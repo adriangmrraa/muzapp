@@ -1,0 +1,114 @@
+export const WHATSAPP_NUMBER = "5491112345678";
+
+export const WHATSAPP_MESSAGES = {
+  hamburguesas: "Hola! Me gustaría hacer un pedido de hamburguesas 🍔",
+  mayorista: "Hola! Me interesa información sobre pan mayorista 🍞",
+};
+
+export interface Product {
+  id: string;
+  name: string;
+  price: number | null;
+  ingredients: string;
+  emoji: string;
+  comingSoon?: boolean;
+}
+
+export const LINEA_POLLO: Product[] = [
+  {
+    id: "genesis",
+    name: "Genesis",
+    price: 2600,
+    ingredients: "Pollo crocante, lechuga, tomate, mayonesa de la casa",
+    emoji: "🍔",
+  },
+  {
+    id: "deli-deli",
+    name: "Deli Deli",
+    price: 3200,
+    ingredients: "Pollo grillado, palta, rúcula, queso crema, cebolla caramelizada",
+    emoji: "🥗",
+  },
+  {
+    id: "mamita",
+    name: "Mamita",
+    price: 3700,
+    ingredients: "Pollo crispy, pickles, coleslaw casero, salsa ranch",
+    emoji: "🌿",
+  },
+  {
+    id: "bookbinder",
+    name: "Bookbinder",
+    price: 4800,
+    ingredients: "Pollo ahumado, panceta, queso cheddar, cebolla crispy",
+    emoji: "🔥",
+  },
+  {
+    id: "toro-asado",
+    name: "Toro Asado",
+    price: 5500,
+    ingredients: "Pollo a la brasa, mozzarella, tomates asados, chimichurri",
+    emoji: "🍗",
+  },
+  {
+    id: "papas-fritas",
+    name: "Papas Fritas",
+    price: 2800,
+    ingredients: "Papas fritas artesanales con sal gruesa y especias",
+    emoji: "🍟",
+  },
+];
+
+export const LINEA_CARNE: Product[] = [
+  {
+    id: "carne-1",
+    name: "La Clásica",
+    price: null,
+    ingredients: "Próximamente — receta secreta en desarrollo",
+    emoji: "🥩",
+    comingSoon: true,
+  },
+  {
+    id: "carne-2",
+    name: "La Doble",
+    price: null,
+    ingredients: "Próximamente — doble burguer de autor",
+    emoji: "🍔",
+    comingSoon: true,
+  },
+  {
+    id: "carne-3",
+    name: "La Especial",
+    price: null,
+    ingredients: "Próximamente — sorpresa que te va a volar la cabeza",
+    emoji: "⭐",
+    comingSoon: true,
+  },
+];
+
+export const BREAD_PRODUCTS = [
+  {
+    id: "pan-brioche",
+    name: "Pan Brioche",
+    description: "Suave, esponjoso, ideal para hamburguesas premium",
+    emoji: "🍞",
+  },
+  {
+    id: "pan-semillas",
+    name: "Pan con Semillas",
+    description: "Multicereal con semillas de sésamo y girasol",
+    emoji: "🌾",
+  },
+  {
+    id: "pan-integral",
+    name: "Pan Integral",
+    description: "Harina integral, opción saludable y deliciosa",
+    emoji: "🌿",
+  },
+  {
+    id: "pan-papa",
+    name: "Pan de Papa",
+    description: "Textura húmeda y sabor único, el favorito del barrio",
+    emoji: "🥔",
+  },
+];
