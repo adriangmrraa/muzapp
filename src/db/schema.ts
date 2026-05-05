@@ -12,6 +12,7 @@ import {
   unique,
 } from "drizzle-orm/pg-core";
 
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "viewer"]);
@@ -93,8 +94,10 @@ export const conversations = pgTable("conversations", {
 export const leads = pgTable("leads", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }),
-  phone: varchar("phone", { length: 50 }),
+  phone: varchar("phone", { length: 50 }).notNull(),
   email: varchar("email", { length: 255 }),
+  firstMessage: text("first_message"),
+  refCode: varchar("ref_code", { length: 255 }),
   utmSource: varchar("utm_source", { length: 255 }),
   utmMedium: varchar("utm_medium", { length: 255 }),
   utmCampaign: varchar("utm_campaign", { length: 255 }),
@@ -103,7 +106,21 @@ export const leads = pgTable("leads", {
   campaignId: varchar("campaign_id", { length: 255 }),
   adsetId: varchar("adset_id", { length: 255 }),
   platform: varchar("platform", { length: 100 }),
+  notes: text("notes"),
   status: leadStatusEnum("status").notNull().default("new"),
   conversationId: integer("conversation_id").references(() => conversations.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  phoneNumber: text("phone_number").notNull(),
+  items: jsonb("items").notNull(),
+  notes: text("notes"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
