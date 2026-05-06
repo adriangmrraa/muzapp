@@ -1,4 +1,4 @@
-export const WHATSAPP_NUMBER = "5491112345678";
+export const WHATSAPP_NUMBER = "5493705115020";
 
 // ─── Campaign Registry ────────────────────────────────────────────────────────
 
@@ -121,6 +121,23 @@ export const LINEA_CARNE: Product[] = [
     comingSoon: true,
   },
 ];
+
+export const PRODUCT_IMAGE_MAP: Record<string, string> = {
+  genesis: "/assets/images/products/hamburguesa-genesis.png",
+  "deli-deli": "/assets/images/products/hamburguesa-deli-float.png",
+  mamita: "/assets/images/products/hamburguesa-mamita.png",
+  bookbinder: "/assets/images/products/hamburguesa-bookbinder.png",
+  "toro-asado": "/assets/images/products/hamburguesa-toro-asado.png",
+};
+
+export const BG_IMAGES = [
+  "/assets/images/background/1.png",
+  "/assets/images/background/2.png",
+  "/assets/images/background/3.png",
+  "/assets/images/background/b4.png",
+];
+
+export const FEATURED_PRODUCT_IDS = ["genesis", "deli-deli", "mamita", "bookbinder"];
 
 export const BREAD_PRODUCTS = [
   {

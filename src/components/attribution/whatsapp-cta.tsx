@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useRef, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { buildWhatsAppURL } from "@/lib/whatsapp";
 import { buildRefCode, parseUTMParams } from "@/lib/attribution";
@@ -42,11 +42,37 @@ function WhatsAppCTAInner({
 
   const url = buildWhatsAppURL(message, refCode);
 
+  const btnRef = useRef<HTMLAnchorElement>(null);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    const el = btnRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const dx = e.clientX - rect.left - rect.width / 2;
+    const dy = e.clientY - rect.top - rect.height / 2;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const maxDist = 150;
+    const factor = Math.min(dist, maxDist) / maxDist;
+    setOffset({ x: dx * factor * 0.3, y: dy * factor * 0.3 });
+  }, []);
+
+  const onMouseLeave = useCallback(() => {
+    setOffset({ x: 0, y: 0 });
+  }, []);
+
   return (
     <a
+      ref={btnRef}
       href={url}
       target="_blank"
       rel="noopener noreferrer"
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      style={{
+        transform: `translate(${offset.x}px, ${offset.y}px)`,
+        transition: "transform 0.15s ease-out",
+      }}
       className={
         className ??
         "btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-widest"

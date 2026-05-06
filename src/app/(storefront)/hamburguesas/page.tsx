@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductToggle } from "@/components/products/product-toggle";
 import { LINEA_POLLO, LINEA_CARNE } from "@/lib/constants";
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
+import { fadeUp, staggerContainer } from "@/lib/animation-variants";
 
 export default function HamburguesasPage() {
   const [linea, setLinea] = useState<"pollo" | "carne">("pollo");
@@ -12,25 +14,35 @@ export default function HamburguesasPage() {
   const products = linea === "pollo" ? LINEA_POLLO : LINEA_CARNE;
 
   return (
-    <div
+    <motion.div
       className="min-h-screen pt-24 pb-20 px-4"
       style={{
         background:
           "radial-gradient(ellipse at 80% 20%, rgba(212,160,23,0.08) 0%, transparent 50%), #0a0a0a",
       }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
     >
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col items-center text-center gap-4 mb-12">
-          <span
+        <motion.div
+          className="flex flex-col items-center text-center gap-4 mb-12"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.span
+            variants={fadeUp}
             className="text-xs font-semibold uppercase tracking-[0.3em]"
             style={{ color: "#D4A017" }}
           >
             El Menú
-          </span>
-          <h1
+          </motion.span>
+          <motion.h1
+            variants={fadeUp}
             className="text-4xl sm:text-5xl font-black"
             style={{
+              fontFamily: "var(--font-playfair), serif",
               background:
                 "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
               WebkitBackgroundClip: "text",
@@ -39,22 +51,28 @@ export default function HamburguesasPage() {
             }}
           >
             Nuestras Hamburguesas
-          </h1>
-          <p className="text-white/60 max-w-lg leading-relaxed">
+          </motion.h1>
+          <motion.p
+            variants={fadeUp}
+            className="text-white/60 max-w-lg leading-relaxed"
+          >
             Cada una tiene su propia historia. Elegí tu línea y descubrí la que te va a conquistar.
-          </p>
+          </motion.p>
 
-          {/* Toggle */}
-          <div className="mt-4">
+          <motion.div variants={fadeUp} className="mt-4">
             <ProductToggle value={linea} onChange={setLinea} />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        {/* Product grid */}
         <ProductGrid products={products} />
 
-        {/* CTA */}
-        <div className="mt-16 flex flex-col items-center gap-4 text-center">
+        <motion.div
+          className="mt-16 flex flex-col items-center gap-4 text-center"
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
           <p className="text-white/60 text-sm">
             ¿Ya elegiste? Hacé tu pedido directo por WhatsApp
           </p>
@@ -63,8 +81,8 @@ export default function HamburguesasPage() {
             message="Hola! Me gustaría hacer un pedido de hamburguesas"
             label="Hacer Pedido"
           />
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
