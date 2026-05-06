@@ -36,42 +36,6 @@ export const CAMPAIGNS: Campaign[] = [
   },
 ];
 
-// ─── Campaign Registry ────────────────────────────────────────────────────────
-
-export interface Campaign {
-  slug: string;
-  name: string;
-  whatsappMessage: string;
-  active: boolean;
-}
-
-export const CAMPAIGNS: Campaign[] = [
-  {
-    slug: "hamburguesas",
-    name: "Menu Hamburguesas (Orgánico)",
-    whatsappMessage: "Hola! Me gustaría hacer un pedido de hamburguesas",
-    active: true,
-  },
-  {
-    slug: "mayorista",
-    name: "Pan Mayorista (Orgánico)",
-    whatsappMessage: "Hola! Me interesa información sobre pan mayorista",
-    active: true,
-  },
-  {
-    slug: "promo-muzza",
-    name: "Promo Muzzarella - Meta Ads",
-    whatsappMessage: "Hola! Vi la promo de muzza y me interesa",
-    active: true,
-  },
-  {
-    slug: "2x1-empanadas",
-    name: "2x1 Empanadas - Meta Ads",
-    whatsappMessage: "Hola! Vi la promo de 2x1 empanadas",
-    active: true,
-  },
-];
-
 export const WHATSAPP_MESSAGES = {
   hamburguesas: "Hola! Me gustaría hacer un pedido de hamburguesas 🍔",
   mayorista: "Hola! Me interesa información sobre pan mayorista 🍞",
