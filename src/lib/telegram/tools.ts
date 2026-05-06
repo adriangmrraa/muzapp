@@ -7,6 +7,7 @@ import { manageProductTools } from "./toolsProduct";
 import { manageOrderTools } from "./toolsOrder";
 import { managementTools } from "./toolsManagement";
 import { analyticsTools } from "./toolsAnalytics";
+import { whatsAppTools } from "./toolsWhatsApp";
 
 // ─── Tools Maestras (Delegantes) ───────────────────────────────────────
 // Cada Tool Maestra es un grupo de sub-tools relacionadas
@@ -77,12 +78,15 @@ export const internalAgentTools = {
   getClientHistory: manageClientTools.getClientHistory,
   suggestProducts: manageClientTools.suggestProducts,
 
-  // manageProduct (~5 tools)
+  // manageProduct (~8 tools)
   getAllProducts: manageProductTools.getAllProducts,
   getProductsByCategory: manageProductTools.getProductsByCategory,
   getProductById: manageProductTools.getProductById,
   searchProducts: manageProductTools.searchProducts,
   getProductAvailability: manageProductTools.getProductAvailability,
+  createProduct: manageProductTools.createProduct,
+  updateProduct: manageProductTools.updateProduct,
+  deleteProduct: manageProductTools.deleteProduct,
 
   // manageOrder (~7 tools)
   createOrder: manageOrderTools.createOrder,
@@ -106,9 +110,20 @@ export const internalAgentTools = {
   getTopProducts: analyticsTools.getTopProducts,
   getTopClients: analyticsTools.getTopClients,
   getAverageTicket: analyticsTools.getAverageTicket,
+
+  // whatsApp (1 tool)
+  sendWhatsAppMessage: whatsAppTools.sendWhatsAppMessage,
 };
 
-// Total: 33 tools individuales organizadas en 6 grupos
+// whatsApp: Comunicación por WhatsApp
+export const whatsApp = {
+  name: "whatsApp",
+  description:
+    "Grupo de herramientas para enviar mensajes de WhatsApp a clientes.",
+  tools: whatsAppTools,
+};
+
+// Total: 37 tools individuales organizadas en 7 grupos
 export const toolGroups = {
   queryOrder,
   manageClient,
@@ -116,6 +131,7 @@ export const toolGroups = {
   manageOrder,
   manageManagement,
   analytics,
+  whatsApp,
 };
 
 console.log(

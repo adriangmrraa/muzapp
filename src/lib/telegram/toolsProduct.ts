@@ -217,6 +217,147 @@ export const getProductAvailability = tool({
   },
 });
 
+// createProduct - Crear nuevo producto
+export const createProduct = tool({
+  description:
+    "Crea un nuevo producto en el catálogo. Preguntas: 'agregar producto', 'nuevo producto', 'alta de producto'",
+  inputSchema: z.object({
+    name: z.string().describe("Nombre del producto"),
+    description: z.string().optional().describe("Descripción del producto"),
+    price: z.number().optional().describe("Precio del producto"),
+    category: z
+      .enum(["hamburguesa", "acompanamiento", "pan_mayorista"])
+      .describe("Categoría del producto"),
+    line: z
+      .enum(["pollo", "carne", "clasica", "pan"])
+      .describe("Línea del producto"),
+    available: z.boolean().default(true).describe("Si el producto está disponible"),
+    comingSoon: z.boolean().default(false).describe("Si el producto es próximamente"),
+  }),
+  execute: async ({ name, description, price, category, line, available, comingSoon }) => {
+    const [created] = await db
+      .insert(products)
+      .values({
+        name,
+        description,
+        price: price !== undefined ? String(price) : undefined,
+        category,
+        line,
+        available,
+        comingSoon,
+      })
+      .returning({
+        id: products.id,
+        name: products.name,
+        description: products.description,
+        price: products.price,
+        category: products.category,
+        line: products.line,
+        available: products.available,
+        comingSoon: products.comingSoon,
+      });
+
+    return {
+      success: true,
+      message: `Producto "${created.name}" creado con ID #${created.id}`,
+      product: created,
+    };
+  },
+});
+
+// updateProduct - Actualizar un producto existente
+export const updateProduct = tool({
+  description:
+    "Actualiza un producto existente. Preguntas: 'modificar producto', 'cambiar precio', 'actualizar disponibilidad'",
+  inputSchema: z.object({
+    id: z.number().describe("ID del producto a actualizar"),
+    name: z.string().optional().describe("Nuevo nombre"),
+    description: z.string().optional().describe("Nueva descripción"),
+    price: z.number().optional().describe("Nuevo precio"),
+    category: z
+      .enum(["hamburguesa", "acompanamiento", "pan_mayorista"])
+      .optional()
+      .describe("Nueva categoría"),
+    line: z
+      .enum(["pollo", "carne", "clasica", "pan"])
+      .optional()
+      .describe("Nueva línea"),
+    available: z.boolean().optional().describe("Disponibilidad"),
+    comingSoon: z.boolean().optional().describe("Próximamente"),
+    sortOrder: z.number().optional().describe("Orden de visualización"),
+  }),
+  execute: async ({ id, name, description, price, category, line, available, comingSoon, sortOrder }) => {
+    const [existing] = await db
+      .select({ id: products.id, name: products.name })
+      .from(products)
+      .where(eq(products.id, id))
+      .limit(1);
+
+    if (!existing) {
+      return { success: false, message: "Producto no encontrado" };
+    }
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (name !== undefined) updates.name = name;
+    if (description !== undefined) updates.description = description;
+    if (price !== undefined) updates.price = String(price);
+    if (category !== undefined) updates.category = category;
+    if (line !== undefined) updates.line = line;
+    if (available !== undefined) updates.available = available;
+    if (comingSoon !== undefined) updates.comingSoon = comingSoon;
+    if (sortOrder !== undefined) updates.sortOrder = sortOrder;
+
+    const [updated] = await db
+      .update(products)
+      .set(updates)
+      .where(eq(products.id, id))
+      .returning({
+        id: products.id,
+        name: products.name,
+        description: products.description,
+        price: products.price,
+        category: products.category,
+        line: products.line,
+        available: products.available,
+        comingSoon: products.comingSoon,
+        sortOrder: products.sortOrder,
+      });
+
+    return {
+      success: true,
+      message: `Producto "${updated.name}" (#${updated.id}) actualizado`,
+      product: updated,
+    };
+  },
+});
+
+// deleteProduct - Eliminar un producto
+export const deleteProduct = tool({
+  description:
+    "Elimina un producto del catálogo. Preguntas: 'eliminar producto', 'borrar producto', 'dar de baja producto'",
+  inputSchema: z.object({
+    id: z.number().describe("ID del producto a eliminar"),
+  }),
+  execute: async ({ id }) => {
+    const [existing] = await db
+      .select({ id: products.id, name: products.name })
+      .from(products)
+      .where(eq(products.id, id))
+      .limit(1);
+
+    if (!existing) {
+      return { success: false, message: "Producto no encontrado" };
+    }
+
+    await db.delete(products).where(eq(products.id, id));
+
+    return {
+      success: true,
+      message: `Producto "${existing.name}" (#${existing.id}) eliminado`,
+    };
+  },
+});
+
 // Export all manageProduct tools
 export const manageProductTools = {
   getAllProducts,
@@ -224,4 +365,7 @@ export const manageProductTools = {
   getProductById,
   searchProducts,
   getProductAvailability,
+  createProduct,
+  updateProduct,
+  deleteProduct,
 };
