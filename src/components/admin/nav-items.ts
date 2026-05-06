@@ -5,6 +5,7 @@ import {
   MessageSquareIcon,
   UsersIcon,
   BarChart2Icon,
+  MegaphoneIcon,
 } from "lucide-react";
 
 export const navItems = [
@@ -24,6 +25,12 @@ export const navItems = [
     label: "Agente IA",
     href: "/admin/agent",
     icon: BotIcon,
+    disabled: false,
+  },
+  {
+    label: "Meta Ads",
+    href: "/admin/meta",
+    icon: MegaphoneIcon,
     disabled: false,
   },
   {
