@@ -228,12 +228,14 @@ export async function sendOutboundMessage(
     const { agentConfig } = await import("@/db/schema");
     const config = await db.select().from(agentConfig).limit(1);
     const cfg = config[0];
-    if (cfg?.ycloudApiKey && cfg?.phoneNumber) {
+    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
+    if (apiKey && from) {
       await sendWhatsAppMessage({
         to: conv.customerPhone ?? conv.externalUserId ?? "",
         body: content,
-        apiKey: cfg.ycloudApiKey,
-        from: cfg.phoneNumber,
+        apiKey,
+        from,
       });
     }
   } else if (channel === "telegram") {
@@ -250,6 +252,7 @@ export async function sendOutboundMessage(
     }
   }
 
-  // Save the outbound message
-  await insertMessage(conversationId, role, content);
+  // Save the outbound message — store "human" as "assistant" for AI compatibility
+  const dbRole = role === "human" ? "assistant" : role;
+  await insertMessage(conversationId, dbRole, content);
 }
