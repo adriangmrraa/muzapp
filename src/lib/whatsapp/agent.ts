@@ -163,7 +163,7 @@ export async function runWhatsAppAgent({
         // Grupo F: Multimedia (1)
         sendProductImage: createSendProductImageTool(customerPhone),
       },
-      stopWhen: stepCountIs(5),
+      stopWhen: stepCountIs(8),
       toolChoice: "auto",
     });
 
