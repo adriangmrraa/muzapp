@@ -6,11 +6,20 @@ import {
   getTelegramConfigFromEnv,
   type TelegramUpdate,
 } from "@/lib/telegram/bot";
+import {
+  checkIdempotency,
+  setIdempotency,
+  createIdempotencyKey,
+} from "@/lib/idempotency";
+import { createCorrelationId, createLogger, logRequestReceived } from "@/lib/logger";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  const correlationId = createCorrelationId();
+  const logger = createLogger(correlationId);
+  
   try {
     const { token } = await params;
 
@@ -33,17 +42,34 @@ export async function POST(
     // ── Parsear el update de Telegram ──
     const update: TelegramUpdate = await request.json();
 
+    // ── Idempotency check ──
+    const message = update.message;
+    if (message) {
+      const key = createIdempotencyKey(message.chat.id, message.date);
+      if (checkIdempotency(key)) {
+        return NextResponse.json({ ok: true, duplicate: true });
+      }
+      setIdempotency(key);
+      
+      // Structured log
+      logRequestReceived(logger, {
+        messageId: correlationId,
+        chatId: message.chat.id,
+        text: message.text?.slice(0, 50),
+      });
+    }
+
     // ── Procesar con el agente interno ──
     const result = await handleTelegramUpdate(update, config);
 
     if (!result.ok) {
-      console.error("[telegram-webhook] Handler error:", result.error);
+      logger.error({ event: "handler_error", error: result.error }, "Handler error");
     }
 
     // Telegram espera 200 OK siempre (incluso si ignoramos el update)
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[telegram-webhook] Error:", error);
+    logger.error({ event: "request_error", error: error instanceof Error ? error.message : "Unknown" }, "Request error");
     return NextResponse.json({ ok: false, error: "Internal error" }, { status: 500 });
   }
 }
