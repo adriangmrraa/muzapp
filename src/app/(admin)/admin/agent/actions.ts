@@ -7,6 +7,20 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/auth";
 
+// ─── Types ──────────────────────────────────────────────────────────────────────
+
+export type PhoneIdEntry = {
+  name: string;
+  phone: string;
+};
+
+export type AgentConfigState = {
+  success: boolean;
+  message: string;
+};
+
+// ─── Schemas ────────────────────────────────────────────────────────────────────
+
 const businessHourSchema = z.object({
   day: z.string(),
   open: z.boolean(),
@@ -14,17 +28,25 @@ const businessHourSchema = z.object({
   closeTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato HH:MM requerido"),
 });
 
+const phoneIdSchema = z.object({
+  name: z.string().min(1, "El nombre es obligatorio"),
+  phone: z.string().min(1, "El teléfono es obligatorio"),
+});
+
 const agentConfigSchema = z.object({
   systemPrompt: z.string().min(1, "El prompt del sistema es obligatorio"),
   phoneNumber: z.string().min(1, "El número de teléfono es obligatorio"),
   enabled: z.boolean(),
   businessHours: z.array(businessHourSchema),
+  ycloudApiKey: z.string().optional(),
+  whatsappBotNumber: z.string().optional(),
+  allowedPhoneIds: z.array(phoneIdSchema),
+  autoReply24h: z.boolean(),
+  autoReply24hMessage: z.string().optional(),
+  trainBotContext: z.string().optional(),
 });
 
-export type AgentConfigState = {
-  success: boolean;
-  message: string;
-};
+// ─── Actions ────────────────────────────────────────────────────────────────────
 
 export async function saveAgentConfig(
   _prevState: AgentConfigState,
@@ -35,6 +57,7 @@ export async function saveAgentConfig(
     return { success: false, message: "No autorizado" };
   }
 
+  // ─── Business hours ────────────────────────────────────────────────────────
   const rawBusinessHours: unknown[] = [];
   const days = [
     "Lunes",
@@ -55,11 +78,28 @@ export async function saveAgentConfig(
     });
   }
 
+  // ─── Allowed phone IDs (JSON string from hidden input) ─────────────────────
+  let allowedPhoneIds: PhoneIdEntry[] = [];
+  try {
+    const raw = formData.get("allowedPhoneIds");
+    if (raw && typeof raw === "string") {
+      allowedPhoneIds = JSON.parse(raw);
+    }
+  } catch {
+    allowedPhoneIds = [];
+  }
+
   const raw = {
     systemPrompt: formData.get("systemPrompt"),
     phoneNumber: formData.get("phoneNumber"),
     enabled: formData.get("enabled") === "true",
     businessHours: rawBusinessHours,
+    ycloudApiKey: formData.get("ycloudApiKey") || undefined,
+    whatsappBotNumber: formData.get("whatsappBotNumber") || undefined,
+    allowedPhoneIds,
+    autoReply24h: formData.get("autoReply24h") === "true",
+    autoReply24hMessage: formData.get("autoReply24hMessage") || undefined,
+    trainBotContext: formData.get("trainBotContext") || undefined,
   };
 
   const parsed = agentConfigSchema.safeParse(raw);
@@ -75,24 +115,29 @@ export async function saveAgentConfig(
       .where(eq(agentConfig.id, 1))
       .limit(1);
 
+    const values = {
+      systemPrompt: parsed.data.systemPrompt,
+      phoneNumber: parsed.data.phoneNumber,
+      enabled: parsed.data.enabled,
+      businessHours: parsed.data.businessHours,
+      ycloudApiKey: parsed.data.ycloudApiKey ?? null,
+      whatsappBotNumber: parsed.data.whatsappBotNumber ?? null,
+      allowedPhoneIds: parsed.data.allowedPhoneIds,
+      autoReply24h: parsed.data.autoReply24h,
+      autoReply24hMessage: parsed.data.autoReply24hMessage ?? null,
+      trainBotContext: parsed.data.trainBotContext ?? null,
+      updatedAt: new Date(),
+    };
+
     if (existing.length > 0) {
       await db
         .update(agentConfig)
-        .set({
-          systemPrompt: parsed.data.systemPrompt,
-          phoneNumber: parsed.data.phoneNumber,
-          enabled: parsed.data.enabled,
-          businessHours: parsed.data.businessHours,
-          updatedAt: new Date(),
-        })
+        .set(values)
         .where(eq(agentConfig.id, 1));
     } else {
       await db.insert(agentConfig).values({
         id: 1,
-        systemPrompt: parsed.data.systemPrompt,
-        phoneNumber: parsed.data.phoneNumber,
-        enabled: parsed.data.enabled,
-        businessHours: parsed.data.businessHours,
+        ...values,
       });
     }
 
@@ -100,5 +145,59 @@ export async function saveAgentConfig(
     return { success: true, message: "Configuración guardada" };
   } catch {
     return { success: false, message: "Error al guardar la configuración" };
+  }
+}
+
+export async function testAgentConnection(): Promise<{
+  success: boolean;
+  message: string;
+}> {
+  const session = await auth();
+  if (!session) {
+    return { success: false, message: "No autorizado" };
+  }
+
+  try {
+    const rows = await db
+      .select({
+        ycloudApiKey: agentConfig.ycloudApiKey,
+        whatsappBotNumber: agentConfig.whatsappBotNumber,
+        systemPrompt: agentConfig.systemPrompt,
+        enabled: agentConfig.enabled,
+      })
+      .from(agentConfig)
+      .where(eq(agentConfig.id, 1))
+      .limit(1);
+
+    const cfg = rows[0];
+    if (!cfg) {
+      return {
+        success: false,
+        message: "No hay configuración guardada. Guardá la configuración primero.",
+      };
+    }
+
+    const checks: string[] = [];
+    if (cfg.ycloudApiKey) checks.push("✅ YCloud API Key configurada");
+    else checks.push("❌ YCloud API Key no configurada");
+
+    if (cfg.whatsappBotNumber) checks.push("✅ Número del bot configurado");
+    else checks.push("❌ Número del bot no configurado");
+
+    if (cfg.systemPrompt) checks.push("✅ Prompt del sistema configurado");
+    else checks.push("❌ Prompt del sistema no configurado");
+
+    checks.push(cfg.enabled ? "✅ Agente activo" : "⚠️ Agente desactivado");
+
+    const allOk = checks.every((c) => c.startsWith("✅"));
+    return {
+      success: allOk,
+      message: checks.join(" · "),
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: `Error al leer configuración: ${e instanceof Error ? e.message : "desconocido"}`,
+    };
   }
 }

@@ -11,12 +11,12 @@ export function calculateClientStats(orders: {
   );
 
   const totalOrders = completedOrders.length;
+  
+  // Items is already the calculated total from the DB
   const totalSpent = completedOrders.reduce((sum, order) => {
-    const items = order.items as { price?: number; quantity?: number }[];
-    if (Array.isArray(items)) {
-      return sum + items.reduce((s, item) => s + (item.price || 0) * (item.quantity || 1), 0);
-    }
-    return sum;
+    const items = order.items as { total?: number; price?: number; quantity?: number }[] | null;
+    if (!items) return sum;
+    return sum + (items[0]?.total || 0);
   }, 0);
 
   const now = new Date();
