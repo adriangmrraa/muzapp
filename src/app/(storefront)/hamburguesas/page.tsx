@@ -1,19 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductToggle } from "@/components/products/product-toggle";
-import { LINEA_POLLO, LINEA_CARNE } from "@/lib/constants";
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
 import { fadeUp, staggerContainer, heroChild } from "@/lib/animation-variants";
 import { PageHero } from "@/components/layout/page-hero";
 import { ParallaxDivider } from "@/components/layout/parallax-divider";
 
+type ProductFromAPI = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: string | null;
+  category: string;
+  line: string;
+  imageUrl: string | null;
+  available: boolean;
+  comingSoon: boolean;
+  sortOrder: number;
+};
+
 export default function HamburguesasPage() {
   const [linea, setLinea] = useState<"pollo" | "carne">("pollo");
+  const [products, setProducts] = useState<ProductFromAPI[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const products = linea === "pollo" ? LINEA_POLLO : LINEA_CARNE;
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products?available=true");
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        console.error("[hamburgesas] fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
+
+  const filteredProducts = products.filter((p) => p.line === linea);
 
   return (
     <>
@@ -60,7 +89,7 @@ export default function HamburguesasPage() {
 
       <div className="bg-[#0a0a0a] relative pb-20 px-4">
         <div className="max-w-7xl mx-auto pt-16">
-          <ProductGrid products={products} />
+          {!loading && <ProductGrid products={filteredProducts} />}
         </div>
       </div>
 

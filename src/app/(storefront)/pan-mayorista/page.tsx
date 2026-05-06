@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
@@ -8,10 +9,22 @@ import {
   cardEntrance,
   heroChild,
 } from "@/lib/animation-variants";
-import { BREAD_PRODUCTS } from "@/lib/constants";
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
 import { PageHero } from "@/components/layout/page-hero";
 import { ParallaxDivider } from "@/components/layout/parallax-divider";
+
+type ProductFromAPI = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: string | null;
+  category: string;
+  line: string;
+  imageUrl: string | null;
+  available: boolean;
+  comingSoon: boolean;
+  sortOrder: number;
+};
 
 const BREAD_IMAGES: Record<string, string> = {
   "pan-brioche":
@@ -52,6 +65,26 @@ const benefits = [
 ];
 
 export default function PanMayoristaPage() {
+  const [products, setProducts] = useState<ProductFromAPI[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products?available=true");
+        const data = await res.json();
+        // Filter for pan mayorista
+        const panProducts = data.filter((p: ProductFromAPI) => p.category === "pan_mayorista");
+        setProducts(panProducts);
+      } catch (err) {
+        console.error("[pan-mayorista] fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] relative">
       {/* Hero */}
@@ -190,7 +223,7 @@ export default function PanMayoristaPage() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {BREAD_PRODUCTS.map((bread) => (
+            {products.map((bread) => (
               <motion.div
                 key={bread.id}
                 variants={cardEntrance}
@@ -225,7 +258,7 @@ export default function PanMayoristaPage() {
                       }}
                     >
                       <span role="img" aria-label={bread.name}>
-                        {bread.emoji}
+                        🍞
                       </span>
                     </div>
                   )}
