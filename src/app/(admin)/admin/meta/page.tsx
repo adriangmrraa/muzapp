@@ -1,4 +1,4 @@
-import { getMetaStatus } from "./actions";
+import { getMetaStatus, getWebhookConfig } from "./actions";
 import { MetaConfigClient } from "./meta-config-client";
 
 export const metadata = {
@@ -6,7 +6,10 @@ export const metadata = {
 };
 
 export default async function MetaPage() {
-  const status = await getMetaStatus();
+  const [status, webhook] = await Promise.all([
+    getMetaStatus(),
+    getWebhookConfig(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -20,7 +23,7 @@ export default async function MetaPage() {
         </p>
       </div>
 
-      <MetaConfigClient initialStatus={status} />
+      <MetaConfigClient initialStatus={status} webhookConfig={webhook} />
     </div>
   );
 }

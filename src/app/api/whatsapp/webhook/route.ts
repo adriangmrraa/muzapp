@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
 
-  // 1. Verify webhook signature
-  const signature = request.headers.get("x-ycloud-signature") || "";
+  // 1. Verify webhook signature (header: ycloud-signature)
+  const signature = request.headers.get("ycloud-signature") || "";
   const secret = process.env.YCLOUD_WEBHOOK_SECRET;
 
   if (!secret || !verifyYCloudSignature(rawBody, signature, secret)) {

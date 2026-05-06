@@ -156,11 +156,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // YCloud event type for inbound messages
       if (payload?.type !== "whatsapp.inbound_message.received") return;
 
-      const message = payload?.data?.message;
-      const from: string | undefined = message?.from;
-      const text: string | undefined = message?.text?.body;
+      // Según doc oficial YCloud: payload.whatsappInboundMessage
+      const ycloudMsg = payload?.whatsappInboundMessage;
+      if (!ycloudMsg) return;
+
+      // Solo texto por ahora
+      if (ycloudMsg.type !== "text") return;
+
+      const from: string | undefined = ycloudMsg.from;
+      const text: string | undefined = ycloudMsg.text?.body;
+      const customerName: string | undefined = ycloudMsg.customerProfile?.name;
 
       if (!from || !text) return;
+
+      console.log(`[webhook] Mensaje de ${customerName ?? from}: ${text.slice(0, 80)}`);
 
       addToBuffer(from, text, handleFlush);
     } catch (error) {

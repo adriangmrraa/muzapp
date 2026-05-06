@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
-import { testMetaConnection, type MetaConnectionStatus } from "./actions";
+import { testMetaConnection, type MetaConnectionStatus, type WebhookConfig } from "./actions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -23,10 +24,45 @@ function StatusDot({ active }: { active: boolean }) {
   );
 }
 
+function CopyField({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = useCallback(() => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [value]);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <div className="flex gap-2">
+        <Input
+          readOnly
+          value={value}
+          className="font-mono text-xs bg-white/[0.03] border-white/[0.08] select-all"
+        />
+        <Button
+          type="button"
+          onClick={copy}
+          variant="outline"
+          size="sm"
+          className="shrink-0 border-white/[0.1] text-xs"
+        >
+          {copied ? "¡Copiado!" : "Copiar"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function MetaConfigClient({
   initialStatus,
+  webhookConfig,
 }: {
   initialStatus: MetaConnectionStatus;
+  webhookConfig: WebhookConfig;
 }) {
   const [testState, formAction, isPending] = useActionState(
     testMetaConnection,
@@ -125,6 +161,64 @@ export function MetaConfigClient({
                 {testState.message}
               </div>
             )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Webhook WhatsApp */}
+      <motion.div variants={fadeUpSmall}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Webhook WhatsApp (YCloud)
+            </CardTitle>
+            <CardDescription>
+              Datos para configurar en el dashboard de YCloud — copialos y pegalos
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <CopyField
+              label="URL del Webhook"
+              value={webhookConfig.webhookUrl}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-lg border p-3 flex items-start gap-2 transition-colors hover:bg-white/[0.02]">
+                <StatusDot active={webhookConfig.hasWebhookSecret} />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs font-medium">YCLOUD_WEBHOOK_SECRET</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {webhookConfig.hasWebhookSecret ? "Configurado" : "Falta en Render"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-lg border p-3 flex items-start gap-2 transition-colors hover:bg-white/[0.02]">
+                <StatusDot active={webhookConfig.hasApiKey} />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs font-medium">YCLOUD_API_KEY</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {webhookConfig.hasApiKey ? "Configurado" : "Falta en Render"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-lg border p-3 flex items-start gap-2 transition-colors hover:bg-white/[0.02]">
+                <StatusDot active={webhookConfig.hasPhoneNumber} />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs font-medium">WHATSAPP_PHONE_NUMBER</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {webhookConfig.phoneNumber ?? "Falta en Render"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 px-4 py-3 text-xs text-amber-300/80">
+              <strong>Pasos en YCloud:</strong> Andá a WhatsApp → Webhook, pega la URL de arriba, ingresá el mismo
+              secret que pusiste en <code className="text-[10px] bg-white/[0.08] px-1 rounded">YCLOUD_WEBHOOK_SECRET</code>,
+              y guardá. Después activá los eventos de inbound_message.
+            </div>
           </CardContent>
         </Card>
       </motion.div>

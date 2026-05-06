@@ -15,6 +15,14 @@ export type MetaConnectionStatus = {
   appId: string | null;
 };
 
+export type WebhookConfig = {
+  webhookUrl: string;
+  hasWebhookSecret: boolean;
+  hasApiKey: boolean;
+  hasPhoneNumber: boolean;
+  phoneNumber: string | null;
+};
+
 /**
  * Obtiene el estado actual de la conexión Meta
  */
@@ -35,6 +43,38 @@ export async function getMetaStatus(): Promise<MetaConnectionStatus> {
     serverConfigured: cfg.hasServerConfig,
     pixelId: cfg.pixelId ?? null,
     appId: cfg.appId ?? null,
+  };
+}
+
+/**
+ * Obtiene la configuración del webhook WhatsApp (YCloud)
+ * para mostrar en el admin y copiar a YCloud dashboard
+ */
+export async function getWebhookConfig(): Promise<WebhookConfig> {
+  const session = await auth();
+  if (!session) {
+    return {
+      webhookUrl: "",
+      hasWebhookSecret: false,
+      hasApiKey: false,
+      hasPhoneNumber: false,
+      phoneNumber: null,
+    };
+  }
+
+  const secret = process.env.YCLOUD_WEBHOOK_SECRET;
+  const apiKey = process.env.YCLOUD_API_KEY;
+  const phone = process.env.WHATSAPP_PHONE_NUMBER;
+
+  // Detectar la URL base desde el entorno
+  const host = process.env.AUTH_URL ?? process.env.RENDER_EXTERNAL_URL ?? "https://muzapp.onrender.com";
+
+  return {
+    webhookUrl: `${host}/api/whatsapp/webhook`,
+    hasWebhookSecret: !!(secret && secret !== "tu-webhook-secret-de-ycloud"),
+    hasApiKey: !!(apiKey && apiKey !== "tu-api-key-de-ycloud"),
+    hasPhoneNumber: !!(phone && phone !== "5491112345678"),
+    phoneNumber: phone && phone !== "5491112345678" ? phone : null,
   };
 }
 
