@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-poppins);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-poppins);
+  --font-heading: var(--font-playfair);
   --color-gold: #D4A017;
   --color-gold-light: #E8B84B;
   --color-gold-dark: #B8860B;
@@ -169,4 +169,16 @@
 }
 .whatsapp-pulse {
   animation: whatsapp-pulse 2s infinite;
+}
+
+/* Animated glass border */
+@keyframes borderRotate {
+  0% { border-color: rgba(212, 160, 23, 0.3); }
+  33% { border-color: rgba(139, 0, 0, 0.4); }
+  66% { border-color: rgba(212, 160, 23, 0.5); }
+  100% { border-color: rgba(212, 160, 23, 0.3); }
+}
+
+.border-animated {
+  animation: borderRotate 4s ease-in-out infinite;
 }

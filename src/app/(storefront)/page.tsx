@@ -1,38 +1,55 @@
+"use client";
+
+import { motion } from "framer-motion";
 import { HeroSection } from "@/components/hero/hero-section";
+import { FeaturedProductsSection } from "@/components/products/featured-products-section";
+import { GlassPanel } from "@/components/ui/glass-panel";
+import { AnimatedStatCard } from "@/components/ui/animated-stat-card";
+import { fadeUp } from "@/lib/animation-variants";
 import Link from "next/link";
+import { ClientGallery } from "@/components/home/client-gallery";
+import { BreadShowcase } from "@/components/home/bread-showcase";
+import { DeliveryCTA } from "@/components/home/delivery-cta";
+
+const STATS = [
+  { value: "100%", label: "Ingredientes frescos" },
+  { value: "6+", label: "Variedades de hamburguesa" },
+  { value: "Pan", label: "Artesanal propio" },
+  { value: "♥", label: "Hecho con amor" },
+];
 
 export default function HomePage() {
   return (
     <>
       <HeroSection />
 
-      {/* About section */}
+      <FeaturedProductsSection />
+
       <section className="py-24 px-4">
         <div className="max-w-5xl mx-auto">
-          <div
-            className="rounded-3xl p-8 sm:p-12"
-            style={{
-              background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(212,160,23,0.3)",
-            }}
-          >
+          <GlassPanel>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-              {/* Text */}
-              <div className="flex flex-col gap-5">
+              <motion.div
+                className="flex flex-col gap-5"
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+              >
                 <span
                   className="text-xs font-semibold uppercase tracking-[0.3em]"
                   style={{ color: "#D4A017" }}
                 >
                   Sobre Nosotros
                 </span>
-                <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
+                <h2
+                  className="text-3xl sm:text-4xl font-black text-white leading-tight"
+                  style={{ fontFamily: "var(--font-playfair), serif" }}
+                >
                   Más que una{" "}
                   <span
                     style={{
-                      background:
-                        "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
+                      background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                       backgroundClip: "text",
@@ -42,7 +59,7 @@ export default function HomePage() {
                   </span>
                 </h2>
                 <p className="text-white/65 leading-relaxed">
-                  En Mrs Muzzarella creemos que cada ingrediente importa. Trabajamos con productores locales, elaboramos nuestro propio pan y preparamos cada hamburgesa al momento. Sin compromiso. Sin atajos.
+                  En Mrs Muzzarella creemos que cada ingrediente importa. Trabajamos con productores locales, elaboramos nuestro propio pan y preparamos cada hamburguesa al momento. Sin compromiso. Sin atajos.
                 </p>
                 <p className="text-white/65 leading-relaxed">
                   También proveemos pan artesanal a restaurantes y cocinas que, como nosotros, no se conforman con lo mediocre.
@@ -66,46 +83,21 @@ export default function HomePage() {
                     Pan Mayorista
                   </Link>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Stats */}
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { value: "100%", label: "Ingredientes frescos" },
-                  { value: "6+", label: "Variedades de hamburguesa" },
-                  { value: "Pan", label: "Artesanal propio" },
-                  { value: "♥", label: "Hecho con amor" },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="flex flex-col items-center justify-center gap-2 p-6 rounded-2xl text-center"
-                    style={{
-                      background: "rgba(212,160,23,0.07)",
-                      border: "1px solid rgba(212,160,23,0.2)",
-                    }}
-                  >
-                    <span
-                      className="text-3xl font-black"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #D4A017, #F5A623)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
-                      {stat.value}
-                    </span>
-                    <span className="text-xs text-white/50 font-medium">
-                      {stat.label}
-                    </span>
-                  </div>
+                {STATS.map((stat) => (
+                  <AnimatedStatCard key={stat.label} value={stat.value} label={stat.label} />
                 ))}
               </div>
             </div>
-          </div>
+          </GlassPanel>
         </div>
       </section>
+
+      <ClientGallery />
+      <BreadShowcase />
+      <DeliveryCTA />
     </>
   );
 }

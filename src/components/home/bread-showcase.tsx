@@ -1,0 +1,194 @@
+"use client";
+
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { fadeUp, staggerContainer } from "@/lib/animation-variants";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { reducedMotionVariant } from "@/lib/animation-variants";
+import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
+
+const BREAD_FEATURES = [
+  "Pan de muzzarella artesanal",
+  "Pan con semillas negro",
+  "Pan tipo brioche largo",
+];
+
+export function BreadShowcase() {
+  const prefersReduced = useReducedMotion();
+
+  const containerVariants = prefersReduced
+    ? reducedMotionVariant(staggerContainer)
+    : staggerContainer;
+
+  const itemVariants = prefersReduced
+    ? reducedMotionVariant(fadeUp)
+    : fadeUp;
+
+  return (
+    <section className="py-24 px-4">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+        {/* LEFT — Text */}
+        <motion.div
+          className="flex flex-col gap-6"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={containerVariants}
+        >
+          {/* Tag */}
+          <motion.span
+            variants={itemVariants}
+            className="self-start text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full"
+            style={{
+              border: "1px solid rgba(212,160,23,0.4)",
+              color: "#D4A017",
+              background: "rgba(212,160,23,0.06)",
+            }}
+          >
+            Pan Artesanal
+          </motion.span>
+
+          {/* Heading */}
+          <motion.h2
+            variants={itemVariants}
+            className="text-4xl sm:text-5xl font-black leading-tight"
+            style={{
+              fontFamily: "var(--font-playfair), serif",
+              background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            Pan al Por Mayor
+          </motion.h2>
+
+          {/* Description */}
+          <motion.p variants={itemVariants} className="text-white/65 leading-relaxed">
+            Proveemos pan artesanal a restaurantes, rotiserías y negocios gastronómicos que no se conforman con lo mediocre. Elaboración propia, ingredientes frescos, entrega directa.
+          </motion.p>
+
+          {/* Features */}
+          <motion.ul variants={containerVariants} className="flex flex-col gap-3">
+            {BREAD_FEATURES.map((feature) => (
+              <motion.li
+                key={feature}
+                variants={itemVariants}
+                className="flex items-center gap-3 text-white/80"
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ background: "#D4A017" }}
+                />
+                {feature}
+              </motion.li>
+            ))}
+          </motion.ul>
+
+          {/* CTA */}
+          <motion.div variants={itemVariants} className="mt-2">
+            <WhatsAppCTA
+              campaignSlug="pan-mayorista-landing"
+              message="Hola! Me interesa información sobre pan mayorista"
+              label="Consultar Precios"
+              className="btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-widest"
+            />
+          </motion.div>
+        </motion.div>
+
+        {/* RIGHT — Images */}
+        <motion.div
+          className="relative h-[480px] sm:h-[560px]"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={containerVariants}
+        >
+          {/* Main image */}
+          <motion.div
+            variants={itemVariants}
+            className="absolute inset-x-0 top-0 rounded-2xl overflow-hidden"
+            style={{
+              border: "1px solid rgba(212,160,23,0.3)",
+              aspectRatio: "4/3",
+              maxHeight: "340px",
+            }}
+            whileHover={
+              prefersReduced
+                ? {}
+                : {
+                    scale: 1.02,
+                    boxShadow: "0 0 24px rgba(212,160,23,0.25)",
+                  }
+            }
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <Image
+              src="/assets/images/pan-mayorista/097707a3-f17b-4399-a6d0-66f6457ee64a.jpg"
+              alt="Panes redondos en bandeja"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+          </motion.div>
+
+          {/* Smaller image — bottom right overlap */}
+          <motion.div
+            variants={itemVariants}
+            className="absolute bottom-0 right-0 w-48 rounded-2xl overflow-hidden"
+            style={{
+              border: "1px solid rgba(212,160,23,0.4)",
+              aspectRatio: "1/1",
+              zIndex: 10,
+            }}
+            whileHover={
+              prefersReduced
+                ? {}
+                : {
+                    scale: 1.05,
+                    boxShadow: "0 0 20px rgba(212,160,23,0.35)",
+                  }
+            }
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <Image
+              src="/assets/images/pan-mayorista/5ee3b05e-fb3b-4bbc-a17f-67ceaeb509eb.jpg"
+              alt="Pancitos con semillas de sésamo"
+              fill
+              className="object-cover"
+              sizes="192px"
+            />
+          </motion.div>
+
+          {/* Small accent image — bottom left */}
+          <motion.div
+            variants={itemVariants}
+            className="absolute bottom-8 left-0 w-36 rounded-2xl overflow-hidden"
+            style={{
+              border: "1px solid rgba(212,160,23,0.35)",
+              aspectRatio: "3/2",
+              zIndex: 10,
+            }}
+            whileHover={
+              prefersReduced
+                ? {}
+                : {
+                    scale: 1.05,
+                    boxShadow: "0 0 20px rgba(212,160,23,0.3)",
+                  }
+            }
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <Image
+              src="/assets/images/pan-mayorista/4f61b737-04bf-42d9-b033-a958cd791f6a.jpg"
+              alt="Panes largos tipo baguette"
+              fill
+              className="object-cover"
+              sizes="144px"
+            />
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
