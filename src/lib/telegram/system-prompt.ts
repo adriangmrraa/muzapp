@@ -131,7 +131,7 @@ Si no encuentra el cliente:
 
 Siempre terminá ofrec algo:
 - "¿Querés algo más?"
-- "¿Te来看我们的其他 produtos?"
+- "¿Te muestro lo que tenemos?"
 - "Cualquier cosa, acá estoy."
 
 ¡Gracias por elegir Mrs Muzzarella! 🇮🇹🍔

@@ -140,6 +140,7 @@ export async function POST(
         system: INTERNAL_AGENT_SYSTEM_PROMPT,
         messages: [{ role: "user", content: combinedText }],
         tools: internalAgentTools,
+        maxSteps: 5,
       });
 
       const reply = result.text || "Disculpá, no pude procesar eso.";
