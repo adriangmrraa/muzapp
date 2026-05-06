@@ -1,28 +1,47 @@
 import { sendWhatsAppMessage } from "@/lib/whatsapp/ycloud-client";
 import { sendTelegramMessage } from "@/lib/telegram/bot";
 
-const MAX_BUBBLE_CHARS = 400;
-const DELAY_BETWEEN_BUBBLES_MS = 2_500; // 2.5s feels natural
+const MAX_BUBBLE_CHARS = 250;
+const DELAY_BETWEEN_BUBBLES_MS = 3_000; // 3s feels natural
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Split text into bubbles: first by paragraphs, then by sentences if too long
+/**
+ * Split text into natural WhatsApp-style bubbles.
+ * Rules:
+ * 1. Split by double newlines (paragraphs) first
+ * 2. Lists (lines starting with - or •) get grouped together as one bubble
+ * 3. Long paragraphs split by sentences
+ * 4. Each bubble ≤ MAX_BUBBLE_CHARS
+ * 5. Strip markdown formatting (bold **text**, backticks, etc.) for natural feel
+ */
 export function splitIntoBubbles(text: string): string[] {
-  if (text.length <= MAX_BUBBLE_CHARS) return [text];
+  // Clean up markdown artifacts for WhatsApp
+  let cleaned = text
+    .replace(/\*\*([^*]+)\*\*/g, "$1")  // **bold** → bold
+    .replace(/`([^`]+)`/g, "$1")         // `code` → code
+    .replace(/---+/g, "")                // --- dividers
+    .replace(/\n{3,}/g, "\n\n")          // collapse 3+ newlines
+    .trim();
 
-  const paragraphs = text.split(/\n\n+/).filter((p) => p.trim());
+  if (cleaned.length <= MAX_BUBBLE_CHARS) return [cleaned];
+
+  const paragraphs = cleaned.split(/\n\n+/).filter((p) => p.trim());
   const bubbles: string[] = [];
 
   for (const para of paragraphs) {
-    if (para.length <= MAX_BUBBLE_CHARS) {
-      bubbles.push(para.trim());
+    const trimmed = para.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.length <= MAX_BUBBLE_CHARS) {
+      bubbles.push(trimmed);
       continue;
     }
 
     // Split long paragraph by sentences
-    const sentences = para.split(/(?<=[.!?])\s+/).filter((s) => s.trim());
+    const sentences = trimmed.split(/(?<=[.!?])\s+/).filter((s) => s.trim());
     let current = "";
 
     for (const sentence of sentences) {
@@ -36,7 +55,9 @@ export function splitIntoBubbles(text: string): string[] {
     if (current) bubbles.push(current.trim());
   }
 
-  return bubbles.length > 0 ? bubbles : [text.slice(0, MAX_BUBBLE_CHARS)];
+  // Filter empty bubbles
+  const result = bubbles.filter((b) => b.trim().length > 0);
+  return result.length > 0 ? result : [cleaned.slice(0, MAX_BUBBLE_CHARS)];
 }
 
 // Send response as bubbles via WhatsApp (YCloud)
