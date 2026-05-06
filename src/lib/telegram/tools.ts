@@ -5,6 +5,7 @@ import { queryOrderTools } from "./toolsQuery";
 import { manageClientTools } from "./toolsClient";
 import { manageProductTools } from "./toolsProduct";
 import { manageOrderTools } from "./toolsOrder";
+import { managementTools } from "./toolsManagement";
 
 // ─── Tools Maestras (Delegantes) ───────────────────────────────────────
 // Cada Tool Maestra es un grupo de sub-tools relacionadas
@@ -41,6 +42,14 @@ export const manageOrder = {
   tools: manageOrderTools,
 };
 
+// manageManagement: Gestión interna (clientes, analytics, horarios)
+export const manageManagement = {
+  name: "manageManagement",
+  description:
+    "Grupo de herramientas de gestión interna. Listar clientes, buscar por nombre/teléfono/email, ver detalle, actualizar estado de pedidos, analytics por período y horarios de atención.",
+  tools: managementTools,
+};
+
 // ─── Export Completo: Todas las tools como un ToolSet ────────────────────
 
 export const internalAgentTools = {
@@ -74,14 +83,23 @@ export const internalAgentTools = {
   cancelOrder: manageOrderTools.cancelOrder,
   calculateTotal: manageOrderTools.calculateTotal,
   confirmOrder: manageOrderTools.confirmOrder,
+
+  // manageManagement (6 tools)
+  getClients: managementTools.getClients,
+  getClientDetail: managementTools.getClientDetail,
+  searchClient: managementTools.searchClient,
+  updateOrderStatusNew: managementTools.updateOrderStatusNew,
+  getAnalytics: managementTools.getAnalytics,
+  getBusinessHours: managementTools.getBusinessHours,
 };
 
-// Total: 23 tools individuales organizadas en 4 grupos
+// Total: 29 tools individuales organizadas en 5 grupos
 export const toolGroups = {
   queryOrder,
   manageClient,
   manageProduct,
   manageOrder,
+  manageManagement,
 };
 
 console.log(

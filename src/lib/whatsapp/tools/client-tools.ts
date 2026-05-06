@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { products } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { products, orders, leads } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 // checkProductAvailability - Verificar stock
 export const checkProductAvailabilityTool = tool({
@@ -11,45 +11,40 @@ export const checkProductAvailabilityTool = tool({
     name: z.string().describe("Nombre del producto"),
   }),
   execute: async ({ name }) => {
-    const [product] = await db
+    const allProducts = await db
       .select({
         name: products.name,
         available: products.available,
-        comingSoon: products.comingSoon,
       })
-      .from(products)
-      .where(eq(products.available, true))
-      .limit(20);
+      .from(products);
 
     const normalizedName = name.toLowerCase();
-    const found = product
-      ? [product].find((p) => p.name?.toLowerCase().includes(normalizedName))
-      : undefined;
+    const found = allProducts.find((p) =>
+      p.name?.toLowerCase().includes(normalizedName)
+    );
 
     if (!found) {
-      return `No tenemos "${name}" disponible en este momento. ¿Querés ver qué tenemos?`;
+      return `No encontré "${name}" en nuestro menú. ¿Querés ver qué tenemos?`;
+    }
+
+    if (!found.available) {
+      return `${found.name} no está disponible en este momento. ¿Querés ver otras opciones?`;
     }
 
     return `✅ ${found.name} está disponible!`;
   },
 });
 
-// Suggest products based on history
+// suggestProducts - Sugerir según historial
 export const suggestProductsTool = tool({
   description: "Sugiere productos basados en el historial de pedidos del cliente",
   inputSchema: z.object({
     phone: z.string().optional().describe("Teléfono del cliente (opcional)"),
   }),
   execute: async ({ phone }) => {
-    // If no phone, show popular products
     if (!phone) {
       return "Nuestros más pedidos: Classic Carne, Crispy Pollo, Especiale Italiano. ¿Querés que te recomiende algo en especial?";
     }
-
-    // Get client history
-    const { db } = await import("@/db");
-    const { orders } = await import("@/db/schema");
-    const { eq, desc } = await import("drizzle-orm");
 
     const recentOrders = await db
       .select({ items: orders.items })
@@ -59,10 +54,9 @@ export const suggestProductsTool = tool({
       .limit(5);
 
     if (recentOrders.length === 0) {
-      return "Aún no tienes pedidos registrados. ¿Querés ver el menú?";
+      return "Aún no tenés pedidos registrados. ¿Querés ver el menú?";
     }
 
-    // Extract most ordered products
     const productCounts: Record<string, number> = {};
     for (const order of recentOrders) {
       const items = order.items as { name: string }[];
@@ -79,5 +73,76 @@ export const suggestProductsTool = tool({
       .map(([name]) => name);
 
     return `Basado en tus pedidos anteriores: ${topProducts.join(", ")}. ¿Querés pedir algo de eso?`;
+  },
+});
+
+// ─── getClientHistory ───────────────────────────────────────────────────────
+export const getClientHistoryTool = tool({
+  description:
+    "Obtiene el historial completo de un cliente: pedidos anteriores, lead info, frecuencia. Usar para venta consultiva.",
+  inputSchema: z.object({
+    phone: z.string().describe("Teléfono del cliente"),
+  }),
+  execute: async ({ phone }) => {
+    // Buscar lead
+    const leadRows = await db
+      .select({
+        name: leads.name,
+        phone: leads.phone,
+        status: leads.status,
+        tags: leads.tags,
+        firstMessage: leads.firstMessage,
+        createdAt: leads.createdAt,
+      })
+      .from(leads)
+      .where(eq(leads.phone, phone))
+      .limit(1);
+
+    // Buscar pedidos
+    const orderRows = await db
+      .select({
+        id: orders.id,
+        items: orders.items,
+        status: orders.status,
+        orderType: orders.orderType,
+        createdAt: orders.createdAt,
+      })
+      .from(orders)
+      .where(eq(orders.phoneNumber, phone))
+      .orderBy(desc(orders.createdAt))
+      .limit(10);
+
+    const lead = leadRows[0];
+    const parts: string[] = [];
+
+    if (lead) {
+      parts.push(
+        `👤 ${lead.name || "Sin nombre"} (${lead.status})`,
+        `📞 ${lead.phone}`,
+        `📅 Cliente desde: ${lead.createdAt ? new Date(lead.createdAt).toLocaleDateString("es-AR") : "desconocido"}`
+      );
+      const tags = lead.tags as string[] | null;
+      if (tags?.length) parts.push(`🏷️ Tags: ${tags.join(", ")}`);
+    } else {
+      parts.push("👤 Cliente no registrado como lead");
+    }
+
+    if (orderRows.length === 0) {
+      parts.push("\n📦 Sin pedidos anteriores");
+    } else {
+      parts.push(`\n📦 ${orderRows.length} pedido(s):`);
+      for (const o of orderRows.slice(0, 5)) {
+        const items = o.items as { name: string; quantity: number }[];
+        const itemSummary = Array.isArray(items)
+          ? items.map((i) => `${i.quantity}x ${i.name}`).join(", ")
+          : "sin detalle";
+        const date = o.createdAt
+          ? new Date(o.createdAt).toLocaleDateString("es-AR")
+          : "";
+        parts.push(`  #${o.id} (${o.status}) ${date}: ${itemSummary}`);
+      }
+    }
+
+    return parts.join("\n");
   },
 });

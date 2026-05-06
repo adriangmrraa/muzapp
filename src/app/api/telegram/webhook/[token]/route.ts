@@ -11,6 +11,11 @@ import {
 } from "@/lib/idempotency";
 import { createCorrelationId, createLogger, logRequestReceived } from "@/lib/logger";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/infra/rate-limit";
+import {
+  findOrCreateConversation,
+  insertMessage,
+  isMessageDuplicate,
+} from "@/lib/channels/router";
 
 export async function POST(
   request: NextRequest,
@@ -62,7 +67,7 @@ export async function POST(
         return NextResponse.json({ ok: true, duplicate: true });
       }
       setIdempotency(key);
-      
+
       // Structured log
       logRequestReceived(logger, {
         messageId: correlationId,
@@ -71,11 +76,40 @@ export async function POST(
       });
     }
 
+    // ── Persistir conversación y mensaje entrante ──
+    let convId: number | null = null;
+    if (message?.text?.trim()) {
+      const chatId = message.chat.id;
+      const text = message.text.trim();
+      const messageId = String(message.message_id);
+      const senderName =
+        message.from?.first_name ||
+        message.from?.username ||
+        String(chatId);
+
+      // DB-level deduplication (complementa el in-memory check)
+      const duplicate = await isMessageDuplicate(messageId);
+      if (!duplicate) {
+        const conv = await findOrCreateConversation(
+          "telegram",
+          String(chatId),
+          senderName
+        );
+        convId = conv.id;
+        await insertMessage(conv.id, "user", text, undefined, messageId);
+      }
+    }
+
     // ── Procesar con el agente interno ──
     const result = await handleTelegramUpdate(update, config);
 
     if (!result.ok) {
       logger.error({ event: "handler_error", error: result.error }, "Handler error");
+    }
+
+    // ── Persistir respuesta del bot ──
+    if (convId !== null && result.ok && result.replyText) {
+      await insertMessage(convId, "assistant", result.replyText);
     }
 
     // Telegram espera 200 OK siempre (incluso si ignoramos el update)

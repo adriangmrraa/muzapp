@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyYCloudSignature } from "@/lib/whatsapp/signature";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/ycloud-client";
-import { findOrCreateConversation, appendMessage, isMessageProcessed, convertToAIMessages } from "@/lib/whatsapp/conversation";
+import {
+  findOrCreateConversation,
+  insertMessage,
+  isMessageDuplicate,
+  getConversationMessages,
+} from "@/lib/channels/router";
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
 import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
 import { db } from "@/db";
@@ -51,7 +56,6 @@ export async function POST(request: NextRequest) {
   const customerPhone = message.from;
   const customerName = message.customerProfile?.name || null;
   const text = message.text?.body || "";
-  const whatsappId = customerPhone; // Use phone as conversation identifier
 
   try {
     // 3. Load agent config
@@ -76,15 +80,17 @@ export async function POST(request: NextRequest) {
     // 3c. Auto-reply when outside 24h window
     const autoReplyEnabled = config.autoReply24h === true;
     const autoReplyMessage = config.autoReply24hMessage?.trim();
-    let skipAiAgent = false;
-    let autoReplySent = false;
 
     // 4. Find or create conversation
-    const conversation = await findOrCreateConversation(whatsappId, customerPhone, customerName);
+    const { id: conversationId, isNew } = await findOrCreateConversation(
+      "whatsapp",
+      customerPhone, // externalUserId for WhatsApp is the phone
+      customerName ?? undefined,
+      customerPhone
+    );
 
     // 5. Deduplication check
-    const existingMessages = (conversation.messages || []) as Record<string, unknown>[];
-    if (isMessageProcessed(existingMessages, messageId)) {
+    if (await isMessageDuplicate(messageId)) {
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
@@ -92,47 +98,36 @@ export async function POST(request: NextRequest) {
     await captureLeadIfNew(customerPhone, customerName, text);
 
     // 7. Check 24h window — send auto-reply if enabled and no recent bot activity
-    const lastAssistantMsg = [...existingMessages]
-      .reverse()
-      .find((m: Record<string, unknown>) => m.role === "assistant");
-
-    if (autoReplyEnabled && autoReplyMessage && !lastAssistantMsg) {
-      // New conversation (no previous assistant response) — send auto-reply
+    if (autoReplyEnabled && autoReplyMessage && isNew) {
+      // New conversation — send auto-reply
       await sendWhatsAppMessage({
         to: customerPhone,
         body: autoReplyMessage,
         apiKey: config.ycloudApiKey || "",
         from: config.phoneNumber || "",
       });
-      autoReplySent = true;
     }
 
-    // 8. Append inbound message
-    await appendMessage(conversation.id, {
-      id: messageId,
-      role: "user",
-      content: text,
-      timestamp: new Date().toISOString(),
-    });
+    // 8. Persist inbound message
+    await insertMessage(conversationId, "user", text, undefined, messageId);
 
-    // 8. Build message history for AI
-    const updatedMessages = [...existingMessages, { role: "user", content: text }];
-    const aiMessages = convertToAIMessages(updatedMessages);
+    // 8b. Build message history for AI (last 20 messages)
+    const existingMessages = await getConversationMessages(conversationId, 20);
+    const aiMessages = existingMessages.map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
 
     // 9. Run AI agent
     const responseText = await runWhatsAppAgent({
-      conversationId: conversation.id,
+      conversationId,
       customerPhone,
       messages: aiMessages,
       systemPrompt: config.systemPrompt || "",
     });
 
-    // 10. Append assistant response
-    await appendMessage(conversation.id, {
-      role: "assistant",
-      content: responseText,
-      timestamp: new Date().toISOString(),
-    });
+    // 10. Persist assistant response
+    await insertMessage(conversationId, "assistant", responseText);
 
     // 11. Send response via YCloud
     await sendWhatsAppMessage({

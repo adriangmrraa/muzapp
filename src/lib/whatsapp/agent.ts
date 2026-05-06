@@ -6,10 +6,22 @@ import {
   createOrderTool,
   getBusinessHoursTool,
   createTransferToHumanTool,
+  getProductDetailsTool,
+  getProductPriceTool,
+  searchProductsTool,
+  checkProductAvailabilityTool,
+  suggestProductsTool,
+  getClientHistoryTool,
+  checkDeliveryTool,
+  getDeliveryTimeTool,
+  listAvailableProductsTool,
+  getOrderStatusTool,
+  addToOrderTool,
+  updateOrderTool,
+  cancelOrderTool,
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
-import { checkDeliveryTool, getDeliveryTimeTool, listAvailableProductsTool } from "./tools/extended-tools";
 import { formatAsWhatsAppBubbles } from "./smart-split";
 
 interface RunAgentParams {
@@ -120,17 +132,33 @@ export async function runWhatsAppAgent({
 
   try {
     const result = await generateText({
-      model: openai("gpt-5-mini"),
+      model: openai("gpt-5.4-mini"),
       system,
       messages,
       tools: {
+        // Grupo A: Menú y productos
         getMenu: getMenuTool,
+        getProductDetails: getProductDetailsTool,
+        getProductPrice: getProductPriceTool,
+        searchProducts: searchProductsTool,
+        // Grupo B: Disponibilidad y delivery
         checkAvailability: checkAvailabilityTool,
+        checkProductAvailability: checkProductAvailabilityTool,
+        checkDelivery: checkDeliveryTool,
+        getDeliveryTime: getDeliveryTimeTool,
+        listAvailableProducts: listAvailableProductsTool,
+        // Grupo C: Pedidos (5)
         createOrder: createOrderTool,
+        getOrderStatus: getOrderStatusTool,
+        addToOrder: addToOrderTool,
+        updateOrder: updateOrderTool,
+        cancelOrder: cancelOrderTool,
+        // Grupo D: Cliente y venta consultiva (2)
+        suggestProducts: suggestProductsTool,
+        getClientHistory: getClientHistoryTool,
+        // Grupo E: Operaciones (2)
         getBusinessHours: getBusinessHoursTool,
         transferToHuman: createTransferToHumanTool(conversationId),
-        checkDelivery: checkDeliveryTool,
-        listAvailableProducts: listAvailableProductsTool,
       },
       stopWhen: stepCountIs(5),
       toolChoice: "auto",

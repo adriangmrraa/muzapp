@@ -43,6 +43,9 @@ export const leadStatusEnum = pgEnum("lead_status", [
   "lost",
 ]);
 
+export const channelEnum = pgEnum("channel", ["whatsapp", "telegram"]);
+export const messageRoleEnum = pgEnum("message_role", ["user", "assistant", "system", "human"]);
+
 // ─── Tables ───────────────────────────────────────────────────────────────────
 
 export const users = pgTable("users", {
@@ -103,6 +106,13 @@ export const agentConfig = pgTable("agent_config", {
     { zona: "sur", disponible: true, tiempo: "30-40 min", costo: 0 },
   ]),
   // ───────────────────────────────────────────────────────────────────────────
+  // ─── Meta Business OAuth ───────────────────────────────────────────────────
+  metaAccessToken: text("meta_access_token"),
+  metaTokenExpiresAt: timestamp("meta_token_expires_at", { withTimezone: true }),
+  metaBusinessName: varchar("meta_business_name", { length: 255 }),
+  metaPhoneNumberId: varchar("meta_phone_number_id", { length: 50 }),
+  metaConnected: boolean("meta_connected").notNull().default(false),
+  // ───────────────────────────────────────────────────────────────────────────
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -113,8 +123,31 @@ export const conversations = pgTable("conversations", {
   customerPhone: varchar("customer_phone", { length: 50 }),
   messages: jsonb("messages").$type<Record<string, unknown>[]>().default([]),
   status: conversationStatusEnum("status").notNull().default("active"),
+  channel: channelEnum("channel").notNull().default("whatsapp"),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  lastMessagePreview: varchar("last_message_preview", { length: 255 }),
+  humanOverrideUntil: timestamp("human_override_until", { withTimezone: true }),
+  externalUserId: varchar("external_user_id", { length: 255 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id),
+  role: messageRoleEnum("role").notNull(),
+  content: text("content").notNull(),
+  contentAttributes: jsonb("content_attributes").$type<{
+    type: "image" | "audio" | "document" | "video";
+    url: string;
+    fileName?: string;
+    fileSize?: number;
+    mimeType?: string;
+    caption?: string;
+    transcription?: string;
+  }[]>().default([]),
+  platformMessageId: varchar("platform_message_id", { length: 255 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const leads = pgTable("leads", {
@@ -137,6 +170,20 @@ export const leads = pgTable("leads", {
   conversationId: integer("conversation_id").references(() => conversations.id),
   tags: jsonb("tags").$type<string[]>().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const attachments = pgTable("attachments", {
+  id: serial("id").primaryKey(),
+  leadId: integer("lead_id").references(() => leads.id),
+  conversationId: integer("conversation_id").references(() => conversations.id),
+  messageId: integer("message_id").references(() => chatMessages.id),
+  type: varchar("type", { length: 20 }).notNull(),
+  url: varchar("url", { length: 500 }).notNull(),
+  fileName: varchar("file_name", { length: 255 }),
+  mimeType: varchar("mime_type", { length: 100 }),
+  fileSize: integer("file_size"),
+  caption: varchar("caption", { length: 500 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // ─── Orders / Kitchen ──────────────────────────────────────────────────────────

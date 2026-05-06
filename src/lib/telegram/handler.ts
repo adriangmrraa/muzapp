@@ -10,7 +10,7 @@ import { internalAgentTools } from "./tools";
 import { INTERNAL_AGENT_SYSTEM_PROMPT } from "./system-prompt";
 
 export type HandleResult =
-  | { ok: true; replied: boolean }
+  | { ok: true; replied: boolean; replyText?: string }
   | { ok: false; error: string };
 
 /**
@@ -39,17 +39,15 @@ export async function handleTelegramUpdate(
 
   // ── Verificar autorización ──
   if (!isChatAuthorized(chatId, config.allowedChatIds)) {
-    await sendTelegramMessage(
-      config.botToken,
-      chatId,
-      "❌ No autorizado. No tengo instrucciones de responder en este chat."
-    );
-    return { ok: true, replied: true };
+    const unauthorizedReply =
+      "❌ No autorizado. No tengo instrucciones de responder en este chat.";
+    await sendTelegramMessage(config.botToken, chatId, unauthorizedReply);
+    return { ok: true, replied: true, replyText: unauthorizedReply };
   }
 
   try {
     const result = await generateText({
-      model: openai("gpt-5-mini"),
+      model: openai("gpt-5.4-mini"),
       system: INTERNAL_AGENT_SYSTEM_PROMPT,
       messages: [{ role: "user", content: text }],
       tools: internalAgentTools,
@@ -59,14 +57,12 @@ export async function handleTelegramUpdate(
 
     await sendTelegramMessage(config.botToken, chatId, reply);
 
-    return { ok: true, replied: true };
+    return { ok: true, replied: true, replyText: reply };
   } catch (error) {
     console.error("[telegram-handler] Error:", error);
-    await sendTelegramMessage(
-      config.botToken,
-      chatId,
-      "❌ Tuve un error interno. Mandale 'hola' de nuevo si querés."
-    );
-    return { ok: true, replied: true };
+    const errorReply =
+      "❌ Tuve un error interno. Mandale 'hola' de nuevo si querés.";
+    await sendTelegramMessage(config.botToken, chatId, errorReply);
+    return { ok: true, replied: true, replyText: errorReply };
   }
 }
