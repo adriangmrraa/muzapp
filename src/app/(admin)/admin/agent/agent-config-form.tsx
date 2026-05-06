@@ -605,8 +605,6 @@ export default function AgentConfigForm({
         </motion.div>
       </motion.div>
 
-      </motion.div>
-
       {/* ═════════════════════════════════════════════════════════════════════════
          Submit — sticky bottom bar, always visible
          ═════════════════════════════════════════════════════════════════════════ */}
