@@ -14,7 +14,7 @@ interface YCloudResponse {
 }
 
 export async function sendWhatsAppMessage({ to, body, apiKey, from }: SendMessageParams): Promise<YCloudResponse> {
-  const response = await fetch("https://api.ycloud.com/v2/whatsapp/messages", {
+  const response = await fetch("https://api.ycloud.com/v2/whatsapp/messages/sendDirectly", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
