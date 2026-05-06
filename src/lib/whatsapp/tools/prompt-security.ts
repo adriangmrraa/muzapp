@@ -1,5 +1,3 @@
-"use client";
-
 // Pattern detection for prompt injection attacks
 // Based on ClinicForge's prompt_security.py
 
