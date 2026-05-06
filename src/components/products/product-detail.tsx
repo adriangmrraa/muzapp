@@ -4,15 +4,27 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import type { Product } from "@/lib/constants";
 import { PRODUCT_IMAGE_MAP } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, ArrowLeft, Heart, Share2, Truck, Clock, Star } from "lucide-react";
 import { fadeUp } from "@/lib/animation-variants";
 
+type ProductFromAPI = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: string | null;
+  category: string;
+  line: string;
+  imageUrl: string | null;
+  available: boolean;
+  comingSoon: boolean;
+  sortOrder: number;
+};
+
 interface ProductDetailProps {
-  product: Product;
-  onAddToCart?: (product: Product) => void;
+  product: ProductFromAPI;
+  onAddToCart?: (product: ProductFromAPI) => void;
 }
 
 export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {

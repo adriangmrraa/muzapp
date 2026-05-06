@@ -3,37 +3,55 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProductDetail } from "@/components/products/product-detail";
-import type { Product } from "@/lib/constants";
-import { BREAD_PRODUCTS } from "@/lib/constants";
+
+type ProductFromAPI = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: string | null;
+  category: string;
+  line: string;
+  imageUrl: string | null;
+  available: boolean;
+  comingSoon: boolean;
+  sortOrder: number;
+};
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const productId = params.id as string;
   
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<ProductFromAPI | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!productId) return;
 
-    // Find product in existing data
-    const found = BREAD_PRODUCTS.find(p => p.id === productId);
-    
-    if (found) {
-      setProduct({
-        ...found,
-        price: null,
-        ingredients: found.description,
-      });
-    } else {
-      setError("Producto no encontrado");
+    async function fetchProduct() {
+      try {
+        const res = await fetch(`/api/products`);
+        const data = await res.json();
+        const panProducts = data.filter((p: ProductFromAPI) => p.category === "pan_mayorista");
+        const found = panProducts.find((p: ProductFromAPI) => String(p.id) === productId);
+        
+        if (found) {
+          setProduct(found);
+        } else {
+          setError("Producto no encontrado");
+        }
+      } catch (err) {
+        console.error("[product] fetch error:", err);
+        setError("Error al cargar producto");
+      } finally {
+        setLoading(false);
+      }
     }
-    setLoading(false);
+    fetchProduct();
   }, [productId]);
 
-  function handleAddToCart(p: Product) {
+  function handleAddToCart(p: ProductFromAPI) {
     console.log("Added to cart:", p.name);
   }
 
