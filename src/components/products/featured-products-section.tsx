@@ -96,7 +96,7 @@ export function FeaturedProductsSection() {
             Las hamburguesas que el ama de casa (nuestra mejor jueza) recomienda.
           </p>
           <div className="mt-2">
-            <ProductToggle value={linea} onChange={setLinea} />
+            <ProductToggle value={linea} onChange={(v) => setLinea(v as "pollo" | "carne")} />
           </div>
         </motion.div>
 

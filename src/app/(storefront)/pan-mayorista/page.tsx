@@ -12,6 +12,7 @@ import {
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
 import { PageHero } from "@/components/layout/page-hero";
 import { ParallaxDivider } from "@/components/layout/parallax-divider";
+import { SellerBadge } from "@/components/ui/seller-badge";
 
 type ProductFromAPI = {
   id: number;
@@ -126,6 +127,10 @@ export default function PanMayoristaPage() {
           hamburgueserías y cocinas profesionales. Sin conservantes, con
           fermentación lenta y el sabor que tus clientes van a notar.
         </motion.p>
+
+        <motion.div variants={heroChild} className="mt-2">
+          <SellerBadge />
+        </motion.div>
 
         <motion.div variants={heroChild}>
           <WhatsAppCTA

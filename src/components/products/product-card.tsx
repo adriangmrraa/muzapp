@@ -108,26 +108,26 @@ export function ProductCard({ product }: ProductCardProps) {
           
           {/* Quantity Stepper + Add to Cart */}
           {!product.comingSoon && (
-            <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 z-20">
+            <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 z-20">
               <div className="flex items-center rounded-full overflow-hidden border border-white/20"
                 style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQty(Math.max(1, qty - 1)); }}
-                  className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-white transition-colors border-none bg-transparent cursor-pointer text-xs"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/70 hover:text-white transition-colors border-none bg-transparent cursor-pointer"
                 >
-                  <Minus className="w-3 h-3" />
+                  <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-6 text-center text-xs font-semibold text-white">{qty}</span>
+                <span className="w-8 text-center text-sm font-semibold text-white">{qty}</span>
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQty(qty + 1); }}
-                  className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-white transition-colors border-none bg-transparent cursor-pointer text-xs"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/70 hover:text-white transition-colors border-none bg-transparent cursor-pointer"
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-4 h-4" />
                 </button>
               </div>
               <button
                 onClick={handleAdd}
-                className={`w-8 h-8 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(212,160,23,0.5)] transition-all duration-300 hover:scale-110 active:scale-95 border-none cursor-pointer ${added ? 'scale-110' : ''}`}
+                className={`min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(212,160,23,0.5)] transition-all duration-300 hover:scale-110 active:scale-95 border-none cursor-pointer ${added ? 'scale-110' : ''}`}
                 style={{ background: added ? "#10b981" : "#D4A017" }}
                 title="Agregar al carrito"
               >

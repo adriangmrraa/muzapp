@@ -17,6 +17,7 @@ export interface ClientSummary {
   leadStatus: string | null;
   totalConversations: number;
   lastConversationDate: Date | null;
+  tags: string[];
 }
 
 export interface ClientsResponse {
@@ -58,9 +59,10 @@ export async function fetchClients(params: {
       phone: leads.phone,
       name: leads.name,
       status: leads.status,
+      tags: leads.tags,
     })
     .from(leads)
-    .groupBy(leads.phone, leads.name, leads.status);
+    .groupBy(leads.phone, leads.name, leads.status, leads.tags);
 
   const convPhones = await db
     .select({
@@ -76,7 +78,7 @@ export async function fetchClients(params: {
   const phoneMap = new Map<string, ClientSummary>();
 
   for (const o of orderPhones) {
-    phoneMap.set(o.phone, {
+      phoneMap.set(o.phone, {
       phone: o.phone,
       name: o.name,
       totalOrders: o.orderCount,
@@ -86,6 +88,7 @@ export async function fetchClients(params: {
       leadStatus: null,
       totalConversations: 0,
       lastConversationDate: null,
+      tags: [],
     });
   }
 
@@ -94,6 +97,7 @@ export async function fetchClients(params: {
     if (existing) {
       existing.leadStatus = l.status;
       if (!existing.name && l.name) existing.name = l.name;
+      if (l.tags) existing.tags = l.tags;
     } else {
       phoneMap.set(l.phone, {
         phone: l.phone,
@@ -105,6 +109,7 @@ export async function fetchClients(params: {
         leadStatus: l.status,
         totalConversations: 0,
         lastConversationDate: null,
+        tags: l.tags ?? [],
       });
     }
   }
@@ -126,6 +131,7 @@ export async function fetchClients(params: {
         leadStatus: null,
         totalConversations: c.count,
         lastConversationDate: c.lastDate ? new Date(c.lastDate) : null,
+        tags: [],
       });
     }
   }
@@ -138,7 +144,8 @@ export async function fetchClients(params: {
     clients = clients.filter(
       (c) =>
         c.phone.includes(s) ||
-        (c.name && c.name.toLowerCase().includes(s))
+        (c.name && c.name.toLowerCase().includes(s)) ||
+        (c.tags && c.tags.some((t) => t.includes(s)))
     );
   }
 

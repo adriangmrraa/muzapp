@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
 import { orders } from "@/db/schema";
+import { notifyNewOrder } from "@/lib/telegram/notifier";
 
 export const createOrderTool = tool({
   description: "Crea un pedido una vez que el cliente confirmó los items. SIEMPRE confirmar con el cliente antes de usar esta herramienta. Preguntá el nombre al cliente si no lo sabés.",
@@ -27,6 +28,8 @@ export const createOrderTool = tool({
       notes: notes || null,
       status: "pending",
     }).returning({ id: orders.id });
+
+    notifyNewOrder({ id: order.id, customerName, orderType, items, total, status: "pending" });
 
     const typeLabel = orderType === "hamburguesas" ? "🍔 Hamburguesas" : "🍞 Pan Mayorista";
 

@@ -83,6 +83,11 @@ export const agentConfig = pgTable("agent_config", {
   autoReply24h: boolean("auto_reply_24h").notNull().default(false),
   autoReply24hMessage: text("auto_reply_24h_message"),
   trainBotContext: text("train_bot_context"),
+  // ─── Telegram Bot (CRUD) ────────────────────────────────────────────────
+  telegramBotToken: text("telegram_bot_token"), // encrypted
+  telegramChatId: varchar("telegram_chat_id", { length: 50 }),
+  telegramWebhookToken: varchar("telegram_webhook_token", { length: 100 }),
+  telegramEnabled: boolean("telegram_enabled").notNull().default(false),
   // ───────────────────────────────────────────────────────────────────────────
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -116,6 +121,7 @@ export const leads = pgTable("leads", {
   notes: text("notes"),
   status: leadStatusEnum("status").notNull().default("new"),
   conversationId: integer("conversation_id").references(() => conversations.id),
+  tags: jsonb("tags").$type<string[]>().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -141,6 +147,7 @@ export const orders = pgTable("orders", {
   orderType: orderTypeEnum("order_type"),
   items: jsonb("items").notNull(),
   notes: text("notes"),
+  tags: jsonb("tags").$type<string[]>().default([]),
   status: orderStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

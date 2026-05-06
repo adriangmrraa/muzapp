@@ -3,16 +3,18 @@
 import { motion } from "framer-motion";
 
 interface ProductToggleProps {
-  value: "pollo" | "carne";
-  onChange: (value: "pollo" | "carne") => void;
+  value: string;
+  onChange: (value: string) => void;
+  showAll?: boolean;
 }
 
-const TABS = [
-  { id: "pollo" as const, label: "Línea Pollo" },
-  { id: "carne" as const, label: "Línea Carne" },
-];
+export function ProductToggle({ value, onChange, showAll = false }: ProductToggleProps) {
+  const TABS = [
+    ...(showAll ? [{ id: "todas" as const, label: "Todas" }] : []),
+    { id: "pollo" as string, label: "Línea Pollo" },
+    { id: "carne" as string, label: "Línea Carne" },
+  ];
 
-export function ProductToggle({ value, onChange }: ProductToggleProps) {
   return (
     <div
       className="relative inline-flex rounded-full p-1"

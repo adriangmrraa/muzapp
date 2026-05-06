@@ -174,6 +174,50 @@ export function getTelegramConfigFromEnv(): TelegramConfig {
   };
 }
 
+// ─── Telegram Bot Config from DB (with encryption) ────────────────────────
+
+import { db } from "@/db";
+import { eq } from "drizzle-orm";
+import { agentConfig } from "@/db/schema";
+import { decrypt } from "@/lib/encryption";
+
+/**
+ * Get Telegram config from database (with encrypted token)
+ * Priority: DB > ENV
+ */
+export async function getTelegramConfigFromDB(): Promise<TelegramConfig> {
+  // Try to get from DB first
+  try {
+    const rows = await db
+      .select()
+      .from(agentConfig)
+      .where(eq(agentConfig.id, 1))
+      .limit(1);
+
+    const config = rows[0];
+    if (config?.telegramBotToken) {
+      const decryptedToken = decrypt(config.telegramBotToken);
+      const webhookToken = config.telegramWebhookToken || "muzapp-telegram-default";
+      const chatId = config.telegramChatId 
+        ? parseInt(config.telegramChatId, 10) 
+        : 0;
+      const allowedChatIds = chatId > 0 ? [chatId] : [];
+
+      return {
+        botToken: decryptedToken,
+        webhookToken,
+        allowedChatIds,
+        enabled: config.telegramEnabled ?? false,
+      };
+    }
+  } catch (error) {
+    console.error("[telegram] Error getting config from DB:", error);
+  }
+
+  // Fallback to env
+  return getTelegramConfigFromEnv();
+}
+
 export function isChatAuthorized(
   chatId: number,
   allowedChatIds: number[]

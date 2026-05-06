@@ -18,6 +18,7 @@ export interface OrderRow {
   orderType: OrderType | null;
   items: unknown;
   notes: string | null;
+  tags: string[] | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;

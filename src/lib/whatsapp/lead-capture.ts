@@ -40,6 +40,7 @@ export async function captureLeadIfNew(
       refCode,
       status: "new",
       platform: "whatsapp",
+      tags: ["nuevo", "whatsapp"],
     })
     .returning({ id: leads.id });
 

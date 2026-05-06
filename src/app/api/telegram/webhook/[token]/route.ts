@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleTelegramUpdate } from "@/lib/telegram/handler";
 import {
-  handleTelegramUpdate,
-} from "@/lib/telegram/handler";
-import {
-  getTelegramConfigFromEnv,
+  getTelegramConfigFromDB,
   type TelegramUpdate,
 } from "@/lib/telegram/bot";
 import {
@@ -24,8 +22,8 @@ export async function POST(
   try {
     const { token } = await params;
 
-    // ── Verificar access token ──
-    const config = getTelegramConfigFromEnv();
+    // ── Get config from DB first, fallback to env ──
+    const config = await getTelegramConfigFromDB();
     if (token !== config.webhookToken) {
       return NextResponse.json(
         { ok: false, error: "Invalid token" },

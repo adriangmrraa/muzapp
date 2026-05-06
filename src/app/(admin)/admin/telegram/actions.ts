@@ -2,12 +2,16 @@
 
 import { auth } from "@/auth";
 import {
-  getTelegramConfigFromEnv,
+  getTelegramConfigFromDB,
   getMe,
   setTelegramWebhook,
   deleteTelegramWebhook as removeTelegramWebhook,
   getTelegramWebhookInfo,
 } from "@/lib/telegram/bot";
+import { db } from "@/db";
+import { eq } from "drizzle-orm";
+import { agentConfig } from "@/db/schema";
+import { encrypt, maskToken as maskTokenUtil } from "@/lib/encryption";
 
 export type TelegramStatus = {
   configured: boolean;
@@ -46,11 +50,12 @@ export async function getTelegramStatus(): Promise<TelegramStatus> {
     };
   }
 
-  const config = getTelegramConfigFromEnv();
+  // Get from DB first, fallback to env
+  const config = await getTelegramConfigFromDB();
   const host =
     process.env.AUTH_URL ??
     process.env.RENDER_EXTERNAL_URL ??
-    "https://muzzarella.onrender.com";
+    "https://muzapp.onrender.com";
 
   // Intentar obtener info del bot
   let botUsername: string | null = null;
@@ -64,7 +69,7 @@ export async function getTelegramStatus(): Promise<TelegramStatus> {
   return {
     configured: config.enabled,
     botUsername,
-    botToken: config.botToken ? maskToken(config.botToken) : "",
+    botToken: config.botToken ? maskTokenUtil(config.botToken) : "",
     webhookToken: config.webhookToken,
     webhookUrl: `${host}/api/telegram/webhook/${config.webhookToken}`,
     allowedChatIds: config.allowedChatIds,
@@ -81,7 +86,7 @@ export async function setTelegramWebhookAction(): Promise<TelegramActionState> {
     return { success: false, message: "No autorizado" };
   }
 
-  const config = getTelegramConfigFromEnv();
+  const config = await getTelegramConfigFromDB();
   if (!config.botToken) {
     return {
       success: false,
@@ -119,7 +124,7 @@ export async function deleteTelegramWebhookAction(): Promise<TelegramActionState
     return { success: false, message: "No autorizado" };
   }
 
-  const config = getTelegramConfigFromEnv();
+  const config = await getTelegramConfigFromDB();
   if (!config.botToken) {
     return { success: false, message: "TELEGRAM_BOT_TOKEN no está configurado." };
   }
@@ -146,7 +151,7 @@ export async function getTelegramWebhookInfoAction(): Promise<
     return { success: false, message: "No autorizado" };
   }
 
-  const config = getTelegramConfigFromEnv();
+  const config = await getTelegramConfigFromDB();
   if (!config.botToken) {
     return { success: false, message: "TELEGRAM_BOT_TOKEN no está configurado." };
   }
@@ -168,4 +173,62 @@ export async function getTelegramWebhookInfoAction(): Promise<
 function maskToken(token: string): string {
   if (token.length <= 8) return "****";
   return token.slice(0, 4) + "****" + token.slice(-4);
+}
+
+/**
+ * Save Telegram Bot config to DB (encrypted)
+ */
+export async function saveTelegramConfigAction(
+  botToken: string,
+  chatId: string,
+  enabled: boolean
+): Promise<TelegramActionState> {
+  const session = await auth();
+  if (!session) {
+    return { success: false, message: "No autorizado" };
+  }
+
+  if (!botToken) {
+    return { success: false, message: "Bot Token es requerido" };
+  }
+
+  try {
+    // Import DB and encryption
+    const { db } = await import("@/db");
+    const { eq } = await import("drizzle-orm");
+    const { agentConfig } = await import("@/db/schema");
+    const { encrypt, decrypt } = await import("@/lib/encryption");
+
+    // Verify token works by getting bot info
+    const { getMe } = await import("@/lib/telegram/bot");
+    const me = await getMe(botToken);
+    if (!me.ok || !me.username) {
+      return { success: false, message: "Token inválido. No se pudo obtener info del bot." };
+    }
+
+    // Encrypt token before storing
+    const encryptedToken = encrypt(botToken);
+
+    // Save to DB
+    await db
+      .update(agentConfig)
+      .set({
+        telegramBotToken: encryptedToken,
+        telegramChatId: chatId || null,
+        telegramEnabled: enabled,
+        updatedAt: new Date(),
+      })
+      .where(eq(agentConfig.id, 1));
+
+    return {
+      success: true,
+      message: `Bot @${me.username} configurado correctamente${enabled ? "" : " (deshabilitado)"}`,
+    };
+  } catch (error) {
+    console.error("[telegram] Save config error:", error);
+    return {
+      success: false,
+      message: `Error al guardar: ${error instanceof Error ? error.message : "Unknown error"}`,
+    };
+  }
 }

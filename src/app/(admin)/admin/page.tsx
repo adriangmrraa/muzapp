@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { products, conversations, leads, agentConfig, orders } from "@/db/schema";
-import { sql, gte, desc } from "drizzle-orm";
-import { PackageIcon, MessageSquareIcon, UsersIcon, BotIcon } from "lucide-react";
+import { sql, gte, desc, count, eq } from "drizzle-orm";
+
 import { DashboardClient } from "./dashboard-client";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -30,23 +30,36 @@ async function getStats() {
     .select({ count: sql<number>`count(*)` })
     .from(products);
 
-  const [conversationsToday] = await db
+  const [totalOrders] = await db
     .select({ count: sql<number>`count(*)` })
-    .from(conversations)
-    .where(gte(conversations.createdAt, todayStart));
+    .from(orders);
 
-  const [leadsThisWeek] = await db
+  const [ordersToday] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(orders)
+    .where(gte(orders.createdAt, todayStart));
+
+  const [newLeads] = await db
     .select({ count: sql<number>`count(*)` })
     .from(leads)
     .where(gte(leads.createdAt, weekStart));
 
-  const [config] = await db.select().from(agentConfig).limit(1);
+  const [newClients] = await db
+    .select({ count: sql<number>`count(distinct ${leads.phone})` })
+    .from(leads)
+    .where(gte(leads.createdAt, weekStart));
+
+  const [totalLeads] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(leads);
 
   return {
     totalProducts: Number(totalProducts?.count ?? 0),
-    conversationsToday: Number(conversationsToday?.count ?? 0),
-    leadsThisWeek: Number(leadsThisWeek?.count ?? 0),
-    agentEnabled: config?.enabled ?? false,
+    totalOrders: Number(totalOrders?.count ?? 0),
+    ordersToday: Number(ordersToday?.count ?? 0),
+    newLeads: Number(newLeads?.count ?? 0),
+    newClients: Number(newClients?.count ?? 0),
+    totalLeads: Number(totalLeads?.count ?? 0),
   };
 }
 
@@ -100,46 +113,75 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
     .slice(0, 10);
 }
 
+async function getRecentOrders() {
+  return await db
+    .select({
+      id: orders.id,
+      customerName: orders.customerName,
+      phoneNumber: orders.phoneNumber,
+      orderType: orders.orderType,
+      status: orders.status,
+      items: orders.items,
+      createdAt: orders.createdAt,
+    })
+    .from(orders)
+    .orderBy(desc(orders.createdAt))
+    .limit(8);
+}
+
 export type DashboardCard = {
   title: string;
   value: number | null;
-  iconName: "package" | "message" | "users" | "bot";
+  iconName: "package" | "message" | "users" | "bot" | "cart" | "dollar" | "userplus" | "trending";
   description: string;
   badge?: boolean;
+};
+
+export type RecentOrder = {
+  id: number;
+  customerName: string | null;
+  phoneNumber: string;
+  orderType: string | null;
+  status: string;
+  items: unknown;
+  createdAt: Date;
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function AdminDashboard() {
-  const [stats, activity] = await Promise.all([getStats(), getRecentActivity()]);
+  const [stats, activity, recentOrders] = await Promise.all([
+    getStats(),
+    getRecentActivity(),
+    getRecentOrders(),
+  ]);
 
   const cards: DashboardCard[] = [
     {
-      title: "Total Productos",
-      value: stats.totalProducts,
-      iconName: "package",
-      description: "Productos en catálogo",
+      title: "Total Pedidos",
+      value: stats.totalOrders,
+      iconName: "cart",
+      description: "Pedidos registrados",
     },
     {
-      title: "Conversaciones Hoy",
-      value: stats.conversationsToday,
-      iconName: "message",
-      description: "Chats activos hoy",
+      title: "Ingresos Hoy",
+      value: stats.ordersToday,
+      iconName: "dollar",
+      description: "Pedidos recibidos hoy",
     },
     {
-      title: "Leads Esta Semana",
-      value: stats.leadsThisWeek,
-      iconName: "users",
+      title: "Clientes Nuevos",
+      value: stats.newClients,
+      iconName: "userplus",
       description: "Últimos 7 días",
     },
     {
-      title: "Estado Agente",
-      value: null,
-      iconName: "bot",
-      description: "Agente de WhatsApp",
-      badge: stats.agentEnabled,
+      title: "Leads Totales",
+      value: stats.totalLeads,
+      iconName: "trending",
+      description: "Leads en la base",
     },
   ];
 
-  return <DashboardClient cards={cards} activity={activity} />;
+  return <DashboardClient cards={cards} activity={activity} recentOrders={recentOrders} />;
 }

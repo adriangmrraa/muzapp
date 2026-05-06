@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
 import { updateOrderStatus, type OrderRow } from "./actions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -126,6 +127,17 @@ function OrderCard({
       {order.notes && (
         <div className="text-[11px] text-white/40 italic border-t border-white/[0.04] pt-2">
           {order.notes}
+        </div>
+      )}
+
+      {/* Tags */}
+      {Array.isArray(order.tags) && order.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {order.tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
+              {tag}
+            </Badge>
+          ))}
         </div>
       )}
 

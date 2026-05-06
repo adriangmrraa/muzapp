@@ -7,6 +7,7 @@ import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
 import type { ClientSummary } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 function formatDate(d: Date | null): string {
   if (!d) return "—";
@@ -153,6 +154,24 @@ export function ClientsView({
                   <div className="text-white/30">Tipo</div>
                 </div>
               </div>
+
+              {/* Tags */}
+              {client.tags && client.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {client.tags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => navigate({ search: tag, page: "" })}
+                      className="border-none bg-transparent p-0"
+                    >
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 cursor-pointer hover:opacity-80 transition-opacity">
+                        {tag}
+                      </Badge>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Footer */}
               <div className="flex items-center justify-between text-[10px] text-white/20 border-t border-white/[0.04] pt-2">

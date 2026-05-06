@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { Search } from "lucide-react";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductToggle } from "@/components/products/product-toggle";
+import { Input } from "@/components/ui/input";
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
 import { fadeUp, staggerContainer, heroChild } from "@/lib/animation-variants";
 import { PageHero } from "@/components/layout/page-hero";
@@ -23,7 +25,8 @@ type ProductFromAPI = {
 };
 
 export default function HamburguesasPage() {
-  const [linea, setLinea] = useState<"pollo" | "carne">("pollo");
+  const [linea, setLinea] = useState<string>("todas");
+  const [search, setSearch] = useState("");
   const [products, setProducts] = useState<ProductFromAPI[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +45,21 @@ export default function HamburguesasPage() {
     fetchProducts();
   }, []);
 
-  const filteredProducts = products.filter((p) => p.line === linea);
+  const filteredProducts = useMemo(() => {
+    let result = products;
+    if (linea !== "todas") {
+      result = result.filter((p) => p.line === linea);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.description && p.description.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [products, linea, search]);
 
   return (
     <>
@@ -82,13 +99,30 @@ export default function HamburguesasPage() {
           </motion.p>
 
           <motion.div variants={heroChild} className="mt-4">
-            <ProductToggle value={linea} onChange={setLinea} />
+            <ProductToggle value={linea} onChange={setLinea} showAll />
           </motion.div>
         </motion.div>
       </PageHero>
 
       <div className="bg-[#0a0a0a] relative pb-20 px-4">
         <div className="max-w-7xl mx-auto pt-16">
+          {/* Search */}
+          <motion.div
+            className="relative mb-8 max-w-md mx-auto"
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+            <Input
+              placeholder="Buscá tu hamburguesa..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 h-11 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-[#D4A017]/50 focus-visible:border-[#D4A017]/50"
+            />
+          </motion.div>
+
           {!loading && <ProductGrid products={filteredProducts} />}
         </div>
       </div>
