@@ -233,10 +233,12 @@ export async function POST(request: NextRequest) {
 
       // Get fresh conversation history for AI context (last 20 messages)
       const history = await getConversationMessages(conversationId, 20);
-      const aiMessages = history.map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      }));
+      const aiMessages = history
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
 
       // If the buffer had multiple messages, add the combined view as the last user turn
       // so the agent sees all pending input in one shot

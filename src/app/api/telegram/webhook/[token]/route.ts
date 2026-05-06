@@ -137,10 +137,12 @@ export async function POST(
 
       // Get conversation history for persistent context (last 30 messages)
       const history = await getConversationMessages(convId, 30);
-      const aiMessages = history.map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      }));
+      const aiMessages = history
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
 
       // If buffer had multiple messages, replace last user turn with combined text
       if (bufferedMessages.length > 1) {
