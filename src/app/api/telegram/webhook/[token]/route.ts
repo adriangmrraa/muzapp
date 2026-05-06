@@ -17,6 +17,7 @@ import {
   findOrCreateConversation,
   insertMessage,
   isMessageDuplicate,
+  getConversationMessages,
 } from "@/lib/channels/router";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
@@ -134,13 +135,29 @@ export async function POST(
       // Concatenate all buffered messages
       const combinedText = bufferedMessages.map((m) => m.content).join("\n");
 
-      // Run the internal agent with combined text
+      // Get conversation history for persistent context (last 30 messages)
+      const history = await getConversationMessages(convId, 30);
+      const aiMessages = history.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+
+      // If buffer had multiple messages, replace last user turn with combined text
+      if (bufferedMessages.length > 1) {
+        const lastUserIdx = [...aiMessages].reverse().findIndex((m) => m.role === "user");
+        if (lastUserIdx !== -1) {
+          const realIdx = aiMessages.length - 1 - lastUserIdx;
+          aiMessages[realIdx] = { role: "user", content: combinedText };
+        }
+      }
+
+      // Run the internal agent with full conversation history
       const result = await generateText({
         model: openai("gpt-5.4-mini"),
         system: INTERNAL_AGENT_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: combinedText }],
+        messages: aiMessages,
         tools: internalAgentTools,
-        stopWhen: stepCountIs(5),
+        stopWhen: stepCountIs(10),
       });
 
       const reply = result.text || "Disculpá, no pude procesar eso.";
