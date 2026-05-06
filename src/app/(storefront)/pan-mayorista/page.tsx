@@ -6,11 +6,12 @@ import {
   fadeUp,
   staggerContainer,
   cardEntrance,
-  heroEntrance,
   heroChild,
 } from "@/lib/animation-variants";
 import { BREAD_PRODUCTS } from "@/lib/constants";
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
+import { PageHero } from "@/components/layout/page-hero";
+import { ParallaxDivider } from "@/components/layout/parallax-divider";
 
 const BREAD_IMAGES: Record<string, string> = {
   "pan-brioche":
@@ -52,69 +53,56 @@ const benefits = [
 
 export default function PanMayoristaPage() {
   return (
-    <div
-      className="min-h-screen bg-[#0a0a0a] relative"
-      style={{
-        background:
-          "radial-gradient(ellipse at 20% 30%, rgba(212,160,23,0.08) 0%, transparent 50%), #0a0a0a",
-      }}
-    >
+    <div className="min-h-screen bg-[#0a0a0a] relative">
       {/* Hero */}
-      <section className="pt-28 pb-20 px-4 text-center">
-        <motion.div
-          className="max-w-4xl mx-auto flex flex-col items-center gap-5"
-          variants={heroEntrance}
-          initial="hidden"
-          animate="visible"
+      <PageHero backgroundImage="/assets/images/pan-muzzarella.jpeg">
+        <motion.span
+          variants={heroChild}
+          className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full"
+          style={{
+            background: "rgba(212,160,23,0.1)",
+            border: "1px solid rgba(212,160,23,0.3)",
+            color: "#D4A017",
+          }}
         >
-          <motion.span
-            variants={heroChild}
-            className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full"
-            style={{
-              background: "rgba(212,160,23,0.1)",
-              border: "1px solid rgba(212,160,23,0.3)",
-              color: "#D4A017",
-            }}
-          >
-            Servicio Mayorista
-          </motion.span>
+          Servicio Mayorista
+        </motion.span>
 
-          <motion.h1
-            variants={heroChild}
-            className="text-4xl sm:text-6xl font-black leading-tight"
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              background:
-                "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            Pan Artesanal
-            <br />
-            para tu Negocio
-          </motion.h1>
+        <motion.h1
+          variants={heroChild}
+          className="text-4xl sm:text-6xl font-black leading-tight"
+          style={{
+            fontFamily: "var(--font-playfair), serif",
+            background:
+              "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          Pan Artesanal
+          <br />
+          para tu Negocio
+        </motion.h1>
 
-          <motion.p
-            variants={heroChild}
-            className="text-lg text-white/65 max-w-2xl leading-relaxed"
-          >
-            Proveemos pan artesanal de calidad premium para restaurantes,
-            hamburgueserías y cocinas profesionales. Sin conservantes, con
-            fermentación lenta y el sabor que tus clientes van a notar.
-          </motion.p>
+        <motion.p
+          variants={heroChild}
+          className="text-lg text-white/65 max-w-2xl leading-relaxed"
+        >
+          Proveemos pan artesanal de calidad premium para restaurantes,
+          hamburgueserías y cocinas profesionales. Sin conservantes, con
+          fermentación lenta y el sabor que tus clientes van a notar.
+        </motion.p>
 
-          <motion.div variants={heroChild}>
-            <WhatsAppCTA
-              campaignSlug="mayorista"
-              message="Hola! Me interesa información sobre pan mayorista"
-              label="Consultá Precios y Disponibilidad"
-              className="btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-widest mt-4"
-            />
-          </motion.div>
+        <motion.div variants={heroChild}>
+          <WhatsAppCTA
+            campaignSlug="mayorista"
+            message="Hola! Me interesa información sobre pan mayorista"
+            label="Consultá Precios y Disponibilidad"
+            className="btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-widest mt-4"
+          />
         </motion.div>
-      </section>
+      </PageHero>
 
       {/* Benefits grid */}
       <section className="py-16 px-4">
@@ -172,6 +160,9 @@ export default function PanMayoristaPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Parallax divider between benefits and products */}
+      <ParallaxDivider image="/assets/images/background/2.png" height="40vh" />
 
       {/* Products */}
       <section className="py-16 px-4">
@@ -275,6 +266,9 @@ export default function PanMayoristaPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Parallax divider between products and final CTA */}
+      <ParallaxDivider image="/assets/images/background/b4.png" height="35vh" />
 
       {/* Final CTA */}
       <section className="py-20 px-4">

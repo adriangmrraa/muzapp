@@ -5,10 +5,11 @@ import {
   fadeUp,
   staggerContainer,
   cardEntrance,
-  heroEntrance,
   heroChild,
 } from "@/lib/animation-variants";
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
+import { PageHero } from "@/components/layout/page-hero";
+import { ParallaxDivider } from "@/components/layout/parallax-divider";
 import type { Campaign } from "@/lib/constants";
 
 interface PromoMeta {
@@ -32,88 +33,75 @@ const trustItems = [
 
 export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) {
   return (
-    <div
-      className="min-h-screen bg-[#0a0a0a] relative flex flex-col"
-      style={{
-        background:
-          "radial-gradient(ellipse at 60% 10%, rgba(212,160,23,0.12) 0%, transparent 55%), #0a0a0a",
-      }}
-    >
+    <div className="min-h-screen bg-[#0a0a0a] relative flex flex-col">
       {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center text-center px-4 pt-28 pb-20">
-        <motion.div
-          className="max-w-3xl mx-auto flex flex-col items-center gap-6"
-          variants={heroEntrance}
-          initial="hidden"
-          animate="visible"
+      <PageHero backgroundImage="/assets/images/background/1.png">
+        {/* Badge */}
+        <motion.span
+          variants={heroChild}
+          className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full"
+          style={{
+            background: "rgba(212,160,23,0.12)",
+            border: "1px solid rgba(212,160,23,0.35)",
+            color: "#D4A017",
+          }}
         >
-          {/* Badge */}
-          <motion.span
-            variants={heroChild}
-            className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full"
-            style={{
-              background: "rgba(212,160,23,0.12)",
-              border: "1px solid rgba(212,160,23,0.35)",
-              color: "#D4A017",
-            }}
-          >
-            {meta.badge}
-          </motion.span>
+          {meta.badge}
+        </motion.span>
 
-          {/* Emoji icon */}
-          <motion.div
-            variants={heroChild}
-            whileHover={{ scale: 1.08, rotate: 3 }}
-            className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl cursor-default"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(212,160,23,0.2) 0%, rgba(232,113,42,0.12) 100%)",
-              border: "1px solid rgba(212,160,23,0.3)",
-            }}
-          >
-            {meta.emoji}
-          </motion.div>
-
-          {/* Headline */}
-          <motion.h1
-            variants={heroChild}
-            className="text-4xl sm:text-6xl font-black leading-tight"
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              background:
-                "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            {meta.headline}
-          </motion.h1>
-
-          {/* Sub */}
-          <motion.p
-            variants={heroChild}
-            className="text-lg text-white/65 max-w-xl leading-relaxed"
-          >
-            {meta.sub}
-          </motion.p>
-
-          {/* CTA */}
-          <motion.div
-            variants={heroChild}
-            className="mt-4 flex flex-col items-center gap-3"
-          >
-            <WhatsAppCTA
-              campaignSlug={slug}
-              message={campaign.whatsappMessage}
-              label="Aprovechá la promo"
-            />
-            <p className="text-white/35 text-xs">
-              Respuesta inmediata por WhatsApp
-            </p>
-          </motion.div>
+        {/* Emoji icon */}
+        <motion.div
+          variants={heroChild}
+          whileHover={{ scale: 1.08, rotate: 3 }}
+          className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl cursor-default"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(212,160,23,0.2) 0%, rgba(232,113,42,0.12) 100%)",
+            border: "1px solid rgba(212,160,23,0.3)",
+          }}
+        >
+          {meta.emoji}
         </motion.div>
-      </section>
+
+        {/* Headline */}
+        <motion.h1
+          variants={heroChild}
+          className="text-4xl sm:text-6xl font-black leading-tight"
+          style={{
+            fontFamily: "var(--font-playfair), serif",
+            background:
+              "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          {meta.headline}
+        </motion.h1>
+
+        {/* Sub */}
+        <motion.p
+          variants={heroChild}
+          className="text-lg text-white/65 max-w-xl leading-relaxed"
+        >
+          {meta.sub}
+        </motion.p>
+
+        {/* CTA */}
+        <motion.div
+          variants={heroChild}
+          className="mt-4 flex flex-col items-center gap-3"
+        >
+          <WhatsAppCTA
+            campaignSlug={slug}
+            message={campaign.whatsappMessage}
+            label="Aprovechá la promo"
+          />
+          <p className="text-white/35 text-xs">
+            Respuesta inmediata por WhatsApp
+          </p>
+        </motion.div>
+      </PageHero>
 
       {/* Trust indicators */}
       <section className="py-12 px-4">
@@ -158,6 +146,9 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
           </motion.div>
         </div>
       </section>
+
+      {/* Parallax divider between trust strip and bottom CTA */}
+      <ParallaxDivider image="/assets/images/background/3.png" height="35vh" />
 
       {/* Bottom CTA */}
       <section className="py-16 px-4 text-center">

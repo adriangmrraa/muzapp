@@ -6,7 +6,9 @@ import { ProductGrid } from "@/components/products/product-grid";
 import { ProductToggle } from "@/components/products/product-toggle";
 import { LINEA_POLLO, LINEA_CARNE } from "@/lib/constants";
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
-import { fadeUp, staggerContainer } from "@/lib/animation-variants";
+import { fadeUp, staggerContainer, heroChild } from "@/lib/animation-variants";
+import { PageHero } from "@/components/layout/page-hero";
+import { ParallaxDivider } from "@/components/layout/parallax-divider";
 
 export default function HamburguesasPage() {
   const [linea, setLinea] = useState<"pollo" | "carne">("pollo");
@@ -14,32 +16,23 @@ export default function HamburguesasPage() {
   const products = linea === "pollo" ? LINEA_POLLO : LINEA_CARNE;
 
   return (
-    <motion.div
-      className="min-h-screen pt-24 pb-20 px-4"
-      style={{
-        background:
-          "radial-gradient(ellipse at 80% 20%, rgba(212,160,23,0.08) 0%, transparent 50%), #0a0a0a",
-      }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="max-w-7xl mx-auto">
+    <>
+      <PageHero backgroundImage="/assets/images/background/1.png">
         <motion.div
-          className="flex flex-col items-center text-center gap-4 mb-12"
+          className="flex flex-col items-center text-center gap-4"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
         >
           <motion.span
-            variants={fadeUp}
+            variants={heroChild}
             className="text-xs font-semibold uppercase tracking-[0.3em]"
             style={{ color: "#D4A017" }}
           >
             El Menú
           </motion.span>
           <motion.h1
-            variants={fadeUp}
+            variants={heroChild}
             className="text-4xl sm:text-5xl font-black"
             style={{
               fontFamily: "var(--font-playfair), serif",
@@ -53,21 +46,29 @@ export default function HamburguesasPage() {
             Nuestras Hamburguesas
           </motion.h1>
           <motion.p
-            variants={fadeUp}
+            variants={heroChild}
             className="text-white/60 max-w-lg leading-relaxed"
           >
             Cada una tiene su propia historia. Elegí tu línea y descubrí la que te va a conquistar.
           </motion.p>
 
-          <motion.div variants={fadeUp} className="mt-4">
+          <motion.div variants={heroChild} className="mt-4">
             <ProductToggle value={linea} onChange={setLinea} />
           </motion.div>
         </motion.div>
+      </PageHero>
 
-        <ProductGrid products={products} />
+      <div className="bg-[#0a0a0a] relative pb-20 px-4">
+        <div className="max-w-7xl mx-auto pt-16">
+          <ProductGrid products={products} />
+        </div>
+      </div>
 
+      <ParallaxDivider image="/assets/images/background/3.png" height="35vh" />
+
+      <div className="bg-[#0a0a0a] py-16 px-4">
         <motion.div
-          className="mt-16 flex flex-col items-center gap-4 text-center"
+          className="max-w-7xl mx-auto flex flex-col items-center gap-4 text-center"
           variants={fadeUp}
           initial="hidden"
           whileInView="visible"
@@ -83,6 +84,6 @@ export default function HamburguesasPage() {
           />
         </motion.div>
       </div>
-    </motion.div>
+    </>
   );
 }

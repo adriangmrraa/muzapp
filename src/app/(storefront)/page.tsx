@@ -10,6 +10,7 @@ import Link from "next/link";
 import { ClientGallery } from "@/components/home/client-gallery";
 import { BreadShowcase } from "@/components/home/bread-showcase";
 import { DeliveryCTA } from "@/components/home/delivery-cta";
+import { ParallaxDivider } from "@/components/layout/parallax-divider";
 
 const STATS = [
   { value: "100%", label: "Ingredientes frescos" },
@@ -24,6 +25,8 @@ export default function HomePage() {
       <HeroSection />
 
       <FeaturedProductsSection />
+
+      <ParallaxDivider image="/assets/images/background/2.png" />
 
       <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
         <div className="max-w-5xl mx-auto">
@@ -95,8 +98,21 @@ export default function HomePage() {
         </div>
       </section>
 
+      <ParallaxDivider image="/assets/images/background/3.png" height="45vh" overlay={0.6}>
+        <p
+          className="text-xl sm:text-2xl font-black text-white text-center max-w-xl mx-auto px-6 leading-snug"
+          style={{ fontFamily: "var(--font-playfair), serif", textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}
+        >
+          "Cada mordida cuenta una historia.{" "}
+          <span style={{ color: "#D4A017" }}>La nuestra empieza con ingredientes reales."</span>
+        </p>
+      </ParallaxDivider>
+
       <ClientGallery />
       <BreadShowcase />
+
+      <ParallaxDivider image="/assets/images/background/b4.png" height="40vh" />
+
       <DeliveryCTA />
     </>
   );
