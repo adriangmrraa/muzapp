@@ -52,10 +52,16 @@ export async function getTelegramStatus(): Promise<TelegramStatus> {
 
   // Get from DB first, fallback to env
   const config = await getTelegramConfigFromDB();
-  const host =
-    process.env.AUTH_URL ??
-    process.env.RENDER_EXTERNAL_URL ??
+  
+  // Get the correct host for webhook URL
+  const host = process.env.RENDER_EXTERNAL_URL || 
+    process.env.VERCEL_URL ? 
+    `https://${process.env.VERCEL_URL}` : 
     "https://muzapp.onrender.com";
+  
+  // Always show the webhook URL (even without token configured)
+  const webhookToken = config.webhookToken || "YOUR_WEBHOOK_TOKEN";
+  const webhookUrl = `${host}/api/telegram/webhook/${webhookToken}`;
 
   // Intentar obtener info del bot
   let botUsername: string | null = null;
@@ -70,8 +76,8 @@ export async function getTelegramStatus(): Promise<TelegramStatus> {
     configured: config.enabled,
     botUsername,
     botToken: config.botToken ? maskTokenUtil(config.botToken) : "",
-    webhookToken: config.webhookToken,
-    webhookUrl: `${host}/api/telegram/webhook/${config.webhookToken}`,
+    webhookToken: webhookToken,
+    webhookUrl: webhookUrl,
     allowedChatIds: config.allowedChatIds,
     enabled: config.enabled,
   };
