@@ -158,13 +158,9 @@ export async function testAgentConnection(): Promise<{
   }
 
   try {
+    // Select all columns - use raw query to avoid Drizzle type issues with new columns
     const rows = await db
-      .select({
-        ycloudApiKey: agentConfig.ycloudApiKey,
-        whatsappBotNumber: agentConfig.whatsappBotNumber,
-        systemPrompt: agentConfig.systemPrompt,
-        enabled: agentConfig.enabled,
-      })
+      .select()
       .from(agentConfig)
       .where(eq(agentConfig.id, 1))
       .limit(1);
@@ -177,17 +173,23 @@ export async function testAgentConnection(): Promise<{
       };
     }
 
+    // Access columns dynamically to avoid TS errors with schema type mismatch
+    const ycloudApiKey = (cfg as Record<string, unknown>).ycloudApiKey as string | null;
+    const whatsappBotNumber = (cfg as Record<string, unknown>).whatsappBotNumber as string | null;
+    const systemPrompt = (cfg as Record<string, unknown>).systemPrompt as string | null;
+    const enabled = (cfg as Record<string, unknown>).enabled as boolean;
+
     const checks: string[] = [];
-    if (cfg.ycloudApiKey) checks.push("✅ YCloud API Key configurada");
+    if (ycloudApiKey) checks.push("✅ YCloud API Key configurada");
     else checks.push("❌ YCloud API Key no configurada");
 
-    if (cfg.whatsappBotNumber) checks.push("✅ Número del bot configurado");
+    if (whatsappBotNumber) checks.push("✅ Número del bot configurado");
     else checks.push("❌ Número del bot no configurado");
 
-    if (cfg.systemPrompt) checks.push("✅ Prompt del sistema configurado");
+    if (systemPrompt) checks.push("✅ Prompt del sistema configurado");
     else checks.push("❌ Prompt del sistema no configurado");
 
-    checks.push(cfg.enabled ? "✅ Agente activo" : "⚠️ Agente desactivado");
+    checks.push(enabled ? "✅ Agente activo" : "⚠️ Agente desactivado");
 
     const allOk = checks.every((c) => c.startsWith("✅"));
     return {

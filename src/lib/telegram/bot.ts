@@ -1,7 +1,3 @@
-import { db } from "@/db";
-import { agentConfig } from "@/db/schema";
-import { eq } from "drizzle-orm";
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type TelegramUpdate = {

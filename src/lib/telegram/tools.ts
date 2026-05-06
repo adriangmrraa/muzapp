@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { orders, orderTypeEnum, orderStatusEnum } from "@/db/schema";
-import { sql, eq, and, gte, lte } from "drizzle-orm";
+import { orders } from "@/db/schema";
+import { eq, and, gte, lte } from "drizzle-orm";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -13,18 +13,13 @@ function getTodayRange() {
   return { start, end };
 }
 
-function formatARS(amount: string | number | null): string {
-  if (!amount) return "$0";
-  const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  return `$${num.toLocaleString("es-AR")}`;
-}
-
 // ─── Tools ───────────────────────────────────────────────────────────────────
 
+// Tool for getting today's orders
 export const getTodaysOrdersTool = tool({
   description:
     "Obtiene la cantidad y el detalle de pedidos del día de hoy. Preguntas: 'cuántos pedidos hoy', 'qué se vendió hoy'",
-  parameters: z.object({}),
+  inputSchema: z.object({}).optional(),
   execute: async () => {
     const { start, end } = getTodayRange();
 
@@ -80,15 +75,18 @@ export const getTodaysOrdersTool = tool({
   },
 });
 
+// Tool for getting orders by status
 export const getOrdersByStatusTool = tool({
   description:
     "Obtiene pedidos filtrados por estado. Preguntas: 'pedidos pendientes', 'pedidos en preparación', 'qué hay para entregar'",
-  parameters: z.object({
+  inputSchema: z.object({
     status: z
       .enum(["pending", "preparing", "ready", "delivered", "cancelled"])
       .describe("Estado de los pedidos a filtrar"),
-  }),
-  execute: async ({ status }) => {
+  }).optional(),
+  execute: async (options) => {
+    const statusFilter = options?.status ?? "pending";
+    
     const rows = await db
       .select({
         id: orders.id,
@@ -98,7 +96,7 @@ export const getOrdersByStatusTool = tool({
         createdAt: orders.createdAt,
       })
       .from(orders)
-      .where(eq(orders.status, status))
+      .where(eq(orders.status, statusFilter))
       .orderBy(orders.createdAt);
 
     const statusLabels: Record<string, string> = {
@@ -110,7 +108,7 @@ export const getOrdersByStatusTool = tool({
     };
 
     return {
-      status: statusLabels[status] ?? status,
+      status: statusLabels[statusFilter] ?? statusFilter,
       count: rows.length,
       orders: rows.map((r) => ({
         id: r.id,
@@ -119,69 +117,71 @@ export const getOrdersByStatusTool = tool({
         date: r.createdAt?.toLocaleString("es-AR", {
           hour: "2-digit",
           minute: "2-digit",
-        }),
+        }) ?? "?",
       })),
     };
   },
 });
 
-export const getSalesSummaryTool = tool({
+// Tool for getting weekly stats
+export const getWeeklyStatsTool = tool({
   description:
-    "Obtiene un resumen de ventas. Preguntas: 'resumen de ventas', 'cuánto se vendió', 'ventas del día'",
-  parameters: z.object({}),
+    "Obtiene estadísticas de la semana actual. Preguntas: 'qué se vendió esta semana', 'ingresos de la semana'",
+  inputSchema: z.object({}).optional(),
   execute: async () => {
-    const { start, end } = getTodayRange();
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
 
     const rows = await db
-      .select({
-        id: orders.id,
-        orderType: orders.orderType,
-        status: orders.status,
-        items: orders.items,
-      })
+      .select()
       .from(orders)
-      .where(
-        and(
-          gte(orders.createdAt, start),
-          lte(orders.createdAt, end),
-          eq(orders.status, "delivered")
-        )
-      );
+      .where(gte(orders.createdAt, start));
 
-    const totalOrders = rows.length;
-    let hamburguesasCount = 0;
-    let panCount = 0;
+    // Access total dynamically to avoid TS issues
+    const getTotal = (row: Record<string, unknown>) => (row.total as number) ?? 0;
 
-    for (const row of rows) {
-      if (row.orderType === "hamburguesas") hamburguesasCount++;
-      else if (row.orderType === "pan_mayorista") panCount++;
-    }
+    const totalDeliveredOrders = rows.filter((r) => r.status === "delivered").length;
+    const hamburguesasOrders = rows.filter(
+      (r) => r.orderType === "hamburguesas" && r.status === "delivered"
+    ).length;
+    const panMayoristaOrders = rows.filter(
+      (r) => r.orderType === "pan_mayorista" && r.status === "delivered"
+    ).length;
 
     return {
-      date: new Date().toLocaleDateString("es-AR"),
-      totalDeliveredOrders: totalOrders,
-      hamburguesasOrders: hamburguesasCount,
-      panMayoristaOrders: panCount,
+      date: start.toLocaleDateString("es-AR"),
+      totalDeliveredOrders,
+      hamburguesasOrders,
+      panMayoristaOrders,
     };
   },
 });
 
-export const getPendingDeliveriesTool = tool({
+// Tool for getting all orders
+export const getAllOrdersTool = tool({
   description:
-    "Obtiene pedidos listos para entregar (status=ready). Preguntas: 'pedidos para entregar', 'qué está listo', 'deliveries pendientes'",
-  parameters: z.object({}),
+    "Obtiene todos los pedidos recientes. Preguntas: 'dame los últimos pedidos', 'qué pedidos hay'",
+  inputSchema: z.object({}).optional(),
   execute: async () => {
     const rows = await db
       .select({
         id: orders.id,
         customerName: orders.customerName,
         orderType: orders.orderType,
-        items: orders.items,
+        status: orders.status,
         createdAt: orders.createdAt,
       })
       .from(orders)
-      .where(eq(orders.status, "ready"))
-      .orderBy(orders.createdAt);
+      .orderBy(orders.createdAt)
+      .limit(20);
+
+    const statusLabels: Record<string, string> = {
+      pending: "pendiente",
+      preparing: "preparando",
+      ready: "listo",
+      delivered: "entregado",
+      cancelled: "cancelado",
+    };
 
     return {
       count: rows.length,
@@ -189,20 +189,16 @@ export const getPendingDeliveriesTool = tool({
         id: r.id,
         customer: r.customerName ?? "Sin nombre",
         type: r.orderType ?? "?",
-        since: r.createdAt?.toLocaleString("es-AR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        since: r.createdAt?.toLocaleDateString("es-AR") ?? "?",
       })),
     };
   },
 });
 
-// ─── Tool registry ───────────────────────────────────────────────────────────
-
+// Export all tools as a ToolSet
 export const internalAgentTools = {
-  getTodaysOrders: getTodaysOrdersTool,
-  getOrdersByStatus: getOrdersByStatusTool,
-  getSalesSummary: getSalesSummaryTool,
-  getPendingDeliveries: getPendingDeliveriesTool,
+  getTodaysOrdersTool,
+  getOrdersByStatusTool,
+  getWeeklyStatsTool,
+  getAllOrdersTool,
 };

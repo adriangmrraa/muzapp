@@ -22,31 +22,41 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   phoneNumber: "",
   enabled: false,
   businessHours: DEFAULT_BUSINESS_HOURS,
+  ycloudApiKey: "",
+  whatsappBotNumber: "",
+  allowedPhoneIds: [],
+  autoReply24h: false,
+  autoReply24hMessage: "",
+  trainBotContext: "",
 };
 
 export default async function AgentPage() {
+  // Use raw select to avoid Drizzle type issues with new columns
   const rows = await db
-    .select({
-      systemPrompt: agentConfig.systemPrompt,
-      phoneNumber: agentConfig.phoneNumber,
-      enabled: agentConfig.enabled,
-      businessHours: agentConfig.businessHours,
-    })
+    .select()
     .from(agentConfig)
     .where(eq(agentConfig.id, 1))
     .limit(1);
 
-  const row = rows[0];
+  const row = rows[0] as Record<string, unknown> | undefined;
 
   const config: AgentConfigFormData = row
     ? {
-        systemPrompt: row.systemPrompt ?? "",
-        phoneNumber: row.phoneNumber ?? "",
-        enabled: row.enabled,
+        systemPrompt: (row.systemPrompt as string) ?? "",
+        phoneNumber: (row.phoneNumber as string) ?? "",
+        enabled: (row.enabled as boolean) ?? false,
         businessHours:
-          Array.isArray(row.businessHours) && row.businessHours.length > 0
+          Array.isArray(row.businessHours) && (row.businessHours as unknown[]).length > 0
             ? (row.businessHours as BusinessHour[])
             : DEFAULT_BUSINESS_HOURS,
+        ycloudApiKey: (row.ycloudApiKey as string) ?? "",
+        whatsappBotNumber: (row.whatsappBotNumber as string) ?? "",
+        allowedPhoneIds: Array.isArray(row.allowedPhoneIds)
+          ? (row.allowedPhoneIds as { name: string; phone: string }[])
+          : [],
+        autoReply24h: (row.autoReply24h as boolean) ?? false,
+        autoReply24hMessage: (row.autoReply24hMessage as string) ?? "",
+        trainBotContext: (row.trainBotContext as string) ?? "",
       }
     : DEFAULT_CONFIG;
 
@@ -57,7 +67,7 @@ export default async function AgentPage() {
           Agente de WhatsApp
         </h1>
         <p className="text-sm text-muted-foreground">
-          Configurá el comportamiento del agente de IA — prompt, horarios y estado
+          Configurá el comportamiento del agente de IA — credenciales, prompt, IDs permitidos y más
         </p>
       </div>
       <AgentConfigForm config={config} />

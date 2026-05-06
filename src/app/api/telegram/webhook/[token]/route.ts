@@ -7,7 +7,7 @@ import {
   type TelegramUpdate,
 } from "@/lib/telegram/bot";
 import {
-  createIdempotency,
+  checkIdempotency,
   setIdempotency,
   createIdempotencyKey,
 } from "@/lib/idempotency";

@@ -11,7 +11,8 @@ export const logger = pino({
   formatters: {
     log: (log) => ({
       ...log,
-      timestamp: log.time ? new Date(log.time).toISOString() : undefined,
+      // log.time puede ser epoch timestamp number
+      timestamp: typeof log.time === "number" ? new Date(log.time).toISOString() : undefined,
     }),
   },
 });

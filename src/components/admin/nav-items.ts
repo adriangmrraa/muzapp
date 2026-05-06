@@ -2,6 +2,7 @@ import {
   LayoutDashboardIcon,
   PackageIcon,
   BotIcon,
+  SendIcon,
   MessageSquareIcon,
   UsersIcon,
   UserRoundIcon,
@@ -33,6 +34,12 @@ export const navItems = [
     label: "Agente IA",
     href: "/admin/agent",
     icon: BotIcon,
+    disabled: false,
+  },
+  {
+    label: "Telegram Bot",
+    href: "/admin/telegram",
+    icon: SendIcon,
     disabled: false,
   },
   {

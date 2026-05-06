@@ -20,6 +20,13 @@ type ProductFromAPI = {
   available: boolean;
   comingSoon: boolean;
   sortOrder: number;
+  // Extended props for display
+  emoji?: string;
+  discountPercentage?: number;
+  ingredients?: string | null;
+  originalPrice?: number;
+  hasFreeShipping?: boolean;
+  soldCount?: number;
 };
 
 interface ProductDetailProps {
@@ -69,7 +76,11 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-8xl">
-              <span role="img" aria-label={product.name}>{product.emoji}</span>
+              {product.emoji ? (
+                <span role="img" aria-label={product.name}>{product.emoji}</span>
+              ) : (
+                <span className="text-6xl">🍔</span>
+              )}
             </div>
           )}
           
@@ -151,7 +162,9 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                       backgroundClip: "text",
                     }}
                   >
-                    ${product.price?.toLocaleString("es-AR") ?? "Consultar"}
+                    {product.price && typeof product.price === "string"
+                      ? `$${parseInt(product.price).toLocaleString("es-AR")}` 
+                      : "Consultar"}
                   </span>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import type { ClientStats } from "./client";
+import type { ClientStats } from "@/types/client";
 
 export function calculateClientStats(orders: {
   id: number;

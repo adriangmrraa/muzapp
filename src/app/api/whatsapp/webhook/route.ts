@@ -66,6 +66,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
+    // 3b. Check if customer phone is in allowed IDs list
+    const allowedIds = (config.allowedPhoneIds ?? []) as { name: string; phone: string }[];
+    if (allowedIds.length > 0 && !allowedIds.some((entry) => entry.phone === customerPhone)) {
+      console.log(`[webhook] Ignoring message from non-allowed phone: ${customerPhone}`);
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    // 3c. Auto-reply when outside 24h window
+    const autoReplyEnabled = config.autoReply24h === true;
+    const autoReplyMessage = config.autoReply24hMessage?.trim();
+    let skipAiAgent = false;
+    let autoReplySent = false;
+
     // 4. Find or create conversation
     const conversation = await findOrCreateConversation(whatsappId, customerPhone, customerName);
 
@@ -78,7 +91,23 @@ export async function POST(request: NextRequest) {
     // 6. Capture lead if first contact
     await captureLeadIfNew(customerPhone, customerName, text);
 
-    // 7. Append inbound message
+    // 7. Check 24h window — send auto-reply if enabled and no recent bot activity
+    const lastAssistantMsg = [...existingMessages]
+      .reverse()
+      .find((m: Record<string, unknown>) => m.role === "assistant");
+
+    if (autoReplyEnabled && autoReplyMessage && !lastAssistantMsg) {
+      // New conversation (no previous assistant response) — send auto-reply
+      await sendWhatsAppMessage({
+        to: customerPhone,
+        body: autoReplyMessage,
+        apiKey: config.ycloudApiKey || "",
+        from: config.phoneNumber || "",
+      });
+      autoReplySent = true;
+    }
+
+    // 8. Append inbound message
     await appendMessage(conversation.id, {
       id: messageId,
       role: "user",

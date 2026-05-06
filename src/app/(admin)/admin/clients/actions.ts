@@ -34,7 +34,7 @@ export async function fetchClients(params: {
   page?: number;
 }): Promise<ClientsResponse> {
   const session = await auth();
-  if (!session) throw new Error("No autorizado");
+  if (!session) return { clients: [], total: 0, totalPages: 1, currentPage: 1 };
 
   const page = Math.max(1, params.page ?? 1);
   const offset = (page - 1) * PAGE_SIZE;
