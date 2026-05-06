@@ -9,6 +9,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        // Premium gold gradient - like Citronela but gold for Mrs Muzzarella
+        premium:
+          "bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-amber-950 font-semibold shadow-lg shadow-amber-500/20 hover:from-amber-300 hover:via-yellow-400 hover:to-amber-500 hover:shadow-xl hover:shadow-amber-400/30 hover:scale-105 active:scale-100 transition-all duration-300",
+        // Glass surface with gold border
+        glass:
+          "glass-surface text-amber-100 hover:border-amber-400/40 hover:bg-amber-950/20 hover:text-amber-50 border border-white/10 bg-white/5",
+        // Outline with gold accent
+        goldOutline:
+          "border-amber-500/50 text-amber-400 hover:border-amber-400 hover:bg-amber-500/10 hover:shadow-lg hover:shadow-amber-500/20",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, Playfair_Display } from "next/font/google";
+import { Poppins, Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { MetaPixelProvider } from "@/components/meta/meta-pixel-provider";
 
@@ -13,6 +13,13 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -29,7 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${poppins.variable} ${playfair.variable} h-full antialiased dark`}
+      className={`${poppins.variable} ${playfair.variable} ${inter.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden">
         <MetaPixelProvider />

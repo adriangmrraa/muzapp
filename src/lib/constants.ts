@@ -45,9 +45,13 @@ export interface Product {
   id: string;
   name: string;
   price: number | null;
+  originalPrice?: number;
   ingredients: string;
   emoji: string;
   comingSoon?: boolean;
+  discountPercentage?: number;
+  hasFreeShipping?: boolean;
+  soldCount?: number;
 }
 
 export const LINEA_POLLO: Product[] = [
