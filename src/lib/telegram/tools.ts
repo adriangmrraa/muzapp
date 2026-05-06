@@ -6,6 +6,7 @@ import { manageClientTools } from "./toolsClient";
 import { manageProductTools } from "./toolsProduct";
 import { manageOrderTools } from "./toolsOrder";
 import { managementTools } from "./toolsManagement";
+import { analyticsTools } from "./toolsAnalytics";
 
 // ─── Tools Maestras (Delegantes) ───────────────────────────────────────
 // Cada Tool Maestra es un grupo de sub-tools relacionadas
@@ -50,6 +51,14 @@ export const manageManagement = {
   tools: managementTools,
 };
 
+// analytics: Métricas de negocio (ventas, top productos, top clientes, ticket promedio)
+export const analytics = {
+  name: "analytics",
+  description:
+    "Grupo de herramientas de analytics de negocio. Ventas por rango de fechas, productos más vendidos, mejores clientes, ticket promedio. Específico para rotisería.",
+  tools: analyticsTools,
+};
+
 // ─── Export Completo: Todas las tools como un ToolSet ────────────────────
 
 export const internalAgentTools = {
@@ -91,15 +100,22 @@ export const internalAgentTools = {
   updateOrderStatusNew: managementTools.updateOrderStatusNew,
   getAnalytics: managementTools.getAnalytics,
   getBusinessHours: managementTools.getBusinessHours,
+
+  // analytics (4 tools)
+  getSalesByDateRange: analyticsTools.getSalesByDateRange,
+  getTopProducts: analyticsTools.getTopProducts,
+  getTopClients: analyticsTools.getTopClients,
+  getAverageTicket: analyticsTools.getAverageTicket,
 };
 
-// Total: 29 tools individuales organizadas en 5 grupos
+// Total: 33 tools individuales organizadas en 6 grupos
 export const toolGroups = {
   queryOrder,
   manageClient,
   manageProduct,
   manageOrder,
   manageManagement,
+  analytics,
 };
 
 console.log(
