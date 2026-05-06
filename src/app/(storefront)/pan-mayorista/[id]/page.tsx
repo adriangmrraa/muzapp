@@ -22,7 +22,11 @@ export default function ProductDetailPage() {
     const found = BREAD_PRODUCTS.find(p => p.id === productId);
     
     if (found) {
-      setProduct(found);
+      setProduct({
+        ...found,
+        price: null,
+        ingredients: found.description,
+      });
     } else {
       setError("Producto no encontrado");
     }
