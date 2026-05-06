@@ -88,6 +88,20 @@ export const agentConfig = pgTable("agent_config", {
   telegramChatId: varchar("telegram_chat_id", { length: 50 }),
   telegramWebhookToken: varchar("telegram_webhook_token", { length: 100 }),
   telegramEnabled: boolean("telegram_enabled").notNull().default(false),
+  // ─── WhatsApp Agent (Editable desde UI) ────────────────────────
+  whatsappSystemPrompt: text("whatsapp_system_prompt"),
+  whatsappInstructions: text("whatsapp_instructions"),
+  whatsappPromociones: text("whatsapp_promociones"),
+  whatsappZonasDelivery: jsonb("whatsapp_zonas_delivery").$type<{
+    zona: string;
+    disponible: boolean;
+    tiempo: string;
+    costo: number;
+  }[]>().default([
+    { zona: "centro", disponible: true, tiempo: "20-30 min", costo: 0 },
+    { zona: "norte", disponible: true, tiempo: "25-35 min", costo: 0 },
+    { zona: "sur", disponible: true, tiempo: "30-40 min", costo: 0 },
+  ]),
   // ───────────────────────────────────────────────────────────────────────────
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

@@ -120,7 +120,7 @@ export async function runWhatsAppAgent({
 
   try {
     const result = await generateText({
-      model: openai("gpt-4o-mini"),
+      model: openai("gpt-5-mini"),
       system,
       messages,
       tools: {
