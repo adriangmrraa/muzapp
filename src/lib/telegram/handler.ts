@@ -1,4 +1,4 @@
-import { generateText } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 import {
   sendTelegramMessage,
@@ -51,7 +51,7 @@ export async function handleTelegramUpdate(
       system: INTERNAL_AGENT_SYSTEM_PROMPT,
       messages: [{ role: "user", content: text }],
       tools: internalAgentTools,
-      maxSteps: 5,
+      stopWhen: stepCountIs(5),
     });
 
     const reply = result.text || "Disculpá, no pude procesar eso.";

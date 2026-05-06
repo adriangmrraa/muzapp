@@ -20,7 +20,7 @@ import {
 } from "@/lib/channels/router";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
-import { generateText } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { internalAgentTools } from "@/lib/telegram/tools";
 import { INTERNAL_AGENT_SYSTEM_PROMPT } from "@/lib/telegram/system-prompt";
@@ -140,7 +140,7 @@ export async function POST(
         system: INTERNAL_AGENT_SYSTEM_PROMPT,
         messages: [{ role: "user", content: combinedText }],
         tools: internalAgentTools,
-        maxSteps: 5,
+        stopWhen: stepCountIs(5),
       });
 
       const reply = result.text || "Disculpá, no pude procesar eso.";
