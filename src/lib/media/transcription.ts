@@ -1,7 +1,10 @@
-export async function transcribeAudio(audioBuffer: Buffer, filename: string): Promise<string> {
+export async function transcribeAudio(
+  audioBuffer: Buffer,
+  filename: string
+): Promise<string> {
   try {
     const formData = new FormData();
-    const blob = new Blob([audioBuffer.buffer.slice(audioBuffer.byteOffset, audioBuffer.byteOffset + audioBuffer.byteLength)], { type: "audio/ogg" });
+    const blob = new Blob([new Uint8Array(audioBuffer)], { type: "audio/ogg" });
     formData.append("file", blob, filename);
     formData.append("model", "whisper-1");
     formData.append("language", "es");
@@ -23,4 +26,7 @@ export async function transcribeAudio(audioBuffer: Buffer, filename: string): Pr
     const result = (await response.json()) as { text?: string };
     return result.text || "[Audio sin transcripción]";
   } catch (error) {
-    console.e
+    console.error("[transcription] Error:", error);
+    return "[Audio sin transcripción]";
+  }
+}
