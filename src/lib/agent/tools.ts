@@ -121,8 +121,14 @@ export const checkDelivery = tool({
 export function makeCaptureOrder(phoneNumber: string) {
   return tool({
     description:
-      "Registra un pedido confirmado por el cliente en la base de datos.",
+      "Registra un pedido confirmado por el cliente en la base de datos. IMPORTANTE: Preguntale el nombre al cliente si no lo sabés todavía.",
     inputSchema: z.object({
+      customerName: z
+        .string()
+        .describe("Nombre del cliente (preguntalo si no lo sabés)"),
+      orderType: z
+        .enum(["hamburguesas", "pan_mayorista"])
+        .describe("Tipo de pedido: hamburguesas (rotisería nocturna) o pan_mayorista (pedido al por mayor)"),
       items: z
         .array(
           z.object({
@@ -137,10 +143,12 @@ export function makeCaptureOrder(phoneNumber: string) {
         .optional()
         .describe("Notas adicionales del cliente (dirección, aclaraciones, etc.)"),
     }),
-    execute: async ({ items, customerNotes }) => {
+    execute: async ({ customerName, orderType, items, customerNotes }) => {
       try {
         await db.insert(orders).values({
           phoneNumber,
+          customerName,
+          orderType,
           items: items as unknown as Record<string, unknown>[],
           notes: customerNotes ?? null,
           status: "pending",
