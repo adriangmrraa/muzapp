@@ -4,6 +4,7 @@ import {
   BotIcon,
   MessageSquareIcon,
   UsersIcon,
+  UserRoundIcon,
   BarChart2Icon,
   MegaphoneIcon,
   UtensilsCrossedIcon,
@@ -44,6 +45,12 @@ export const navItems = [
     label: "Conversaciones",
     href: "/admin/conversations",
     icon: MessageSquareIcon,
+    disabled: false,
+  },
+  {
+    label: "Clientes",
+    href: "/admin/clients",
+    icon: UserRoundIcon,
     disabled: false,
   },
   {
