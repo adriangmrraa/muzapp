@@ -218,8 +218,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Capture config values for the closure (config object may not be available later)
-    const apiKey = config.ycloudApiKey || "";
-    const botNumber = config.phoneNumber || "";
+    const apiKey = config.ycloudApiKey || process.env.YCLOUD_API_KEY || "";
+    const botNumber = config.phoneNumber || process.env.WHATSAPP_PHONE_NUMBER || "";
     const systemPrompt = config.systemPrompt || "";
 
     console.log(`[webhook:wa] Config for agent — apiKey:${apiKey ? "SET" : "EMPTY"} botNumber:${botNumber || "EMPTY"} prompt:${systemPrompt ? "SET" : "EMPTY"}`);
