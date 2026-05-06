@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProductDetail } from "@/components/products/product-detail";
 import type { Product } from "@/lib/constants";
-import { PAN_MAYORISTA } from "@/lib/constants";
+import { BREAD_PRODUCTS } from "@/lib/constants";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -19,7 +19,7 @@ export default function ProductDetailPage() {
     if (!productId) return;
 
     // Find product in existing data
-    const found = PAN_MAYORISTA.find(p => p.id === productId);
+    const found = BREAD_PRODUCTS.find(p => p.id === productId);
     
     if (found) {
       setProduct(found);

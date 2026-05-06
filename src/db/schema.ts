@@ -112,15 +112,33 @@ export const leads = pgTable("leads", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// ─── Orders ───────────────────────────────────────────────────────────────────
+// ─── Orders / Kitchen ──────────────────────────────────────────────────────────
+
+export const orderTypeEnum = pgEnum("order_type", [
+  "hamburguesas",
+  "pan_mayorista",
+]);
+
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "preparing",
+  "ready",
+  "delivered",
+  "cancelled",
+]);
 
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   phoneNumber: text("phone_number").notNull(),
+  customerName: text("customer_name"),
+  orderType: orderTypeEnum("order_type"),
   items: jsonb("items").notNull(),
   notes: text("notes"),
-  status: text("status").notNull().default("pending"),
+  status: orderStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });

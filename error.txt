@@ -1,0 +1,73 @@
+
+Search
+
+May 6, 4:49 AM - 4:52 AM
+GMT-3
+
+
+
+==> Downloading cache...
+Menu
+==> Cloning from https://github.com/adriangmrraa/muzapp
+==> Checking out commit a3863bcd8fc748c0202240ccaa26b40969bbd5e1 in branch main
+==> Downloaded 255MB in 2s. Extraction took 3s.
+==> Requesting Node.js version 20
+==> Using Node.js version 20.20.2 via environment variable NODE_VERSION
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install && npm run build'...
+added 670 packages, and audited 671 packages in 14s
+238 packages are looking for funding
+  run `npm fund` for details
+11 moderate severity vulnerabilities
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+> muzapp@0.1.0 build
+> next build
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+▲ Next.js 16.2.4 (Turbopack)
+  Creating an optimized production build ...
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./src/app/(storefront)/pan-mayorista/[id]/page.tsx:7:1
+Export PAN_MAYORISTA doesn't exist in target module
+   5 | import { ProductDetail } from "@/components/products/product-detail";
+   6 | import type { Product } from "@/lib/constants";
+>  7 | import { PAN_MAYORISTA } from "@/lib/constants";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   8 |
+   9 | export default function ProductDetailPage() {
+  10 |   const params = useParams();
+The export PAN_MAYORISTA was not found in module [project]/src/lib/constants.ts [app-client] (ecmascript).
+Did you mean to import PRODUCT_IMAGE_MAP?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+Import traces:
+  Client Component Browser:
+    ./src/app/(storefront)/pan-mayorista/[id]/page.tsx [Client Component Browser]
+    ./src/app/(storefront)/pan-mayorista/[id]/page.tsx [Server Component]
+  Client Component SSR:
+    ./src/app/(storefront)/pan-mayorista/[id]/page.tsx [Client Component SSR]
+    ./src/app/(storefront)/pan-mayorista/[id]/page.tsx [Server Component]
+./src/app/(storefront)/pan-mayorista/[id]/page.tsx:7:1
+Export PAN_MAYORISTA doesn't exist in target module
+   5 | import { ProductDetail } from "@/components/products/product-detail";
+   6 | import type { Product } from "@/lib/constants";
+>  7 | import { PAN_MAYORISTA } from "@/lib/constants";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   8 |
+   9 | export default function ProductDetailPage() {
+  10 |   const params = useParams();
+The export PAN_MAYORISTA was not found in module [project]/src/lib/constants.ts [app-ssr] (ecmascript).
+Did you mean to import PRODUCT_IMAGE_MAP?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+Import traces:
+  Client Component Browser:
+    ./src/app/(storefront)/pan-mayorista/[id]/page.tsx [Client Component Browser]
+    ./src/app/(storefront)/pan-mayorista/[id]/page.tsx [Server Component]
+  Client Component SSR:
+    ./src/app/(storefront)/pan-mayorista/[id]/page.tsx [Client Component SSR]
+    ./src/app/(storefront)/pan-mayorista/[id]/page.tsx [Server Component]
+    at <unknown> (./src/app/(storefront)/pan-mayorista/[id]/page.tsx:7:1)
+    at <unknown> (./src/app/(storefront)/pan-mayorista/[id]/page.tsx:7:1)
+==> Build failed 😞
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys

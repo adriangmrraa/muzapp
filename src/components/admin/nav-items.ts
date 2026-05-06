@@ -6,6 +6,7 @@ import {
   UsersIcon,
   BarChart2Icon,
   MegaphoneIcon,
+  UtensilsCrossedIcon,
 } from "lucide-react";
 
 export const navItems = [
@@ -19,6 +20,12 @@ export const navItems = [
     label: "Productos",
     href: "/admin/products",
     icon: PackageIcon,
+    disabled: false,
+  },
+  {
+    label: "Pedidos / Cocina",
+    href: "/admin/orders",
+    icon: UtensilsCrossedIcon,
     disabled: false,
   },
   {
