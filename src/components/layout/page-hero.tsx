@@ -16,17 +16,18 @@ export function PageHero({ backgroundImage, children }: PageHeroProps) {
     target: ref,
     offset: ["start start", "end start"],
   });
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.5]);
 
   return (
     <section
       ref={ref}
-      className="relative min-h-[65vh] flex flex-col items-center justify-center text-center px-4 overflow-hidden"
+      className="relative flex flex-col items-center justify-center text-center px-4 py-28 sm:py-32 md:py-40 overflow-hidden w-full"
+      style={{ maxWidth: "100vw" }}
     >
       <motion.div
-        className="absolute inset-0"
-        style={{ y, top: "-10%", bottom: "-10%", height: "120%" }}
+        className="absolute inset-x-0"
+        style={{ y, top: "-10%", bottom: "-10%", height: "120%", position: "absolute" }}
       >
         <Image
           src={backgroundImage}
@@ -46,7 +47,7 @@ export function PageHero({ backgroundImage, children }: PageHeroProps) {
       </motion.div>
 
       <div
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[500px] h-[500px] rounded-full pointer-events-none"
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] rounded-full pointer-events-none"
         style={{
           background:
             "radial-gradient(circle, rgba(212,160,23,0.06) 0%, transparent 70%)",
@@ -56,7 +57,7 @@ export function PageHero({ backgroundImage, children }: PageHeroProps) {
       />
 
       <motion.div
-        className="relative z-10 flex flex-col items-center gap-5 max-w-4xl"
+        className="relative z-10 flex flex-col items-center gap-5 max-w-4xl w-full"
         variants={heroEntrance}
         initial="hidden"
         animate="visible"

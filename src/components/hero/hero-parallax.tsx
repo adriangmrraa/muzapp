@@ -36,7 +36,7 @@ export function HeroParallax({ children }: { children: ReactNode }) {
     : (1 as unknown as MotionValue<number>);
 
   return (
-    <section className="relative flex flex-col items-center justify-center min-h-screen text-center px-4 overflow-hidden">
+    <section className="relative flex flex-col items-center justify-center min-h-[100svh] text-center px-4 overflow-hidden w-full" style={{ maxWidth: "100vw" }}>
       <motion.div className="absolute inset-0" style={{ y }}>
         <BackgroundCycle images={BG_IMAGES} />
         <div
@@ -49,7 +49,7 @@ export function HeroParallax({ children }: { children: ReactNode }) {
       </motion.div>
 
       <div
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/4 w-[600px] h-[600px] rounded-full pointer-events-none"
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/4 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] rounded-full pointer-events-none"
         style={{
           background:
             "radial-gradient(circle, rgba(212,160,23,0.07) 0%, transparent 70%)",
@@ -59,7 +59,7 @@ export function HeroParallax({ children }: { children: ReactNode }) {
       />
 
       <motion.div
-        className="relative z-10 flex flex-col items-center gap-6 max-w-4xl"
+        className="relative z-10 flex flex-col items-center gap-6 max-w-4xl w-full"
         style={{ opacity }}
       >
         {children}

@@ -31,7 +31,7 @@ export function HeroSection() {
 
         <motion.h1
           variants={heroChild}
-          className="text-6xl sm:text-7xl md:text-8xl font-black leading-none tracking-tight"
+          className="text-5xl sm:text-6xl md:text-8xl font-black leading-none tracking-tight"
           style={{
             fontFamily: "var(--font-playfair), serif",
             background: "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",

@@ -28,12 +28,12 @@ export function ParallaxDivider({
   return (
     <div
       ref={ref}
-      className="relative overflow-hidden"
-      style={{ height, minHeight: "280px" }}
+      className="relative overflow-hidden w-full"
+      style={{ height, minHeight: "200px", maxWidth: "100vw" }}
     >
       <motion.div
-        className="absolute inset-0"
-        style={{ y, top: "-20%", bottom: "-20%", height: "140%" }}
+        className="absolute inset-x-0"
+        style={{ y, top: "-15%", bottom: "-15%", height: "130%", position: "absolute" }}
       >
         <Image
           src={image}
