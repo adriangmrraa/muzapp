@@ -1,12 +1,13 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { signIn } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signInAction } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { AlertCircleIcon, LoaderIcon } from "lucide-react";
+import { AlertCircleIcon, LoaderIcon, LogInIcon } from "lucide-react";
 import { staggerContainer, fadeUpSmall } from "@/lib/animation-variants";
 
 const initialState = { error: "" };
@@ -45,6 +46,7 @@ export default function LoginForm() {
   const [state, formAction, isPending] = useActionState(signInAction, initialState);
 
   return (
+    <>
     <motion.form
       action={formAction}
       className="flex flex-col gap-4"
@@ -132,5 +134,55 @@ export default function LoginForm() {
         </motion.div>
       </motion.div>
     </motion.form>
+
+      {/* Separator */}
+      <div className="relative my-4 flex items-center gap-3">
+        <div
+          className="h-px flex-1"
+          style={{
+            background:
+              "linear-gradient(to right, transparent, rgba(212,160,23,0.3), transparent)",
+          }}
+        />
+        <span
+          className="text-xs font-medium uppercase tracking-widest"
+          style={{ color: "rgba(212,160,23,0.6)" }}
+        >
+          o continuá con
+        </span>
+        <div
+          className="h-px flex-1"
+          style={{
+            background:
+              "linear-gradient(to right, transparent, rgba(212,160,23,0.3), transparent)",
+          }}
+        />
+      </div>
+
+      {/* Facebook login */}
+      <motion.div variants={fadeUpSmall}>
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        >
+          <button
+            type="button"
+            onClick={() => signIn("facebook", { callbackUrl: "/admin" })}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl font-bold uppercase tracking-widest text-sm text-white"
+            style={{ backgroundColor: "#1877F2" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#166fe5")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "#1877F2")
+            }
+          >
+            <LogInIcon className="size-4" />
+            Continuar con Facebook
+          </button>
+        </motion.div>
+      </motion.div>
+    </>
   );
 }
