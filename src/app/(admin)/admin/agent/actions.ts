@@ -143,8 +143,9 @@ export async function saveAgentConfig(
 
     revalidatePath("/admin/agent");
     return { success: true, message: "Configuración guardada" };
-  } catch {
-    return { success: false, message: "Error al guardar la configuración" };
+  } catch (e) {
+    console.error("[agent-config] Error saving:", e);
+    return { success: false, message: `Error al guardar: ${e instanceof Error ? e.message : "desconocido"}` };
   }
 }
 
