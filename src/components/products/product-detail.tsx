@@ -162,8 +162,8 @@ export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
                       backgroundClip: "text",
                     }}
                   >
-                    {product.price && typeof product.price === "string"
-                      ? `$${parseInt(product.price).toLocaleString("es-AR")}` 
+                    {product.price != null
+                      ? `$${Number(product.price).toLocaleString("es-AR")}`
                       : "Consultar"}
                   </span>
                 </div>
