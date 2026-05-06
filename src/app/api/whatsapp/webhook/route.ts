@@ -40,7 +40,12 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get("ycloud-signature") || "";
   const secret = process.env.YCLOUD_WEBHOOK_SECRET;
 
-  if (!secret || !verifyYCloudSignature(rawBody, signature, secret)) {
+  if (!secret) {
+    console.error("[webhook:wa] YCLOUD_WEBHOOK_SECRET not set — rejecting");
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+  if (!verifyYCloudSignature(rawBody, signature, secret)) {
+    console.error("[webhook:wa] Signature verification FAILED — check YCLOUD_WEBHOOK_SECRET matches YCloud dashboard");
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
@@ -76,16 +81,18 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!config) {
-      console.error("[webhook] No active agent config found");
+      console.error("[webhook:wa] No active agent config found — is agent enabled in admin?");
       return NextResponse.json({ ok: true }, { status: 200 });
     }
+    console.log(`[webhook:wa] Config loaded — enabled:${config.enabled} phone:${config.phoneNumber || "N/A"}`);
 
     // 3b. Check if customer phone is in allowed IDs list
     const allowedIds = (config.allowedPhoneIds ?? []) as { name: string; phone: string }[];
     if (allowedIds.length > 0 && !allowedIds.some((entry) => entry.phone === customerPhone)) {
-      console.log(`[webhook] Ignoring message from non-allowed phone: ${customerPhone}`);
+      console.log(`[webhook:wa] BLOCKED — phone ${customerPhone} not in allowedPhoneIds (${allowedIds.map(a => a.phone).join(",")})`);
       return NextResponse.json({ ok: true }, { status: 200 });
     }
+    console.log(`[webhook:wa] Message from ${customerPhone} (${customerName}) type=${msgType} id=${messageId}`);
 
     // 3c. Auto-reply when outside 24h window
     const autoReplyEnabled = config.autoReply24h === true;
@@ -101,6 +108,7 @@ export async function POST(request: NextRequest) {
 
     // 5. Deduplication check
     if (await isMessageDuplicate(messageId)) {
+      console.log(`[webhook:wa] Duplicate message ${messageId} — skipping`);
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
@@ -201,7 +209,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
-    console.log(`[buffer:enqueue] Buffering message for whatsapp:${customerPhone}`);
+    console.log(`[webhook:wa] Enqueueing to buffer for whatsapp:${customerPhone}`);
     await BufferManager.enqueue("whatsapp", customerPhone, {
       content: agentText,
       messageId,
