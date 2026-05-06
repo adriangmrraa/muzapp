@@ -50,7 +50,7 @@ export function DeliveryCTA() {
 
   return (
     <section
-      className="w-full py-24 px-4"
+      className="w-full py-20 sm:py-24 px-4 relative"
       style={{
         background: "linear-gradient(180deg, #0a0a0a 0%, rgba(212,160,23,0.05) 50%, #0a0a0a 100%)",
       }}

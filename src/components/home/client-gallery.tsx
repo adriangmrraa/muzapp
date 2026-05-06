@@ -45,7 +45,7 @@ export function ClientGallery() {
     : cardEntrance;
 
   return (
-    <section className="py-24 px-4">
+    <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
       <div className="max-w-7xl mx-auto">
         {/* Heading */}
         <motion.div
@@ -88,7 +88,7 @@ export function ClientGallery() {
             <motion.div
               key={photo.src}
               variants={itemVariants}
-              className="relative aspect-[3/4] rounded-2xl overflow-hidden group"
+              className="relative aspect-square md:aspect-[3/4] rounded-2xl overflow-hidden group"
               style={{
                 border: "1px solid rgba(212,160,23,0.2)",
               }}

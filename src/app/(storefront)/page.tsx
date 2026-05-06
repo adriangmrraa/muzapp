@@ -25,7 +25,7 @@ export default function HomePage() {
 
       <FeaturedProductsSection />
 
-      <section className="py-24 px-4">
+      <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
         <div className="max-w-5xl mx-auto">
           <GlassPanel>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">

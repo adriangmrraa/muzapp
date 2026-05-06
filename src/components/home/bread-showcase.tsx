@@ -25,7 +25,7 @@ export function BreadShowcase() {
     : fadeUp;
 
   return (
-    <section className="py-24 px-4">
+    <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
         {/* LEFT — Text */}
         <motion.div
@@ -98,7 +98,7 @@ export function BreadShowcase() {
 
         {/* RIGHT — Images */}
         <motion.div
-          className="relative h-[480px] sm:h-[560px]"
+          className="grid grid-cols-2 gap-3 md:relative md:block md:h-[480px]"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
@@ -107,11 +107,9 @@ export function BreadShowcase() {
           {/* Main image */}
           <motion.div
             variants={itemVariants}
-            className="absolute inset-x-0 top-0 rounded-2xl overflow-hidden"
+            className="col-span-2 relative aspect-[4/3] md:absolute md:inset-x-0 md:top-0 md:max-h-[340px] rounded-2xl overflow-hidden"
             style={{
               border: "1px solid rgba(212,160,23,0.3)",
-              aspectRatio: "4/3",
-              maxHeight: "340px",
             }}
             whileHover={
               prefersReduced
@@ -132,13 +130,12 @@ export function BreadShowcase() {
             />
           </motion.div>
 
-          {/* Smaller image — bottom right overlap */}
+          {/* Smaller image */}
           <motion.div
             variants={itemVariants}
-            className="absolute bottom-0 right-0 w-48 rounded-2xl overflow-hidden"
+            className="relative aspect-square md:absolute md:bottom-0 md:right-0 md:w-48 rounded-2xl overflow-hidden"
             style={{
               border: "1px solid rgba(212,160,23,0.4)",
-              aspectRatio: "1/1",
               zIndex: 10,
             }}
             whileHover={
@@ -153,20 +150,19 @@ export function BreadShowcase() {
           >
             <Image
               src="/assets/images/pan-mayorista/5ee3b05e-fb3b-4bbc-a17f-67ceaeb509eb.jpg"
-              alt="Pancitos con semillas de sésamo"
+              alt="Pancitos con semillas de sesamo"
               fill
               className="object-cover"
-              sizes="192px"
+              sizes="(max-width: 768px) 50vw, 192px"
             />
           </motion.div>
 
-          {/* Small accent image — bottom left */}
+          {/* Small accent image */}
           <motion.div
             variants={itemVariants}
-            className="absolute bottom-8 left-0 w-36 rounded-2xl overflow-hidden"
+            className="relative aspect-[3/2] md:absolute md:bottom-8 md:left-0 md:w-36 rounded-2xl overflow-hidden"
             style={{
               border: "1px solid rgba(212,160,23,0.35)",
-              aspectRatio: "3/2",
               zIndex: 10,
             }}
             whileHover={
@@ -184,7 +180,7 @@ export function BreadShowcase() {
               alt="Panes largos tipo baguette"
               fill
               className="object-cover"
-              sizes="144px"
+              sizes="(max-width: 768px) 50vw, 144px"
             />
           </motion.div>
         </motion.div>

@@ -15,7 +15,7 @@ export function FeaturedProductsSection() {
     : allProducts;
 
   return (
-    <section className="py-24 px-4 sticky top-20 z-10">
+    <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
       <div className="max-w-7xl mx-auto">
         <motion.div
           className="flex flex-col items-center text-center gap-4 mb-12"
