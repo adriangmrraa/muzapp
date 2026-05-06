@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
+import { fadeUpSmall } from "@/lib/animation-variants";
 import {
   Table,
   TableBody,
@@ -102,7 +104,12 @@ export default function ConversationsTable({
   return (
     <div className="flex flex-col gap-4">
       {/* ─── Filters ─── */}
-      <div className="flex items-center gap-3">
+      <motion.div
+        variants={fadeUpSmall}
+        initial="hidden"
+        animate="visible"
+        className="flex items-center gap-3"
+      >
         <span className="text-sm text-muted-foreground">Filtrar por estado:</span>
         <div className="w-48">
           <Select
@@ -115,10 +122,15 @@ export default function ConversationsTable({
             <SelectOption value="archived">Archivada</SelectOption>
           </Select>
         </div>
-      </div>
+      </motion.div>
 
       {/* ─── Table ─── */}
-      <div className="rounded-lg border border-border bg-card">
+      <motion.div
+        variants={fadeUpSmall}
+        initial="hidden"
+        animate="visible"
+        className="rounded-lg border border-border bg-card"
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -145,7 +157,7 @@ export default function ConversationsTable({
                 return (
                   <TableRow
                     key={conv.id}
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:bg-white/[0.02] transition-colors"
                     onClick={() => handleRowClick(conv.id)}
                   >
                     <TableCell className="font-medium text-foreground">
@@ -169,7 +181,7 @@ export default function ConversationsTable({
             )}
           </TableBody>
         </Table>
-      </div>
+      </motion.div>
 
       {/* ─── Pagination ─── */}
       <div className="flex items-center justify-between gap-4">
@@ -185,6 +197,7 @@ export default function ConversationsTable({
             onClick={() =>
               router.push(buildUrl({ page: String(currentPage - 1) }))
             }
+            className="transition-opacity hover:opacity-80"
           >
             Anterior
           </Button>
@@ -195,6 +208,7 @@ export default function ConversationsTable({
             onClick={() =>
               router.push(buildUrl({ page: String(currentPage + 1) }))
             }
+            className="transition-opacity hover:opacity-80"
           >
             Siguiente
           </Button>

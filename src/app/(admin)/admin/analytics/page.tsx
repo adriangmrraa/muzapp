@@ -14,13 +14,24 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+      {/* Header — server-rendered, no animation needed */}
+      <div className="flex flex-col gap-1">
+        <h1
+          className="text-2xl font-bold tracking-tight text-gold-gradient"
+          style={{ display: "inline-block" }}
+        >
           Analytics de Campañas
         </h1>
         <p className="text-sm text-muted-foreground">
           Rendimiento de campañas y atribución de leads
         </p>
+        <div
+          className="mt-2 h-px w-16 rounded-full"
+          style={{
+            background: "linear-gradient(135deg, #D4A017, #F5A623)",
+            opacity: 0.6,
+          }}
+        />
       </div>
 
       <SummaryCards data={summaryStats} />

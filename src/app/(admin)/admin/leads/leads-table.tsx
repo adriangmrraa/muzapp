@@ -2,6 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import { fadeUpSmall } from "@/lib/animation-variants";
 import {
   Table,
   TableHeader,
@@ -153,7 +155,12 @@ export default function LeadsTable({
   return (
     <>
       {/* Filtro de estado */}
-      <div className="flex items-center gap-3">
+      <motion.div
+        variants={fadeUpSmall}
+        initial="hidden"
+        animate="visible"
+        className="flex items-center gap-3"
+      >
         <label
           htmlFor="status-filter"
           className="text-sm font-medium text-foreground whitespace-nowrap"
@@ -173,10 +180,15 @@ export default function LeadsTable({
             <SelectOption value="lost">Perdido</SelectOption>
           </Select>
         </div>
-      </div>
+      </motion.div>
 
       {/* Tabla */}
-      <div className="rounded-lg border border-border bg-card">
+      <motion.div
+        variants={fadeUpSmall}
+        initial="hidden"
+        animate="visible"
+        className="rounded-lg border border-border bg-card"
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -202,7 +214,7 @@ export default function LeadsTable({
               leads.map((lead) => (
                 <TableRow
                   key={lead.id}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-white/[0.02] transition-colors"
                   onClick={() => openDetail(lead)}
                 >
                   <TableCell className="font-medium">
@@ -232,12 +244,14 @@ export default function LeadsTable({
             )}
           </TableBody>
         </Table>
-      </div>
+      </motion.div>
 
       {/* Paginación */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Página {currentPage} de {totalPages}
+          Página{" "}
+          <span className="font-medium text-foreground">{currentPage}</span> de{" "}
+          <span className="font-medium text-foreground">{totalPages}</span>
         </p>
         <div className="flex gap-2">
           <Button
@@ -245,6 +259,7 @@ export default function LeadsTable({
             size="sm"
             onClick={handlePrev}
             disabled={currentPage <= 1}
+            className="transition-opacity hover:opacity-80"
           >
             Anterior
           </Button>
@@ -253,6 +268,7 @@ export default function LeadsTable({
             size="sm"
             onClick={handleNext}
             disabled={currentPage >= totalPages}
+            className="transition-opacity hover:opacity-80"
           >
             Siguiente
           </Button>
@@ -264,24 +280,26 @@ export default function LeadsTable({
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-0">
           {selectedLead && (
             <>
-              <SheetHeader className="p-6 pb-4 border-b border-border">
-                <SheetTitle>
+              <SheetHeader className="p-6 pb-4 border-b border-border bg-card/50">
+                <SheetTitle className="text-gold-gradient text-xl">
                   {selectedLead.name ?? "Lead sin nombre"}
                 </SheetTitle>
-                <div className="mt-1">
+                <div className="mt-2 flex items-center gap-2">
                   <Badge variant={STATUS_VARIANTS[selectedLead.status]}>
                     {STATUS_LABELS[selectedLead.status]}
                   </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    ID #{selectedLead.id}
+                  </span>
                 </div>
               </SheetHeader>
 
-              <div className="p-6 flex flex-col gap-5">
+              <div className="p-6 flex flex-col gap-6">
                 {/* Identificación */}
                 <section className="flex flex-col gap-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground border-b border-border pb-1.5">
                     Contacto
                   </h3>
-                  <DetailField label="ID" value={selectedLead.id} />
                   <DetailField label="Nombre" value={selectedLead.name} />
                   <DetailField label="Teléfono" value={selectedLead.phone} />
                   <DetailField label="Email" value={selectedLead.email} />
@@ -298,7 +316,7 @@ export default function LeadsTable({
 
                 {/* Atribución */}
                 <section className="flex flex-col gap-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground border-b border-border pb-1.5">
                     Atribución
                   </h3>
                   <DetailField
@@ -326,7 +344,7 @@ export default function LeadsTable({
 
                 {/* IDs de campaña */}
                 <section className="flex flex-col gap-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground border-b border-border pb-1.5">
                     IDs de campaña
                   </h3>
                   <DetailField label="Ad ID" value={selectedLead.adId} />

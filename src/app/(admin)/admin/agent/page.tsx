@@ -53,11 +53,11 @@ export default async function AgentPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-gold-gradient">
           Agente de WhatsApp
         </h1>
         <p className="text-sm text-muted-foreground">
-          Configurá el comportamiento del agente de IA
+          Configurá el comportamiento del agente de IA — prompt, horarios y estado
         </p>
       </div>
       <AgentConfigForm config={config} />

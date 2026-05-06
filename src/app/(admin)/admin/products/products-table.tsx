@@ -3,6 +3,8 @@
 import { useState, useTransition, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { fadeUpSmall } from "@/lib/animation-variants";
 
 import {
   Table,
@@ -110,13 +112,10 @@ function ProductForm({ product, onClose }: ProductFormProps) {
   const router = useRouter();
   const isEdit = product !== null;
 
-  // Switch controlled state (can't live in FormData natively)
   const [available, setAvailable] = useState(product?.available ?? true);
   const [comingSoon, setComingSoon] = useState(product?.comingSoon ?? false);
 
-  // Build a bound action so useActionState always receives (prevState, formData)
   async function formAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-    // Inject switch values since shadcn Switch doesn't submit with the form
     formData.set("available", String(available));
     formData.set("comingSoon", String(comingSoon));
 
@@ -128,7 +127,6 @@ function ProductForm({ product, onClose }: ProductFormProps) {
 
   const [state, dispatch, isPending] = useActionState(formAction, null);
 
-  // React to action result
   useEffect(() => {
     if (!state) return;
     if (state.success) {
@@ -139,6 +137,9 @@ function ProductForm({ product, onClose }: ProductFormProps) {
       toast.error(state.error);
     }
   }, [state]);
+
+  const selectClass =
+    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
   return (
     <form action={dispatch} className="flex flex-col gap-5 py-4">
@@ -201,7 +202,7 @@ function ProductForm({ product, onClose }: ProductFormProps) {
           name="category"
           required
           defaultValue={product?.category ?? "hamburguesa"}
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className={selectClass}
         >
           <option value="hamburguesa">Hamburguesa</option>
           <option value="acompanamiento">Acompañamiento</option>
@@ -217,7 +218,7 @@ function ProductForm({ product, onClose }: ProductFormProps) {
           name="line"
           required
           defaultValue={product?.line ?? "clasica"}
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className={selectClass}
         >
           <option value="pollo">Pollo</option>
           <option value="carne">Carne</option>
@@ -239,7 +240,7 @@ function ProductForm({ product, onClose }: ProductFormProps) {
       </div>
 
       {/* Available switch */}
-      <div className="flex items-center justify-between rounded-md border p-3">
+      <div className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-white/[0.02]">
         <div className="flex flex-col gap-0.5">
           <Label htmlFor="available" className="cursor-pointer">Disponible</Label>
           <span className="text-xs text-muted-foreground">
@@ -254,7 +255,7 @@ function ProductForm({ product, onClose }: ProductFormProps) {
       </div>
 
       {/* Coming soon switch */}
-      <div className="flex items-center justify-between rounded-md border p-3">
+      <div className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-white/[0.02]">
         <div className="flex flex-col gap-0.5">
           <Label htmlFor="comingSoon" className="cursor-pointer">Próximamente</Label>
           <span className="text-xs text-muted-foreground">
@@ -269,7 +270,11 @@ function ProductForm({ product, onClose }: ProductFormProps) {
       </div>
 
       {/* Submit */}
-      <Button type="submit" disabled={isPending} className="mt-2">
+      <Button
+        type="submit"
+        disabled={isPending}
+        className="btn-gold mt-2 transition-opacity hover:opacity-90"
+      >
         {isPending
           ? isEdit
             ? "Guardando..."
@@ -288,26 +293,17 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Local availability state for optimistic updates
   const [availability, setAvailability] = useState<Record<number, boolean>>(
     () =>
       Object.fromEntries(initialProducts.map((p) => [p.id, p.available]))
   );
 
-  // Filter state
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [lineFilter, setLineFilter] = useState<string>("all");
-
-  // Delete dialog state
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
-
-  // Selected product state (edit mode Sheet)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-  // New product sheet open state
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
 
-  // Derived: is any sheet open?
   const isSheetOpen = isNewProductOpen || selectedProduct !== null;
   const sheetProduct = isNewProductOpen ? null : selectedProduct;
 
@@ -327,13 +323,11 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
   function handleToggleAvailability(id: number, next: boolean) {
-    // Optimistic update
     setAvailability((prev) => ({ ...prev, [id]: next }));
 
     startTransition(async () => {
       const result = await toggleProductAvailability(id, next);
       if ("error" in result && result.error) {
-        // Revert optimistic update
         setAvailability((prev) => ({ ...prev, [id]: !next }));
         toast.error("Error al actualizar disponibilidad");
       } else {
@@ -366,9 +360,13 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
   return (
     <div className="flex flex-col gap-4">
       {/* Top bar: filters + new product button */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <motion.div
+        variants={fadeUpSmall}
+        initial="hidden"
+        animate="visible"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
         <div className="flex gap-2">
-          {/* Category filter */}
           <Select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
@@ -380,7 +378,6 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
             <option value="pan_mayorista">Pan Mayorista</option>
           </Select>
 
-          {/* Line filter */}
           <Select
             value={lineFilter}
             onChange={(e) => setLineFilter(e.target.value)}
@@ -394,13 +391,21 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
           </Select>
         </div>
 
-        <Button onClick={() => setIsNewProductOpen(true)}>
-          + Nuevo Producto
-        </Button>
-      </div>
+        <motion.div whileHover={{ y: -1 }} transition={{ duration: 0.15 }}>
+          <Button onClick={() => setIsNewProductOpen(true)}>
+            + Nuevo Producto
+          </Button>
+        </motion.div>
+      </motion.div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <motion.div
+        variants={fadeUpSmall}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.08 }}
+        className="rounded-md border"
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -425,7 +430,10 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
               </TableRow>
             ) : (
               filtered.map((product) => (
-                <TableRow key={product.id}>
+                <TableRow
+                  key={product.id}
+                  className="transition-colors hover:bg-white/[0.02]"
+                >
                   {/* Name */}
                   <TableCell className="font-medium">{product.name}</TableCell>
 
@@ -462,7 +470,7 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
                     />
                   </TableCell>
 
-                  {/* Coming soon switch (read-only display — editing via Sheet) */}
+                  {/* Coming soon switch (read-only — editing via Sheet) */}
                   <TableCell className="text-center">
                     <Switch
                       checked={product.comingSoon}
@@ -477,6 +485,7 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="transition-colors hover:border-[#D4A017]/40 hover:text-[#D4A017]"
                         onClick={() => setSelectedProduct(product)}
                       >
                         Editar
@@ -484,6 +493,7 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
                       <Button
                         variant="destructive"
                         size="sm"
+                        className="transition-opacity hover:opacity-90"
                         onClick={() => setDeleteTarget(product)}
                       >
                         Eliminar
@@ -495,13 +505,13 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
             )}
           </TableBody>
         </Table>
-      </div>
+      </motion.div>
 
       {/* Create / Edit Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) handleCloseSheet(); }}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
+          <SheetHeader className="border-b border-[#D4A017]/20 pb-4">
+            <SheetTitle className="text-gold-gradient">
               {isNewProductOpen ? "Nuevo Producto" : "Editar Producto"}
             </SheetTitle>
             <SheetDescription>
@@ -511,7 +521,6 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
             </SheetDescription>
           </SheetHeader>
 
-          {/* Key forces remount when switching between create/edit so state resets */}
           <ProductForm
             key={isNewProductOpen ? "new" : String(selectedProduct?.id)}
             product={sheetProduct}

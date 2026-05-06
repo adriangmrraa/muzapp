@@ -46,7 +46,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-gold-gradient">
           Leads
         </h1>
         <p className="text-sm text-muted-foreground">

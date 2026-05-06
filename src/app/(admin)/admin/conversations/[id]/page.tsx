@@ -51,10 +51,22 @@ function formatTime(timestamp: string | undefined): string | null {
   }
 }
 
-const statusConfig: Record<ConversationStatus, { label: string; variant: "default" | "secondary" | "warning" }> = {
-  active: { label: "Activa", variant: "default" },
-  closed: { label: "Cerrada", variant: "secondary" },
-  archived: { label: "Archivada", variant: "warning" },
+const statusConfig: Record<
+  ConversationStatus,
+  { label: string; className: string }
+> = {
+  active: {
+    label: "Activa",
+    className: "bg-blue-500/15 text-blue-400 border-0",
+  },
+  closed: {
+    label: "Cerrada",
+    className: "bg-secondary text-secondary-foreground border-0",
+  },
+  archived: {
+    label: "Archivada",
+    className: "bg-yellow-500/15 text-yellow-400 border-0",
+  },
 };
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
@@ -88,29 +100,34 @@ export default async function ConversationDetailPage({ params }: { params: Param
           href="/admin/conversations"
           className={cn(
             buttonVariants({ variant: "ghost", size: "sm" }),
-            "gap-1.5 text-muted-foreground hover:text-foreground -ml-2"
+            "gap-1.5 -ml-2 text-muted-foreground hover:text-foreground transition-colors group"
           )}
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
           Volver a conversaciones
         </Link>
       </div>
 
       {/* ─── Header ─── */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            {row.customerName ?? <span className="text-muted-foreground italic">Sin nombre</span>}
+      <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-2xl font-bold tracking-tight text-gold-gradient">
+            {row.customerName ?? "Sin nombre"}
           </h1>
           {row.customerPhone && (
-            <p className="text-sm text-muted-foreground">{row.customerPhone}</p>
+            <p className="text-sm text-muted-foreground font-mono">
+              {row.customerPhone}
+            </p>
           )}
+          <p className="text-xs text-muted-foreground">
+            ID #{numericId} · {messages.length} mensajes
+          </p>
         </div>
-        <Badge variant={cfg.variant}>{cfg.label}</Badge>
+        <Badge className={cfg.className}>{cfg.label}</Badge>
       </div>
 
       {/* ─── Chat ─── */}
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 min-h-[300px]">
+      <div className="flex flex-col gap-4 rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5 min-h-[300px] shadow-inner">
         {messages.length === 0 ? (
           <div className="flex flex-1 items-center justify-center py-16 text-sm text-muted-foreground">
             No hay mensajes en esta conversación.
@@ -126,23 +143,29 @@ export default async function ConversationDetailPage({ params }: { params: Param
                 className={`flex flex-col gap-1 ${isUser ? "items-start" : "items-end"}`}
               >
                 {/* Role label */}
-                <span className="text-xs font-medium text-muted-foreground px-1">
+                <span className="text-xs font-medium text-muted-foreground px-1 uppercase tracking-wide">
                   {isUser ? "Cliente" : "Agente"}
                 </span>
 
                 {/* Bubble */}
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                  className={cn(
+                    "max-w-[75%] rounded-2xl px-4 py-3 shadow-sm",
                     isUser
-                      ? "bg-muted text-foreground rounded-tl-sm"
-                      : "bg-primary/20 text-foreground rounded-tr-sm"
-                  }`}
+                      ? "bg-muted/80 text-foreground rounded-tl-sm border border-border/50"
+                      : "bg-[#D4A017]/10 text-foreground rounded-tr-sm border border-[#D4A017]/20"
+                  )}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {msg.content}
                   </p>
                   {time && (
-                    <p className={`mt-1 text-[11px] text-muted-foreground ${isUser ? "text-left" : "text-right"}`}>
+                    <p
+                      className={cn(
+                        "mt-1.5 text-[11px] text-muted-foreground",
+                        isUser ? "text-left" : "text-right"
+                      )}
+                    >
                       {time}
                     </p>
                   )}
@@ -151,6 +174,35 @@ export default async function ConversationDetailPage({ params }: { params: Param
             );
           })
         )}
+      </div>
+
+      {/* ─── Metadata ─── */}
+      <div className="rounded-lg border border-border bg-card p-4 flex flex-col gap-3">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground pb-1.5 border-b border-border">
+          Metadata de la conversación
+        </h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[11px] font-medium text-[#D4A017] uppercase tracking-wider">
+              Estado
+            </span>
+            <span className="text-sm text-foreground">{cfg.label}</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[11px] font-medium text-[#D4A017] uppercase tracking-wider">
+              Mensajes
+            </span>
+            <span className="text-sm text-foreground tabular-nums">{messages.length}</span>
+          </div>
+          {row.customerPhone && (
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[11px] font-medium text-[#D4A017] uppercase tracking-wider">
+                Teléfono
+              </span>
+              <span className="text-sm text-foreground font-mono">{row.customerPhone}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
