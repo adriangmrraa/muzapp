@@ -35,8 +35,13 @@ export async function getConversations(
 
   const conditions = [];
 
-  if (channel && channel !== "all") {
+  if (channel === "telegram") {
+    conditions.push(eq(conversations.channel, "telegram"));
+  } else if (channel && channel !== "all") {
     conditions.push(eq(conversations.channel, channel as "whatsapp" | "telegram"));
+  } else {
+    // By default, exclude Telegram (internal admin channel)
+    conditions.push(eq(conversations.channel, "whatsapp"));
   }
   if (status && status !== "all") {
     conditions.push(
