@@ -2,7 +2,7 @@
 
 // Grupo A: Menú y productos (4)
 export { getMenuTool } from "./get-menu";
-export { getProductDetailsTool, getProductPriceTool, searchProductsTool } from "./product-tools";
+export { getProductDetailsTool, getProductPriceTool, searchProductsTool, createSendProductImageTool } from "./product-tools";
 
 // Grupo B: Disponibilidad y delivery (4)
 export { checkAvailabilityTool } from "./check-availability";

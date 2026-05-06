@@ -19,6 +19,7 @@ import {
   addToOrderTool,
   updateOrderTool,
   cancelOrderTool,
+  createSendProductImageTool,
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
@@ -159,6 +160,8 @@ export async function runWhatsAppAgent({
         // Grupo E: Operaciones (2)
         getBusinessHours: getBusinessHoursTool,
         transferToHuman: createTransferToHumanTool(conversationId),
+        // Grupo F: Multimedia (1)
+        sendProductImage: createSendProductImageTool(customerPhone),
       },
       stopWhen: stepCountIs(5),
       toolChoice: "auto",

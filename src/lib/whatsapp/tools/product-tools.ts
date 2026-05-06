@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { products } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { sendImage } from "@/lib/ycloud";
 
 // getProductDetails - Ver detalles de un producto
 export const getProductDetailsTool = tool({
@@ -80,6 +81,52 @@ export const getProductPriceTool = tool({
     return `💰 ${found.name}: $${found.price}`;
   },
 });
+
+// createSendProductImageTool - Enviar foto de un producto por WhatsApp
+export function createSendProductImageTool(customerPhone: string) {
+  return tool({
+    description: "Envía la foto de un producto al cliente por WhatsApp",
+    inputSchema: z.object({
+      productId: z.number().describe("ID del producto cuya foto se quiere enviar"),
+    }),
+    execute: async ({ productId }) => {
+      const [product] = await db
+        .select({
+          name: products.name,
+          price: products.price,
+          imageUrl: products.imageUrl,
+        })
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1);
+
+      if (!product) {
+        return "No encontré ese producto.";
+      }
+
+      if (!product.imageUrl) {
+        return "Este producto no tiene foto.";
+      }
+
+      const baseUrl =
+        process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
+        "https://muzapp.onrender.com";
+      const fullImageUrl = product.imageUrl.startsWith("/")
+        ? `${baseUrl}${product.imageUrl}`
+        : product.imageUrl;
+
+      const caption = `${product.name} - $${product.price}`;
+      const result = await sendImage(customerPhone, fullImageUrl, caption);
+
+      if (!result.ok) {
+        console.error("[sendProductImage] YCloud error:", result.error);
+        return "No pude enviar la foto en este momento. Intentá de nuevo o pedime que te describa el producto.";
+      }
+
+      return `Te envié la foto de ${product.name} 📸`;
+    },
+  });
+}
 
 // searchProducts - Buscar productos
 export const searchProductsTool = tool({
