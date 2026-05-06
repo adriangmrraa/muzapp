@@ -605,10 +605,12 @@ export default function AgentConfigForm({
         </motion.div>
       </motion.div>
 
+      </motion.div>
+
       {/* ═════════════════════════════════════════════════════════════════════════
-         Submit
+         Submit — sticky bottom bar, always visible
          ═════════════════════════════════════════════════════════════════════════ */}
-      <div className="flex justify-end">
+      <div className="sticky bottom-0 z-30 -mx-4 mt-4 border-t border-white/10 bg-[#0a0a0a]/95 backdrop-blur-sm px-4 py-3 flex justify-end">
         <Button
           type="submit"
           disabled={isPending}

@@ -222,8 +222,12 @@ export async function POST(request: NextRequest) {
     const botNumber = config.phoneNumber || "";
     const systemPrompt = config.systemPrompt || "";
 
+    console.log(`[webhook:wa] Config for agent — apiKey:${apiKey ? "SET" : "EMPTY"} botNumber:${botNumber || "EMPTY"} prompt:${systemPrompt ? "SET" : "EMPTY"}`);
+
     // Fire-and-forget: webhook returns 200 immediately, processing happens in background
     scheduleBufferProcessing("whatsapp", customerPhone, async (bufferedMessages) => {
+      console.log(`[webhook:wa] Buffer callback fired — ${bufferedMessages.length} msgs for ${customerPhone}`);
+
       // Concatenate all buffered messages into a single context for the agent
       const combinedText = bufferedMessages.map((m) => m.content).join("\n");
 
@@ -245,6 +249,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      console.log(`[webhook:wa] Running agent with ${aiMessages.length} history messages`);
+
       // Run agent with combined context
       const responseText = await runWhatsAppAgent({
         conversationId,
@@ -252,6 +258,8 @@ export async function POST(request: NextRequest) {
         messages: aiMessages,
         systemPrompt,
       });
+
+      console.log(`[webhook:wa] Agent response: ${responseText.slice(0, 100)}...`);
 
       // Persist assistant response
       await insertMessage(conversationId, "assistant", responseText);
@@ -263,7 +271,9 @@ export async function POST(request: NextRequest) {
         apiKey,
         from: botNumber,
       });
-    }).catch((err) => console.error("[webhook] Buffer processing error:", err));
+
+      console.log(`[webhook:wa] Response sent to ${customerPhone}`);
+    }).catch((err) => console.error("[webhook:wa] Buffer processing error:", err));
 
   } catch (error) {
     console.error("[webhook] Error processing message:", error);
