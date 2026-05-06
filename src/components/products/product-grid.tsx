@@ -38,6 +38,11 @@ export function ProductGrid({ products }: ProductGridProps) {
       {normalized.map((product, i) => (
         <ProductCard key={product.id} product={product} index={i} />
       ))}
+    {normalized.length === 0 && (
+      <div className="col-span-full text-center py-16">
+        <p className="text-white/40 text-lg">No hay productos disponibles</p>
+      </div>
+    )}
     </motion.div>
   );
 }

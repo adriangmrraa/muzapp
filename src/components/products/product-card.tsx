@@ -7,17 +7,30 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useTilt } from "@/hooks/use-tilt";
 import { cardEntrance } from "@/lib/animation-variants";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Check, Plus, Minus } from "lucide-react";
+import { useCart } from "@/lib/cart/cart-context";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
   index?: number;
-  onAddToCart?: (product: Product) => void;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
   const { ref, style, onMouseMove, onMouseLeave } = useTilt({ maxAngle: 8 });
   const imageSrc = PRODUCT_IMAGE_MAP[product.id];
+  const { addItem } = useCart();
+  const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
+
+  function handleAdd(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    addItem({ id: product.id, name: product.name, price: product.price ?? 0, emoji: product.emoji }, qty);
+    setAdded(true);
+    setQty(1);
+    setTimeout(() => setAdded(false), 1500);
+  }
 
   return (
     <Link href={`/hamburguesas/${product.id}`}>
@@ -61,6 +74,11 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               {product.discountPercentage}% OFF
             </span>
           )}
+          {product.soldCount && product.soldCount > 50 && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400">
+              🌟 Más vendido
+            </span>
+          )}
         </div>
 
         {/* Image Container */}
@@ -88,20 +106,34 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
           
-          {/* Add to Cart Button */}
-          {onAddToCart && !product.comingSoon && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onAddToCart(product);
-              }}
-              className="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(212,160,23,0.5)] transition-all duration-300 hover:scale-110 active:scale-95 z-20 border-none"
-              style={{ background: "#D4A017" }}
-              title="Agregar al carrito"
-            >
-              <ShoppingCart className="w-4 h-4 stroke-[1.5] text-white" />
-            </button>
+          {/* Quantity Stepper + Add to Cart */}
+          {!product.comingSoon && (
+            <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 z-20">
+              <div className="flex items-center rounded-full overflow-hidden border border-white/20"
+                style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQty(Math.max(1, qty - 1)); }}
+                  className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-white transition-colors border-none bg-transparent cursor-pointer text-xs"
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
+                <span className="w-6 text-center text-xs font-semibold text-white">{qty}</span>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQty(qty + 1); }}
+                  className="w-7 h-7 flex items-center justify-center text-white/70 hover:text-white transition-colors border-none bg-transparent cursor-pointer text-xs"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
+              <button
+                onClick={handleAdd}
+                className={`w-8 h-8 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(212,160,23,0.5)] transition-all duration-300 hover:scale-110 active:scale-95 border-none cursor-pointer ${added ? 'scale-110' : ''}`}
+                style={{ background: added ? "#10b981" : "#D4A017" }}
+                title="Agregar al carrito"
+              >
+                {added ? <Check className="w-4 h-4 stroke-[1.5] text-white" /> : <ShoppingCart className="w-4 h-4 stroke-[1.5] text-white" />}
+              </button>
+            </div>
           )}
         </div>
 

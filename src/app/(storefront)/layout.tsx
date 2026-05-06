@@ -2,6 +2,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppFAB } from "@/components/layout/whatsapp-fab";
 import { UTMCaptureScript } from "@/components/attribution/utm-capture-script";
+import { CartProvider } from "@/lib/cart/cart-context";
 
 export default function StorefrontLayout({
   children,
@@ -9,12 +10,12 @@ export default function StorefrontLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <CartProvider>
       <Navbar />
       <UTMCaptureScript />
       <main className="flex-1 overflow-x-hidden">{children}</main>
       <Footer />
       <WhatsAppFAB />
-    </>
+    </CartProvider>
   );
 }

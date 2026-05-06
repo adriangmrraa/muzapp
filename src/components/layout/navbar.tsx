@@ -5,6 +5,9 @@ import { useState } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Image from "next/image";
+import { ShoppingBag } from "lucide-react";
+import { useCart } from "@/lib/cart/cart-context";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -14,6 +17,8 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const { itemCount } = useCart();
   const { scrollY } = useScroll();
   const bgColor = useTransform(
     scrollY,
@@ -22,7 +27,7 @@ export function Navbar() {
   );
 
   return (
-    <motion.header
+    <><motion.header
       className="fixed top-0 left-0 right-0 z-50"
       style={{
         background: bgColor,
@@ -66,6 +71,24 @@ export function Navbar() {
               </Link>
             ))}
           </nav>
+
+          <div className="flex items-center gap-3">
+            {/* Cart button */}
+            <button
+              onClick={() => setCartOpen(true)}
+              className="relative p-2 text-white/80 hover:text-amber-400 transition-colors bg-transparent border-none cursor-pointer"
+              aria-label="Abrir carrito"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold rounded-full"
+                  style={{ background: "#D4A017", color: "#0a0a0a" }}
+                >
+                  {itemCount > 9 ? "9+" : itemCount}
+                </span>
+              )}
+            </button>
+          </div>
 
           <div className="md:hidden">
             <Sheet open={open} onOpenChange={setOpen}>
@@ -120,5 +143,6 @@ export function Navbar() {
         </div>
       </div>
     </motion.header>
-  );
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+    </>);
 }
