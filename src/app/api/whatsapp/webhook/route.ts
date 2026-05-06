@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyYCloudSignature } from "@/lib/whatsapp/signature";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/ycloud-client";
+import { sendWhatsAppBubbles } from "@/lib/buffer/response-sender";
 import {
   findOrCreateConversation,
   insertMessage,
   isMessageDuplicate,
   getConversationMessages,
+  type MediaAttachment,
 } from "@/lib/channels/router";
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
 import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
 import { db } from "@/db";
 import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { downloadYCloudMedia, saveMediaLocally } from "@/lib/media/downloader";
+import { transcribeAudio } from "@/lib/media/transcription";
+import { BufferManager } from "@/lib/buffer/manager";
+import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 
 /**
  * GET — Webhook verification (YCloud sends a challenge token)
@@ -47,15 +53,19 @@ export async function POST(request: NextRequest) {
   }
 
   const message = payload.whatsappInboundMessage;
-  if (!message || message.type !== "text") {
-    // Only handle text messages for now
+
+  // Accept: text, image, audio, document, video — drop everything else
+  const SUPPORTED_TYPES = ["text", "image", "audio", "document", "video"] as const;
+  type SupportedType = (typeof SUPPORTED_TYPES)[number];
+
+  if (!message || !SUPPORTED_TYPES.includes(message.type as SupportedType)) {
     return NextResponse.json({ ok: true }, { status: 200 });
   }
 
-  const messageId = message.id;
-  const customerPhone = message.from;
-  const customerName = message.customerProfile?.name || null;
-  const text = message.text?.body || "";
+  const msgType = message.type as SupportedType;
+  const messageId = message.id as string;
+  const customerPhone = message.from as string;
+  const customerName = (message.customerProfile?.name as string) || null;
 
   try {
     // 3. Load agent config
@@ -84,7 +94,7 @@ export async function POST(request: NextRequest) {
     // 4. Find or create conversation
     const { id: conversationId, isNew } = await findOrCreateConversation(
       "whatsapp",
-      customerPhone, // externalUserId for WhatsApp is the phone
+      customerPhone,
       customerName ?? undefined,
       customerPhone
     );
@@ -95,11 +105,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Capture lead if first contact
-    await captureLeadIfNew(customerPhone, customerName, text);
+    const textForLead = msgType === "text" ? (message.text?.body as string) || "" : "";
+    await captureLeadIfNew(customerPhone, customerName, textForLead);
 
-    // 7. Check 24h window — send auto-reply if enabled and no recent bot activity
+    // 7. Auto-reply for new conversations
     if (autoReplyEnabled && autoReplyMessage && isNew) {
-      // New conversation — send auto-reply
       await sendWhatsAppMessage({
         to: customerPhone,
         body: autoReplyMessage,
@@ -108,34 +118,144 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 8. Persist inbound message
-    await insertMessage(conversationId, "user", text, undefined, messageId);
+    // -------------------------------------------------------------------------
+    // 8. Persist inbound message + resolve text for agent
+    // -------------------------------------------------------------------------
+    let agentText: string;
+    let contentAttributes: MediaAttachment[] | undefined;
 
-    // 8b. Build message history for AI (last 20 messages)
-    const existingMessages = await getConversationMessages(conversationId, 20);
-    const aiMessages = existingMessages.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    }));
+    if (msgType === "text") {
+      // ── TEXT ──────────────────────────────────────────────────────────────
+      agentText = (message.text?.body as string) || "";
+      await insertMessage(conversationId, "user", agentText, undefined, messageId);
 
-    // 9. Run AI agent
-    const responseText = await runWhatsAppAgent({
-      conversationId,
-      customerPhone,
-      messages: aiMessages,
-      systemPrompt: config.systemPrompt || "",
+    } else {
+      // ── MEDIA (image | audio | document | video) ──────────────────────────
+      // YCloud payload shape:
+      //   message.image    = { id, caption? }
+      //   message.audio    = { id, voice? }
+      //   message.document = { id, filename?, caption? }
+      //   message.video    = { id, caption? }
+      const mediaObj = message[msgType] as {
+        id?: string;
+        caption?: string;
+        filename?: string;
+        voice?: boolean;
+      } | undefined;
+
+      if (!mediaObj?.id) {
+        // Malformed payload — ack and move on
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
+
+      try {
+        const apiKey = config.ycloudApiKey || "";
+
+        // Download from YCloud
+        const { buffer, mimeType, filename } = await downloadYCloudMedia(mediaObj.id, apiKey);
+
+        // Persist to disk, get public URL
+        const mediaUrl = await saveMediaLocally(buffer, conversationId, filename, mimeType);
+
+        // Build contentAttributes entry
+        const attachment: MediaAttachment = {
+          type: msgType as MediaAttachment["type"],
+          url: mediaUrl,
+          fileName: mediaObj.filename || filename,
+          mimeType,
+          caption: mediaObj.caption,
+        };
+
+        // Transcribe audio — enriches both the attachment and the agent context
+        if (msgType === "audio") {
+          const transcription = await transcribeAudio(buffer, filename);
+          attachment.transcription = transcription;
+          agentText = `[Audio]: ${transcription}`;
+        } else {
+          const typeLabel =
+            msgType === "image" ? "una imagen"
+            : msgType === "document" ? "un documento"
+            : "un video";
+          agentText = `El cliente envió ${typeLabel}${mediaObj.caption ? `: "${mediaObj.caption}"` : ""}`;
+        }
+
+        contentAttributes = [attachment];
+        await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+
+      } catch (mediaError) {
+        // Media processing failed — still run the agent with a degraded context
+        console.error("[webhook] Media processing error:", mediaError);
+        agentText = `[${msgType}]`;
+        await insertMessage(conversationId, "user", agentText, undefined, messageId);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 9. Enqueue message into buffer and schedule deferred processing
+    // -------------------------------------------------------------------------
+
+    // Content-level dedup (Level 2) — catches exact resends within 5s
+    const isDuplContent = await BufferManager.isContentDuplicate("whatsapp", customerPhone, agentText);
+    if (isDuplContent) {
+      console.log(`[buffer:enqueue] Content duplicate detected, skipping: ${agentText.slice(0, 50)}`);
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    console.log(`[buffer:enqueue] Buffering message for whatsapp:${customerPhone}`);
+    await BufferManager.enqueue("whatsapp", customerPhone, {
+      content: agentText,
+      messageId,
+      timestamp: Date.now(),
+      contentAttributes: contentAttributes ?? undefined,
     });
 
-    // 10. Persist assistant response
-    await insertMessage(conversationId, "assistant", responseText);
+    // Capture config values for the closure (config object may not be available later)
+    const apiKey = config.ycloudApiKey || "";
+    const botNumber = config.phoneNumber || "";
+    const systemPrompt = config.systemPrompt || "";
 
-    // 11. Send response via YCloud
-    await sendWhatsAppMessage({
-      to: customerPhone,
-      body: responseText,
-      apiKey: config.ycloudApiKey || "",
-      from: config.phoneNumber || "",
-    });
+    // Fire-and-forget: webhook returns 200 immediately, processing happens in background
+    scheduleBufferProcessing("whatsapp", customerPhone, async (bufferedMessages) => {
+      // Concatenate all buffered messages into a single context for the agent
+      const combinedText = bufferedMessages.map((m) => m.content).join("\n");
+
+      // Get fresh conversation history for AI context (last 20 messages)
+      const history = await getConversationMessages(conversationId, 20);
+      const aiMessages = history.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+
+      // If the buffer had multiple messages, add the combined view as the last user turn
+      // so the agent sees all pending input in one shot
+      if (bufferedMessages.length > 1) {
+        // Replace the last user message with the combined text to avoid duplication
+        const lastUserIdx = [...aiMessages].reverse().findIndex((m) => m.role === "user");
+        if (lastUserIdx !== -1) {
+          const realIdx = aiMessages.length - 1 - lastUserIdx;
+          aiMessages[realIdx] = { role: "user", content: combinedText };
+        }
+      }
+
+      // Run agent with combined context
+      const responseText = await runWhatsAppAgent({
+        conversationId,
+        customerPhone,
+        messages: aiMessages,
+        systemPrompt,
+      });
+
+      // Persist assistant response
+      await insertMessage(conversationId, "assistant", responseText);
+
+      // Send response via YCloud (split into bubbles for natural UX)
+      await sendWhatsAppBubbles({
+        to: customerPhone,
+        text: responseText,
+        apiKey,
+        from: botNumber,
+      });
+    }).catch((err) => console.error("[webhook] Buffer processing error:", err));
 
   } catch (error) {
     console.error("[webhook] Error processing message:", error);

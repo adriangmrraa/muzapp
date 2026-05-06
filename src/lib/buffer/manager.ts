@@ -80,4 +80,18 @@ export const BufferManager = {
     const len = await redis.llen(bKey);
     return len > 0;
   },
+
+  // Level-2 content dedup: returns true if the same content was seen in the last 5 seconds
+  async isContentDuplicate(channel: Channel, userId: string, content: string): Promise<boolean> {
+    if (!redis) return false;
+    const hashKey = `dedup:${channel}:${userId}`;
+    // Simple fingerprint: first 50 chars, lowercased and trimmed
+    const hash = content.toLowerCase().trim().slice(0, 50);
+
+    const existing = await redis.get(hashKey);
+    if (existing === hash) return true;
+
+    await redis.set(hashKey, hash, { ex: 5 });
+    return false;
+  },
 };

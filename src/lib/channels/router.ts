@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { conversations, chatMessages } from "@/db/schema";
+import { conversations, chatMessages, leads, attachments } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export type Channel = "whatsapp" | "telegram";
@@ -117,7 +117,60 @@ export async function insertMessage(
     })
     .where(eq(conversations.id, conversationId));
 
+  // Auto-attach media to lead
+  if (contentAttributes && contentAttributes.length > 0 && role === "user") {
+    autoAttachToLead(conversationId, msg.id, contentAttributes).catch((err) =>
+      console.error("[router] autoAttach failed:", err)
+    );
+  }
+
   return msg.id;
+}
+
+async function autoAttachToLead(
+  conversationId: number,
+  messageId: number,
+  contentAttributes: MediaAttachment[]
+): Promise<void> {
+  if (!contentAttributes || contentAttributes.length === 0) return;
+
+  try {
+    // Find lead by conversation
+    const [conv] = await db
+      .select({ customerPhone: conversations.customerPhone })
+      .from(conversations)
+      .where(eq(conversations.id, conversationId))
+      .limit(1);
+
+    if (!conv?.customerPhone) return;
+
+    // Find lead by phone
+    const leadRows = await db
+      .select({ id: leads.id })
+      .from(leads)
+      .where(eq(leads.phone, conv.customerPhone))
+      .limit(1);
+
+    const leadId = leadRows[0]?.id || null;
+
+    // Create attachment for each media item
+    for (const media of contentAttributes) {
+      await db.insert(attachments).values({
+        leadId,
+        conversationId,
+        messageId,
+        type: media.type,
+        url: media.url,
+        fileName: media.fileName || null,
+        mimeType: media.mimeType || null,
+        fileSize: media.fileSize || null,
+        caption: media.caption || null,
+      });
+    }
+  } catch (error) {
+    console.error("[router] autoAttachToLead error:", error);
+    // Non-fatal — don't break message flow
+  }
 }
 
 // Check if message was already processed (deduplication)

@@ -2,6 +2,9 @@
 
 import { auth } from "@/auth";
 import { getMetaConfig, getMetaAccessToken } from "@/lib/meta/config";
+import { db } from "@/db";
+import { agentConfig } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export type MetaConfigState = {
   success: boolean;
@@ -132,4 +135,47 @@ export async function testMetaConnection(): Promise<MetaConfigState> {
       message: `Error al conectar con Meta: ${err instanceof Error ? err.message : "desconocido"}`,
     };
   }
+}
+
+export async function disconnectMeta(): Promise<{ success: boolean; error?: string }> {
+  try {
+    await db
+      .update(agentConfig)
+      .set({
+        metaAccessToken: null,
+        metaTokenExpiresAt: null,
+        metaBusinessName: null,
+        metaPhoneNumberId: null,
+        metaConnected: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(agentConfig.id, 1));
+
+    return { success: true };
+  } catch (error) {
+    console.error("[disconnectMeta] Error:", error);
+    return { success: false, error: "Error al desconectar" };
+  }
+}
+
+export async function getMetaConnectionStatus(): Promise<{
+  connected: boolean;
+  businessName: string | null;
+  expiresAt: Date | null;
+}> {
+  const rows = await db
+    .select({
+      metaConnected: agentConfig.metaConnected,
+      metaBusinessName: agentConfig.metaBusinessName,
+      metaTokenExpiresAt: agentConfig.metaTokenExpiresAt,
+    })
+    .from(agentConfig)
+    .limit(1);
+
+  const config = rows[0];
+  return {
+    connected: config?.metaConnected ?? false,
+    businessName: config?.metaBusinessName ?? null,
+    expiresAt: config?.metaTokenExpiresAt ?? null,
+  };
 }
