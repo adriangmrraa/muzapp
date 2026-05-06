@@ -6,7 +6,7 @@ const DLQ_KEY = "queue:dlq";
 
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
 const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-const hasRedis = !!(redisUrl && redisToken);
+const hasRedis = !!(redisUrl && redisToken && redisUrl.startsWith("https://"));
 
 let redis: Redis | null = null;
 
