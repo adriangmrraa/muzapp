@@ -7,11 +7,12 @@ import {
   type TelegramUpdate,
 } from "@/lib/telegram/bot";
 import {
-  checkIdempotency,
+  createIdempotency,
   setIdempotency,
   createIdempotencyKey,
 } from "@/lib/idempotency";
 import { createCorrelationId, createLogger, logRequestReceived } from "@/lib/logger";
+import { checkRateLimit, getRateLimitHeaders } from "@/lib/infra/rate-limit";
 
 export async function POST(
   request: NextRequest,
@@ -36,6 +37,19 @@ export async function POST(
       return NextResponse.json(
         { ok: false, error: "Bot disabled" },
         { status: 503 }
+      );
+    }
+
+    // ── Rate limiting ──
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      request.headers.get("x-real-ip") ??
+      "unknown";
+    const rateCheck = await checkRateLimit(`telegram:${ip}`);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { ok: false, error: "Too many requests" },
+        { status: 429, headers: getRateLimitHeaders(false, 0, rateCheck.limit) }
       );
     }
 

@@ -4,31 +4,7 @@ import { processMessage } from "@/lib/agent";
 import { loadConversation, saveConversation } from "@/lib/agent/conversation";
 import { smartSplit } from "@/lib/agent/smart-split";
 import { sendText } from "@/lib/ycloud";
-
-// ─── Rate limiting ─────────────────────────────────────────────────────────────
-
-interface RateEntry {
-  count: number;
-  windowStart: number;
-}
-
-const rateLimitMap = new Map<string, RateEntry>();
-const RATE_LIMIT = 100;
-const RATE_WINDOW_MS = 60_000; // 1 minute
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now - entry.windowStart > RATE_WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, windowStart: now });
-    return false;
-  }
-
-  entry.count += 1;
-  if (entry.count > RATE_LIMIT) return true;
-  return false;
-}
+import { checkRateLimit, getRateLimitHeaders } from "@/lib/infra/rate-limit";
 
 // ─── HMAC-SHA256 verification ──────────────────────────────────────────────────
 
@@ -128,14 +104,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // Rate limiting by IP
+  // Rate limiting by IP (profesional)
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("x-real-ip") ??
     "unknown";
 
-  if (isRateLimited(ip)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  const rateCheck = await checkRateLimit(`whatsapp:${ip}`);
+  if (!rateCheck.success) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: getRateLimitHeaders(false, 0, rateCheck.limit) }
+    );
   }
 
   // Read raw body for signature verification
