@@ -6,10 +6,27 @@ import { motion } from "framer-motion";
 import { staggerContainer } from "@/lib/animation-variants";
 
 interface ProductGridProps {
-  products: Product[];
+  products: Product[] | any[];
 }
 
 export function ProductGrid({ products }: ProductGridProps) {
+  // Normalize products from API or constants format
+  const normalized = products.map((p, i) => {
+    // If has 'price' as number, convert to string for ProductCard
+    if (typeof p.price === "number") {
+      return {
+        id: String(p.id),
+        name: p.name,
+        price: p.price,
+        ingredients: p.description || "",
+        emoji: "🍔",
+        comingSoon: p.comingSoon,
+      };
+    }
+    // Already in Product format
+    return p;
+  });
+
   return (
     <motion.div
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -18,8 +35,8 @@ export function ProductGrid({ products }: ProductGridProps) {
       whileInView="visible"
       viewport={{ once: true, margin: "-50px" }}
     >
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {normalized.map((product, i) => (
+        <ProductCard key={product.id} product={product} index={i} />
       ))}
     </motion.div>
   );

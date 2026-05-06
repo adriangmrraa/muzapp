@@ -7,42 +7,116 @@ import {
   getBusinessHoursTool,
   createTransferToHumanTool,
 } from "./tools";
+import { detectInjection } from "./tools/prompt-security";
+import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
+import { checkDeliveryTool, getDeliveryTimeTool, listAvailableProductsTool } from "./tools/extended-tools";
+import { formatAsWhatsAppBubbles } from "./smart-split";
 
 interface RunAgentParams {
   conversationId: number;
   customerPhone: string;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
-  systemPrompt: string;
+  systemPrompt?: string;
 }
 
-const DEFAULT_SYSTEM_PROMPT = `Sos el asistente virtual de Mrs Muzzarella, una rotisería en Formosa, Argentina.
+// 🎯 FLUJOS EMOCIONALES (adaptados de ClinicForge F1-F9)
+// Detecta el tipo de situación emocional y retorna el handler apropiado
 
-Tu personalidad:
-- Amable, cordial y eficiente
-- Respondés en español rioplatense informal (vos, dale, genial)
-- Sos conciso — no escribís párrafos largos por WhatsApp
-- Usás emojis con moderación (1-2 por mensaje máximo)
+type EmotionalTrigger = "F1_MALA_EXPERIENCIA" | "F3_URGENCIA" | "F5_PRECIO" | "F6_PERDIDA_DIENTES" | "F7_MIEDO" | null;
 
-Tus capacidades:
-- Podés mostrar el menú y precios
-- Podés verificar disponibilidad de productos
-- Podés tomar pedidos (SIEMPRE confirmá los items antes de crear el pedido)
-- Podés informar horarios de atención
-- Si no podés resolver algo, transferís a un humano
+function detectEmotionalTrigger(message: string): EmotionalTrigger {
+  const m = message.toLowerCase();
+  
+  // F1: Mala experiencia previa en otro lado
+  if (m.includes("otra parte") || m.includes("otro lado") || m.includes("otro restaurant") || 
+      m.includes("antes no me gusto") || m.includes("otra vez") && m.includes("mal")) {
+    return "F1_MALA_EXPERIENCIA";
+  }
+  
+  // F3: Urgencia / hambre
+  if (m.includes("tengo hambre") || m.includes("urgente") || m.includes("ya") || m.includes("ahora") ||
+      m.includes("para ahora") || m.includes("rápido")) {
+    return "F3_URGENCIA";
+  }
+  
+  // F5: Precio directo
+  if (m.includes("cuánto sale") || m.includes("cuánto cuesta") || m.includes("precio") || m.includes("cuánto")) {
+    return "F5_PRECIO";
+  }
+  
+  // F6: Pérdida de dientes / urgencia dental (gastronomy: comida)
+  if (m.includes("sin comer") || m.includes("no puedo comer") || m.includes("hambre")) {
+    return "F6_PERDIDA_DIENTES";
+  }
+  
+  // F7: Miedo / ansiedad
+  if (m.includes("no sé") || m.includes("duda") || m.includes("me da cosa") || m.includes("no entiendo")) {
+    return "F7_MIEDO";
+  }
+  
+  return null;
+}
 
-Reglas:
-- NUNCA inventés precios — usá siempre la herramienta getMenu
-- SIEMPRE confirmá el pedido completo antes de usar createOrder
-- Si el cliente pide algo que no está en el menú, sugerí alternativas
-- Si te preguntan algo que no sea sobre comida/pedidos, respondé amablemente que solo podés ayudar con pedidos`;
+function getEmotionalResponse(trigger: EmotionalTrigger, customerName?: string): string | null {
+  const name = customerName || "chico/a";
+  
+  switch (trigger) {
+    case "F1_MALA_EXPERIENCIA":
+      return `Entiendo tu preocupación ${name}. En Mrs Muzzarella somos distintos — preparamos todo fresco, con ingredientes de calidad y sin conservantes. Dale una chance, probá alguna de nuestras burgers y me decís! 🍔`;
+    
+    case "F3_URGENCIA":
+      return `¡Te entiendo! La línea de pollo es la más rápida y están tope ricas.¿Querés que te tome el pedido ahora para que llegue lo antes posible? 🚀`;
+    
+    case "F5_PRECIO":
+      // El agente usará getMenu - esto es solo fallback
+      return null;
+    
+    case "F6_PERDIDA_DIENTES":
+      return `¡No te quedes sin comer! Nuestras burgers son completas y rendidoras. Te paso el menú para que elijas lo que más te llame la atención 🍔`;
+    
+    case "F7_MIEDO":
+      return `Tranqui ${name}, cualquier duda me preguntás y te asesoro. ¿Qué te llama la atención del menú?`;
+    
+    default:
+      return null;
+  }
+}
 
 export async function runWhatsAppAgent({
   conversationId,
   customerPhone,
   messages,
-  systemPrompt,
+  systemPrompt: customPrompt,
 }: RunAgentParams): Promise<string> {
-  const system = systemPrompt || DEFAULT_SYSTEM_PROMPT;
+  // 🛡️ PROMPT INJECTION DETECTION
+  const lastUserMessage = messages[messages.length - 1]?.content || "";
+  const injectionCheck = detectInjection(lastUserMessage);
+  
+  if (injectionCheck.detected) {
+    console.warn("[agent] Prompt injection detected:", injectionCheck.pattern);
+    return "No puedo procesar esa solicitud. ¿Querés hacer un pedido o ver el menú?";
+  }
+
+  // 🎯 DETECTAR FLUJO EMOCIONAL
+  const emotionalTrigger = detectEmotionalTrigger(lastUserMessage);
+  let emotionalResponse = null;
+  
+  if (emotionalTrigger) {
+    emotionalResponse = getEmotionalResponse(emotionalTrigger);
+    if (emotionalResponse) {
+      // Responder con el flujo emocional primero, luego continue
+      console.log("[agent] Emotional flow triggered:", emotionalTrigger);
+    }
+  }
+
+  // 🔧 BUILD DYNAMIC PROMPT (3 layers: core + data + context)
+  let system: string;
+  try {
+    system = customPrompt || await buildSystemPrompt(conversationId);
+  } catch (err) {
+    console.warn("[agent] buildSystemPrompt failed, using fallback", err);
+    system = DEFAULT_SYSTEM_PROMPT;
+  }
 
   try {
     const result = await generateText({
@@ -55,12 +129,22 @@ export async function runWhatsAppAgent({
         createOrder: createOrderTool,
         getBusinessHours: getBusinessHoursTool,
         transferToHuman: createTransferToHumanTool(conversationId),
+        checkDelivery: checkDeliveryTool,
+        listAvailableProducts: listAvailableProductsTool,
       },
       stopWhen: stepCountIs(5),
       toolChoice: "auto",
     });
 
-    return result.text || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
+    let rawText = result.text || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
+    
+    // 📨 SMART SPLIT — dividir respuestas largas en burbujas
+    const bubbles = formatAsWhatsAppBubbles(rawText);
+    const finalText = bubbles.length > 1 
+      ? bubbles.join("\n\n---\n\n") 
+      : rawText;
+    
+    return finalText;
   } catch (error) {
     console.error("[agent] Error running WhatsApp agent:", error);
     return "¡Uy! Tuve un problema técnico. Intentá de nuevo en unos minutos o escribí 'hablar con humano' para que te atienda una persona.";

@@ -39,6 +39,7 @@ export async function createProduct(formData: FormData) {
   });
 
   revalidatePath("/admin/products");
+  revalidatePath("/api/products");
   return { success: true };
 }
 
@@ -78,6 +79,7 @@ export async function updateProduct(id: number, formData: FormData) {
     .where(eq(products.id, id));
 
   revalidatePath("/admin/products");
+  revalidatePath("/api/products");
   return { success: true };
 }
 
@@ -89,6 +91,7 @@ export async function deleteProduct(id: number) {
 
   await db.delete(products).where(eq(products.id, id));
   revalidatePath("/admin/products");
+  revalidatePath("/api/products");
   return { success: true };
 }
 
@@ -104,5 +107,6 @@ export async function toggleProductAvailability(id: number, available: boolean) 
     .where(eq(products.id, id));
 
   revalidatePath("/admin/products");
+  revalidatePath("/api/products");
   return { success: true };
 }

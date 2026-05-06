@@ -1,18 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductToggle } from "@/components/products/product-toggle";
 import { LINEA_POLLO, LINEA_CARNE, FEATURED_PRODUCT_IDS } from "@/lib/constants";
 import { fadeUp } from "@/lib/animation-variants";
 
+type ProductFromAPI = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: string | null;
+  category: string;
+  line: string;
+  imageUrl: string | null;
+  available: boolean;
+  comingSoon: boolean;
+  sortOrder: number;
+};
+
 export function FeaturedProductsSection() {
   const [linea, setLinea] = useState<"pollo" | "carne">("pollo");
-  const allProducts = linea === "pollo" ? LINEA_POLLO : LINEA_CARNE;
-  const products = linea === "pollo"
-    ? allProducts.filter((p) => FEATURED_PRODUCT_IDS.includes(p.id))
-    : allProducts;
+  const [products, setProducts] = useState<ProductFromAPI[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products?available=true");
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        console.warn("[FeaturedProductsSection] API unavailable, using fallback", err);
+        setError(true);
+        // Fallback to constants
+        const fallback = linea === "pollo" ? LINEA_POLLO : LINEA_CARNE;
+        const mapped = fallback.map((p, i) => ({
+          id: i,
+          name: p.name,
+          description: p.ingredients,
+          price: p.price ? `$${p.price}` : null,
+          category: linea === "pollo" ? "hamburguesa" : "hamburguesa",
+          line: linea,
+          imageUrl: null,
+          available: !p.comingSoon,
+          comingSoon: p.comingSoon || false,
+          sortOrder: i,
+        }));
+        setProducts(mapped);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+  }, [linea]);
+
+  // Filter featured for pollo line
+  const featuredIds = FEATURED_PRODUCT_IDS;
+  const filteredProducts = linea === "pollo"
+    ? products.filter((p) => featuredIds.includes(p.id.toString()) || p.sortOrder < 4)
+    : products;
 
   return (
     <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
@@ -50,7 +100,7 @@ export function FeaturedProductsSection() {
           </div>
         </motion.div>
 
-        <ProductGrid products={products} />
+        <ProductGrid products={filteredProducts} />
       </div>
     </section>
   );
