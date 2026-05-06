@@ -20,9 +20,13 @@ function sleep(ms: number): Promise<void> {
 export function splitIntoBubbles(text: string): string[] {
   // Clean up markdown artifacts for WhatsApp
   let cleaned = text
-    .replace(/\*\*([^*]+)\*\*/g, "$1")  // **bold** → bold
+    .replace(/\*\*([^*]*)\*\*/g, "$1")   // **bold** → bold (allow empty)
+    .replace(/\*([^*]+)\*/g, "$1")       // *italic* → italic
     .replace(/`([^`]+)`/g, "$1")         // `code` → code
+    .replace(/^#+\s*/gm, "")             // # headers → remove
+    .replace(/^[-*]\s+/gm, "- ")         // normalize bullet points
     .replace(/---+/g, "")                // --- dividers
+    .replace(/👇/g, "")                  // remove pointer emojis
     .replace(/\n{3,}/g, "\n\n")          // collapse 3+ newlines
     .trim();
 

@@ -33,5 +33,7 @@ export async function sendWhatsAppMessage({ to, body, apiKey, from }: SendMessag
     throw new Error(`YCloud API error (${response.status}): ${error}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log(`[ycloud] Message sent to ${to} — id:${result.id} status:${result.status}`);
+  return result;
 }
