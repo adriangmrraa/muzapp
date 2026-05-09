@@ -489,7 +489,7 @@ export const queryDataTool = tool({
     try {
       // Map table names to actual drizzle queries
       const tableMap: Record<string, any> = {
-        conversations, leads, orders, products, agentConfig, chat_messages, users,
+        conversations, leads, orders, products, agentConfig, chatMessages, users,
       };
 
       const tbl = tableMap[table];
