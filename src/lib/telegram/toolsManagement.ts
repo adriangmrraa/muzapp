@@ -571,7 +571,7 @@ export const getBusinessSummaryTool = tool({
       `📊 *RESUMEN DEL NEGOCIO*`,
       ``,
       `👨‍🍳 Cocina: ${config?.isCooking ? "✅ Abierta" : "❌ Cerrada"}`,
-      `⏰ Horarios: ${config?.businessHours ? `${config.businessHours.days || "?"} ${config.businessHours.open || "?"}-${config.businessHours.close || "?"}` : "No configurados"}`,
+      `⏰ Horarios: ${config?.businessHours ? `${(config.businessHours as any).days || "?"} ${(config.businessHours as any).open || "?"}-${(config.businessHours as any).close || "?"}` : "No configurados"}`,
       `📦 Pedidos pendientes: ${pendingOrders?.count || 0}`,
       `📅 Pedidos hoy: ${todayOrders?.count || 0}`,
       `🆕 Leads hoy: ${newLeads?.count || 0}`,
