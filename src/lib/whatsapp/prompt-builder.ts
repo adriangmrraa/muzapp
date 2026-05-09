@@ -190,7 +190,7 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
       const p = customerContext.pendingOrder;
       const items = Array.isArray(p.items) ? p.items.map((i: any) => `${i.quantity || 1}x ${i.name || "?"}`).join(", ") : "ver detalle";
       context += `\n\n🟢 PEDIDO ACTUAL (PENDIENTE #${p.id}): ${items} | Tipo: ${p.orderType || "?"}${p.address ? ` | Direccion: ${p.address}` : ""}`;
-      context += `\nImportante: El cliente ya tiene un pedido pendiente. No le preguntes qué quiere de nuevo. Ayudalo con el estado de su pedido actual.`;
+      context += `\nNota: El cliente tiene un pedido pendiente, PERO si pide algo nuevo o diferente, procesalo como un pedido nuevo. No ignores lo que te pide.`;
     }
   }
   
@@ -271,6 +271,8 @@ PASO 6 — CIERRE
 STATUS PEDIDO: Si pregunta "cuanto falta?" o "está listo?" → EJECUTÁ getOrderStatus. No inventes tiempos.
 
 PRECIO PRODUCTO: Si pregunta precio o si tenés un producto → EJECUTÁ getProductPrice. No digas precios de memoria.
+
+PROMOS: Si el cliente pregunta por promos, descuentos, u ofertas, revisá las PROMOCIONES ACTIVAS en tu contexto (las carga el admin desde la UI). Si hay promo, ofrecela. Si no hay, decí "no hay promos activas por ahora amigo".
 
 B2B: checkPanStock + preguntar cantidad + getPaymentAlias("b2b")
 
