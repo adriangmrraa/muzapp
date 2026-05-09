@@ -154,8 +154,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const ycloudMsg = payload?.whatsappInboundMessage;
       if (!ycloudMsg) return;
 
-      // Solo texto por ahora
-      if (ycloudMsg.type !== "text") return;
+      // Solo texto — audio/imagen/document pasan por el webhook nuevo (/api/whatsapp/webhook)
+      if (ycloudMsg.type !== "text") {
+        if (ycloudMsg.type === "audio") console.warn("[webhook:old] Audio ignorado — configurá YCloud para usar /api/whatsapp/webhook");
+        return;
+      }
 
       const from: string | undefined = ycloudMsg.from;
       const text: string | undefined = ycloudMsg.text?.body;

@@ -160,6 +160,38 @@ export async function updateOrderStatus(
 }
 
 /**
+ * Notificar al cliente sin cambiar el estado
+ */
+export async function notifyCustomer(
+  orderId: number
+): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  if (!session) return { success: false, message: "No autorizado" };
+
+  try {
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!order) return { success: false, message: "Pedido no encontrado" };
+    if (!order.phoneNumber) return { success: false, message: "Sin teléfono" };
+
+    const msg = buildWhatsAppMessage(order.status, order as OrderRow);
+    if (!msg) return { success: false, message: "No hay mensaje para este estado" };
+
+    const { sendText } = await import("@/lib/ycloud");
+    const result = await sendText(order.phoneNumber, msg);
+    if (!result.ok) return { success: false, message: `Error al enviar: ${result.error}` };
+
+    return { success: true, message: "Notificación enviada" };
+  } catch (e) {
+    return { success: false, message: `Error: ${e instanceof Error ? e.message : "desconocido"}` };
+  }
+}
+
+/**
  * Get order summary counts
  */
 export async function getOrderCounts(): Promise<Record<string, number>> {

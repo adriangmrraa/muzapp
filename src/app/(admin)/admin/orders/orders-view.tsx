@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
-import { updateOrderStatus, type OrderRow } from "./actions";
+import { updateOrderStatus, notifyCustomer, type OrderRow } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +67,7 @@ function OrderCard({
   onStatusChange: (id: number, status: string) => void;
 }) {
   const [changing, setChanging] = useState(false);
+  const [notifying, setNotifying] = useState(false);
   const statusCfg = STATUSES[order.status] ?? STATUSES.pending;
   const typeBadge = orderTypeBadge(order.orderType);
   const items: Array<{ name?: string; quantity?: number; productName?: string }> =
@@ -163,6 +164,23 @@ function OrderCard({
               className="h-7 text-[11px] px-3 bg-white/[0.06] hover:bg-white/[0.1] text-white/70"
             >
               → {STATUSES[NEXT_STATUS[order.status]]?.label}
+            </Button>
+          )}
+          {(order.status === "pending" || order.status === "preparing") && (
+            <Button
+              type="button"
+              size="sm"
+              disabled={notifying}
+              onClick={async () => {
+                setNotifying(true);
+                await notifyCustomer(order.id);
+                setNotifying(false);
+              }}
+              variant="ghost"
+              className="h-7 text-[11px] px-2 text-white/30 hover:text-amber-400"
+              title="Notificar al cliente"
+            >
+              🔔
             </Button>
           )}
           {order.status === "pending" && (
