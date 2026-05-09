@@ -2,12 +2,14 @@ import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 import {
   sendTelegramMessage,
+  downloadTelegramFile,
   type TelegramUpdate,
   type TelegramConfig,
   isChatAuthorized,
 } from "./bot";
 import { internalAgentTools } from "./tools";
 import { INTERNAL_AGENT_SYSTEM_PROMPT } from "./system-prompt";
+import { transcribeAudio } from "@/lib/media/transcription";
 
 export type HandleResult =
   | { ok: true; replied: boolean; replyText?: string }
@@ -30,9 +32,22 @@ export async function handleTelegramUpdate(
   }
 
   const chatId = message.chat.id;
-  const text = message.text?.trim();
+  let text = message.text?.trim() || "";
 
-  // ── Solo procesar mensajes de texto ──
+  // ── Audio/Voice → transcribir con Whisper ──
+  const voiceOrAudio = message.voice || message.audio;
+  if (!text && voiceOrAudio) {
+    const file = await downloadTelegramFile(config.botToken, voiceOrAudio.file_id);
+    if (file) {
+      const transcription = await transcribeAudio(file.buffer, file.filePath);
+      text = `[Audio]: ${transcription}`;
+      console.log(`[telegram-handler] Audio transcribed: ${transcription.slice(0, 100)}`);
+    } else {
+      text = "[Audio sin transcripción]";
+    }
+  }
+
+  // ── Nada que procesar ──
   if (!text) {
     return { ok: true, replied: false };
   }

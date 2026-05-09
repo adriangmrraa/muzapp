@@ -7,6 +7,8 @@ export type TelegramUpdate = {
     chat: { id: number; type: string; first_name?: string; username?: string };
     from: { id: number; is_bot: boolean; first_name?: string; username?: string };
     text?: string;
+    voice?: { file_id: string; duration: number; mime_type?: string };
+    audio?: { file_id: string; duration: number; mime_type?: string; file_name?: string };
     date: number;
   };
 };
@@ -24,6 +26,39 @@ const TELEGRAM_API = "https://api.telegram.org/bot";
 
 function apiUrl(token: string, method: string): string {
   return `${TELEGRAM_API}${token}/${method}`;
+}
+
+/**
+ * Descarga un archivo de Telegram por file_id.
+ * 1. getFile → obtiene file_path
+ * 2. Descarga el binario desde api.telegram.org/file/bot{token}/{file_path}
+ */
+export async function downloadTelegramFile(
+  token: string,
+  fileId: string
+): Promise<{ buffer: Buffer; filePath: string } | null> {
+  try {
+    const res = await fetch(apiUrl(token, "getFile"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file_id: fileId }),
+    });
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as { ok: boolean; result?: { file_path?: string } };
+    const filePath = data.result?.file_path;
+    if (!filePath) return null;
+
+    const fileUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
+    const fileRes = await fetch(fileUrl);
+    if (!fileRes.ok) return null;
+
+    const arrayBuffer = await fileRes.arrayBuffer();
+    return { buffer: Buffer.from(arrayBuffer), filePath };
+  } catch (err) {
+    console.error("[telegram] Error downloading file:", err);
+    return null;
+  }
 }
 
 export async function sendTelegramMessage(
