@@ -86,8 +86,37 @@ export async function fetchOrders(params: {
   };
 }
 
+// ─── Mensajes personalizados segun estado, tipo y entrega ───────────────
+function buildWhatsAppMessage(status: string, order: OrderRow): string | null {
+  const name = order.customerName || "amigo";
+  const isDelivery = order.notes?.toLowerCase().includes("delivery") || !order.notes?.toLowerCase().includes("retiro");
+  const isPan = order.orderType === "pan_mayorista";
+
+  switch (status) {
+    case "preparing":
+      return isPan
+        ? `hola ${name}, ya estamos preparando tu pedido de pan 👍`
+        : `hola ${name}, ya estamos preparando tu pedido 👍`;
+
+    case "ready":
+      if (isPan) return `hola ${name}, tu pedido de pan está listo para retirar en Neuquen 1245 🔥`;
+      return isDelivery
+        ? `hola ${name}, tu pedido está listo! te lo estamos llevando 🛵`
+        : `hola ${name}, tu pedido está listo para retirar en Neuquen 1245 🔥`;
+
+    case "delivered":
+      return `gracias ${name}! esperamos que te haya gustado. etiquetanos en ig @mrs_mozzarella ❤️`;
+
+    case "cancelled":
+      return `hola ${name}, tu pedido fue cancelado. cualquier cosa nos contactamos`;
+
+    default:
+      return null;
+  }
+}
+
 /**
- * Update order status
+ * Update order status + send WhatsApp notification
  */
 export async function updateOrderStatus(
   orderId: number,
@@ -97,14 +126,35 @@ export async function updateOrderStatus(
   if (!session) return { success: false, message: "No autorizado" };
 
   try {
+    // Get order details before updating
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!order) return { success: false, message: "Pedido no encontrado" };
+
     await db
       .update(orders)
       .set({ status: newStatus, updatedAt: new Date() })
       .where(eq(orders.id, orderId));
 
+    // Send WhatsApp notification
+    const message = buildWhatsAppMessage(newStatus, order as OrderRow);
+    if (message && order.phoneNumber) {
+      try {
+        const { sendText } = await import("@/lib/ycloud");
+        await sendText(order.phoneNumber, message);
+        console.log(`[orders] WhatsApp sent to ${order.phoneNumber} for order #${orderId}: ${newStatus}`);
+      } catch (e) {
+        console.warn(`[orders] Failed to send WhatsApp for order #${orderId}:`, e);
+      }
+    }
+
     revalidatePath("/admin/orders");
     return { success: true, message: "Estado actualizado" };
-  } catch {
+  } catch (e) {
     return { success: false, message: "Error al actualizar" };
   }
 }
