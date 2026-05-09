@@ -8,6 +8,8 @@ export async function getCorePrompt(): Promise<string> {
   let userExtras = "";
   let instruccionesExtra = "";
   let promosActivas = "";
+  let trainContext = "";
+  let customSystemPrompt = "";
 
   try {
     const config = await db.query.agentConfig.findFirst({
@@ -25,6 +27,14 @@ export async function getCorePrompt(): Promise<string> {
     if (config?.whatsappPromociones && config.whatsappPromociones.trim().length > 0) {
       promosActivas = config.whatsappPromociones.trim();
     }
+
+    if (config?.trainBotContext && config.trainBotContext.trim().length > 0) {
+      trainContext = config.trainBotContext.trim();
+    }
+
+    if (config?.whatsappSystemPrompt && config.whatsappSystemPrompt.trim().length > 0) {
+      customSystemPrompt = config.whatsappSystemPrompt.trim();
+    }
   } catch (err) {
     console.warn("[prompt-builder] agent_config table not available");
   }
@@ -41,11 +51,17 @@ export async function getCorePrompt(): Promise<string> {
   }
 
   if (promosActivas) {
-    extraSections.push(`PROMOCIONES ACTIVAS:\n\n${promosActivas}\n\nInformá estas promos cuando el cliente pida recomendaciones o pregunte por descuentos.`);
-  }
+      extraSections.push(`PROMOCIONES ACTIVAS:\n\n${promosActivas}\n\nInformá estas promos cuando el cliente pida recomendaciones o pregunte por descuentos.`);
+    }
 
-  if (extraSections.length > 0) {
-    return `${DEFAULT_SYSTEM_PROMPT}
+    if (trainContext) {
+      extraSections.push(`CONTEXTO DEL NEGOCIO:\n\n${trainContext}`);
+    }
+
+    const basePrompt = customSystemPrompt || DEFAULT_SYSTEM_PROMPT;
+
+    if (extraSections.length > 0) {
+      return `${basePrompt}
 
 ---
 
@@ -53,9 +69,9 @@ ${extraSections.join("\n\n---\n\n")}
 
 ---
 Fin de instrucciones adicionales. Las reglas base siguen vigentes.`;
-  }
+    }
 
-  return DEFAULT_SYSTEM_PROMPT;
+    return basePrompt;
 }
 
 // Layer 2: Data (menu, business hours, campaigns)

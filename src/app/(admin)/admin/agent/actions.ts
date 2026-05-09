@@ -167,7 +167,7 @@ export async function saveAgentConfig(
       autoReply24hMessage: parsed.data.autoReply24hMessage ?? null,
       trainBotContext: parsed.data.trainBotContext ?? null,
       whatsappSystemPrompt: parsed.data.whatsappSystemPrompt ?? null,
-      whatsappInstrucciones: parsed.data.whatsappInstrucciones ?? null,
+      whatsappInstructions: parsed.data.whatsappInstrucciones ?? null,
       whatsappPromociones: parsed.data.whatsappPromociones ?? null,
       whatsappZonasDelivery: parsed.data.whatsappZonasDelivery ?? null,
       isCooking: parsed.data.isCooking,
