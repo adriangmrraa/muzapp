@@ -313,62 +313,101 @@ export const getBusinessHoursTool = tool({
       return "No hay horarios configurados todavía.";
     }
 
-    const hours = config.businessHours as {
-      days?: string;
-      open?: string;
-      close?: string;
-      enabled?: boolean;
-    };
+    const data = config.businessHours as any;
 
-    if (!hours.enabled) {
-      return "Los horarios automáticos están desactivados.";
+    // Soporte para ambos formatos: array (admin UI) y objeto legacy
+    let days: string[], openTime: string, closeTime: string, isEnabled: boolean;
+
+    if (Array.isArray(data)) {
+      // Formato array: [{ day: "Lunes", openTime: "05:00", ... }]
+      const abiertos = data.filter((d: any) => d.open !== false);
+      if (abiertos.length === 0) return "Los horarios automáticos están desactivados.";
+      days = abiertos.map((d: any) => d.day);
+      openTime = abiertos[0]?.openTime || "—";
+      closeTime = abiertos[0]?.closeTime || "—";
+      isEnabled = true;
+    } else {
+      // Formato objeto legacy: { enabled, days, open, close }
+      if (!data.enabled) return "Los horarios automáticos están desactivados.";
+      days = (data.days || "").split(/,\s*/);
+      openTime = data.open || "—";
+      closeTime = data.close || "—";
+      isEnabled = true;
     }
 
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const parseTime = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m ?? 0); };
+    const openM = parseTime(openTime);
+    const closeM = parseTime(closeTime);
+    const isOpen = isEnabled && currentMinutes >= openM && currentMinutes < closeM;
 
-    const parseTime = (t: string) => {
-      const [h, m] = t.split(":").map(Number);
-      return h * 60 + (m ?? 0);
-    };
-
-    const currentMinutes = currentHour * 60 + currentMinute;
-    const openMinutes = hours.open ? parseTime(hours.open) : null;
-    const closeMinutes = hours.close ? parseTime(hours.close) : null;
-
-    const isOpen =
-      openMinutes !== null &&
-      closeMinutes !== null &&
-      currentMinutes >= openMinutes &&
-      currentMinutes < closeMinutes;
-
-    const lines = [
+    return [
       `🕐 Horarios de atención:`,
-      `• Días: ${hours.days ?? "No especificados"}`,
-      `• Apertura: ${hours.open ?? "—"}`,
-      `• Cierre: ${hours.close ?? "—"}`,
+      `• Días: ${days.join(", ")}`,
+      `• Apertura: ${openTime}`,
+      `• Cierre: ${closeTime}`,
       ``,
       isOpen
         ? `✅ Ahora estamos ABIERTOS (${now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })})`
         : `❌ Ahora estamos CERRADOS (${now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })})`,
-    ];
-
-    return lines.join("\n");
+    ].join("\n");
   },
 });
 
 // ─── updateBusinessHoursTool ─────────────────────────────────────────────────
+const ALL_DAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+function parseDays(daysStr: string): string[] {
+  const s = daysStr.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // "todos los dias" o "todos" → todos
+  if (s.includes("todos") || s.includes("siempre")) return [...ALL_DAYS];
+  // "lunes a viernes" → lunes, martes, miercoles, jueves, viernes
+  const rangeMatch = s.match(/(\w+)\s*a\s*(\w+)/);
+  if (rangeMatch) {
+    const from = rangeMatch[1];
+    const to = rangeMatch[2];
+    const startIdx = ALL_DAYS.findIndex(d => d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").startsWith(from));
+    const endIdx = ALL_DAYS.findIndex(d => d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").startsWith(to));
+    if (startIdx !== -1 && endIdx !== -1) {
+      return ALL_DAYS.slice(startIdx, endIdx + 1);
+    }
+  }
+  // "lunes, martes, miercoles" → lista separada por comas
+  const dayNames = s.split(/[,;]+/).map(d => d.trim()).filter(Boolean);
+  if (dayNames.length > 0) {
+    const matched = dayNames.map(d => ALL_DAYS.find(ad => ad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").startsWith(d.slice(0, 3)))).filter(Boolean) as string[];
+    if (matched.length > 0) return matched;
+  }
+  // "hoy" → día actual
+  if (s.includes("hoy")) {
+    const todayIdx = new Date().getDay(); // 0=domingo
+    return [ALL_DAYS[todayIdx === 0 ? 6 : todayIdx - 1]]; // ajustar a array empezando lunes
+  }
+  // fallback: todos
+  return [...ALL_DAYS];
+}
+
 export const updateBusinessHoursTool = tool({
   description:
-    "ACTUALIZA los horarios de atención del negocio. Usar cuando el admin pida cambiar horarios. Parámetros: enabled (true/false), days (ej: 'Lunes a Viernes'), openTime (ej: '05:00'), closeTime (ej: '23:45'). SIEMPRE actualizá con los datos que te den, no preguntes de más.",
+    "ACTUALIZA los horarios de atención del negocio. Usar cuando el admin pida cambiar horarios. Parámetros: enabled (true/false), days (ej: 'Lunes a Viernes', 'todos los dias', 'hoy'), openTime (ej: '05:00'), closeTime (ej: '23:45'). SIEMPRE actualizá con los datos que te den, no preguntes de más.",
   inputSchema: z.object({
     enabled: z.boolean().describe("true si el negocio está abierto, false si cerrado"),
-    days: z.string().describe("Días de atención. Ej: 'Lunes a Viernes' o 'Lunes a Domingo'"),
+    days: z.string().describe("Días de atención. Ej: 'Lunes a Viernes', 'todos los dias', 'hoy', 'Lunes y Martes'"),
     openTime: z.string().describe("Hora de apertura formato HH:MM. Ej: '05:00'"),
     closeTime: z.string().describe("Hora de cierre formato HH:MM. Ej: '23:45'"),
   }),
   execute: async ({ enabled, days, openTime, closeTime }) => {
+    const resolvedDays = parseDays(days);
+    
+    // Guardar en el MISMO formato que el admin UI (array de objetos)
+    const businessHoursArray = resolvedDays.map(day => ({
+      day,
+      open: enabled,
+      openTime,
+      closeTime,
+    }));
+
     const [existing] = await db
       .select({ id: agentConfig.id })
       .from(agentConfig)
@@ -379,19 +418,19 @@ export const updateBusinessHoursTool = tool({
       await db
         .update(agentConfig)
         .set({
-          businessHours: { enabled, days, open: openTime, close: closeTime },
+          businessHours: businessHoursArray,
           updatedAt: new Date(),
         })
         .where(eq(agentConfig.id, 1));
     } else {
       await db.insert(agentConfig).values({
         id: 1,
-        businessHours: { enabled, days, open: openTime, close: closeTime },
+        businessHours: businessHoursArray,
       });
     }
 
     return `✅ Horarios actualizados:
-• Días: ${days}
+• Días: ${resolvedDays.join(", ")}
 • Apertura: ${openTime}
 • Cierre: ${closeTime}
 • Estado: ${enabled ? "Abierto" : "Cerrado"}`;
