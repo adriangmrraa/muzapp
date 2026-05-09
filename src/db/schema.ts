@@ -106,6 +106,12 @@ export const agentConfig = pgTable("agent_config", {
     { zona: "sur", disponible: true, tiempo: "30-40 min", costo: 0 },
   ]),
   // ───────────────────────────────────────────────────────────────────────────
+  // ─── Identidad anti-bot / System Status ───────────────────────────────────
+  isCooking: boolean("is_cooking").notNull().default(true),
+  stockPanDocenas: integer("stock_pan_docenas").default(0),
+  aliasB2c: varchar("alias_b2c", { length: 100 }),
+  aliasB2b: varchar("alias_b2b", { length: 100 }),
+  // ───────────────────────────────────────────────────────────────────────────
   // ─── Meta Business OAuth ───────────────────────────────────────────────────
   metaAccessToken: text("meta_access_token"),
   metaTokenExpiresAt: timestamp("meta_token_expires_at", { withTimezone: true }),

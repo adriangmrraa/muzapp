@@ -41,7 +41,7 @@ const zonaDeliverySchema = z.object({
 });
 
 const agentConfigSchema = z.object({
-  systemPrompt: z.string().min(1, "El prompt del sistema es obligatorio"),
+  systemPrompt: z.string().optional().default(""),
   phoneNumber: z.string().min(1, "El número de teléfono es obligatorio"),
   enabled: z.boolean(),
   businessHours: z.array(businessHourSchema),
@@ -55,6 +55,10 @@ const agentConfigSchema = z.object({
   whatsappInstrucciones: z.string().optional(),
   whatsappPromociones: z.string().optional(),
   whatsappZonasDelivery: z.array(zonaDeliverySchema).optional().default([]),
+  isCooking: z.boolean(),
+  stockPanDocenas: z.number().int().min(0).optional().default(0),
+  aliasB2c: z.string().optional(),
+  aliasB2b: z.string().optional(),
 });
 
 // ─── Actions ────────────────────────────────────────────────────────────────────
@@ -112,7 +116,7 @@ export async function saveAgentConfig(
   }
 
   const raw = {
-    systemPrompt: formData.get("systemPrompt"),
+    systemPrompt: formData.get("systemPrompt") || "",
     phoneNumber: formData.get("phoneNumber"),
     enabled: formData.get("enabled") === "true",
     businessHours: rawBusinessHours,
@@ -126,6 +130,10 @@ export async function saveAgentConfig(
     whatsappInstrucciones: formData.get("whatsappInstrucciones") || undefined,
     whatsappPromociones: formData.get("whatsappPromociones") || undefined,
     whatsappZonasDelivery,
+    isCooking: formData.get("isCooking") === "true",
+    stockPanDocenas: Number(formData.get("stockPanDocenas")) || 0,
+    aliasB2c: formData.get("aliasB2c") || undefined,
+    aliasB2b: formData.get("aliasB2b") || undefined,
   };
 
   const parsed = agentConfigSchema.safeParse(raw);
@@ -156,6 +164,10 @@ export async function saveAgentConfig(
       whatsappInstrucciones: parsed.data.whatsappInstrucciones ?? null,
       whatsappPromociones: parsed.data.whatsappPromociones ?? null,
       whatsappZonasDelivery: parsed.data.whatsappZonasDelivery ?? null,
+      isCooking: parsed.data.isCooking,
+      stockPanDocenas: parsed.data.stockPanDocenas ?? 0,
+      aliasB2c: parsed.data.aliasB2c ?? null,
+      aliasB2b: parsed.data.aliasB2b ?? null,
       updatedAt: new Date(),
     };
 

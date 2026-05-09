@@ -63,6 +63,11 @@ export type AgentConfigFormData = {
   whatsappInstrucciones: string;
   whatsappPromociones: string;
   whatsappZonasDelivery: { zona: string; disponible: boolean; tiempo: string; costo: number }[];
+  // ─── System Status ──────────────────────────────────────────────────────
+  isCooking: boolean;
+  stockPanDocenas: number;
+  aliasB2c: string;
+  aliasB2b: string;
 };
 
 const initialState: AgentConfigState = {
@@ -117,6 +122,10 @@ export default function AgentConfigForm({
     { zona: "sur", disponible: true, tiempo: "30-40 min", costo: 0 },
   ]);
   const [newZona, setNewZona] = useState({ zona: "", tiempo: "", costo: 0 });
+  const [isCooking, setIsCooking] = useState(config.isCooking ?? true);
+  const [stockPanDocenas, setStockPanDocenas] = useState(config.stockPanDocenas ?? 0);
+  const [aliasB2c, setAliasB2c] = useState(config.aliasB2c ?? "");
+  const [aliasB2b, setAliasB2b] = useState(config.aliasB2b ?? "");
 
   // ─── Toast notifications ────────────────────────────────────────────────────
 
@@ -693,7 +702,96 @@ export default function AgentConfigForm({
         </motion.div>
 
         {/* ═════════════════════════════════════════════════════════════════════
-            9. Quick Actions
+            9. System Status — Cocina + Stock + Alias
+            ═════════════════════════════════════════════════════════════════════ */}
+        <motion.div variants={fadeUpSmall}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>👨‍🍳</span>
+                Estado del Local
+              </CardTitle>
+              <CardDescription>
+                Control de cocina, stock de pan y alias de pago — influye en las respuestas del agente
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              {/* isCooking */}
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <Label htmlFor="isCooking">Cocina operativa</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Si está desactivado, el agente responde "Hoy no :/" y no toma pedidos
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input type="hidden" name="isCooking" value={String(isCooking)} />
+                  <Switch
+                    id="isCooking"
+                    checked={isCooking}
+                    onCheckedChange={setIsCooking}
+                  />
+                  <span className={clsx("text-sm font-medium", isCooking ? "text-green-400" : "text-red-400")}>
+                    {isCooking ? "Cocinando" : "Cerrado"}
+                  </span>
+                </div>
+              </div>
+
+              {/* stockPanDocenas */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="stockPanDocenas">Stock pan al por mayor (en docenas)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="stockPanDocenas"
+                    name="stockPanDocenas"
+                    type="number"
+                    min={0}
+                    value={stockPanDocenas}
+                    onChange={(e) => setStockPanDocenas(Number(e.target.value))}
+                    className="w-24"
+                  />
+                  <span className="text-sm text-muted-foreground">docenas disponibles</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Si el cliente pide más de esto, el agente dice "Tengo X doc nomás amigo"
+                </p>
+              </div>
+
+              {/* Alias B2C */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="aliasB2c">Alias de pago — B2C (hamburguesas / rotisería)</Label>
+                <Input
+                  id="aliasB2c"
+                  name="aliasB2c"
+                  placeholder="Ej: LEAN..LEMON"
+                  value={aliasB2c}
+                  onChange={(e) => setAliasB2c(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  El agente inyecta este alias cuando un cliente de hamburguesas pide datos para transferir
+                </p>
+              </div>
+
+              {/* Alias B2B */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="aliasB2b">Alias de pago — B2B (pan mayorista / negocios)</Label>
+                <Input
+                  id="aliasB2b"
+                  name="aliasB2b"
+                  placeholder="Ej: PANES.AL.POR.MAYOR"
+                  value={aliasB2b}
+                  onChange={(e) => setAliasB2b(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  El agente inyecta este alias cuando un cliente mayorista pide datos para transferir
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ═════════════════════════════════════════════════════════════════════
+            10. Quick Actions
             ═════════════════════════════════════════════════════════════════════ */}
         <motion.div variants={fadeUpSmall}>
           <Card>

@@ -20,6 +20,11 @@ import {
   updateOrderTool,
   cancelOrderTool,
   createSendProductImageTool,
+  checkKitchenStatusTool,
+  checkPanStockTool,
+  getPaymentAliasTool,
+  createSendStickerTool,
+  createSendMenuImageTool,
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
@@ -167,8 +172,14 @@ export async function runWhatsAppAgent({
         // Grupo E: Operaciones (2)
         getBusinessHours: getBusinessHoursTool,
         transferToHuman: createTransferToHumanTool(conversationId),
-        // Grupo F: Multimedia (1)
+        // Grupo F: Cocina + Stock + Alias (3)
+        checkKitchenStatus: checkKitchenStatusTool,
+        checkPanStock: checkPanStockTool,
+        getPaymentAlias: getPaymentAliasTool,
+        // Grupo G: Multimedia + Stickers (3)
         sendProductImage: createSendProductImageTool(customerPhone),
+        sendSticker: createSendStickerTool(customerPhone),
+        sendMenuImage: createSendMenuImageTool(customerPhone),
       },
       stopWhen: stepCountIs(8),
       toolChoice: "auto",

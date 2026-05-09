@@ -32,6 +32,10 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   whatsappInstrucciones: "",
   whatsappPromociones: "",
   whatsappZonasDelivery: [],
+  isCooking: true,
+  stockPanDocenas: 0,
+  aliasB2c: "",
+  aliasB2b: "",
 };
 
 export default async function AgentPage() {
@@ -67,6 +71,10 @@ export default async function AgentPage() {
         whatsappZonasDelivery: Array.isArray(row.whatsappZonasDelivery)
           ? (row.whatsappZonasDelivery as { zona: string; disponible: boolean; tiempo: string; costo: number }[])
           : [],
+        isCooking: (row.isCooking as boolean) ?? true,
+        stockPanDocenas: (row.stockPanDocenas as number) ?? 0,
+        aliasB2c: (row.aliasB2c as string) ?? "",
+        aliasB2b: (row.aliasB2b as string) ?? "",
       }
     : DEFAULT_CONFIG;
 
