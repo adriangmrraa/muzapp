@@ -65,7 +65,7 @@ export function SummaryCards({ data }: SummaryCardsProps) {
               boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
               transition: { duration: 0.2 },
             }}
-            className="glass-card rounded-xl p-5 flex flex-col gap-3 cursor-default"
+            className="glass-card card-gold-glow rounded-xl p-5 flex flex-col gap-3 cursor-default"
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addToBuffer } from "@/lib/agent/buffer";
-import { processMessage } from "@/lib/agent";
+import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
 import { loadConversation, saveConversation } from "@/lib/agent/conversation";
 import { smartSplit } from "@/lib/agent/smart-split";
 import { sendText } from "@/lib/ycloud";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/infra/rate-limit";
+import { db } from "@/db";
+import { conversations } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 // ─── HMAC-SHA256 verification ──────────────────────────────────────────────────
 
@@ -66,10 +69,33 @@ async function handleFlush(phone: string, combinedText: string): Promise<void> {
   try {
     const history = await loadConversation(phone);
 
-    const responseText = await processMessage({
-      phoneNumber: phone,
-      text: combinedText,
-      conversationHistory: history,
+    // Map old history format to new agent format
+    const aiMessages = history.map((m) => ({
+      role: (m.role === "user" || m.role === "assistant" ? m.role : "user") as "user" | "assistant",
+      content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+    }));
+    
+    // Add current user message
+    aiMessages.push({ role: "user" as const, content: combinedText });
+
+    // Get or create conversation ID for the new agent
+    let conversationId = 0;
+    try {
+      const rows = await db
+        .select({ id: conversations.id })
+        .from(conversations)
+        .where(eq(conversations.whatsappId, phone))
+        .limit(1);
+      if (rows.length > 0) conversationId = rows[0].id;
+    } catch {
+      // Fallback: no conversation ID needed
+    }
+
+    // Use the NEW V2 agent (14 tools, emotional flows, dynamic prompt)
+    const responseText = await runWhatsAppAgent({
+      conversationId,
+      customerPhone: phone,
+      messages: aiMessages,
     });
 
     const bubbles = smartSplit(responseText);

@@ -7,9 +7,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useTilt } from "@/hooks/use-tilt";
 import { cardEntrance } from "@/lib/animation-variants";
-import { ShoppingCart, Check, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Check, Plus, Minus, MessageCircle } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
 import { useState } from "react";
+import { buildProductWhatsAppURL } from "@/lib/whatsapp";
 
 interface ProductCardProps {
   product: Product;
@@ -190,6 +191,24 @@ export function ProductCard({ product }: ProductCardProps) {
                   </span>
                 )}
               </div>
+              {/* WhatsApp order button */}
+              {!product.comingSoon && (
+                <a
+                  href={buildProductWhatsAppURL(product.name, product.price, qty)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-3 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold uppercase tracking-wider rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-95"
+                  style={{
+                    background: "linear-gradient(135deg, #25D366, #128C7E)",
+                    color: "white",
+                    boxShadow: "0 4px 16px rgba(37, 211, 102, 0.3)",
+                  }}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Pedir por WhatsApp
+                </a>
+              )}
             </div>
           ) : (
             <p className="text-sm font-semibold text-white/40 mt-2 uppercase tracking-wider">

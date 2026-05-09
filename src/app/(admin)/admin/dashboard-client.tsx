@@ -58,7 +58,7 @@ function StatsCard({ card, index }: { card: DashboardCard; index: number }) {
         boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
         transition: { duration: 0.2 },
       }}
-      className="glass-card rounded-xl p-5 flex flex-col gap-3 cursor-default"
+      className="glass-card card-gold-glow rounded-xl p-5 flex flex-col gap-3 cursor-default"
     >
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-muted-foreground">
@@ -143,7 +143,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
 function OrdersTable({ orders }: { orders: RecentOrder[] }) {
   return (
     <motion.div
-      className="glass-card rounded-xl overflow-hidden"
+      className="glass-card card-gold-glow rounded-xl overflow-hidden"
       variants={cardEntrance}
       initial="hidden"
       animate="visible"
@@ -264,7 +264,7 @@ export function DashboardClient({ cards, activity, recentOrders }: DashboardClie
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Activity Feed */}
         <motion.div
-          className="glass-card rounded-xl overflow-hidden"
+          className="glass-card card-gold-glow rounded-xl overflow-hidden"
           variants={cardEntrance}
           initial="hidden"
           animate="visible"

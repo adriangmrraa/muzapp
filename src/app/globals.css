@@ -163,9 +163,57 @@
 
 /* WhatsApp pulse animation */
 @keyframes whatsapp-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5); }
-  70% { box-shadow: 0 0 0 12px rgba(37, 211, 102, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(37, 211, 102, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+  }
+}
+.whatsapp-pulse {
+  animation: whatsapp-pulse 2s infinite;
+}
+
+/* Premium glass surface for detail views */
+.glass-surface {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 160, 23, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Gold glow on hover for interactive cards */
+.card-gold-glow {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-gold-glow:hover {
+  border-color: rgba(212, 160, 23, 0.5);
+  box-shadow: 0 0 30px rgba(212, 160, 23, 0.15), 0 8px 32px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+/* Subtle gold shimmer animation for loading states */
+@keyframes gold-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(212, 160, 23, 0.05) 25%,
+    rgba(212, 160, 23, 0.15) 50%,
+    rgba(212, 160, 23, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: gold-shimmer 1.5s ease-in-out infinite;
 }
 .whatsapp-pulse {
   animation: whatsapp-pulse 2s infinite;

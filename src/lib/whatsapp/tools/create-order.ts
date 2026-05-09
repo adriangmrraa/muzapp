@@ -29,7 +29,7 @@ export const createOrderTool = tool({
       status: "pending",
     }).returning({ id: orders.id });
 
-    notifyNewOrder({ id: order.id, customerName, orderType, items, total, status: "pending" });
+    notifyNewOrder({ id: order.id, customerName, orderType, items, total, status: "pending", phoneNumber: customerPhone, notes });
 
     const typeLabel = orderType === "hamburguesas" ? "🍔 Hamburguesas" : "🍞 Pan Mayorista";
 

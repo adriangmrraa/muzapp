@@ -33,6 +33,13 @@ const phoneIdSchema = z.object({
   phone: z.string().min(1, "El teléfono es obligatorio"),
 });
 
+const zonaDeliverySchema = z.object({
+  zona: z.string(),
+  disponible: z.boolean(),
+  tiempo: z.string(),
+  costo: z.number(),
+});
+
 const agentConfigSchema = z.object({
   systemPrompt: z.string().min(1, "El prompt del sistema es obligatorio"),
   phoneNumber: z.string().min(1, "El número de teléfono es obligatorio"),
@@ -44,6 +51,10 @@ const agentConfigSchema = z.object({
   autoReply24h: z.boolean(),
   autoReply24hMessage: z.string().optional(),
   trainBotContext: z.string().optional(),
+  whatsappSystemPrompt: z.string().optional(),
+  whatsappInstrucciones: z.string().optional(),
+  whatsappPromociones: z.string().optional(),
+  whatsappZonasDelivery: z.array(zonaDeliverySchema).optional().default([]),
 });
 
 // ─── Actions ────────────────────────────────────────────────────────────────────
@@ -89,6 +100,17 @@ export async function saveAgentConfig(
     allowedPhoneIds = [];
   }
 
+  // ─── WhatsApp zonas delivery (JSON string from hidden input) ─────────────
+  let whatsappZonasDelivery: unknown[] = [];
+  try {
+    const rawZonas = formData.get("whatsappZonasDelivery");
+    if (rawZonas && typeof rawZonas === "string") {
+      whatsappZonasDelivery = JSON.parse(rawZonas);
+    }
+  } catch {
+    whatsappZonasDelivery = [];
+  }
+
   const raw = {
     systemPrompt: formData.get("systemPrompt"),
     phoneNumber: formData.get("phoneNumber"),
@@ -100,6 +122,10 @@ export async function saveAgentConfig(
     autoReply24h: formData.get("autoReply24h") === "true",
     autoReply24hMessage: formData.get("autoReply24hMessage") || undefined,
     trainBotContext: formData.get("trainBotContext") || undefined,
+    whatsappSystemPrompt: formData.get("whatsappSystemPrompt") || undefined,
+    whatsappInstrucciones: formData.get("whatsappInstrucciones") || undefined,
+    whatsappPromociones: formData.get("whatsappPromociones") || undefined,
+    whatsappZonasDelivery,
   };
 
   const parsed = agentConfigSchema.safeParse(raw);
@@ -126,6 +152,10 @@ export async function saveAgentConfig(
       autoReply24h: parsed.data.autoReply24h,
       autoReply24hMessage: parsed.data.autoReply24hMessage ?? null,
       trainBotContext: parsed.data.trainBotContext ?? null,
+      whatsappSystemPrompt: parsed.data.whatsappSystemPrompt ?? null,
+      whatsappInstrucciones: parsed.data.whatsappInstrucciones ?? null,
+      whatsappPromociones: parsed.data.whatsappPromociones ?? null,
+      whatsappZonasDelivery: parsed.data.whatsappZonasDelivery ?? null,
       updatedAt: new Date(),
     };
 

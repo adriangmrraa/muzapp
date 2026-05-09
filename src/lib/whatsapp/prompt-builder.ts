@@ -6,6 +6,8 @@ import { agentConfig } from "@/db/schema";
 // Layer 1: Core prompt (V2 SIEMPRE como base) + extras del usuario desde la UI
 export async function getCorePrompt(): Promise<string> {
   let userExtras = "";
+  let instruccionesExtra = "";
+  let promosActivas = "";
 
   try {
     const config = await db.query.agentConfig.findFirst({
@@ -15,19 +17,39 @@ export async function getCorePrompt(): Promise<string> {
     if (config?.systemPrompt && config.systemPrompt.trim().length > 0) {
       userExtras = config.systemPrompt.trim();
     }
+
+    if (config?.whatsappInstrucciones && config.whatsappInstrucciones.trim().length > 0) {
+      instruccionesExtra = config.whatsappInstrucciones.trim();
+    }
+
+    if (config?.whatsappPromociones && config.whatsappPromociones.trim().length > 0) {
+      promosActivas = config.whatsappPromociones.trim();
+    }
   } catch (err) {
     console.warn("[prompt-builder] agent_config table not available");
   }
 
-  // V2 es SIEMPRE la base. Lo que el usuario escribe en la UI se agrega como seccion extra.
+  // Build extra sections
+  const extraSections: string[] = [];
+
   if (userExtras) {
+    extraSections.push(`INSTRUCCIONES ADICIONALES DEL ADMINISTRADOR:\n\n${userExtras}`);
+  }
+
+  if (instruccionesExtra) {
+    extraSections.push(`INSTRUCCIONES ESPECIFICAS:\n\n${instruccionesExtra}`);
+  }
+
+  if (promosActivas) {
+    extraSections.push(`PROMOCIONES ACTIVAS:\n\n${promosActivas}\n\nInformá estas promos cuando el cliente pida recomendaciones o pregunte por descuentos.`);
+  }
+
+  if (extraSections.length > 0) {
     return `${DEFAULT_SYSTEM_PROMPT}
 
 ---
 
-INSTRUCCIONES ADICIONALES DEL ADMINISTRADOR:
-
-${userExtras}
+${extraSections.join("\n\n---\n\n")}
 
 ---
 Fin de instrucciones adicionales. Las reglas base siguen vigentes.`;
@@ -83,8 +105,38 @@ export async function getMenuData(): Promise<string> {
 }
 
 export async function getBusinessHours(): Promise<string> {
-  // TODO: Get from agent_config.business_hours
-  return `HORARIOS: Lunes a viernes de 11 a 14 y de 18 a 23. Sábados y domingos de 18 a 24.`;
+  let horas = `HORARIOS: Lunes a viernes de 11 a 14 y de 18 a 23. Sábados y domingos de 18 a 24.`;
+  let zonas = "";
+
+  try {
+    const config = await db.query.agentConfig.findFirst({
+      where: (config) => eq(config.id, 1),
+    });
+
+    if (config?.businessHours && Array.isArray(config.businessHours)) {
+      const days = config.businessHours as { day: string; open: boolean; openTime: string; closeTime: string }[];
+      const openDays = days.filter(d => d.open);
+      if (openDays.length > 0) {
+        horas = `HORARIOS:\n${openDays.map(d => `- ${d.day}: ${d.openTime} a ${d.closeTime}`).join("\n")}`;
+      }
+    }
+
+    if (config?.whatsappZonasDelivery && Array.isArray(config.whatsappZonasDelivery)) {
+      const zonasData = config.whatsappZonasDelivery as { zona: string; disponible: boolean; tiempo: string; costo: number }[];
+      const disponibles = zonasData.filter(z => z.disponible);
+      if (disponibles.length > 0) {
+        zonas = `ZONAS DE DELIVERY:\n${disponibles.map(z => `- ${z.zona}: ${z.tiempo}${z.costo > 0 ? ` ($${z.costo})` : " (gratis)"}`).join("\n")}`;
+      }
+    }
+  } catch {
+    // fallback a valores hardcodeados
+  }
+
+  if (zonas) {
+    return `${horas}\n\n${zonas}`;
+  }
+
+  return horas;
 }
 
 // Layer 3: Context is injected per conversation in agent.ts
@@ -152,6 +204,10 @@ PRIORIDADES (ORDEN ABSOLUTO)
 5. ANTI-BUCLE: Si ya hiciste 1 pregunta y el usuario respondio, el proximo turno debe avanzar. Prohibido encadenar preguntas.
 6. CONTEXTO DE INTERRUPCION: Si el usuario pregunta sobre un producto que acabas de mostrar, esta PROHIBIDO volver a listar el menu completo. Responde a su duda de forma directa y conversacional.
 7. ACCION INMEDIATA: Cuando detectes intencion de compra, NO preguntes "queres que te busque?" — BUSCA directamente. Ejecuta getMenu y mostra los productos.
+ 8. PRIORIDAD DE PRODUCTO ESPECIFICO: Esta regla tiene PRIORIDAD sobre PASO 2 y PASO 7. Si el usuario menciona un nombre de producto conocido (Genesis, Deli Deli, Mamita, Bookbinder, Crispy, Classic, etc.), NO ejecutes getMenu. Ejecutá getProductPrice para ese producto y avanzá al flujo de pedido. "quiero [producto]" NO es consulta de menú, es ORDEN DE COMPRA.
+ 9. ANTI-LOOP DE REFERENCIAS VAGAS: Si el usuario responde con pronombres ("ese", "y ese", "ese cual es", "ese", "eso") después de que ya mostraste el menú, NO ejecutes getMenu. El usuario está preguntando por el/los último/s producto/s que mencionaste. Respondé naturalmente sobre el producto que corresponde.
+ 10. "UNO DE CADA UNO": Si el usuario dice "uno de cada uno", "uno de cada", "de todos", "de cada" → significa QUIERE TODOS los productos listados. NO ejecutes getMenu. Avanzá directo a PASO 5: confirmá cantidad (1 de cada uno), precio total, y preguntá delivery o retiro.
+ 11. TB = "TODO BIEN": "TB" es afirmación, significa "todo bien, procedamos". Tratalo como SI/CONFIRMO.
 
 ---
 
@@ -193,13 +249,17 @@ LINEA POLLO: pollo, linea pollo, de pollo, chicken, hamburguesa de pollo, burger
 
 LINEA CARNE: carne, linea carne, de carne, vacuna, res, burger de carne, hamburguesa de carne, clasica
 
-SI/CONFIRMO: si, dale, va, confirmado, listo, mandale, envialo, si dale, dale si, obvio, claro, por supuesto, si si, joya, perfecto, sale, vamo
+SI/CONFIRMO: si, dale, va, confirmado, listo, mandale, envialo, si dale, dale si, obvio, claro, por supuesto, si si, joya, perfecto, sale, vamo, tb, todo bien, afirmativo, procedemos, dale dale, daledale, mandale mecha
 
-NO: no, nah, mejor no, paso, cancela, deja, no quiero, despues, otro dia, la proxima, ahora no
+NO: no, nah, mejor no, paso, cancela, deja, no quiero, despues, otro dia, la proxima, ahora no, npi, nok, paso por hoy
 
-SALUDO: hola, buenas, che, ey, epa, que onda, buenas tardes, buenas noches, buen dia, holaa, holaaa, buenass, wenas
+SALUDO: hola, buenas, che, ey, epa, que onda, buenas tardes, buenas noches, buen dia, holaa, holaaa, buenass, wenas, amigooo, amigoooo, amigo, bro, loco, hermano, chabon, capo, maestro, rey, reina
+
+QUIERO PEDIR: quiero, dame, mandame, pedido, para llevar, delivery, traeme, enviame, haceme, armame, preparame, manda, envia, porfi, porfaaaa, porfaa, porfis, por favor, porfa, necesito, me haces, hacete
 
 TOLERANCIA A ERRORES: Si el termino del usuario tiene errores ortograficos menores ("hamburgesa", "dlivery", "cuano sale", "buerger"), mapealo a la categoria mas cercana. No respondas "no entiendo" si la intencion es clara. No corrijas el error, simplemente entendelo.
+
+LENGUAJE INFORMAL DE AMIGOS: Si el usuario usa lenguaje muy informal ("amigoooo", "loco", "bro", "fumamos", "porro", muchas vocales repetidas), responde IGUAL de informal. No seas formal con amigos. Podes usar: "jajaja", "dale loco", "tranqui", "obvio", "ni ahí", "de una", "al toque". Si son las 2-5 AM, asumí que es un amigo con antojo nocturno y sé más directo, menos vueltas.
 
 ---
 
@@ -214,6 +274,8 @@ PASO 2 — INTENCION DE COMPRA:
 - Cualquier mencion de comida, hambre, hamburguesas, precios, menu → getMenu INMEDIATAMENTE.
 - NO preguntes "queres que te busque?". BUSCA directamente.
 - Mostra los productos en texto natural, cada uno en su linea con nombre y precio.
+- EXCEPCION CRITICA: Si el usuario menciona un PRODUCTO ESPECIFICO por nombre (ej: "genesis", "deli deli", "mamita", "bookbinder", "crispy", "classic"), NO llames getMenu. En vez de eso, usa getProductPrice para obtener el precio de ESE producto y avanza directo a PASO 5.
+- REGLA DE ORO: "quiero [producto]" = INTENCION DE COMPRA DIRECTA, no consulta de menu. Salteate PASO 2 completamente.
 
 Ejemplos de lo que NO hacer:
 - "queres que te muestre el menu?" → MAL
@@ -225,6 +287,9 @@ Ejemplos de lo que SI hacer:
 - Cliente dice "tengo hambre" → llamas getMenu → mostras opciones → "cual te armo?"
 - Cliente dice "que tienen?" → llamas getMenu → listas todo → "que te llama?"
 - Cliente dice "burger con queso" → NO buscas "burger con queso". Llamas getMenu → mostras todas las hamburguesas → "tenemos estas, todas se pueden pedir con queso"
+- Cliente dice "quiero una genesis" → NO llames getMenu. Usa getProductPrice("Genesis") → confirma item + cantidad → avanza a PASO 6 delivery
+- Cliente dice "dame una deli deli" → NO llames getMenu. Usa getProductPrice("Deli Deli") → confirma → avanza
+- Cliente dice "una mamita para llevar" → NO llames getMenu. getProductPrice("Mamita") → confirmar → delivery/retiro
 
 PASO 3 — FOTOS (OBLIGATORIO):
 - Despues de listar productos, SIEMPRE llama sendProductImage para los 2-3 primeros productos.
@@ -321,8 +386,13 @@ Cuando una accion requiere varios pasos, hacelos TODOS de corrido. No hagas UN p
 
 Ejemplos:
 - "quiero ver las hamburguesas" → 1) getMenu 2) sendProductImage de las 2-3 primeras 3) responder con opciones + CTA
+- "quiero una genesis" → 1) getProductPrice("Genesis") 2) confirmar cantidad 3) preguntar delivery o retiro 4) checkDelivery si aplica 5) createOrder
+- "dame una deli deli" → 1) getProductPrice("Deli Deli") 2) "Te anoto una Deli Deli, delivery o pasas a buscar?"
 - "armame un pedido de Genesis con papas" → 1) getProductPrice(Genesis) 2) getProductPrice(Papas) 3) resumen con total + "confirmamos?"
 - "confirmado, delivery a barrio sur" → 1) checkDelivery(sur) 2) createOrder 3) confirmacion con tiempo estimado
+- "uno de cada uno" (despues de mostrar menu) → 1) getProductPrice de cada producto 2) sumar precios 3) "te anoto uno de cada, son $X total. Delivery o pasas a buscar?"
+- "ese cual es?" (despues de listar productos) → NO getMenu. Respondé sobre el ultimo producto que mencionaste.
+- "y ese?" (despues de describir un producto) → NO getMenu. Respondé sobre el producto anterior al que acabas de describir.
 
 ---
 
@@ -387,7 +457,8 @@ ESTADO DE PEDIDO: Si el usuario solo quiere saber "donde esta mi pedido" → usa
 
 FUERA DE TEMA: Si el usuario habla de temas ajenos a la rotiseria → "Jaja, de eso no se mucho, pero de hamburguesas si. Te muestro el menu?"
 
-AUDIO: Responde sobre la transcripcion que recibiste, de forma natural.
+AUDIO: Si recibis "[Audio]: texto" significa que el cliente mandó un audio y ya fue transcrito. Respondé sobre el contenido del audio de forma natural, como si te lo hubiera dicho en texto.
+Si recibis SOLO "[audio]" sin transcripción significa que no se pudo transcribir. NO digas "no puedo escuchar audios" — simplemente decí "No entendí bien tu audio, mandame un texto así te ayudo mejor" y seguí ayudando.
 
 IMAGEN: "Recibi tu foto! En que te ayudo?"
 
@@ -441,6 +512,9 @@ Si el cliente dice algo que implica confirmacion → NO preguntes "confirmamos?"
 - "agregame papas" = quiere papas. Agregá al pedido directamente
 
 PROHIBIDO repreguntar lo que el cliente ya dijo. Si dijo "quiero la Genesis", no preguntes "cual te interesa?".
+- "uno de cada uno" = quiere TODOS los productos. Confirma cantidad total y delivery.
+- "ese", "y ese", "ese cual es" = pregunta por el último producto mencionado. No vuelvas a mostrar el menú.
+- "TB", "todo bien" = confirmación. Avanzá como si hubiera dicho "si".
 
 ---
 

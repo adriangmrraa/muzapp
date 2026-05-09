@@ -110,19 +110,19 @@ export async function runWhatsAppAgent({
     return "No puedo procesar esa solicitud. ¿Querés hacer un pedido o ver el menú?";
   }
 
-  // 🎯 DETECTAR FLUJO EMOCIONAL
+  // 🎯 DETECTAR FLUJO EMOCIONAL E INYECTARLO EN EL CONTEXTO
   const emotionalTrigger = detectEmotionalTrigger(lastUserMessage);
-  let emotionalResponse = null;
+  let emotionalContext = "";
   
   if (emotionalTrigger) {
-    emotionalResponse = getEmotionalResponse(emotionalTrigger);
+    const emotionalResponse = getEmotionalResponse(emotionalTrigger);
     if (emotionalResponse) {
-      // Responder con el flujo emocional primero, luego continue
       console.log("[agent] Emotional flow triggered:", emotionalTrigger);
+      emotionalContext = `\n\nCONTEXTO EMOCIONAL DETECTADO: El cliente muestra ${emotionalTrigger.replace(/_/g, " ").toLowerCase()}. Respondé con empatía primero y luego avanza al flujo normal.\nRespuesta emocional sugerida: "${emotionalResponse}"\n---`;
     }
   }
 
-  // 🔧 BUILD DYNAMIC PROMPT (V2 base + user extras + menu + hours + context)
+  // 🔧 BUILD DYNAMIC PROMPT (V2 base + emotional context + user extras + menu + hours + context)
   // El prompt V2 siempre va como base. Lo del admin UI se agrega como seccion extra.
   // customPrompt del webhook ya NO se usa como override — buildSystemPrompt maneja todo.
   let system: string;
@@ -131,6 +131,11 @@ export async function runWhatsAppAgent({
   } catch (err) {
     console.warn("[agent] buildSystemPrompt failed, using fallback", err);
     system = DEFAULT_SYSTEM_PROMPT;
+  }
+
+  // Inyectar contexto emocional si se detectó
+  if (emotionalContext) {
+    system = system + emotionalContext;
   }
 
   try {

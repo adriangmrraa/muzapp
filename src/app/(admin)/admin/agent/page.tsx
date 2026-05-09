@@ -28,6 +28,10 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   autoReply24h: false,
   autoReply24hMessage: "",
   trainBotContext: "",
+  whatsappSystemPrompt: "",
+  whatsappInstrucciones: "",
+  whatsappPromociones: "",
+  whatsappZonasDelivery: [],
 };
 
 export default async function AgentPage() {
@@ -57,6 +61,12 @@ export default async function AgentPage() {
         autoReply24h: (row.autoReply24h as boolean) ?? false,
         autoReply24hMessage: (row.autoReply24hMessage as string) ?? "",
         trainBotContext: (row.trainBotContext as string) ?? "",
+        whatsappSystemPrompt: (row.whatsappSystemPrompt as string) ?? "",
+        whatsappInstrucciones: (row.whatsappInstrucciones as string) ?? "",
+        whatsappPromociones: (row.whatsappPromociones as string) ?? "",
+        whatsappZonasDelivery: Array.isArray(row.whatsappZonasDelivery)
+          ? (row.whatsappZonasDelivery as { zona: string; disponible: boolean; tiempo: string; costo: number }[])
+          : [],
       }
     : DEFAULT_CONFIG;
 

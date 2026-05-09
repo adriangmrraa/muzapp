@@ -130,7 +130,7 @@ export function LeadsChart({ data }: LeadsChartProps) {
   if (data.length === 0) {
     return (
       <motion.div
-        className="glass-card rounded-xl p-6"
+className="glass-card card-gold-glow rounded-xl p-6"
         variants={fadeUpSmall}
         initial="hidden"
         animate="visible"

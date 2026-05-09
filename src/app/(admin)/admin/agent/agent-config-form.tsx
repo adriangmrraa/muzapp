@@ -33,6 +33,7 @@ import {
   ChevronUp,
   CheckCircle2,
   AlertCircle,
+  MessageCircle,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -57,6 +58,11 @@ export type AgentConfigFormData = {
   autoReply24h: boolean;
   autoReply24hMessage: string;
   trainBotContext: string;
+  // ─── WhatsApp Agent Editor ──────────────────────────────────────────────
+  whatsappSystemPrompt: string;
+  whatsappInstrucciones: string;
+  whatsappPromociones: string;
+  whatsappZonasDelivery: { zona: string; disponible: boolean; tiempo: string; costo: number }[];
 };
 
 const initialState: AgentConfigState = {
@@ -102,6 +108,15 @@ export default function AgentConfigForm({
   const [showPreview, setShowPreview] = useState(false);
   const [trainBotContext, setTrainBotContext] = useState(config.trainBotContext);
   const [systemPrompt, setSystemPrompt] = useState(config.systemPrompt);
+  const [whatsappSystemPrompt, setWhatsappSystemPrompt] = useState(config.whatsappSystemPrompt || "");
+  const [whatsappInstrucciones, setWhatsappInstrucciones] = useState(config.whatsappInstrucciones || "");
+  const [whatsappPromociones, setWhatsappPromociones] = useState(config.whatsappPromociones || "");
+  const [zonasDelivery, setZonasDelivery] = useState(config.whatsappZonasDelivery || [
+    { zona: "centro", disponible: true, tiempo: "20-30 min", costo: 0 },
+    { zona: "norte", disponible: true, tiempo: "25-35 min", costo: 0 },
+    { zona: "sur", disponible: true, tiempo: "30-40 min", costo: 0 },
+  ]);
+  const [newZona, setNewZona] = useState({ zona: "", tiempo: "", costo: 0 });
 
   // ─── Toast notifications ────────────────────────────────────────────────────
 
@@ -538,8 +553,148 @@ export default function AgentConfigForm({
         </motion.div>
 
         {/* ═════════════════════════════════════════════════════════════════════
-           8. Quick Actions
-           ═════════════════════════════════════════════════════════════════════ */}
+            8. WhatsApp Agent — Editor de Prompt
+            ═════════════════════════════════════════════════════════════════════ */}
+        <motion.div variants={fadeUpSmall}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle size={18} className="text-[#25D366]" />
+                Editor de Prompt — WhatsApp Agent
+              </CardTitle>
+              <CardDescription>
+                Personalizá el comportamiento del agente. El prompt V2 base siempre está activo;
+                estos valores se agregan como instrucciones adicionales.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              {/* System Prompt override */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="whatsappSystemPrompt">System Prompt personalizado</Label>
+                <Textarea
+                  id="whatsappSystemPrompt"
+                  name="whatsappSystemPrompt"
+                  rows={4}
+                  placeholder="Ej: Usá un tono más formal con clientes B2B..."
+                  value={whatsappSystemPrompt}
+                  onChange={(e) => setWhatsappSystemPrompt(e.target.value)}
+                  className="resize-none"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Si se completa, reemplaza al prompt V2 por completo. Dejalo vacío para usar el prompt base.
+                </p>
+              </div>
+
+              {/* Instrucciones adicionales */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="whatsappInstrucciones">Instrucciones adicionales</Label>
+                <Textarea
+                  id="whatsappInstrucciones"
+                  name="whatsappInstrucciones"
+                  rows={3}
+                  placeholder="Ej: Preguntá siempre si quieren papas antes de cerrar el pedido..."
+                  value={whatsappInstrucciones}
+                  onChange={(e) => setWhatsappInstrucciones(e.target.value)}
+                  className="resize-none"
+                />
+              </div>
+
+              {/* Promociones activas */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="whatsappPromociones">Promociones activas</Label>
+                <Textarea
+                  id="whatsappPromociones"
+                  name="whatsappPromociones"
+                  rows={2}
+                  placeholder="Ej: 2x1 en Genesis todos los martes | Combo Deli Deli + Papas $4.500"
+                  value={whatsappPromociones}
+                  onChange={(e) => setWhatsappPromociones(e.target.value)}
+                  className="resize-none"
+                />
+              </div>
+
+              {/* Zonas de delivery */}
+              <div className="flex flex-col gap-3">
+                <Label>Zonas de delivery</Label>
+                <input
+                  type="hidden"
+                  name="whatsappZonasDelivery"
+                  value={JSON.stringify(zonasDelivery)}
+                />
+                <div className="flex flex-col gap-2">
+                  {zonasDelivery.map((z, i) => (
+                    <div key={i} className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.02] px-3 py-2">
+                      <div className="flex-1 grid grid-cols-4 gap-2 text-sm">
+                        <Input
+                          value={z.zona}
+                          onChange={(e) => {
+                            const next = [...zonasDelivery];
+                            next[i] = { ...next[i], zona: e.target.value };
+                            setZonasDelivery(next);
+                          }}
+                          className="h-8 text-xs"
+                          placeholder="Zona"
+                        />
+                        <Input
+                          value={z.tiempo}
+                          onChange={(e) => {
+                            const next = [...zonasDelivery];
+                            next[i] = { ...next[i], tiempo: e.target.value };
+                            setZonasDelivery(next);
+                          }}
+                          className="h-8 text-xs"
+                          placeholder="Tiempo"
+                        />
+                        <Input
+                          type="number"
+                          value={z.costo}
+                          onChange={(e) => {
+                            const next = [...zonasDelivery];
+                            next[i] = { ...next[i], costo: Number(e.target.value) };
+                            setZonasDelivery(next);
+                          }}
+                          className="h-8 text-xs"
+                          placeholder="Costo"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={z.disponible}
+                            onCheckedChange={(v) => {
+                              const next = [...zonasDelivery];
+                              next[i] = { ...next[i], disponible: v };
+                              setZonasDelivery(next);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setZonasDelivery((prev) => prev.filter((_, idx) => idx !== i))}
+                            className="text-muted-foreground hover:text-red-400 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setZonasDelivery((prev) => [...prev, { zona: "", disponible: true, tiempo: "30 min", costo: 0 }])}
+                  className="gap-1 self-start"
+                >
+                  <Plus size={14} />
+                  Agregar zona
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ═════════════════════════════════════════════════════════════════════
+            9. Quick Actions
+            ═════════════════════════════════════════════════════════════════════ */}
         <motion.div variants={fadeUpSmall}>
           <Card>
             <CardHeader>

@@ -65,7 +65,7 @@ function CampaignRow({ row, index }: { row: CampaignPerformance; index: number }
 export function CampaignTable({ data }: CampaignTableProps) {
   return (
     <motion.div
-      className="glass-card rounded-xl overflow-hidden"
+      className="glass-card card-gold-glow rounded-xl overflow-hidden"
       variants={fadeUpSmall}
       initial="hidden"
       animate="visible"

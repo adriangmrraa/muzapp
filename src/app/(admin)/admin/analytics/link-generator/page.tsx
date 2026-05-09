@@ -182,7 +182,7 @@ export default function LinkGeneratorPage() {
 
       {/* Form card */}
       <motion.div
-        className="glass-card rounded-xl p-6"
+        className="glass-card card-gold-glow rounded-xl p-6"
         variants={fadeUpSmall}
         initial="hidden"
         animate="visible"
