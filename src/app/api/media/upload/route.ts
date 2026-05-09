@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(filePath, buffer);
 
-    // ─── Return URL ──────────────────────────────────────────────────────────
-    const url = `/uploads/${uniqueName}`;
+    // ─── Return URL (via API route que lee el fs directo, no static serving) ──
+    const url = `/api/media/${uniqueName}`;
     console.log(`[upload] Saved: ${url} (${(file.size / 1024).toFixed(1)}KB)`);
 
     return NextResponse.json({ url });
