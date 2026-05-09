@@ -21,6 +21,7 @@ export const getProductDetailsTool = tool({
         category: products.category,
         line: products.line,
         available: products.available,
+        imageUrl: products.imageUrl,
       })
       .from(products)
       .orderBy(products.sortOrder);

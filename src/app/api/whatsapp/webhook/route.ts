@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
 
         // Transcribe audio — enriches both the attachment and the agent context
         if (msgType === "audio") {
-          const transcription = await transcribeAudio(buffer, filename);
+          const transcription = await transcribeAudio(buffer, filename, mimeType);
           attachment.transcription = transcription;
           agentText = `[Audio]: ${transcription}`;
 

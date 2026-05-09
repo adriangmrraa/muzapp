@@ -20,78 +20,154 @@ export interface BufferedMessage {
   contentAttributes?: unknown[];
 }
 
+// ─── In-Memory Fallback (cuando Redis no está disponible) ───────────────────
+interface InMemoryEntry {
+  messages: BufferedMessage[];
+  timer: number; // timestamp del último enqueue
+  lock: boolean;
+}
+
+const inMemoryStore = new Map<string, InMemoryEntry>();
+
+// Cleanup cada 5 min: borra entradas con más de 10 min de inactividad
+const CLEANUP_INTERVAL = 5 * 60 * 1000;
+const ENTRY_TTL = 10 * 60 * 1000;
+
+setInterval(() => {
+  const cutoff = Date.now() - ENTRY_TTL;
+  for (const [key, entry] of inMemoryStore.entries()) {
+    if (entry.timer < cutoff) {
+      inMemoryStore.delete(key);
+    }
+  }
+}, CLEANUP_INTERVAL);
+
+function memKey(channel: Channel, userId: string): string {
+  return `${channel}:${userId}`;
+}
+
+function getOrCreateEntry(channel: Channel, userId: string): InMemoryEntry {
+  const key = memKey(channel, userId);
+  if (!inMemoryStore.has(key)) {
+    inMemoryStore.set(key, { messages: [], timer: 0, lock: false });
+  }
+  return inMemoryStore.get(key)!;
+}
+
+// ─── BufferManager ──────────────────────────────────────────────────────────
+
 export const BufferManager = {
   async enqueue(channel: Channel, userId: string, message: BufferedMessage): Promise<void> {
-    if (!redis) return;
     const config = BUFFER_CONFIG[channel];
-    const bKey = bufferKey(channel, userId);
-    const tKey = timerKey(channel, userId);
 
-    await redis.rpush(bKey, JSON.stringify(message));
-
-    const debounceSeconds = Math.ceil(config.debounceMs / 1000);
-    await redis.set(tKey, Date.now().toString(), { ex: debounceSeconds });
-
-    await redis.expire(bKey, 600);
+    if (redis) {
+      const bKey = bufferKey(channel, userId);
+      const tKey = timerKey(channel, userId);
+      await redis.rpush(bKey, JSON.stringify(message));
+      const debounceSeconds = Math.ceil(config.debounceMs / 1000);
+      await redis.set(tKey, Date.now().toString(), { ex: debounceSeconds });
+      await redis.expire(bKey, 600);
+    } else {
+      const entry = getOrCreateEntry(channel, userId);
+      entry.messages.push(message);
+      entry.timer = Date.now();
+    }
   },
 
   async acquireLock(channel: Channel, userId: string): Promise<boolean> {
-    if (!redis) return true;
-    const config = BUFFER_CONFIG[channel];
-    const lKey = lockKey(channel, userId);
-    const lockTtlSeconds = Math.ceil(config.lockTtlMs / 1000);
+    if (redis) {
+      const config = BUFFER_CONFIG[channel];
+      const lKey = lockKey(channel, userId);
+      const lockTtlSeconds = Math.ceil(config.lockTtlMs / 1000);
+      const result = await redis.set(lKey, Date.now().toString(), {
+        nx: true,
+        ex: lockTtlSeconds,
+      });
+      return result === "OK";
+    }
 
-    const result = await redis.set(lKey, Date.now().toString(), {
-      nx: true,
-      ex: lockTtlSeconds,
-    });
-    return result === "OK";
+    const entry = getOrCreateEntry(channel, userId);
+    if (entry.lock) return false;
+    entry.lock = true;
+    return true;
   },
 
   async releaseLock(channel: Channel, userId: string): Promise<void> {
-    if (!redis) return;
-    await redis.del(lockKey(channel, userId));
+    if (redis) {
+      await redis.del(lockKey(channel, userId));
+    } else {
+      const key = memKey(channel, userId);
+      const entry = inMemoryStore.get(key);
+      if (entry) entry.lock = false;
+    }
   },
 
   async isTimerExpired(channel: Channel, userId: string): Promise<boolean> {
-    if (!redis) return true;
-    const tKey = timerKey(channel, userId);
-    const exists = await redis.exists(tKey);
-    return exists === 0;
+    if (redis) {
+      const tKey = timerKey(channel, userId);
+      const exists = await redis.exists(tKey);
+      return exists === 0;
+    }
+
+    const key = memKey(channel, userId);
+    const entry = inMemoryStore.get(key);
+    if (!entry) return true;
+
+    const config = BUFFER_CONFIG[channel];
+    const elapsed = Date.now() - entry.timer;
+    return elapsed >= config.debounceMs;
   },
 
   async fetchAndClear(channel: Channel, userId: string): Promise<BufferedMessage[]> {
-    if (!redis) return [];
-    const bKey = bufferKey(channel, userId);
+    if (redis) {
+      const bKey = bufferKey(channel, userId);
+      const raw = await redis.lrange(bKey, 0, -1);
+      await redis.del(bKey);
+      return raw.map((item) => {
+        if (typeof item === "string") return JSON.parse(item) as BufferedMessage;
+        return item as BufferedMessage;
+      });
+    }
 
-    const raw = await redis.lrange(bKey, 0, -1);
+    const key = memKey(channel, userId);
+    const entry = inMemoryStore.get(key);
+    if (!entry) return [];
 
-    await redis.del(bKey);
-
-    return raw.map((item) => {
-      if (typeof item === "string") return JSON.parse(item) as BufferedMessage;
-      return item as BufferedMessage;
-    });
+    const messages = [...entry.messages];
+    entry.messages = [];
+    entry.timer = 0;
+    return messages;
   },
 
   async hasNewMessages(channel: Channel, userId: string): Promise<boolean> {
-    if (!redis) return false;
-    const bKey = bufferKey(channel, userId);
-    const len = await redis.llen(bKey);
-    return len > 0;
+    if (redis) {
+      const bKey = bufferKey(channel, userId);
+      const len = await redis.llen(bKey);
+      return len > 0;
+    }
+
+    const key = memKey(channel, userId);
+    const entry = inMemoryStore.get(key);
+    return entry ? entry.messages.length > 0 : false;
   },
 
   // Level-2 content dedup: returns true if the same content was seen in the last 5 seconds
   async isContentDuplicate(channel: Channel, userId: string, content: string): Promise<boolean> {
-    if (!redis) return false;
-    const hashKey = `dedup:${channel}:${userId}`;
-    // Simple fingerprint: first 50 chars, lowercased and trimmed
+    if (redis) {
+      const hashKey = `dedup:${channel}:${userId}`;
+      const hash = content.toLowerCase().trim().slice(0, 50);
+      const existing = await redis.get(hashKey);
+      if (existing === hash) return true;
+      await redis.set(hashKey, hash, { ex: 5 });
+      return false;
+    }
+
+    // In-memory dedup: simple Map con TTL de 5s
+    const dedupKey = `dedup:${channel}:${userId}`;
     const hash = content.toLowerCase().trim().slice(0, 50);
 
-    const existing = await redis.get(hashKey);
-    if (existing === hash) return true;
-
-    await redis.set(hashKey, hash, { ex: 5 });
-    return false;
+    const dedupMap = inMemoryStore.get(dedupKey)?.messages.length;
+    // Simple approach: store hash + timestamp in a separate weak map
+    return false; // no dedup for in-memory (simplified)
   },
 };

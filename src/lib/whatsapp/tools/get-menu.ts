@@ -21,6 +21,7 @@ export const getMenuTool = tool({
         price: products.price,
         category: products.category,
         line: products.line,
+        imageUrl: products.imageUrl,
       })
       .from(products)
       .where(and(...conditions))

@@ -68,6 +68,9 @@ export type AgentConfigFormData = {
   stockPanDocenas: number;
   aliasB2c: string;
   aliasB2b: string;
+  // ─── Menu Images ─────────────────────────────────────────────────────────
+  menuImageUrlHamburguesas: string;
+  menuImageUrlPan: string;
 };
 
 const initialState: AgentConfigState = {
@@ -126,6 +129,10 @@ export default function AgentConfigForm({
   const [stockPanDocenas, setStockPanDocenas] = useState(config.stockPanDocenas ?? 0);
   const [aliasB2c, setAliasB2c] = useState(config.aliasB2c ?? "");
   const [aliasB2b, setAliasB2b] = useState(config.aliasB2b ?? "");
+  const [menuImageHamburguesas, setMenuImageHamburguesas] = useState(config.menuImageUrlHamburguesas ?? "");
+  const [menuImagePan, setMenuImagePan] = useState(config.menuImageUrlPan ?? "");
+  const [uploadingMenuHamb, setUploadingMenuHamb] = useState(false);
+  const [uploadingMenuPan, setUploadingMenuPan] = useState(false);
 
   // ─── Toast notifications ────────────────────────────────────────────────────
 
@@ -159,6 +166,28 @@ export default function AgentConfigForm({
   const removePhoneId = (phone: string) => {
     setAllowedPhoneIds((prev) => prev.filter((e) => e.phone !== phone));
   };
+
+  // ─── Image upload helper ─────────────────────────────────────────────────────
+  async function handleMenuImageUpload(
+    file: File,
+    setUrl: (url: string) => void,
+    setUploading: (v: boolean) => void
+  ) {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/media/upload", { method: "POST", body: fd });
+      if (!res.ok) throw new Error((await res.json()).error || "Error");
+      const data = await res.json();
+      setUrl(data.url);
+      toast.success("Imagen subida");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al subir");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const handleTestConfig = async () => {
     setTestState({ loading: true, result: null });
@@ -791,7 +820,111 @@ export default function AgentConfigForm({
         </motion.div>
 
         {/* ═════════════════════════════════════════════════════════════════════
-            10. Quick Actions
+            10. Imágenes de Menú
+            ═════════════════════════════════════════════════════════════════════ */}
+        <motion.div variants={fadeUpSmall}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>📸</span>
+                Imágenes de Menú
+              </CardTitle>
+              <CardDescription>
+                Subí las imágenes del menú que el agente envía cuando los clientes preguntan
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              {/* Menu Hamburguesas */}
+              <div className="flex items-start gap-4">
+                <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                  {menuImageHamburguesas ? (
+                    <img src={menuImageHamburguesas} alt="Menu hamburguesas" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl text-white/20">🍔</span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 flex-1">
+                  <Label>Menú Hamburguesas</Label>
+                  <input type="hidden" name="menuImageUrlHamburguesas" value={menuImageHamburguesas} />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploadingMenuHamb}
+                    onClick={() => document.getElementById("menu-upload-hamb")?.click()}
+                  >
+                    {uploadingMenuHamb ? "Subiendo..." : "Subir imagen"}
+                  </Button>
+                  <input
+                    id="menu-upload-hamb"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleMenuImageUpload(f, setMenuImageHamburguesas, setUploadingMenuHamb);
+                    }}
+                  />
+                  {menuImageHamburguesas && (
+                    <button
+                      type="button"
+                      onClick={() => setMenuImageHamburguesas("")}
+                      className="text-xs text-red-400 hover:text-red-300 self-start"
+                    >
+                      Quitar imagen
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Menu Pan */}
+              <div className="flex items-start gap-4">
+                <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                  {menuImagePan ? (
+                    <img src={menuImagePan} alt="Menu pan" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl text-white/20">🍞</span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 flex-1">
+                  <Label>Menú Pan (B2B)</Label>
+                  <input type="hidden" name="menuImageUrlPan" value={menuImagePan} />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploadingMenuPan}
+                    onClick={() => document.getElementById("menu-upload-pan")?.click()}
+                  >
+                    {uploadingMenuPan ? "Subiendo..." : "Subir imagen"}
+                  </Button>
+                  <input
+                    id="menu-upload-pan"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleMenuImageUpload(f, setMenuImagePan, setUploadingMenuPan);
+                    }}
+                  />
+                  {menuImagePan && (
+                    <button
+                      type="button"
+                      onClick={() => setMenuImagePan("")}
+                      className="text-xs text-red-400 hover:text-red-300 self-start"
+                    >
+                      Quitar imagen
+                    </button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ═════════════════════════════════════════════════════════════════════
+            11. Quick Actions
             ═════════════════════════════════════════════════════════════════════ */}
         <motion.div variants={fadeUpSmall}>
           <Card>

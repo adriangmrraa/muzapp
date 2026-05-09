@@ -67,7 +67,7 @@ export function createSendStickerTool(customerPhone: string) {
 export function createSendMenuImageTool(customerPhone: string) {
   return tool({
     description:
-      "Envía la foto del menú al cliente. Usar cuando piden 'menu', 'carta', 'que tienen'.",
+      "Envía la foto del menú al cliente. Usar cuando piden 'menu', 'carta', 'que tienen'. El agente no necesita especificar tipo, se detecta automáticamente del contexto.",
     inputSchema: z.object({
       tipo: z
         .enum(["hamburguesas", "pan"])
@@ -80,6 +80,35 @@ export function createSendMenuImageTool(customerPhone: string) {
         process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
         "https://muzapp.onrender.com";
 
+      // Try to get from DB first (configurable from admin UI)
+      try {
+        const { db } = await import("@/db");
+        const { agentConfig } = await import("@/db/schema");
+        const { eq } = await import("drizzle-orm");
+
+        const rows = await db
+          .select({
+            hamb: agentConfig.menuImageUrlHamburguesas,
+            pan: agentConfig.menuImageUrlPan,
+          })
+          .from(agentConfig)
+          .where(eq(agentConfig.id, 1))
+          .limit(1);
+
+        const config = rows[0];
+        const dbUrl = tipo === "hamburguesas" ? config?.hamb : config?.pan;
+
+        if (dbUrl) {
+          const absoluteUrl = dbUrl.startsWith("http") ? dbUrl : `${baseUrl}${dbUrl}`;
+          const result = await sendImage(customerPhone, absoluteUrl, "Acá tenés el menú amigo ❤️");
+          if (result.ok) return `Te mandé el menú 📸`;
+          console.warn("[menuImage] DB URL failed, trying fallback:", result.error);
+        }
+      } catch (err) {
+        console.warn("[menuImage] DB query failed, using fallback:", err);
+      }
+
+      // Fallback: archivos estáticos
       const filename = tipo === "hamburguesas" ? "menu-pizzas.jpeg" : "menu-pan.jpeg";
       const imageUrl = `${baseUrl}/assets/images/${filename}`;
 

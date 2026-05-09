@@ -114,6 +114,41 @@ function ProductForm({ product, onClose }: ProductFormProps) {
 
   const [available, setAvailable] = useState(product?.available ?? true);
   const [comingSoon, setComingSoon] = useState(product?.comingSoon ?? false);
+  const [imageUrlValue, setImageUrlValue] = useState(product?.imageUrl ?? "");
+  const [imagePreview, setImagePreview] = useState(product?.imageUrl ?? "");
+  const [uploading, setUploading] = useState(false);
+
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show local preview immediately
+    const localPreview = URL.createObjectURL(file);
+    setImagePreview(localPreview);
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/media/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error al subir");
+      }
+
+      const data = await res.json();
+      setImageUrlValue(data.url);
+      toast.success("Imagen subida");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al subir imagen");
+      setImagePreview(product?.imageUrl ?? ""); // revert preview
+    } finally {
+      setUploading(false);
+      // Cleanup object URL after a delay
+      setTimeout(() => URL.revokeObjectURL(localPreview), 5000);
+    }
+  }
 
   async function formAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
     formData.set("available", String(available));
@@ -182,16 +217,56 @@ function ProductForm({ product, onClose }: ProductFormProps) {
         />
       </div>
 
-      {/* Image URL */}
+      {/* Image upload */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="imageUrl">URL de imagen</Label>
-        <Input
-          id="imageUrl"
-          name="imageUrl"
-          type="url"
-          defaultValue={product?.imageUrl ?? ""}
-          placeholder="https://..."
-        />
+        <Label>Imagen del producto</Label>
+        <input type="hidden" name="imageUrl" value={imageUrlValue} />
+        <div className="flex items-start gap-4">
+          {/* Preview */}
+          <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+            {imagePreview ? (
+              <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-2xl text-white/20">📸</span>
+            )}
+          </div>
+          <div className="flex flex-col gap-2 flex-1">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={uploading}
+                onClick={() => document.getElementById(`image-picker-${product?.id || "new"}`)?.click()}
+              >
+                {uploading ? "Subiendo..." : "Subir foto"}
+              </Button>
+              {imageUrlValue && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setImageUrlValue(""); setImagePreview(""); }}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  Quitar
+                </Button>
+              )}
+            </div>
+            <input
+              id={`image-picker-${product?.id || "new"}`}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleImageSelect}
+            />
+            {imageUrlValue && (
+              <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">
+                {imageUrlValue}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Category */}

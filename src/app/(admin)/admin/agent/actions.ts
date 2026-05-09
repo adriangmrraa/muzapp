@@ -59,6 +59,8 @@ const agentConfigSchema = z.object({
   stockPanDocenas: z.number().int().min(0).optional().default(0),
   aliasB2c: z.string().optional(),
   aliasB2b: z.string().optional(),
+  menuImageUrlHamburguesas: z.string().optional(),
+  menuImageUrlPan: z.string().optional(),
 });
 
 // ─── Actions ────────────────────────────────────────────────────────────────────
@@ -134,6 +136,8 @@ export async function saveAgentConfig(
     stockPanDocenas: Number(formData.get("stockPanDocenas")) || 0,
     aliasB2c: formData.get("aliasB2c") || undefined,
     aliasB2b: formData.get("aliasB2b") || undefined,
+    menuImageUrlHamburguesas: formData.get("menuImageUrlHamburguesas") || undefined,
+    menuImageUrlPan: formData.get("menuImageUrlPan") || undefined,
   };
 
   const parsed = agentConfigSchema.safeParse(raw);
@@ -168,6 +172,8 @@ export async function saveAgentConfig(
       stockPanDocenas: parsed.data.stockPanDocenas ?? 0,
       aliasB2c: parsed.data.aliasB2c ?? null,
       aliasB2b: parsed.data.aliasB2b ?? null,
+      menuImageUrlHamburguesas: parsed.data.menuImageUrlHamburguesas ?? null,
+      menuImageUrlPan: parsed.data.menuImageUrlPan ?? null,
       updatedAt: new Date(),
     };
 
