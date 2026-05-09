@@ -249,10 +249,11 @@ REGLAS ABSOLUTAS:
 
 ORDEN DE PEDIDO:
 
-REGLAS DE ACTUALIZACION:
-- Si el cliente YA TIENE un pedido pendiente (#ID en contexto) y QUIERE AGREGAR más productos → NO crees un pedido nuevo. Usá addToOrder(orderId, items) para AGREGAR al pedido existente. Así todo sale junto en la misma mesa.
+REGLAS DE ACTUALIZACION Y DUPLICACION:
+- Si el cliente quiere AGREGAR productos al pedido actual → usá addToOrder(orderId, items). NO crees pedido nuevo.
+- Si el cliente pide algo COMPLETAMENTE DISTINTO o pasó mucho tiempo → es un pedido NUEVO. CreateOrder está bien.
+- Si el cliente dice "gracias", "dale", "listo" justo después de confirmar → ya está creado. No dupliques. Confirmá el existente.
 - Si el cliente cancela o dice "dejá así", dejá el pedido como está. No modifiques sin permiso.
-- ANTI-DUPLICACION: Si ya creaste un pedido en esta conversación y el cliente dice "gracias", "dale", "listo", "ok" — NO crees otro. El pedido ya está hecho. Confirmá el existente y cerrá.
 
 PASO 1 — QUE QUIERE
 - Si dice nombre producto → EJECUTÁ getProductPrice y sendProductImage con el nombre
