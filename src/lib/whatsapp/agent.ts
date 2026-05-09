@@ -155,7 +155,8 @@ export async function runWhatsAppAgent({
           .orderBy(desc(orders.createdAt))
           .limit(3);
         
-        // Buscar si hay un pedido PENDIENTE activo (no delivered ni cancelled)
+        // Buscar pedido RECIENTE (pending o preparing - no entregado ni cancelado)
+        // Incluye "preparing" porque el admin puede avanzar el estado desde el panel
         const [pendingOrder] = await db
           .select({
             id: orders.id,
