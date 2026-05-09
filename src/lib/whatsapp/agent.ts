@@ -181,7 +181,7 @@ export async function runWhatsAppAgent({
         sendSticker: createSendStickerTool(customerPhone),
         sendMenuImage: createSendMenuImageTool(customerPhone),
       },
-      stopWhen: stepCountIs(5),
+      stopWhen: stepCountIs(7),
       toolChoice: "auto",
     });
 
