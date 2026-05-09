@@ -68,6 +68,7 @@ export type AgentConfigFormData = {
   stockPanDocenas: number;
   aliasB2c: string;
   aliasB2b: string;
+  tiempoEspera: string;
   // ─── Menu Images ─────────────────────────────────────────────────────────
   menuImageUrlHamburguesas: string;
   menuImageUrlPan: string;
@@ -813,6 +814,20 @@ export default function AgentConfigForm({
                 />
                 <p className="text-xs text-muted-foreground">
                   El agente inyecta este alias cuando un cliente mayorista pide datos para transferir
+                </p>
+              </div>
+
+              {/* Tiempo de espera */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="tiempoEspera">Tiempo de espera estimado</Label>
+                <Input
+                  id="tiempoEspera"
+                  name="tiempoEspera"
+                  placeholder="30-40 min"
+                  defaultValue={config.tiempoEspera ?? ""}
+                />
+                <p className="text-xs text-muted-foreground">
+                  El agente usa este tiempo al confirmar pedidos. Ej: "En 30-40 min lo tenes amigo"
                 </p>
               </div>
             </CardContent>

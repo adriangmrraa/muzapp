@@ -18,8 +18,9 @@ function sleep(ms: number): Promise<void> {
  * 5. Strip markdown formatting (bold **text**, backticks, etc.) for natural feel
  */
 export function splitIntoBubbles(text: string): string[] {
-  // Clean up markdown artifacts for WhatsApp
+  // Clean up markdown artifacts + internal markers for WhatsApp
   let cleaned = text
+    .replace(/\[INTERNAL_[^\]]*\]/g, "")  // [INTERNAL_*] markers
     .replace(/\*\*([^*]*)\*\*/g, "$1")   // **bold** → bold (allow empty)
     .replace(/\*([^*]+)\*/g, "$1")       // *italic* → italic
     .replace(/`([^`]+)`/g, "$1")         // `code` → code

@@ -111,6 +111,7 @@ export const agentConfig = pgTable("agent_config", {
   stockPanDocenas: integer("stock_pan_docenas").default(0),
   aliasB2c: varchar("alias_b2c", { length: 100 }),
   aliasB2b: varchar("alias_b2b", { length: 100 }),
+  tiempoEspera: varchar("tiempo_espera", { length: 50 }),
   menuImageUrlHamburguesas: text("menu_image_url_hamburguesas"),
   menuImageUrlPan: text("menu_image_url_pan"),
   // ───────────────────────────────────────────────────────────────────────────

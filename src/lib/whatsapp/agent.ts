@@ -28,7 +28,7 @@ import {
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
-import { formatAsWhatsAppBubbles } from "./smart-split";
+// smart-split unificado en response-sender.ts — ya no se usa acá
 
 interface RunAgentParams {
   conversationId: number;
@@ -181,17 +181,14 @@ export async function runWhatsAppAgent({
         sendSticker: createSendStickerTool(customerPhone),
         sendMenuImage: createSendMenuImageTool(customerPhone),
       },
-      stopWhen: stepCountIs(8),
+      stopWhen: stepCountIs(5),
       toolChoice: "auto",
     });
 
     let rawText = result.text || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
-    
-    // 📨 SMART SPLIT — dividir respuestas largas en burbujas
-    const bubbles = formatAsWhatsAppBubbles(rawText);
-    const finalText = bubbles.length > 1 
-      ? bubbles.join("\n\n---\n\n") 
-      : rawText;
+
+    // Limpiar markers internos que el LLM pueda haber incluido
+    const finalText = rawText.replace(/\[INTERNAL_[^\]]*\]/g, "").trim();
     
     return finalText;
   } catch (error) {

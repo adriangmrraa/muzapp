@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
 
   const message = payload.whatsappInboundMessage;
 
-  // Accept: text, image, audio, document, video — drop everything else
-  const SUPPORTED_TYPES = ["text", "image", "audio", "document", "video"] as const;
+  // Accept: text, image, audio, document, video, location — drop everything else
+  const SUPPORTED_TYPES = ["text", "image", "audio", "document", "video", "location"] as const;
   type SupportedType = (typeof SUPPORTED_TYPES)[number];
 
   if (!message || !SUPPORTED_TYPES.includes(message.type as SupportedType)) {
@@ -132,7 +132,30 @@ export async function POST(request: NextRequest) {
     let agentText: string;
     let contentAttributes: MediaAttachment[] | undefined;
 
-    if (msgType === "text") {
+    if (msgType === "location") {
+      // ── LOCATION (pin de Maps) ──────────────────────────────────────────
+      const loc = message.location as {
+        latitude?: number;
+        longitude?: number;
+        name?: string;
+        address?: string;
+      } | undefined;
+
+      const address = loc?.address || loc?.name || "ubicación compartida";
+      const coords = loc?.latitude && loc?.longitude
+        ? ` (${loc.latitude}, ${loc.longitude})`
+        : "";
+      agentText = `[Ubicacion]: ${address}${coords}`;
+
+      contentAttributes = [{
+        type: "image" as const,
+        url: "",
+        caption: agentText,
+        description: `Ubicación compartida: ${address}${coords}`,
+      }];
+      await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+
+    } else if (msgType === "text") {
       // ── TEXT ──────────────────────────────────────────────────────────────
       agentText = (message.text?.body as string) || "";
       await insertMessage(conversationId, "user", agentText, undefined, messageId);

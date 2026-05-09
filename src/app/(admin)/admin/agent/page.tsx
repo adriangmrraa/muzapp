@@ -36,6 +36,7 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   stockPanDocenas: 0,
   aliasB2c: "",
   aliasB2b: "",
+  tiempoEspera: "",
   menuImageUrlHamburguesas: "",
   menuImageUrlPan: "",
 };
@@ -77,6 +78,7 @@ export default async function AgentPage() {
         stockPanDocenas: (row.stockPanDocenas as number) ?? 0,
         aliasB2c: (row.aliasB2c as string) ?? "",
         aliasB2b: (row.aliasB2b as string) ?? "",
+        tiempoEspera: (row.tiempoEspera as string) ?? "",
         menuImageUrlHamburguesas: (row.menuImageUrlHamburguesas as string) ?? "",
         menuImageUrlPan: (row.menuImageUrlPan as string) ?? "",
       }

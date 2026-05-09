@@ -14,6 +14,7 @@ const STICKER_MAP: Record<string, { file: string; emoji: string }> = {
   flama: { file: "flama.webp", emoji: "🔥" },
   ok: { file: "ok.webp", emoji: "👍" },
   dale: { file: "dale.webp", emoji: "✅" },
+  corazon: { file: "corazon.webp", emoji: "❤️" },
 };
 
 type StickerName = keyof typeof STICKER_MAP;
