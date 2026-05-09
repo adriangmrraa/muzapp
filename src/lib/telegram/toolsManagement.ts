@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { leads, orders, agentConfig } from "@/db/schema";
-import { eq, desc, ilike, or, gte, lte, count, and } from "drizzle-orm";
+import { leads, orders, agentConfig, conversations, chatMessages, products } from "@/db/schema";
+import { eq, desc, ilike, or, gte, lte, count, and, asc, sql } from "drizzle-orm";
 
 // ─── manageManagement: Tools de gestión interna ──────────────────────────────
 
@@ -358,6 +358,191 @@ export const getBusinessHoursTool = tool({
   },
 });
 
+// ─── updateBusinessHoursTool ─────────────────────────────────────────────────
+export const updateBusinessHoursTool = tool({
+  description:
+    "ACTUALIZA los horarios de atención del negocio. Usar cuando el admin pida cambiar horarios. Parámetros: enabled (true/false), days (ej: 'Lunes a Viernes'), openTime (ej: '05:00'), closeTime (ej: '23:45'). SIEMPRE actualizá con los datos que te den, no preguntes de más.",
+  inputSchema: z.object({
+    enabled: z.boolean().describe("true si el negocio está abierto, false si cerrado"),
+    days: z.string().describe("Días de atención. Ej: 'Lunes a Viernes' o 'Lunes a Domingo'"),
+    openTime: z.string().describe("Hora de apertura formato HH:MM. Ej: '05:00'"),
+    closeTime: z.string().describe("Hora de cierre formato HH:MM. Ej: '23:45'"),
+  }),
+  execute: async ({ enabled, days, openTime, closeTime }) => {
+    const [existing] = await db
+      .select({ id: agentConfig.id })
+      .from(agentConfig)
+      .where(eq(agentConfig.id, 1))
+      .limit(1);
+
+    if (existing) {
+      await db
+        .update(agentConfig)
+        .set({
+          businessHours: { enabled, days, open: openTime, close: closeTime },
+          updatedAt: new Date(),
+        })
+        .where(eq(agentConfig.id, 1));
+    } else {
+      await db.insert(agentConfig).values({
+        id: 1,
+        businessHours: { enabled, days, open: openTime, close: closeTime },
+      });
+    }
+
+    return `✅ Horarios actualizados:
+• Días: ${days}
+• Apertura: ${openTime}
+• Cierre: ${closeTime}
+• Estado: ${enabled ? "Abierto" : "Cerrado"}`;
+  },
+});
+
+// ─── getConversationsTool ────────────────────────────────────────────────────
+export const getConversationsTool = tool({
+  description:
+    "Lista las últimas conversaciones de WhatsApp. Preguntas: 'mostrame los chats', 'conversaciones recientes', 'qué están hablando los clientes'",
+  inputSchema: z.object({
+    limit: z.number().optional().default(10).describe("Cantidad de conversaciones a mostrar (max 20)"),
+  }),
+  execute: async ({ limit }) => {
+    const { conversations: convTable, chatMessages } = await import("@/db/schema");
+    const rows = await db
+      .select({
+        id: convTable.id,
+        customerName: convTable.customerName,
+        customerPhone: convTable.customerPhone,
+        status: convTable.status,
+        lastMessageAt: convTable.lastMessageAt,
+        lastMessagePreview: convTable.lastMessagePreview,
+      })
+      .from(convTable)
+      .orderBy(desc(convTable.lastMessageAt))
+      .limit(Math.min(limit, 20));
+
+    if (rows.length === 0) return "No hay conversaciones.";
+
+    return rows.map((r) =>
+      `• #${r.id} ${r.customerName ?? "?"} (${r.customerPhone}) — ${r.status}${r.lastMessageAt ? ` — ${r.lastMessageAt.toLocaleString("es-AR")}` : ""}${r.lastMessagePreview ? `: "${r.lastMessagePreview.slice(0, 50)}"` : ""}`
+    ).join("\n");
+  },
+});
+
+// ─── updateAgentConfigTool ──────────────────────────────────────────────────
+export const updateAgentConfigTool = tool({
+  description:
+    "ACTUALIZA cualquier configuración del negocio en tiempo real. Usar cuando el admin pida cambios en: cocina (isCooking), stock de pan (stockPanDocenas), alias de pago (aliasB2c/aliasB2b), tiempo de espera (tiempoEspera), o cualquier campo de configuración. Solo envía los campos que querés cambiar.",
+  inputSchema: z.object({
+    isCooking: z.boolean().optional().describe("true = cocina abierta, false = cocina cerrada"),
+    stockPanDocenas: z.number().int().min(0).optional().describe("Stock de pan en docenas"),
+    aliasB2c: z.string().optional().describe("Alias de Mercado Pago para hamburguesas (B2C)"),
+    aliasB2b: z.string().optional().describe("Alias de Mercado Pago para pan mayorista (B2B)"),
+    tiempoEspera: z.string().optional().describe("Tiempo de espera estimado. Ej: '30-40 min'"),
+  }),
+  execute: async (args) => {
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    const changed: string[] = [];
+
+    if (args.isCooking !== undefined) { updates.isCooking = args.isCooking; changed.push(`cocina: ${args.isCooking ? "abierta" : "cerrada"}`); }
+    if (args.stockPanDocenas !== undefined) { updates.stockPanDocenas = args.stockPanDocenas; changed.push(`stock pan: ${args.stockPanDocenas} doc`); }
+    if (args.aliasB2c !== undefined) { updates.aliasB2c = args.aliasB2c; changed.push(`alias B2C: ${args.aliasB2c}`); }
+    if (args.aliasB2b !== undefined) { updates.aliasB2b = args.aliasB2b; changed.push(`alias B2B: ${args.aliasB2b}`); }
+    if (args.tiempoEspera !== undefined) { updates.tiempoEspera = args.tiempoEspera; changed.push(`tiempo espera: ${args.tiempoEspera}`); }
+
+    if (changed.length === 0) return "No especificaste qué cambiar. Pasá al menos un parámetro.";
+
+    const [existing] = await db
+      .select({ id: agentConfig.id })
+      .from(agentConfig)
+      .where(eq(agentConfig.id, 1))
+      .limit(1);
+
+    if (existing) {
+      await db.update(agentConfig).set(updates).where(eq(agentConfig.id, 1));
+    } else {
+      await db.insert(agentConfig).values({ id: 1, ...updates });
+    }
+
+    return `✅ Configuración actualizada:\n${changed.join("\n")}`;
+  },
+});
+
+// ─── queryDataTool ──────────────────────────────────────────────────────────
+// Tool genérica para consultar CUALQUIER tabla de la base de datos
+// con filtros inteligentes. El LLM decide qué tabla, columnas y filtros usar.
+export const queryDataTool = tool({
+  description:
+    "Consulta CUALQUIER tabla de la base de datos con filtros inteligentes. Elegí la tabla, los filtros (columna:valor), el orden y límite. Tablas disponibles: conversations (chats de WhatsApp), leads (clientes), orders (pedidos), products (productos), agent_config (config del negocio), chat_messages (mensajes individuales), users (usuarios admin), attachments (archivos adjuntos).",
+  inputSchema: z.object({
+    table: z.enum(["conversations", "leads", "orders", "products", "agent_config", "chat_messages", "users", "attachments"])
+      .describe("Nombre de la tabla a consultar"),
+    filters: z.array(z.object({
+      column: z.string().describe("Nombre de la columna. Ej: 'id', 'name', 'phone', 'status', 'customerName', 'orderType'"),
+      operator: z.enum(["eq", "neq", "like", "gt", "gte", "lt", "lte"]).describe("Operador: eq (igual), neq (distinto), like (contiene), gt/gte/lt/lte (mayor/menor que)"),
+      value: z.string().describe("Valor a buscar. Para texto usá el texto, para números usá el número como string"),
+    })).optional().describe("Filtros a aplicar. Se combinan con AND."),
+    orderBy: z.string().optional().describe("Columna por la que ordenar. Por defecto: createdAt o id"),
+    orderDir: z.enum(["asc", "desc"]).optional().default("desc").describe("Dirección del orden"),
+    limit: z.number().int().min(1).max(50).optional().default(20).describe("Cantidad máxima de resultados"),
+  }),
+  execute: async ({ table, filters, orderBy, orderDir, limit }) => {
+    try {
+      // Map table names to actual drizzle queries
+      const tableMap: Record<string, any> = {
+        conversations, leads, orders, products, agent_config, chat_messages,
+      };
+
+      const tbl = tableMap[table];
+      if (!tbl) return `Tabla "${table}" no disponible para consulta directa.`;
+
+      // Build WHERE conditions
+      const conditions: any[] = [];
+      for (const f of filters || []) {
+        const col = tbl[f.column as keyof typeof tbl];
+        if (!col) continue; // skip unknown columns
+
+        if (f.operator === "eq") conditions.push(eq(col, f.value));
+        else if (f.operator === "neq") conditions.push(sql`${col} != ${f.value}`);
+        else if (f.operator === "like") conditions.push(ilike(col, `%${f.value}%`));
+        else if (f.operator === "gt") conditions.push(sql`${col} > ${f.value}::numeric`);
+        else if (f.operator === "gte") conditions.push(sql`${col} >= ${f.value}::numeric`);
+        else if (f.operator === "lt") conditions.push(sql`${col} < ${f.value}::numeric`);
+        else if (f.operator === "lte") conditions.push(sql`${col} <= ${f.value}::numeric`);
+      }
+
+      // Default order
+      const orderCol = orderBy
+        ? (tbl[orderBy as keyof typeof tbl] || desc(tbl.createdAt || tbl.id))
+        : desc(tbl.createdAt || tbl.id);
+      const orderFn = orderDir === "asc" ? asc : desc;
+      const finalOrder = orderBy ? orderFn(tbl[orderBy as keyof typeof tbl]) : desc(tbl.createdAt || tbl.id);
+
+      const rows = await db
+        .select()
+        .from(tbl)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(finalOrder)
+        .limit(limit);
+
+      if (rows.length === 0) return `No se encontraron resultados en "${table}" con esos filtros.`;
+
+      // Format results as compact text
+      const headers = Object.keys(rows[0]).slice(0, 8); // max 8 columns
+      return rows.map((row: any) => {
+        return headers.map((h) => {
+          const val = row[h];
+          if (val === null || val === undefined) return "";
+          if (val instanceof Date) return val.toLocaleString("es-AR");
+          if (typeof val === "object") return JSON.stringify(val).slice(0, 100);
+          return String(val).slice(0, 80);
+        }).filter(Boolean).join(" | ");
+      }).join("\n");
+    } catch (e: any) {
+      return `Error al consultar: ${e.message || "desconocido"}`;
+    }
+  },
+});
+
 // ─── Export ─────────────────────────────────────────────────────────────────
 
 export const managementTools = {
@@ -367,4 +552,8 @@ export const managementTools = {
   updateOrderStatusNew: updateOrderStatusTool,
   getAnalytics: getAnalyticsTool,
   getBusinessHours: getBusinessHoursTool,
+  updateBusinessHours: updateBusinessHoursTool,
+  getConversations: getConversationsTool,
+  updateAgentConfig: updateAgentConfigTool,
+  queryData: queryDataTool,
 };

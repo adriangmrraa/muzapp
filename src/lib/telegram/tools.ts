@@ -97,13 +97,17 @@ export const internalAgentTools = {
   calculateTotal: manageOrderTools.calculateTotal,
   confirmOrder: manageOrderTools.confirmOrder,
 
-  // manageManagement (6 tools)
+  // manageManagement (10 tools)
   getClients: managementTools.getClients,
   getClientDetail: managementTools.getClientDetail,
   searchClient: managementTools.searchClient,
   updateOrderStatusNew: managementTools.updateOrderStatusNew,
   getAnalytics: managementTools.getAnalytics,
   getBusinessHours: managementTools.getBusinessHours,
+  updateBusinessHours: managementTools.updateBusinessHours,
+  getConversations: managementTools.getConversations,
+  updateAgentConfig: managementTools.updateAgentConfig,
+  queryData: managementTools.queryData,
 
   // analytics (4 tools)
   getSalesByDateRange: analyticsTools.getSalesByDateRange,
