@@ -18,8 +18,8 @@ export async function getCorePrompt(): Promise<string> {
       userExtras = config.systemPrompt.trim();
     }
 
-    if (config?.whatsappInstrucciones && config.whatsappInstrucciones.trim().length > 0) {
-      instruccionesExtra = config.whatsappInstrucciones.trim();
+    if (config?.whatsappInstructions && config.whatsappInstructions.trim().length > 0) {
+      instruccionesExtra = config.whatsappInstructions.trim();
     }
 
     if (config?.whatsappPromociones && config.whatsappPromociones.trim().length > 0) {
