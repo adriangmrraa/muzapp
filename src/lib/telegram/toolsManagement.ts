@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { leads, orders, agentConfig, conversations, chatMessages, products } from "@/db/schema";
+import { leads, orders, agentConfig, conversations, chatMessages, products, users } from "@/db/schema";
 import { eq, desc, ilike, or, gte, lte, count, and, asc, sql } from "drizzle-orm";
 
 // ─── manageManagement: Tools de gestión interna ──────────────────────────────
@@ -489,7 +489,7 @@ export const queryDataTool = tool({
     try {
       // Map table names to actual drizzle queries
       const tableMap: Record<string, any> = {
-        conversations, leads, orders, products, agent_config, chat_messages,
+        conversations, leads, orders, products, agentConfig, chat_messages, users,
       };
 
       const tbl = tableMap[table];
