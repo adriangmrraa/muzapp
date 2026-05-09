@@ -97,7 +97,7 @@ export const internalAgentTools = {
   calculateTotal: manageOrderTools.calculateTotal,
   confirmOrder: manageOrderTools.confirmOrder,
 
-  // manageManagement (10 tools)
+  // manageManagement (12 tools)
   getClients: managementTools.getClients,
   getClientDetail: managementTools.getClientDetail,
   searchClient: managementTools.searchClient,
@@ -108,6 +108,8 @@ export const internalAgentTools = {
   getConversations: managementTools.getConversations,
   updateAgentConfig: managementTools.updateAgentConfig,
   queryData: managementTools.queryData,
+  getBusinessSummary: managementTools.getBusinessSummary,
+  getConversationMessages: managementTools.getConversationMessages,
 
   // analytics (4 tools)
   getSalesByDateRange: analyticsTools.getSalesByDateRange,
@@ -115,8 +117,9 @@ export const internalAgentTools = {
   getTopClients: analyticsTools.getTopClients,
   getAverageTicket: analyticsTools.getAverageTicket,
 
-  // whatsApp (1 tool)
+  // whatsApp (2 tools)
   sendWhatsAppMessage: whatsAppTools.sendWhatsAppMessage,
+  batchSendWhatsApp: whatsAppTools.batchSendWhatsApp,
 };
 
 // whatsApp: Comunicación por WhatsApp

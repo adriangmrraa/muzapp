@@ -543,6 +543,102 @@ export const queryDataTool = tool({
   },
 });
 
+// ─── getBusinessSummary ──────────────────────────────────────────────────────
+// Resumen ejecutivo del negocio en UNA sola llamada (cocina, pedidos pendientes, data rápida)
+export const getBusinessSummaryTool = tool({
+  description:
+    "RESUMEN EJECUTIVO del negocio en UNA llamada. Devuelve: estado de cocina, pedidos pendientes, pedidos hoy, leads nuevos, stock de pan, alias configurados. PREGUNTAS: 'cómo vamos?', 'resumen del negocio', 'qué onda hoy?', 'dame el panorama general'",
+  inputSchema: z.object({}),
+  execute: async () => {
+    const [config] = await db.select().from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [pendingOrders] = await db
+      .select({ count: count() }).from(orders)
+      .where(eq(orders.status, "pending"));
+
+    const [todayOrders] = await db
+      .select({ count: count() }).from(orders)
+      .where(and(gte(orders.createdAt, today), lte(orders.createdAt, new Date(today.getTime() + 86400000))));
+
+    const [newLeads] = await db
+      .select({ count: count() }).from(leads)
+      .where(gte(leads.createdAt, today));
+
+    const lines = [
+      `📊 *RESUMEN DEL NEGOCIO*`,
+      ``,
+      `👨‍🍳 Cocina: ${config?.isCooking ? "✅ Abierta" : "❌ Cerrada"}`,
+      `⏰ Horarios: ${config?.businessHours ? `${config.businessHours.days || "?"} ${config.businessHours.open || "?"}-${config.businessHours.close || "?"}` : "No configurados"}`,
+      `📦 Pedidos pendientes: ${pendingOrders?.count || 0}`,
+      `📅 Pedidos hoy: ${todayOrders?.count || 0}`,
+      `🆕 Leads hoy: ${newLeads?.count || 0}`,
+      `🍞 Stock pan: ${config?.stockPanDocenas || 0} docenas`,
+      `🏷️ Alias B2C: ${config?.aliasB2c || "—"}`,
+      `🏷️ Alias B2B: ${config?.aliasB2b || "—"}`,
+      `⏱ Tiempo espera: ${config?.tiempoEspera || "30-40 min"}`,
+    ];
+
+    return lines.join("\n");
+  },
+});
+
+// ─── getConversationMessages ─────────────────────────────────────────────────
+// Ver el historial de mensajes de una conversación específica
+export const getConversationMessagesTool = tool({
+  description:
+    "Muestra el historial COMPLETO de mensajes de una conversación de WhatsApp. PREGUNTAS: 'mostrame el chat con Hector', 'qué dijo el cliente X?', 'historial de la conversación 5'",
+  inputSchema: z.object({
+    conversationId: z.number().optional().describe("ID de la conversación (si se sabe)"),
+    customerPhone: z.string().optional().describe("Teléfono del cliente para buscar su conversación"),
+    customerName: z.string().optional().describe("Nombre del cliente para buscar"),
+  }),
+  execute: async ({ conversationId, customerPhone, customerName }) => {
+    let convId = conversationId;
+
+    if (!convId) {
+      const conditions = [];
+      if (customerPhone) conditions.push(eq(conversations.customerPhone, customerPhone));
+      if (customerName) conditions.push(ilike(conversations.customerName || conversations.whatsappId, `%${customerName}%`));
+
+      if (conditions.length === 0) return "Necesito un ID de conversación, teléfono o nombre del cliente.";
+
+      const [conv] = await db
+        .select({ id: conversations.id })
+        .from(conversations)
+        .where(conditions.length === 1 ? conditions[0] : or(...conditions))
+        .orderBy(desc(conversations.lastMessageAt))
+        .limit(1);
+
+      if (!conv) return "No encontré esa conversación.";
+      convId = conv.id;
+    }
+
+    const messages = await db
+      .select({
+        role: chatMessages.role,
+        content: chatMessages.content,
+        createdAt: chatMessages.createdAt,
+        contentAttributes: chatMessages.contentAttributes,
+      })
+      .from(chatMessages)
+      .where(eq(chatMessages.conversationId, convId))
+      .orderBy(asc(chatMessages.createdAt))
+      .limit(50);
+
+    if (messages.length === 0) return `La conversación #${convId} no tiene mensajes.`;
+
+    return messages.map((m) => {
+      const time = m.createdAt ? m.createdAt.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) : "";
+      const role = m.role === "user" ? "👤 Cliente" : "🤖 Bot";
+      const content = m.content?.slice(0, 200) || "";
+      return `${time} ${role}: ${content}`;
+    }).join("\n");
+  },
+});
+
 // ─── Export ─────────────────────────────────────────────────────────────────
 
 export const managementTools = {
@@ -556,4 +652,6 @@ export const managementTools = {
   getConversations: getConversationsTool,
   updateAgentConfig: updateAgentConfigTool,
   queryData: queryDataTool,
+  getBusinessSummary: getBusinessSummaryTool,
+  getConversationMessages: getConversationMessagesTool,
 };
