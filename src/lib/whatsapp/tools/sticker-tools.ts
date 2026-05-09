@@ -32,11 +32,11 @@ function stickerExists(name: StickerName): boolean {
 export function createSendStickerTool(customerPhone: string) {
   return tool({
     description:
-      "Envía un sticker de confirmación al cliente. Usar después de confirmar pedido, pago recibido, o cuando el cliente confirma algo. Stickers: flama (🔥 épico), ok (👍 confirmación), dale (✅ aprobación).",
+      "Envía un sticker de confirmación al cliente. Usar después de confirmar pedido, pago recibido, o cuando el cliente confirma algo. Stickers: flama (🔥 épico), ok (👍 confirmación), dale (✅ aprobación), corazon (❤️ feedback/agradecimiento).",
     inputSchema: z.object({
       sticker: z
-        .enum(["flama", "ok", "dale"])
-        .describe("Sticker: flama (confirmación épica), ok (okey), dale (dale nomás)"),
+        .enum(["flama", "ok", "dale", "corazon"])
+        .describe("Sticker: flama (confirmación épica), ok (okey), dale (dale nomás), corazon (❤️ feedback/agradecimiento)"),
     }),
     execute: async ({ sticker }) => {
       const info = STICKER_MAP[sticker as StickerName];

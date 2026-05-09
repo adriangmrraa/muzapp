@@ -173,7 +173,7 @@ export async function handleTelegramUpdate(
       system: INTERNAL_AGENT_SYSTEM_PROMPT,
       messages: [{ role: "user", content: text }],
       tools: internalAgentTools,
-      stopWhen: stepCountIs(5),
+      stopWhen: stepCountIs(10),
     });
 
     const reply = result.text || "Disculpá, no pude procesar eso.";

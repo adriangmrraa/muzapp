@@ -131,8 +131,42 @@ export async function runWhatsAppAgent({
   // El prompt V2 siempre va como base. Lo del admin UI se agrega como seccion extra.
   // customPrompt del webhook ya NO se usa como override — buildSystemPrompt maneja todo.
   let system: string;
+  let customerContext: { name?: string; phone?: string; orderHistory?: any[] } | undefined;
+  
   try {
-    system = await buildSystemPrompt(conversationId);
+    // Cargar contexto del cliente (nombre, historial de pedidos)
+    const { db } = await import("@/db");
+    const { conversations: convTable, orders } = await import("@/db/schema");
+    const { eq, desc } = await import("drizzle-orm");
+    
+    if (conversationId > 0) {
+      const [conv] = await db
+        .select({ name: convTable.customerName, phone: convTable.customerPhone })
+        .from(convTable)
+        .where(eq(convTable.id, conversationId))
+        .limit(1);
+      
+      if (conv?.phone) {
+        const recentOrders = await db
+          .select({ total: orders.items })
+          .from(orders)
+          .where(eq(orders.phoneNumber, conv.phone))
+          .orderBy(desc(orders.createdAt))
+          .limit(3);
+        
+        customerContext = {
+          name: conv.name || undefined,
+          phone: conv.phone,
+          orderHistory: recentOrders.map(o => ({ items: o.total })),
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("[agent] Customer context load failed, continuing without it", err);
+  }
+  
+  try {
+    system = await buildSystemPrompt(conversationId, customerContext);
   } catch (err) {
     console.warn("[agent] buildSystemPrompt failed, using fallback", err);
     system = DEFAULT_SYSTEM_PROMPT;
@@ -181,7 +215,7 @@ export async function runWhatsAppAgent({
         sendSticker: createSendStickerTool(customerPhone),
         sendMenuImage: createSendMenuImageTool(customerPhone),
       },
-      stopWhen: stepCountIs(7),
+      stopWhen: stepCountIs(10),
       toolChoice: "auto",
     });
 
