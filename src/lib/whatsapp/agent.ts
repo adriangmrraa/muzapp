@@ -131,13 +131,13 @@ export async function runWhatsAppAgent({
   // El prompt V2 siempre va como base. Lo del admin UI se agrega como seccion extra.
   // customPrompt del webhook ya NO se usa como override — buildSystemPrompt maneja todo.
   let system: string;
-  let customerContext: { name?: string; phone?: string; orderHistory?: any[] } | undefined;
+  let customerContext: { name?: string; phone?: string; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null } } | undefined;
   
   try {
     // Cargar contexto del cliente (nombre, historial de pedidos)
     const { db } = await import("@/db");
     const { conversations: convTable, orders } = await import("@/db/schema");
-    const { eq, desc } = await import("drizzle-orm");
+    const { eq, desc, and } = await import("drizzle-orm");
     
     if (conversationId > 0) {
       const [conv] = await db
@@ -147,17 +147,42 @@ export async function runWhatsAppAgent({
         .limit(1);
       
       if (conv?.phone) {
+        // Órdenes anteriores (historial)
         const recentOrders = await db
-          .select({ total: orders.items })
+          .select({ items: orders.items, status: orders.status, id: orders.id, orderType: orders.orderType, address: orders.address })
           .from(orders)
           .where(eq(orders.phoneNumber, conv.phone))
           .orderBy(desc(orders.createdAt))
           .limit(3);
         
+        // Buscar si hay un pedido PENDIENTE activo (no delivered ni cancelled)
+        const [pendingOrder] = await db
+          .select({
+            id: orders.id,
+            items: orders.items,
+            orderType: orders.orderType,
+            status: orders.status,
+            address: orders.address,
+            customerName: orders.customerName,
+          })
+          .from(orders)
+          .where(and(
+            eq(orders.phoneNumber, conv.phone),
+            eq(orders.status, "pending"),
+          ))
+          .orderBy(desc(orders.createdAt))
+          .limit(1);
+        
         customerContext = {
           name: conv.name || undefined,
           phone: conv.phone,
-          orderHistory: recentOrders.map(o => ({ items: o.total })),
+          orderHistory: recentOrders.map(o => ({ items: o.items, status: o.status, id: o.id })),
+          pendingOrder: pendingOrder ? {
+            id: pendingOrder.id,
+            items: pendingOrder.items,
+            orderType: pendingOrder.orderType,
+            address: pendingOrder.address,
+          } : undefined,
         };
       }
     }

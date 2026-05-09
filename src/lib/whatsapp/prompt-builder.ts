@@ -162,6 +162,7 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
   name?: string;
   phone?: string;
   orderHistory?: any[];
+  pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null };
 }): Promise<string> {
   const layer1 = await getCorePrompt();
   const layer2 = await getMenuData();
@@ -180,8 +181,16 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
     if (customerContext.orderHistory && customerContext.orderHistory.length > 0) {
       context += `\n📦 PEDIDOS ANTERIORES:`;
       for (const order of customerContext.orderHistory.slice(-3)) {
-        context += `\n• ${order.total}`;
+        const items = Array.isArray(order.items) ? order.items.map((i: any) => `${i.quantity || 1}x ${i.name || "?"}`).join(", ") : "ver detalle";
+        context += `\n• #${order.id} (${order.status || "?"}): ${items}`;
       }
+    }
+    // 🟢 PEDIDO ACTUAL: inyectado en CADA turno para que el agente NO lo olvide
+    if (customerContext.pendingOrder) {
+      const p = customerContext.pendingOrder;
+      const items = Array.isArray(p.items) ? p.items.map((i: any) => `${i.quantity || 1}x ${i.name || "?"}`).join(", ") : "ver detalle";
+      context += `\n\n🟢 PEDIDO ACTUAL (PENDIENTE #${p.id}): ${items} | Tipo: ${p.orderType || "?"}${p.address ? ` | Direccion: ${p.address}` : ""}`;
+      context += `\nImportante: El cliente ya tiene un pedido pendiente. No le preguntes qué quiere de nuevo. Ayudalo con el estado de su pedido actual.`;
     }
   }
   
