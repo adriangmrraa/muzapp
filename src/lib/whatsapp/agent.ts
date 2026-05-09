@@ -122,10 +122,12 @@ export async function runWhatsAppAgent({
     }
   }
 
-  // 🔧 BUILD DYNAMIC PROMPT (3 layers: core + data + context)
+  // 🔧 BUILD DYNAMIC PROMPT (V2 base + user extras + menu + hours + context)
+  // El prompt V2 siempre va como base. Lo del admin UI se agrega como seccion extra.
+  // customPrompt del webhook ya NO se usa como override — buildSystemPrompt maneja todo.
   let system: string;
   try {
-    system = customPrompt || await buildSystemPrompt(conversationId);
+    system = await buildSystemPrompt(conversationId);
   } catch (err) {
     console.warn("[agent] buildSystemPrompt failed, using fallback", err);
     system = DEFAULT_SYSTEM_PROMPT;
