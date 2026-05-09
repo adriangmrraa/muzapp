@@ -155,7 +155,7 @@ export async function POST(
 
       // Run the internal agent with full conversation history
       const result = await generateText({
-        model: openai("gpt-5.4-mini"),
+        model: openai("gpt-4o-mini"),
         system: INTERNAL_AGENT_SYSTEM_PROMPT,
         messages: aiMessages,
         tools: internalAgentTools,
