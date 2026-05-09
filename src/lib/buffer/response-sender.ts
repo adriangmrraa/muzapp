@@ -31,9 +31,11 @@ export function splitIntoBubbles(text: string): string[] {
     .replace(/\n{3,}/g, "\n\n")          // collapse 3+ newlines
     .trim();
 
-  if (cleaned.length <= MAX_BUBBLE_CHARS) return [cleaned];
-
   const paragraphs = cleaned.split(/\n\n+/).filter((p) => p.trim());
+
+  // Si solo hay 1 párrafo y entra en el límite, devolverlo directamente
+  if (paragraphs.length <= 1 && cleaned.length <= MAX_BUBBLE_CHARS) return [cleaned];
+
   const bubbles: string[] = [];
 
   for (const para of paragraphs) {

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { addToBuffer } from "@/lib/agent/buffer";
 import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
 import { loadConversation, saveConversation } from "@/lib/agent/conversation";
-import { smartSplit } from "@/lib/agent/smart-split";
-import { sendText } from "@/lib/ycloud";
+import { sendWhatsAppBubbles } from "@/lib/buffer/response-sender";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/infra/rate-limit";
 import { db } from "@/db";
 import { conversations } from "@/db/schema";
@@ -57,12 +56,6 @@ async function verifySignature(
   return computed === s;
 }
 
-// ─── Sleep helper ──────────────────────────────────────────────────────────────
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 // ─── Flush handler ─────────────────────────────────────────────────────────────
 
 async function handleFlush(phone: string, combinedText: string): Promise<void> {
@@ -98,16 +91,11 @@ async function handleFlush(phone: string, combinedText: string): Promise<void> {
       messages: aiMessages,
     });
 
-    const bubbles = smartSplit(responseText);
-
-    for (let i = 0; i < bubbles.length; i++) {
-      const result = await sendText(phone, bubbles[i]);
-      if (!result.ok) {
-        console.error(`[webhook] Failed to send bubble ${i + 1}:`, result.error);
-      }
-      if (i < bubbles.length - 1) {
-        await sleep(1500);
-      }
+    // Send via centralized bubble system (misma logica que webhook nuevo)
+    const apiKey = process.env.YCLOUD_API_KEY || "";
+    const from = process.env.WHATSAPP_PHONE_NUMBER || "";
+    if (apiKey && from) {
+      await sendWhatsAppBubbles({ to: phone, text: responseText, apiKey, from });
     }
 
     // Save updated conversation (history + user msg + assistant response)
