@@ -162,12 +162,27 @@ export const BufferManager = {
       return false;
     }
 
-    // In-memory dedup: simple Map con TTL de 5s
-    const dedupKey = `dedup:${channel}:${userId}`;
+    // In-memory dedup: Map separado con TTL de 5s
     const hash = content.toLowerCase().trim().slice(0, 50);
+    const dedupKey = `dedup:${channel}:${userId}`;
+    const now = Date.now();
 
-    const dedupMap = inMemoryStore.get(dedupKey)?.messages.length;
-    // Simple approach: store hash + timestamp in a separate weak map
-    return false; // no dedup for in-memory (simplified)
+    const existing = inMemoryDedup.get(dedupKey);
+    if (existing && existing.hash === hash && now - existing.ts < 5000) {
+      return true;
+    }
+    inMemoryDedup.set(dedupKey, { hash, ts: now });
+    return false;
   },
 };
+
+// Mapa separado para dedup in-memory (no contamina el buffer)
+const inMemoryDedup = new Map<string, { hash: string; ts: number }>();
+
+// Cleanup dedup cada 30s
+setInterval(() => {
+  const cutoff = Date.now() - 10_000;
+  for (const [key, entry] of inMemoryDedup.entries()) {
+    if (entry.ts < cutoff) inMemoryDedup.delete(key);
+  }
+}, 30_000);

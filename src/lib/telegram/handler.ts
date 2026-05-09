@@ -167,16 +167,51 @@ export async function handleTelegramUpdate(
     return { ok: true, replied: false };
   }
 
+  // ── Cargar historial de conversación para contexto ──
+  let conversationMessages: Array<{ role: "user" | "assistant"; content: string }> = [];
+  try {
+    const { id: conversationId } = await findOrCreateConversation(
+      "telegram",
+      String(chatId),
+      message.from?.first_name
+    );
+
+    const { getConversationMessages } = await import("@/lib/channels/router");
+    const history = await getConversationMessages(conversationId, 20);
+    conversationMessages = history
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+
+    // Persistir el mensaje actual
+    await insertMessage(conversationId, "user", text);
+  } catch (err) {
+    console.warn("[telegram-handler] History load failed, continuing stateless", err);
+  }
+
+  // Agregar mensaje actual al final del historial
+  conversationMessages.push({ role: "user", content: text });
+
   try {
     const result = await generateText({
       model: openai("gpt-5.4-mini"),
       system: INTERNAL_AGENT_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: text }],
+      messages: conversationMessages,
       tools: internalAgentTools,
       stopWhen: stepCountIs(10),
     });
 
     const reply = result.text || "Disculpá, no pude procesar eso.";
+
+    // Persistir respuesta del agente
+    try {
+      const { id: conversationId } = await findOrCreateConversation(
+        "telegram", String(chatId), message.from?.first_name
+      );
+      await insertMessage(conversationId, "assistant", reply);
+    } catch { /* non-fatal */ }
 
     await sendTelegramMessage(config.botToken, chatId, reply);
 
