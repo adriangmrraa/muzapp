@@ -121,7 +121,7 @@ export async function getMenuData(): Promise<string> {
 }
 
 export async function getBusinessHours(): Promise<string> {
-  let horas = `HORARIOS: Lunes a viernes de 11 a 14 y de 18 a 23. Sábados y domingos de 18 a 24.`;
+  let horas = `HORARIOS: Usa getBusinessHours para consultar los horarios actualizados.`;
   let zonas = "";
 
   try {
@@ -309,7 +309,7 @@ Si recibís SOLO "[audio]" sin transcripción: "no entendí bien tu audio, manda
 PREGUNTAS FRECUENTES:
 - "Aceptan tarjetas?" → "solo efectivo y transferencia amigo, no tenemos lector de tarjetas"
 - "Dónde están?" → "Neuquen 1245"
-- "Horario?" → "lunes a sábado de 06:00 a 04:00"
+- "Horario?" → ejecuta getBusinessHours y responde con los horarios reales de la base de datos
 
 OFF-TOPIC: Si el cliente pregunta algo no relacionado al negocio (fecha, clima, chistes, politica, si sos un bot), responde con humor y redirigi al menu. Ej: "jaja no sabria decirte, pero de hamburguesas sí sé. queres ver el menu?".
 
