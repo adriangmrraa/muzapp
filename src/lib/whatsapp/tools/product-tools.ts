@@ -86,20 +86,39 @@ export const getProductPriceTool = tool({
 // createSendProductImageTool - Enviar foto de un producto por WhatsApp
 export function createSendProductImageTool(customerPhone: string) {
   return tool({
-    description: "Envía la foto de un producto al cliente por WhatsApp",
+    description: "Envía la foto de un producto al cliente por WhatsApp. Podés buscar por ID o por nombre.",
     inputSchema: z.object({
-      productId: z.number().describe("ID del producto cuya foto se quiere enviar"),
+      productId: z.number().optional().describe("ID del producto (alternativa al nombre)"),
+      productName: z.string().optional().describe("Nombre del producto para buscar (alternativa al ID). Ej: 'genesis', 'bookbinder', 'deli deli'"),
     }),
-    execute: async ({ productId }) => {
-      const [product] = await db
-        .select({
-          name: products.name,
-          price: products.price,
-          imageUrl: products.imageUrl,
-        })
-        .from(products)
-        .where(eq(products.id, productId))
-        .limit(1);
+    execute: async ({ productId, productName }) => {
+      let product;
+      
+      if (productId) {
+        [product] = await db
+          .select({
+            id: products.id,
+            name: products.name,
+            price: products.price,
+            imageUrl: products.imageUrl,
+          })
+          .from(products)
+          .where(eq(products.id, productId))
+          .limit(1);
+      } else if (productName) {
+        const all = await db
+          .select({
+            id: products.id,
+            name: products.name,
+            price: products.price,
+            imageUrl: products.imageUrl,
+          })
+          .from(products)
+          .orderBy(products.sortOrder);
+        
+        const q = productName.toLowerCase();
+        product = all.find(p => p.name?.toLowerCase().includes(q));
+      }
 
       if (!product) {
         return "No encontré ese producto.";
