@@ -9,7 +9,7 @@ export const productSchema = z.object({
     .optional(),
   category: z.enum(["hamburguesa", "acompanamiento", "pan_mayorista"]),
   line: z.enum(["pollo", "carne", "clasica", "pan"]),
-  imageUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  imageUrl: z.string().optional().or(z.literal("")),
   available: z.boolean().default(true),
   comingSoon: z.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),
