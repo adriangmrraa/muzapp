@@ -639,6 +639,27 @@ export const getConversationMessagesTool = tool({
   },
 });
 
+// ─── getActivePromotions ─────────────────────────────────────────────────────
+// Lee las promociones activas desde la config del WhatsApp agent
+export const getActivePromotionsTool = tool({
+  description:
+    "Lee las PROMOCIONES ACTIVAS configuradas desde el panel admin. Esto es lo mismo que usa el agente de WhatsApp para ofrecer descuentos. PREGUNTAS: 'qué promos hay?', 'promociones activas', 'qué ofertas tenemos?'",
+  inputSchema: z.object({}),
+  execute: async () => {
+    const [config] = await db
+      .select({ promos: agentConfig.whatsappPromociones, aliasB2c: agentConfig.aliasB2c })
+      .from(agentConfig)
+      .where(eq(agentConfig.id, 1))
+      .limit(1);
+
+    if (!config?.promos || !config.promos.trim()) {
+      return "No hay promociones activas configuradas. Agregalas desde el panel admin → Agente IA.";
+    }
+
+    return `🏷️ *PROMOCIONES ACTIVAS:*\n${config.promos}`;
+  },
+});
+
 // ─── Export ─────────────────────────────────────────────────────────────────
 
 export const managementTools = {
@@ -654,4 +675,5 @@ export const managementTools = {
   queryData: queryDataTool,
   getBusinessSummary: getBusinessSummaryTool,
   getConversationMessages: getConversationMessagesTool,
+  getActivePromotions: getActivePromotionsTool,
 };

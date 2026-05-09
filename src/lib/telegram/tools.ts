@@ -97,7 +97,7 @@ export const internalAgentTools = {
   calculateTotal: manageOrderTools.calculateTotal,
   confirmOrder: manageOrderTools.confirmOrder,
 
-  // manageManagement (12 tools)
+  // manageManagement (13 tools)
   getClients: managementTools.getClients,
   getClientDetail: managementTools.getClientDetail,
   searchClient: managementTools.searchClient,
@@ -110,6 +110,7 @@ export const internalAgentTools = {
   queryData: managementTools.queryData,
   getBusinessSummary: managementTools.getBusinessSummary,
   getConversationMessages: managementTools.getConversationMessages,
+  getActivePromotions: managementTools.getActivePromotions,
 
   // analytics (4 tools)
   getSalesByDateRange: analyticsTools.getSalesByDateRange,
