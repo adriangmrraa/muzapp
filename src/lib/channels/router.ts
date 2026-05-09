@@ -12,6 +12,7 @@ export interface MediaAttachment {
   mimeType?: string;
   caption?: string;
   transcription?: string;
+  description?: string;
 }
 
 export interface IncomingMessage {

@@ -10,6 +10,9 @@ import {
 import { internalAgentTools } from "./tools";
 import { INTERNAL_AGENT_SYSTEM_PROMPT } from "./system-prompt";
 import { transcribeAudio } from "@/lib/media/transcription";
+import { processImageWithVision } from "@/lib/media/vision";
+import { findOrCreateConversation, insertMessage } from "@/lib/channels/router";
+import type { MediaAttachment } from "@/lib/channels/router";
 
 export type HandleResult =
   | { ok: true; replied: boolean; replyText?: string }
@@ -17,10 +20,7 @@ export type HandleResult =
 
 /**
  * Procesa un update entrante de Telegram.
- * 1. Verifica que el chat_id esté autorizado
- * 2. Si no hay texto, ignora
- * 3. Ejecuta el agente interno con tools
- * 4. Envía la respuesta
+ * Soporta: texto, voice, audio, photo, document
  */
 export async function handleTelegramUpdate(
   update: TelegramUpdate,
@@ -28,11 +28,19 @@ export async function handleTelegramUpdate(
 ): Promise<HandleResult> {
   const message = update.message;
   if (!message) {
-    return { ok: true, replied: false }; // non-message update, ignore
+    return { ok: true, replied: false };
   }
 
   const chatId = message.chat.id;
   let text = message.text?.trim() || "";
+
+  // ── Verificar autorización PRIMERO ──
+  if (!isChatAuthorized(chatId, config.allowedChatIds)) {
+    const unauthorizedReply =
+      "❌ No autorizado. No tengo instrucciones de responder en este chat.";
+    await sendTelegramMessage(config.botToken, chatId, unauthorizedReply);
+    return { ok: true, replied: true, replyText: unauthorizedReply };
+  }
 
   // ── Audio/Voice → transcribir con Whisper ──
   const voiceOrAudio = message.voice || message.audio;
@@ -47,17 +55,116 @@ export async function handleTelegramUpdate(
     }
   }
 
+  // ── Photo → descargar + Vision ──
+  if (!text && message.photo && message.photo.length > 0) {
+    const photo = message.photo[message.photo.length - 1]; // mayor resolución
+    const file = await downloadTelegramFile(config.botToken, photo.file_id);
+    if (file) {
+      try {
+        // Persistir en conversation + attachments
+        const { id: conversationId } = await findOrCreateConversation(
+          "telegram",
+          String(chatId),
+          message.from?.first_name
+        );
+
+        const attachment: MediaAttachment = {
+          type: "image",
+          url: file.filePath,
+          mimeType: "image/jpeg",
+          caption: message.caption,
+        };
+
+        const msgId = await insertMessage(conversationId, "user", "[Imagen recibida]", [attachment]);
+
+        // Get attachment ID
+        const { db } = await import("@/db");
+        const { attachments: attachmentsTable } = await import("@/db/schema");
+        const { eq } = await import("drizzle-orm");
+        const [att] = await db
+          .select({ id: attachmentsTable.id })
+          .from(attachmentsTable)
+          .where(eq(attachmentsTable.messageId, msgId))
+          .limit(1);
+
+        const captionCtx = message.caption ? `Caption: ${message.caption}` : undefined;
+        const visionResult = await processImageWithVision(
+          file.buffer, "image/jpeg", att?.id || 0, msgId, captionCtx
+        );
+
+        text = visionResult.agentText;
+        if (visionResult.backgroundPersist) visionResult.backgroundPersist();
+
+        console.log(`[telegram-handler] Photo analyzed: ${text.slice(0, 100)}`);
+      } catch (err) {
+        console.error("[telegram-handler] Photo processing error:", err);
+        text = "Recibí tu foto. ¿En qué te ayudo?";
+      }
+    } else {
+      text = "Recibí tu foto pero no pude descargarla. ¿Podés mandarla de nuevo?";
+    }
+  }
+
+  // ── Document → descargar, Vision si es imagen ──
+  if (!text && message.document) {
+    const doc = message.document;
+    const file = await downloadTelegramFile(config.botToken, doc.file_id);
+    if (file) {
+      const isImage = doc.mime_type?.startsWith("image/") || false;
+
+      try {
+        const { id: conversationId } = await findOrCreateConversation(
+          "telegram",
+          String(chatId),
+          message.from?.first_name
+        );
+
+        const attachment: MediaAttachment = {
+          type: "document",
+          url: file.filePath,
+          fileName: doc.file_name,
+          mimeType: doc.mime_type,
+          caption: message.caption,
+        };
+
+        const msgId = await insertMessage(
+          conversationId, "user",
+          isImage ? "[Imagen recibida]" : `[Documento]: ${doc.file_name || "archivo"}`,
+          [attachment]
+        );
+
+        if (isImage) {
+          const { db } = await import("@/db");
+          const { attachments: attachmentsTable } = await import("@/db/schema");
+          const { eq } = await import("drizzle-orm");
+          const [att] = await db
+            .select({ id: attachmentsTable.id })
+            .from(attachmentsTable)
+            .where(eq(attachmentsTable.messageId, msgId))
+            .limit(1);
+
+          const visionResult = await processImageWithVision(
+            file.buffer, doc.mime_type || "image/jpeg", att?.id || 0, msgId
+          );
+          text = visionResult.agentText;
+          if (visionResult.backgroundPersist) visionResult.backgroundPersist();
+        } else {
+          text = `[Documento]: ${doc.file_name || "archivo"}${message.caption ? ` — "${message.caption}"` : ""}`;
+        }
+
+        console.log(`[telegram-handler] Document processed: ${text.slice(0, 100)}`);
+      } catch (err) {
+        console.error("[telegram-handler] Document processing error:", err);
+        text = `Recibí tu documento${doc.file_name ? ` (${doc.file_name})` : ""}. ¿En qué te ayudo?`;
+      }
+    } else {
+      text = "Recibí tu documento pero no pude descargarlo. ¿Podés mandarlo de nuevo?";
+    }
+  }
+
   // ── Nada que procesar ──
   if (!text) {
     return { ok: true, replied: false };
-  }
-
-  // ── Verificar autorización ──
-  if (!isChatAuthorized(chatId, config.allowedChatIds)) {
-    const unauthorizedReply =
-      "❌ No autorizado. No tengo instrucciones de responder en este chat.";
-    await sendTelegramMessage(config.botToken, chatId, unauthorizedReply);
-    return { ok: true, replied: true, replyText: unauthorizedReply };
   }
 
   try {

@@ -183,6 +183,8 @@ export const attachments = pgTable("attachments", {
   mimeType: varchar("mime_type", { length: 100 }),
   fileSize: integer("file_size"),
   caption: varchar("caption", { length: 500 }),
+  description: text("description"),
+  documentType: varchar("document_type", { length: 50 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

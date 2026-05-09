@@ -179,16 +179,47 @@ export async function POST(request: NextRequest) {
           const transcription = await transcribeAudio(buffer, filename);
           attachment.transcription = transcription;
           agentText = `[Audio]: ${transcription}`;
-        } else {
-          const typeLabel =
-            msgType === "image" ? "una imagen"
-            : msgType === "document" ? "un documento"
-            : "un video";
-          agentText = `El cliente envió ${typeLabel}${mediaObj.caption ? `: "${mediaObj.caption}"` : ""}`;
-        }
 
-        contentAttributes = [attachment];
-        await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+          contentAttributes = [attachment];
+          await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+
+        } else if (msgType === "image" || (msgType === "document" && mimeType.startsWith("image/"))) {
+          // Image or image-document → Vision analysis with race timeout
+          const { processImageWithVision } = await import("@/lib/media/vision");
+
+          contentAttributes = [attachment];
+          const msgId = await insertMessage(conversationId, "user", "[Imagen recibida]", contentAttributes, messageId);
+
+          // Get attachment ID from the auto-created record
+          const { attachments: attachmentsTable } = await import("@/db/schema");
+          const [att] = await db
+            .select({ id: attachmentsTable.id })
+            .from(attachmentsTable)
+            .where(eq(attachmentsTable.messageId, msgId))
+            .limit(1);
+
+          const attachmentId = att?.id || 0;
+          const captionCtx = mediaObj.caption ? `Caption del cliente: ${mediaObj.caption}` : undefined;
+
+          const visionResult = await processImageWithVision(buffer, mimeType, attachmentId, msgId, captionCtx);
+          agentText = visionResult.agentText;
+
+          // Fire background persist if vision timed out
+          if (visionResult.backgroundPersist) {
+            visionResult.backgroundPersist();
+          }
+
+        } else if (msgType === "video") {
+          agentText = `El cliente envió un video${mediaObj.caption ? `: "${mediaObj.caption}"` : ""}`;
+          contentAttributes = [attachment];
+          await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+
+        } else {
+          // Document (non-image): PDF, etc
+          agentText = `El cliente envió un documento: ${mediaObj.filename || filename}${mediaObj.caption ? ` — "${mediaObj.caption}"` : ""}`;
+          contentAttributes = [attachment];
+          await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+        }
 
       } catch (mediaError) {
         // Media processing failed — still run the agent with a degraded context
