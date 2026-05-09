@@ -164,6 +164,7 @@ export const leads = pgTable("leads", {
   name: varchar("name", { length: 255 }),
   phone: varchar("phone", { length: 50 }).notNull(),
   email: varchar("email", { length: 255 }),
+  address: text("address"),
   firstMessage: text("first_message"),
   refCode: varchar("ref_code", { length: 255 }),
   utmSource: varchar("utm_source", { length: 255 }),
@@ -214,8 +215,10 @@ export const orderStatusEnum = pgEnum("order_status", [
 
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
+  leadId: integer("lead_id").references(() => leads.id),
   phoneNumber: text("phone_number").notNull(),
   customerName: text("customer_name"),
+  address: text("address"),
   orderType: orderTypeEnum("order_type"),
   items: jsonb("items").notNull(),
   notes: text("notes"),

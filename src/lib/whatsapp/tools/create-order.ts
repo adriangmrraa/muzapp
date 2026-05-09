@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { orders } from "@/db/schema";
+import { orders, leads } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 
 export const createOrderTool = tool({
@@ -15,14 +16,39 @@ export const createOrderTool = tool({
       unitPrice: z.number().positive(),
     })).describe("Lista de items del pedido con cantidad y precio unitario"),
     customerPhone: z.string().describe("Teléfono del cliente"),
+    address: z.string().optional().describe("Dirección de entrega (si es delivery)"),
     notes: z.string().optional().describe("Notas adicionales del pedido"),
   }),
-  execute: async ({ customerName, orderType, items, customerPhone, notes }) => {
+  execute: async ({ customerName, orderType, items, customerPhone, address, notes }) => {
     const total = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
 
+    // Find lead to link order + save address
+    let leadId: number | null = null;
+    try {
+      const [lead] = await db
+        .select({ id: leads.id })
+        .from(leads)
+        .where(eq(leads.phone, customerPhone))
+        .limit(1);
+
+      if (lead) {
+        leadId = lead.id;
+        // Save/update address on the lead if provided
+        if (address) {
+          await db.update(leads)
+            .set({ address })
+            .where(eq(leads.id, lead.id));
+        }
+      }
+    } catch {
+      // non-fatal
+    }
+
     const [order] = await db.insert(orders).values({
+      leadId,
       phoneNumber: customerPhone,
       customerName,
+      address: address || null,
       orderType,
       items: items,
       notes: notes || null,

@@ -89,6 +89,7 @@ export const getClientHistoryTool = tool({
       .select({
         name: leads.name,
         phone: leads.phone,
+        address: leads.address,
         status: leads.status,
         tags: leads.tags,
         firstMessage: leads.firstMessage,
@@ -121,6 +122,7 @@ export const getClientHistoryTool = tool({
         `📞 ${lead.phone}`,
         `📅 Cliente desde: ${lead.createdAt ? new Date(lead.createdAt).toLocaleDateString("es-AR") : "desconocido"}`
       );
+      if (lead.address) parts.push(`📍 Direccion guardada: ${lead.address}`);
       const tags = lead.tags as string[] | null;
       if (tags?.length) parts.push(`🏷️ Tags: ${tags.join(", ")}`);
     } else {
