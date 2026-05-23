@@ -18,7 +18,12 @@ import {
   insertMessage,
   isMessageDuplicate,
   getConversationMessages,
+  type MediaAttachment,
 } from "@/lib/channels/router";
+import { downloadTelegramFile } from "@/lib/telegram/bot";
+import { transcribeAudio } from "@/lib/media/transcription";
+import { processImageWithVision } from "@/lib/media/vision";
+import { saveMediaLocally } from "@/lib/media/downloader";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 import { generateText, stepCountIs } from "ai";
@@ -68,15 +73,96 @@ export async function POST(
     // ── Parsear el update de Telegram ──
     const update: TelegramUpdate = await request.json();
 
-    // ── Only process text messages ──
+    // ── Process message: text or media ──
     const message = update.message;
-    if (!message?.text?.trim()) {
-      // Non-text updates — ack immediately
+    if (!message) {
+      return NextResponse.json({ ok: true });
+    }
+
+    let text = message.text?.trim() || "";
+    let contentAttributes: MediaAttachment[] | undefined;
+    let isMedia = false;
+
+    // ── Voice / Audio → transcribe with Whisper ──
+    if (!text && (message.voice || message.audio)) {
+      isMedia = true;
+      const vFile = message.voice || message.audio;
+      if (vFile) {
+        try {
+          const file = await downloadTelegramFile(config.botToken, vFile.file_id);
+          if (file) {
+            // Save file using temp conv ID — will be re-attached to real conv later
+            const tmpConv = await findOrCreateConversation("telegram", String(message.chat.id), message.from?.first_name);
+            const localUrl = await saveMediaLocally(file.buffer, tmpConv.id, vFile.file_id, vFile.mime_type || "audio/ogg");
+            const transcription = await transcribeAudio(file.buffer, vFile.file_id, vFile.mime_type);
+            text = `[Audio]: ${transcription}`;
+            contentAttributes = [{ type: "audio", url: localUrl, mimeType: vFile.mime_type || "audio/ogg", transcription, fileSize: (vFile as { file_size?: number }).file_size }];
+          }
+        } catch (e) {
+          text = "[Audio sin transcripción]";
+          console.warn("[tg] Audio processing failed:", e);
+        }
+      }
+    }
+
+    // ── Photo → Vision analysis ──
+    if (!text && message.photo && message.photo.length > 0) {
+      isMedia = true;
+      const photo = message.photo[message.photo.length - 1];
+      const caption = message.caption?.trim() || "";
+      try {
+        const file = await downloadTelegramFile(config.botToken, photo.file_id);
+        if (file) {
+          const tmpConv = await findOrCreateConversation("telegram", String(message.chat.id), message.from?.first_name);
+          const localUrl = await saveMediaLocally(file.buffer, tmpConv.id, photo.file_id, "image/jpeg");
+          const visionResult = await processImageWithVision(file.buffer, "image/jpeg", 0, 0, caption);
+          text = caption ? `[Imagen "${caption}"]: ${visionResult.agentText}` : `[Imagen]: ${visionResult.agentText}`;
+          contentAttributes = [{ type: "image", url: localUrl, caption, description: visionResult.agentText }];
+        }
+      } catch (e) {
+        text = caption ? `[Imagen]: ${caption}` : "[Imagen sin descripción]";
+        console.warn("[tg] Photo processing failed:", e);
+      }
+    }
+
+    // ── Document / Video ──
+    if (!text && (message.document || message.video)) {
+      isMedia = true;
+      const doc = message.document;
+      const vid = message.video;
+      const mediaItem = (doc || vid)!;
+      const mediaType = doc ? "documento" : "video";
+      const attType: MediaAttachment["type"] = doc ? "document" : "video";
+      const caption = message.caption?.trim() || "";
+      const fileName = doc?.file_name || vid?.file_id || "archivo";
+      const mimeType = doc?.mime_type || vid?.mime_type || "application/octet-stream";
+      const isImageType = doc?.mime_type?.startsWith("image/") ?? false;
+      try {
+        const file = await downloadTelegramFile(config.botToken, mediaItem.file_id);
+        if (file) {
+          const tmpConv = await findOrCreateConversation("telegram", String(message.chat.id), message.from?.first_name);
+          const localUrl = await saveMediaLocally(file.buffer, tmpConv.id, fileName, mimeType);
+          if (doc && isImageType) {
+            const visionResult = await processImageWithVision(file.buffer, mimeType, 0, 0, caption);
+            text = caption ? `[Imagen "${fileName}"]: ${visionResult.agentText}` : `[Imagen]: ${visionResult.agentText}`;
+            contentAttributes = [{ type: "image", url: localUrl, fileName, mimeType, caption, description: visionResult.agentText, fileSize: mediaItem.file_size }];
+          } else {
+            text = caption ? `[${mediaType} "${fileName}"]: ${caption}` : `[${mediaType}]: ${fileName}`;
+            contentAttributes = [{ type: attType, url: localUrl, fileName, mimeType, caption, fileSize: mediaItem.file_size }];
+          }
+        }
+      } catch (e) {
+        text = caption ? `[${mediaType}]: ${caption}` : `[${mediaType}]: ${fileName}`;
+        console.warn(`[tg] ${mediaType} processing failed:`, e);
+      }
+    }
+
+    // If still no text, skip
+    if (!text) {
       return NextResponse.json({ ok: true });
     }
 
     const chatId = message.chat.id;
-    const text = message.text.trim();
     const messageId = String(message.message_id);
     const senderName =
       message.from?.first_name ||
@@ -118,7 +204,7 @@ export async function POST(
       senderName
     );
     const convId = conv.id;
-    await insertMessage(convId, "user", text, undefined, messageId);
+    await insertMessage(convId, "user", text, contentAttributes, messageId);
 
     // ── Enqueue message into buffer and schedule deferred processing ──
     await BufferManager.enqueue("telegram", String(chatId), {
