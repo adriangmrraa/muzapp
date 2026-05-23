@@ -14,15 +14,11 @@ import {
 import { toggleHumanOverride } from "./actions";
 import type { ConversationSummary } from "@/types/chat";
 
-// ─── Query Client ────────────────────────────────────────────────────────────
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: 1, refetchOnWindowFocus: true },
   },
 });
-
-// ─── Inbox Component ─────────────────────────────────────────────────────────
 
 interface Props {
   initialConversations: ConversationSummary[];
@@ -32,7 +28,6 @@ function ConversationsInboxInner({ initialConversations }: Props) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [currentView, setCurrentView] = useState<"list" | "chat" | "context">("list");
 
-  // TanStack Query hooks
   const { data: convData } = useConversations({ page: 1 });
   const { data: messages = [] } = useMessages(selectedId);
   const sendMutation = useSendReply(selectedId);
@@ -64,10 +59,8 @@ function ConversationsInboxInner({ initialConversations }: Props) {
     await toggleHumanOverride(selectedId, !isHumanOverride);
   }, [selectedId, isHumanOverride]);
 
-  // ── Context panel (shared between inline desktop + fullscreen mobile) ──
   const contextPanel = selectedId ? (
     <div className="flex flex-col h-full">
-      {/* Mobile back button */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 xl:hidden">
         <button
           onClick={handleBackToChat}
@@ -83,7 +76,7 @@ function ConversationsInboxInner({ initialConversations }: Props) {
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden bg-[#0f0f0f]">
-      {/* ── Col 1: Listado de Chats ─────────────────────────────────────── */}
+      {/* Col 1: Listado de Chats */}
       <div
         className={`flex-shrink-0 border-r border-white/5 overflow-hidden ${
           currentView === "list" ? "flex flex-col w-full md:w-80" : "hidden md:flex md:flex-col md:w-80"
@@ -96,14 +89,14 @@ function ConversationsInboxInner({ initialConversations }: Props) {
         />
       </div>
 
-      {/* ── Col 2: Chat Activo ──────────────────────────────────────────── */}
+      {/* Col 2: Chat Activo */}
       <div
-        className={`flex-1 flex flex-col min-w-0 ${
+        className={`flex-1 flex flex-col min-w-0 h-full ${
           currentView === "chat" ? "flex" : "hidden md:flex"
         }`}
       >
         {!selectedId || !selectedConversation ? (
-          <div className="flex flex-1 items-center justify-center text-gray-500">
+          <div className="flex flex-1 items-center justify-center text-gray-500 h-full">
             <p>Seleccioná una conversación</p>
           </div>
         ) : (
@@ -119,15 +112,14 @@ function ConversationsInboxInner({ initialConversations }: Props) {
         )}
       </div>
 
-      {/* ── Col 3: Contexto/Perfil del Cliente ──────────────────────────── */}
-      {/* Desktop: siempre visible xl+ como tercera columna */}
+      {/* Col 3: Contexto/Perfil del Cliente (desktop xl+) */}
       {selectedId && (
-        <div className="hidden xl:flex xl:w-[380px] flex-shrink-0 border-l border-white/5">
+        <div className="hidden xl:flex xl:w-[380px] flex-shrink-0 border-l border-white/5 h-full">
           {contextPanel}
         </div>
       )}
 
-      {/* Mobile: fullscreen overlay cuando currentView === 'context' */}
+      {/* Mobile: overlay fullscreen para contexto */}
       {selectedId && (
         <div
           className={`absolute inset-0 z-40 bg-[#0f0f0f] xl:hidden ${
@@ -140,8 +132,6 @@ function ConversationsInboxInner({ initialConversations }: Props) {
     </div>
   );
 }
-
-// ─── Wrapper ─────────────────────────────────────────────────────────────────
 
 export function ConversationsInbox(props: Props) {
   return (
