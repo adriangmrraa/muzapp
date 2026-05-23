@@ -135,6 +135,15 @@ export const PRODUCT_IMAGE_MAP: Record<string, string> = {
   "toro-asado": "/assets/images/products/hamburguesa-toro-asado.png",
 };
 
+// Map por nombre (para productos de API que tienen IDs numéricos)
+export const PRODUCT_IMAGE_BY_NAME: Record<string, string> = {
+  genesis: "/assets/images/products/hamburguesa-genesis.png",
+  "deli deli": "/assets/images/products/hamburguesa-deli-float.png",
+  mamita: "/assets/images/products/hamburguesa-mamita.png",
+  bookbinder: "/assets/images/products/hamburguesa-bookbinder.png",
+  "toro asado": "/assets/images/products/hamburguesa-toro-asado.png",
+};
+
 export const BG_IMAGES = [
   "/assets/images/background/1.png",
   "/assets/images/background/2.png",

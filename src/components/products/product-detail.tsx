@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { PRODUCT_IMAGE_MAP } from "@/lib/constants";
+import { PRODUCT_IMAGE_MAP, PRODUCT_IMAGE_BY_NAME } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, ArrowLeft, Heart, Share2, Truck, Clock, Star } from "lucide-react";
 import { fadeUp } from "@/lib/animation-variants";
@@ -37,7 +37,7 @@ interface ProductDetailProps {
 export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
   const router = useRouter();
   const [adding, setAdding] = useState(false);
-  const imageSrc = PRODUCT_IMAGE_MAP[product.id];
+  const imageSrc = PRODUCT_IMAGE_MAP[product.id] || PRODUCT_IMAGE_BY_NAME[product.name.toLowerCase()];
 
   async function handleAddToCart() {
     if (!onAddToCart || adding) return;

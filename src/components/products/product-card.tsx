@@ -1,7 +1,7 @@
 "use client";
 
 import type { Product } from "@/lib/constants";
-import { PRODUCT_IMAGE_MAP } from "@/lib/constants";
+import { PRODUCT_IMAGE_MAP, PRODUCT_IMAGE_BY_NAME } from "@/lib/constants";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -19,7 +19,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { ref, style, onMouseMove, onMouseLeave } = useTilt({ maxAngle: 8 });
-  const imageSrc = product.imageUrl || PRODUCT_IMAGE_MAP[product.id];
+  const imageSrc = product.imageUrl || PRODUCT_IMAGE_MAP[product.id] || PRODUCT_IMAGE_BY_NAME[product.name.toLowerCase()];
   const { addItem } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
