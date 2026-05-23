@@ -20,6 +20,7 @@ export function ProductGrid({ products }: ProductGridProps) {
         price: p.price,
         ingredients: p.description || "",
         emoji: "🍔",
+        imageUrl: p.imageUrl || null,
         comingSoon: p.comingSoon,
       };
     }

@@ -48,6 +48,7 @@ export interface Product {
   originalPrice?: number;
   ingredients: string;
   emoji: string;
+  imageUrl?: string | null;
   comingSoon?: boolean;
   discountPercentage?: number;
   hasFreeShipping?: boolean;
