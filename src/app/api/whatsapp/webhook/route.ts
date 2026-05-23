@@ -12,7 +12,7 @@ import {
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
 import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
 import { db } from "@/db";
-import { agentConfig } from "@/db/schema";
+import { agentConfig, conversations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { downloadYCloudMedia, saveMediaLocally } from "@/lib/media/downloader";
 import { transcribeAudio } from "@/lib/media/transcription";
@@ -28,6 +28,171 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing token" }, { status: 400 });
   }
   return new NextResponse(token, { status: 200 });
+}
+
+// ─── Echo event types de YCloud ─────────────────────────────────────────────
+const ECHO_EVENT_TYPES = [
+  "whatsapp.message.echo",
+  "whatsapp.smb.message.echoes",
+];
+
+// Keys candidatas donde puede venir el mensaje en el payload del echo
+const ECHO_MESSAGE_KEYS = [
+  "whatsappMessage",
+  "whatsappSmbMessageEcho",
+  "whatsappSmbMessageEchoes",
+  "smbMessage",
+  "message",
+  "whatsappMessageEcho",
+];
+
+// ─── Echo handler ───────────────────────────────────────────────────────────
+async function handleEcho(
+  payload: Record<string, unknown>
+): Promise<NextResponse> {
+  try {
+    // 1. Extraer el objeto mensaje del payload (búsqueda en múltiples keys)
+    const event = payload as Record<string, unknown>;
+    let msg: Record<string, unknown> | undefined;
+
+    for (const key of ECHO_MESSAGE_KEYS) {
+      const candidate = event[key];
+      if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
+        msg = candidate as Record<string, unknown>;
+        break;
+      }
+    }
+
+    // Fallback dinámico: buscar cualquier valor dict que tenga "to" o "from"
+    if (!msg) {
+      for (const [k, v] of Object.entries(event)) {
+        if (["type", "id", "createTime", "sendTime", "apiVersion"].includes(k)) continue;
+        if (v && typeof v === "object" && !Array.isArray(v)) {
+          const obj = v as Record<string, unknown>;
+          if (obj.to || obj.from) {
+            msg = obj;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!msg) {
+      console.warn("[webhook:echo] Could not extract message from echo payload");
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    // 2. Extraer teléfonos
+    // En un echo: from = quien envió (bot/staff), to = quien recibe (customer)
+    const customerPhone = (msg.to || event.to) as string | undefined;
+    const botPhone = (msg.from || event.from) as string | undefined;
+
+    if (!customerPhone || !botPhone) {
+      console.warn("[webhook:echo] Missing phone numbers in echo payload");
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    // 3. Extraer el contenido del mensaje
+    const msgType = (msg.type as string) || "text";
+    let displayText = "[Mensaje desde WhatsApp Business]";
+
+    if (msgType === "text" && msg.text && typeof msg.text === "object") {
+      displayText = (msg.text as Record<string, unknown>).body as string || displayText;
+    } else if (["image", "audio", "document", "video"].includes(msgType)) {
+      const mediaObj = msg[msgType] as Record<string, unknown> | undefined;
+      const caption = mediaObj?.caption as string | undefined;
+      displayText = caption || `[${msgType}]`;
+    }
+
+    const echoMsgId = (msg.id || event.id) as string | undefined;
+
+    console.log(
+      `[webhook:echo] Echo from ${botPhone} → ${customerPhone}: "${displayText.slice(0, 80)}"`
+    );
+
+    // 4. Buscar o crear conversación por el teléfono del customer
+    const { id: conversationId } = await findOrCreateConversation(
+      "whatsapp",
+      customerPhone,
+      undefined,
+      customerPhone
+    );
+
+    // 5. Dedup: si este echo ya tiene el mismo platformMessageId, skip
+    if (echoMsgId) {
+      const isDup = await isMessageDuplicate(echoMsgId);
+      if (isDup) {
+        console.log(`[webhook:echo] Duplicate echo ${echoMsgId} — skipping`);
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
+
+      // Dedup adicional: si el contenido coincide con el ÚLTIMO mensaje
+      // del assistant en los últimos 30s, es el eco de nuestra propia respuesta
+      const recentMessages = await getConversationMessages(conversationId, 1);
+      if (recentMessages.length > 0) {
+        const last = recentMessages[0];
+        const thirtySecAgo = Date.now() - 30_000;
+        const msgTime = last.createdAt instanceof Date
+          ? last.createdAt.getTime()
+          : new Date(last.createdAt).getTime();
+
+        if (
+          last.role === "assistant" &&
+          msgTime > thirtySecAgo &&
+          last.content.trim() === displayText.trim()
+        ) {
+          console.log(`[webhook:echo] Skip — echo matches recent AI response (${echoMsgId})`);
+          return NextResponse.json({ ok: true }, { status: 200 });
+        }
+      }
+    }
+
+    // 6. Setear humanOverrideUntil = NOW + 24h
+    //    (indica que un humano respondió desde WhatsApp Business App)
+    const overrideUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await db
+      .update(conversations)
+      .set({ humanOverrideUntil: overrideUntil, updatedAt: new Date() })
+      .where(eq(conversations.id, conversationId));
+
+    console.log(`[webhook:echo] Human override set for conversation ${conversationId} until ${overrideUntil.toISOString()}`);
+
+    // 7. Guardar el mensaje como assistant (para que se muestre en el chat)
+    await insertMessage(
+      conversationId,
+      "assistant",
+      displayText,
+      undefined,
+      echoMsgId
+    );
+
+    console.log(`[webhook:echo] Echo saved as assistant message in conversation ${conversationId}`);
+
+  } catch (error) {
+    console.error("[webhook:echo] Error processing echo:", error);
+    // Siempre devolver 200 para evitar retries de YCloud
+  }
+
+  return NextResponse.json({ ok: true }, { status: 200 });
+}
+
+// ─── Check if AI is overridden by human ────────────────────────────────────
+async function checkHumanOverride(conversationId: number): Promise<boolean> {
+  try {
+    const [conv] = await db
+      .select({ humanOverrideUntil: conversations.humanOverrideUntil })
+      .from(conversations)
+      .where(eq(conversations.id, conversationId))
+      .limit(1);
+
+    if (!conv?.humanOverrideUntil) return false; // no override → AI can respond
+
+    // humanOverrideUntil en el futuro → override activo → AI no responde
+    return new Date(conv.humanOverrideUntil).getTime() > Date.now();
+  } catch (error) {
+    console.error("[webhook] Error checking human override:", error);
+    return false; // fallback: permitir que AI responda
+  }
 }
 
 /**
@@ -52,7 +217,14 @@ export async function POST(request: NextRequest) {
   // Parse the payload
   const payload = JSON.parse(rawBody);
 
-  // 2. Filter non-message events (status updates, etc.)
+  // 2. Handle ECHO events (outgoing messages from WhatsApp Business App)
+  //    Esto va ANTES del filtro de inbound messages porque los echoes
+  //    tienen type diferente
+  if (ECHO_EVENT_TYPES.includes(payload.type)) {
+    return handleEcho(payload);
+  }
+
+  // 3. Filter non-message events (status updates, etc.)
   if (payload.type !== "whatsapp.inbound_message.received") {
     return NextResponse.json({ ok: true }, { status: 200 });
   }
@@ -73,20 +245,24 @@ export async function POST(request: NextRequest) {
   const customerName = (message.customerProfile?.name as string) || null;
 
   try {
-    // 3. Load agent config
+    // ─────────────────────────────────────────────────────────────────────────
+    // 4. Load agent config — SIN filtro de enabled
+    //    (siempre cargamos la config, aunque la AI esté apagada,
+    //    para poder guardar el mensaje igual)
+    // ─────────────────────────────────────────────────────────────────────────
     const [config] = await db
       .select()
       .from(agentConfig)
-      .where(eq(agentConfig.enabled, true))
+      .where(eq(agentConfig.id, 1))
       .limit(1);
 
     if (!config) {
-      console.error("[webhook:wa] No active agent config found — is agent enabled in admin?");
+      console.error("[webhook:wa] No agent config found — is DB initialized?");
       return NextResponse.json({ ok: true }, { status: 200 });
     }
     console.log(`[webhook:wa] Config loaded — enabled:${config.enabled} phone:${config.phoneNumber || "N/A"}`);
 
-    // 3b. Check if customer phone is in allowed IDs list
+    // 4b. Check if customer phone is in allowed IDs list
     const allowedIds = (config.allowedPhoneIds ?? []) as { name: string; phone: string }[];
     if (allowedIds.length > 0 && !allowedIds.some((entry) => entry.phone === customerPhone)) {
       console.log(`[webhook:wa] BLOCKED — phone ${customerPhone} not in allowedPhoneIds (${allowedIds.map(a => a.phone).join(",")})`);
@@ -94,11 +270,12 @@ export async function POST(request: NextRequest) {
     }
     console.log(`[webhook:wa] Message from ${customerPhone} (${customerName}) type=${msgType} id=${messageId}`);
 
-    // 3c. Auto-reply when outside 24h window
+    // 4c. Auto-reply when outside 24h window
     const autoReplyEnabled = config.autoReply24h === true;
     const autoReplyMessage = config.autoReply24hMessage?.trim();
+    const isAiEnabled = config.enabled === true;
 
-    // 4. Find or create conversation
+    // 5. Find or create conversation
     const { id: conversationId, isNew } = await findOrCreateConversation(
       "whatsapp",
       customerPhone,
@@ -106,18 +283,18 @@ export async function POST(request: NextRequest) {
       customerPhone
     );
 
-    // 5. Deduplication check
+    // 6. Deduplication check
     if (await isMessageDuplicate(messageId)) {
       console.log(`[webhook:wa] Duplicate message ${messageId} — skipping`);
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
-    // 6. Capture lead if first contact
+    // 7. Capture lead if first contact
     const textForLead = msgType === "text" ? (message.text?.body as string) || "" : "";
     await captureLeadIfNew(customerPhone, customerName, textForLead);
 
-    // 7. Auto-reply for new conversations
-    if (autoReplyEnabled && autoReplyMessage && isNew) {
+    // 8. Auto-reply for new conversations (solo si la AI está habilitada)
+    if (isAiEnabled && autoReplyEnabled && autoReplyMessage && isNew) {
       await sendWhatsAppMessage({
         to: customerPhone,
         body: autoReplyMessage,
@@ -127,7 +304,8 @@ export async function POST(request: NextRequest) {
     }
 
     // -------------------------------------------------------------------------
-    // 8. Persist inbound message + resolve text for agent
+    // 9. Persist inbound message + resolve text for agent
+    //    ESTO SIEMPRE SE HACE, independientemente de si la AI está encendida
     // -------------------------------------------------------------------------
     let agentText: string;
     let contentAttributes: MediaAttachment[] | undefined;
@@ -162,11 +340,6 @@ export async function POST(request: NextRequest) {
 
     } else {
       // ── MEDIA (image | audio | document | video) ──────────────────────────
-      // YCloud payload shape:
-      //   message.image    = { id, caption? }
-      //   message.audio    = { id, voice? }
-      //   message.document = { id, filename?, caption? }
-      //   message.video    = { id, caption? }
       const mediaObj = message[msgType] as {
         id?: string;
         caption?: string;
@@ -252,9 +425,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // -------------------------------------------------------------------------
-    // 9. Enqueue message into buffer and schedule deferred processing
-    // -------------------------------------------------------------------------
+    // ─────────────────────────────────────────────────────────────────────────
+    // 10. Verificar si la AI DEBE responder o no
+    //     El mensaje YA FUE GUARDADO arriba. Ahora decidimos si ejecutamos AI.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Check 1: ¿La AI está habilitada en el admin?
+    if (!isAiEnabled) {
+      console.log(`[webhook:wa] AI disabled — message ${messageId} saved, AI skipped`);
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    // Check 2: ¿Hay un human override activo?
+    const isOverridden = await checkHumanOverride(conversationId);
+    if (isOverridden) {
+      console.log(`[webhook:wa] Human override active for conv ${conversationId} — AI skipped`);
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    // ───────────────────────────────────────────────────────────────────────
+    // 11. AI está habilitada y no hay override — encolar en buffer
+    // ───────────────────────────────────────────────────────────────────────
 
     // Content-level dedup (Level 2) — catches exact resends within 5s
     const isDuplContent = await BufferManager.isContentDuplicate("whatsapp", customerPhone, agentText);
@@ -271,7 +462,7 @@ export async function POST(request: NextRequest) {
       contentAttributes: contentAttributes ?? undefined,
     });
 
-    // Capture config values for the closure (config object may not be available later)
+    // Capture config values for the closure
     const apiKey = process.env.YCLOUD_API_KEY || config.ycloudApiKey || "";
     const botNumber = process.env.WHATSAPP_PHONE_NUMBER || config.phoneNumber || "";
     const systemPrompt = config.systemPrompt || "";
@@ -281,6 +472,14 @@ export async function POST(request: NextRequest) {
     // Fire-and-forget: webhook returns 200 immediately, processing happens in background
     scheduleBufferProcessing("whatsapp", customerPhone, async (bufferedMessages) => {
       console.log(`[webhook:wa] Buffer callback fired — ${bufferedMessages.length} msgs for ${customerPhone}`);
+
+      // ANTES de ejecutar AI, verificar AGAIN si hay human override
+      // (puede haber cambiado durante el debounce de 11s)
+      const stillOverridden = await checkHumanOverride(conversationId);
+      if (stillOverridden) {
+        console.log(`[webhook:wa] Human override activated during debounce for ${customerPhone} — aborting AI`);
+        return;
+      }
 
       // Concatenate all buffered messages into a single context for the agent
       const combinedText = bufferedMessages.map((m) => m.content).join("\n");
@@ -295,9 +494,7 @@ export async function POST(request: NextRequest) {
         }));
 
       // If the buffer had multiple messages, add the combined view as the last user turn
-      // so the agent sees all pending input in one shot
       if (bufferedMessages.length > 1) {
-        // Replace the last user message with the combined text to avoid duplication
         const lastUserIdx = [...aiMessages].reverse().findIndex((m) => m.role === "user");
         if (lastUserIdx !== -1) {
           const realIdx = aiMessages.length - 1 - lastUserIdx;
@@ -318,15 +515,34 @@ export async function POST(request: NextRequest) {
       console.log(`[webhook:wa] Agent response: ${responseText.slice(0, 100)}...`);
 
       // Persist assistant response
-      await insertMessage(conversationId, "assistant", responseText);
+      const msgId = await insertMessage(conversationId, "assistant", responseText);
 
       // Send response via YCloud (split into bubbles for natural UX)
-      await sendWhatsAppBubbles({
+      const ycloudResult = await sendWhatsAppBubbles({
         to: customerPhone,
         text: responseText,
         apiKey,
         from: botNumber,
       });
+
+      // ═══════════════════════════════════════════════════════════════════
+      // CLINICFORGE PATTERN: Guardar el wamid (YCloud message ID) en el
+      // registro de chatMessage para que el echo handler pueda deduplicar
+      // ═══════════════════════════════════════════════════════════════════
+      if (ycloudResult?.id) {
+        try {
+          // Actualizar el mensaje con el wamid que devolvió YCloud
+          const { chatMessages } = await import("@/db/schema");
+          await db
+            .update(chatMessages)
+            .set({ platformMessageId: ycloudResult.id })
+            .where(eq(chatMessages.id, msgId));
+          console.log(`[webhook:wa] Updated chatMessage ${msgId} with wamid ${ycloudResult.id}`);
+        } catch (updateErr) {
+          // Non-fatal
+          console.warn("[webhook:wa] Failed to update wamid on chatMessage:", updateErr);
+        }
+      }
 
       console.log(`[webhook:wa] Response sent to ${customerPhone}`);
     }).catch((err) => console.error("[webhook:wa] Buffer processing error:", err));

@@ -256,4 +256,16 @@ export async function sendOutboundMessage(
   // Save the outbound message — store "human" as "assistant" for AI compatibility
   const dbRole = role === "human" ? "assistant" : role;
   await insertMessage(conversationId, dbRole, content);
+
+  // If a human sent this from the admin panel, set humanOverrideUntil
+  // para que la IA no responda automáticamente después (ClinicForge pattern)
+  if (role === "human") {
+    const overrideUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await db
+      .update(conversations)
+      .set({ humanOverrideUntil: overrideUntil, updatedAt: new Date() })
+      .where(eq(conversations.id, conversationId));
+
+    console.log(`[router] Human override set for conv ${conversationId} until ${overrideUntil.toISOString()}`);
+  }
 }

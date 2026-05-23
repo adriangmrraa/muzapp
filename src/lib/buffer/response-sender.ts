@@ -1,4 +1,4 @@
-import { sendWhatsAppMessage } from "@/lib/whatsapp/ycloud-client";
+import { sendWhatsAppMessage, type YCloudResponse } from "@/lib/whatsapp/ycloud-client";
 import { sendTelegramMessage } from "@/lib/telegram/bot";
 
 const MAX_BUBBLE_CHARS = 250;
@@ -68,13 +68,15 @@ export function splitIntoBubbles(text: string): string[] {
 }
 
 // Send response as bubbles via WhatsApp (YCloud)
+// Returns the LAST YCloud response (which has the wamid) for echo dedup
 export async function sendWhatsAppBubbles(params: {
   to: string;
   text: string;
   apiKey: string;
   from: string;
-}): Promise<void> {
+}): Promise<YCloudResponse | null> {
   const bubbles = splitIntoBubbles(params.text);
+  let lastResult: YCloudResponse | null = null;
 
   for (let i = 0; i < bubbles.length; i++) {
     if (i > 0) {
@@ -83,13 +85,15 @@ export async function sendWhatsAppBubbles(params: {
       await sleep(DELAY_BETWEEN_BUBBLES_MS);
     }
 
-    await sendWhatsAppMessage({
+    lastResult = await sendWhatsAppMessage({
       to: params.to,
       body: bubbles[i],
       apiKey: params.apiKey,
       from: params.from,
     });
   }
+
+  return lastResult;
 }
 
 // Send response as bubbles via Telegram

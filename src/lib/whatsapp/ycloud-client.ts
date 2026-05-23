@@ -8,7 +8,7 @@ interface SendMessageParams {
   from: string;      // sender phone number
 }
 
-interface YCloudResponse {
+export interface YCloudResponse {
   id: string;
   status: string;
 }

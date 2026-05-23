@@ -1,7 +1,9 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useCart } from "@/lib/cart/cart-context"
 import { buildOrderMessage } from "@/lib/cart/build-order-message"
+import { getWhatsAppNumber } from "@/lib/whatsapp/get-number"
 import {
   Sheet,
   SheetContent,
@@ -18,7 +20,7 @@ import {
   ArrowRight,
 } from "lucide-react"
 
-const WHATSAPP_NUMBER = "5493704123456"
+const FALLBACK_NUMBER = "5493705115020"
 
 type CartDrawerProps = {
   open: boolean
@@ -28,6 +30,14 @@ type CartDrawerProps = {
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, total, itemCount, updateQuantity, removeItem, clearCart } =
     useCart()
+  const [whatsappNumber, setWhatsappNumber] = useState(FALLBACK_NUMBER)
+
+  // Cargar el número desde la DB (admin UI) al montar
+  useEffect(() => {
+    getWhatsAppNumber().then(setWhatsappNumber).catch(() => {
+      // fallback silencioso
+    })
+  }, [])
 
   function handleWhatsApp() {
     const message = buildOrderMessage(
@@ -37,7 +47,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         price: i.product.price,
       })),
     )
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
+    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
     window.open(url, "_blank")
     onClose()
   }

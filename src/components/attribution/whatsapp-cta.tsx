@@ -96,7 +96,7 @@ export function WhatsAppCTA(props: WhatsAppCTAProps) {
     <Suspense
       fallback={
         <a
-          href={`https://wa.me/5491112345678`}
+          href={`https://wa.me/5493705115020`}
           target="_blank"
           rel="noopener noreferrer"
           className={
