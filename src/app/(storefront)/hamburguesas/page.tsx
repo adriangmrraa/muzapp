@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductToggle } from "@/components/products/product-toggle";
+import { UpsellModal } from "@/components/products/upsell-modal";
 import { Input } from "@/components/ui/input";
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
 import { fadeUp, staggerContainer, heroChild } from "@/lib/animation-variants";
@@ -29,6 +30,11 @@ export default function HamburguesasPage() {
   const [search, setSearch] = useState("");
   const [products, setProducts] = useState<ProductFromAPI[]>([]);
   const [loading, setLoading] = useState(true);
+  const productsRef = useRef<HTMLDivElement>(null);
+
+  const handleNavigateToPapas = () => {
+    productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   useEffect(() => {
     async function fetchProducts() {
@@ -123,7 +129,9 @@ export default function HamburguesasPage() {
             />
           </motion.div>
 
-          {!loading && <ProductGrid products={filteredProducts} />}
+          <div ref={productsRef}>
+            {!loading && <ProductGrid products={filteredProducts} />}
+          </div>
         </div>
       </div>
 
@@ -147,6 +155,8 @@ export default function HamburguesasPage() {
           />
         </motion.div>
       </div>
+
+      <UpsellModal onNavigateToPapas={handleNavigateToPapas} />
     </>
   );
 }
