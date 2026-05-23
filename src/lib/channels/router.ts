@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { conversations, chatMessages, leads, attachments } from "@/db/schema";
+import { conversations, chatMessages, leads, attachments, orders, agentConfig } from "@/db/schema";
 import { eq, and, lt } from "drizzle-orm";
 
 export type Channel = "whatsapp" | "telegram";
@@ -429,7 +429,7 @@ export async function sendPendingFollowups(): Promise<number> {
 
       try {
         await sendWhatsAppMessage({ to: order.phoneNumber, body: message, apiKey, from });
-        await db.update(ordersTbl).set({ followupSent: true }).where(eq(ordersTbl.id, order.id));
+        await db.update(orders).set({ followupSent: true }).where(eq(orders.id, order.id));
         sentCount++;
         console.log(`[followup] Sent to ${order.phoneNumber} (order #${order.id})`);
       } catch (err) {

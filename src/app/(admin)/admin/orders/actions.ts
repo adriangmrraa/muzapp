@@ -15,11 +15,15 @@ export interface OrderRow {
   id: number;
   phoneNumber: string;
   customerName: string | null;
+  address: string | null;
   orderType: OrderType | null;
   items: unknown;
   notes: string | null;
   tags: string[] | null;
   status: string;
+  leadId: number | null;
+  deliveredAt: Date | null;
+  followupSent: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
