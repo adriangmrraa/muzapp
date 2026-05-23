@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { conversations, chatMessages, leads, attachments } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, lt } from "drizzle-orm";
 
 export type Channel = "whatsapp" | "telegram";
 
@@ -376,5 +376,70 @@ export async function forwardLocationToDelivery(
   } catch (error) {
     console.error("[delivery] Error forwarding location:", error);
     return false;
+  }
+}
+
+// ─── Post-delivery followup ─────────────────────────────────────────────────
+
+const FOLLOWUP_DELAY_MS = 30 * 60 * 1000; // 30 minutos
+
+/**
+ * Busca pedidos entregados hace >30min sin followup y envía mensaje.
+ * Se llama desde el webhook POST (piggyback en tráfico existente).
+ */
+export async function sendPendingFollowups(): Promise<number> {
+  try {
+    const thirtyMinAgo = new Date(Date.now() - FOLLOWUP_DELAY_MS);
+
+    // Buscar pedidos: deliveredAt < 30min ago AND followupSent = false
+    const pendingOrders = await db
+      .select({
+        id: orders.id,
+        phoneNumber: orders.phoneNumber,
+        customerName: orders.customerName,
+      })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.status, "delivered"),
+          lt(orders.deliveredAt, thirtyMinAgo),
+          eq(orders.followupSent, false),
+        )
+      )
+      .limit(5);
+
+    if (pendingOrders.length === 0) return 0;
+
+    const [cfg] = await db.select().from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
+    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
+
+    if (!apiKey || !from) {
+      console.warn("[followup] Cannot send — missing YCloud credentials");
+      return 0;
+    }
+
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/ycloud-client");
+    let sentCount = 0;
+
+    for (const order of pendingOrders) {
+      const name = order.customerName || "";
+      const greeting = name ? `Hola ${name}` : "Hola";
+      const message = `${greeting}, quería saber si todo estuvo bien con tu pedido. Cualquier cosa, acá estoy.`;
+
+      try {
+        await sendWhatsAppMessage({ to: order.phoneNumber, body: message, apiKey, from });
+        await db.update(ordersTbl).set({ followupSent: true }).where(eq(ordersTbl.id, order.id));
+        sentCount++;
+        console.log(`[followup] Sent to ${order.phoneNumber} (order #${order.id})`);
+      } catch (err) {
+        console.error(`[followup] Failed for order #${order.id}:`, err);
+      }
+    }
+
+    return sentCount;
+  } catch (error) {
+    console.error("[followup] Error checking pending followups:", error);
+    return 0;
   }
 }

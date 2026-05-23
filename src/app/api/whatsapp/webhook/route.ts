@@ -9,6 +9,7 @@ import {
   getConversationMessages,
   notifyCustomerDeliveryArrived,
   forwardLocationToDelivery,
+  sendPendingFollowups,
   type MediaAttachment,
 } from "@/lib/channels/router";
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
@@ -614,6 +615,12 @@ export async function POST(request: NextRequest) {
     // Always return 200 after signature verification passes
     // to prevent YCloud from retrying
   }
+
+  // ─── Post-delivery followup check ──────────────────────────────────────
+  // Fire-and-forget: busca pedidos entregados hace >30min sin followup
+  sendPendingFollowups().then((n) => {
+    if (n > 0) console.log(`[webhook] Followups sent: ${n}`);
+  }).catch((err) => console.warn("[webhook] Followup check failed:", err));
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

@@ -137,9 +137,16 @@ export async function updateOrderStatus(
 
     if (!order) return { success: false, message: "Pedido no encontrado" };
 
+    const updateFields: Record<string, unknown> = { status: newStatus, updatedAt: new Date() };
+
+    // Si se marca como entregado, guardar timestamp para followup
+    if (newStatus === "delivered") {
+      updateFields.deliveredAt = new Date();
+    }
+
     await db
       .update(orders)
-      .set({ status: newStatus, updatedAt: new Date() })
+      .set(updateFields)
       .where(eq(orders.id, orderId));
 
     // Send WhatsApp notification

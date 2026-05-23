@@ -233,4 +233,6 @@ export const orders = pgTable("orders", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  followupSent: boolean("followup_sent").notNull().default(false),
 });
