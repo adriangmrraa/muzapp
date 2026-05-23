@@ -91,12 +91,12 @@ function ConversationsInboxInner({ initialConversations }: Props) {
 
       {/* Col 2: Chat Activo */}
       <div
-        className={`flex-1 flex flex-col min-w-0 h-full ${
+        className={`flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden ${
           currentView === "chat" ? "flex" : "hidden md:flex"
         }`}
       >
         {!selectedId || !selectedConversation ? (
-          <div className="flex flex-1 items-center justify-center text-gray-500 h-full">
+          <div className="flex flex-1 items-center justify-center text-gray-500">
             <p>Seleccioná una conversación</p>
           </div>
         ) : (

@@ -79,7 +79,7 @@ export function ChatPanel({
   }, [messages]);
 
   return (
-    <div className={cn("flex flex-col h-full bg-[#0a0a0a]", className)}>
+    <div className={cn("flex flex-col flex-1 min-h-0 bg-[#0a0a0a]", className)}>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -4 }}
@@ -161,7 +161,7 @@ export function ChatPanel({
       {/* Messages area */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 min-h-0 overflow-y-auto"
         style={{ scrollbarWidth: "thin" }}
       >
         <div className="px-4 py-4 space-y-1">
