@@ -68,7 +68,7 @@ export function createTransferToHumanTool(conversationId: number) {
         lastMessages,
       });
 
-      return "Listo, ya le avisé al equipo. Te van a contactar a la brevedad. Cualquier cosa mientras tanto, acá estoy.";
+      return "Te paso con Karen, ella se va a encargar de tu consulta. Gracias por esperar.";
     },
   });
 }
