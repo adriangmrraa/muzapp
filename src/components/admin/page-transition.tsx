@@ -1,16 +1,18 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 
-interface PageTransitionProps {
-  children: React.ReactNode;
-}
+const FULL_BLEED_ROUTES = ["/admin/conversations", "/admin/conversations/"];
 
-export default function PageTransition({ children }: PageTransitionProps) {
+export default function PageTransition({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isFullBleed = FULL_BLEED_ROUTES.includes(pathname);
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        className="flex-1 overflow-y-auto"
+        className={`flex-1 ${isFullBleed ? "overflow-hidden" : "overflow-y-auto"}`}
         style={{
           background:
             "radial-gradient(ellipse at 60% 0%, rgba(212,160,23,0.04) 0%, #0a0a0a 60%)",
@@ -20,7 +22,7 @@ export default function PageTransition({ children }: PageTransitionProps) {
         exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
-        <div className="p-6">{children}</div>
+        {isFullBleed ? children : <div className="p-6">{children}</div>}
       </motion.div>
     </AnimatePresence>
   );

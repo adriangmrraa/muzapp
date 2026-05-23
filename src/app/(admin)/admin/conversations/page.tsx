@@ -22,9 +22,5 @@ export default async function ConversationsPage() {
     })
   );
 
-  return (
-    <div className="-m-6 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
-      <ConversationsInbox initialConversations={initialConversations} />
-    </div>
-  );
+  return <ConversationsInbox initialConversations={initialConversations} />;
 }

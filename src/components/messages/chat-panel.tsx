@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Phone, MoreVertical, UserCheck, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -66,12 +66,14 @@ export function ChatPanel({
   className,
 }: ChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const displayName = conversation.customerName || conversation.customerPhone;
   const initial = (conversation.customerName?.[0] || conversation.customerPhone.slice(-2)).toUpperCase();
 
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages]);
 
@@ -147,36 +149,33 @@ export function ChatPanel({
       </motion.div>
 
       {/* Messages area */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-1"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 100%, rgba(212,160,23,0.02) 0%, transparent 50%)",
-        }}
-      >
-        <AnimatePresence mode="popLayout">
-          {messages.map((msg, i) => {
-            const showDate =
-              i === 0 ||
-              !isSameDay(messages[i - 1].createdAt, msg.createdAt);
+      <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+        <div className="px-4 py-4 space-y-1 min-h-full flex flex-col justify-end">
+          <AnimatePresence mode="popLayout">
+            {messages.map((msg, i) => {
+              const showDate =
+                i === 0 ||
+                !isSameDay(messages[i - 1].createdAt, msg.createdAt);
 
-            return (
-              <div key={msg.id}>
-                {showDate && <DateSeparator date={msg.createdAt} />}
-                <div
-                  className={cn(
-                    "flex mb-2",
-                    msg.role === "user" ? "justify-start" : "justify-end",
-                    msg.role === "system" && "justify-center"
-                  )}
-                >
-                  <MessageBubble message={msg} />
+              return (
+                <div key={msg.id}>
+                  {showDate && <DateSeparator date={msg.createdAt} />}
+                  <div
+                    className={cn(
+                      "flex mb-2",
+                      msg.role === "user" ? "justify-start" : "justify-end",
+                      msg.role === "system" && "justify-center"
+                    )}
+                  >
+                    <MessageBubble message={msg} />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </AnimatePresence>
+              );
+            })}
+          </AnimatePresence>
+          {/* Scroll anchor — siempre al final de los mensajes */}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
       {/* Reply input */}
