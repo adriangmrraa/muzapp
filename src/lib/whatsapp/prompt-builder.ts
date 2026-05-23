@@ -221,6 +221,8 @@ export async function getOperationalData(): Promise<string> {
 export async function buildSystemPrompt(conversationId?: number, customerContext?: {
   name?: string;
   phone?: string;
+  address?: string | null;
+  preferences?: string[];
   orderHistory?: any[];
   pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null };
 }): Promise<string> {
@@ -238,6 +240,14 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
     }
     if (customerContext.phone) {
       context += `\n📱 Tel: ${customerContext.phone}`;
+    }
+    if (customerContext.address) {
+      context += `\n📍 DIRECCIÓN GUARDADA: ${customerContext.address}`;
+      context += `\n⚠️ IMPORTANTE: si el cliente pide delivery, preguntale: "¿a la misma dirección de siempre? (${customerContext.address})"`;
+    }
+    if (customerContext.preferences && customerContext.preferences.length > 0) {
+      context += `\n⭐ PREFERENCIAS DEL CLIENTE (productos que suele pedir): ${customerContext.preferences.join(", ")}`;
+      context += `\n💡 Si el cliente no sabe qué pedir, podés sugerirle estos productos.`;
     }
     if (customerContext.orderHistory && customerContext.orderHistory.length > 0) {
       context += `\n📦 PEDIDOS ANTERIORES:`;

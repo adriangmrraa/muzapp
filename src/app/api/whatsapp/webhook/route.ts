@@ -15,7 +15,7 @@ import {
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
 import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
 import { db } from "@/db";
-import { agentConfig, conversations } from "@/db/schema";
+import { agentConfig, conversations, leads } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { downloadYCloudMedia, saveMediaLocally } from "@/lib/media/downloader";
 import { transcribeAudio } from "@/lib/media/transcription";
@@ -380,6 +380,19 @@ export async function POST(request: NextRequest) {
         description: `Ubicación compartida: ${address}${coords}`,
       }];
       await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+
+      // ── PERSISTIR dirección en leads.address ──
+      const addrToSave = loc?.address || loc?.name || "";
+      if (addrToSave) {
+        db.update(leads)
+          .set({ address: addrToSave })
+          .where(eq(leads.phone, customerPhone))
+          .then((r) => {
+            if (r.rowCount && r.rowCount > 0)
+              console.log(`[webhook:wa] Address saved to lead ${customerPhone}: ${addrToSave}`);
+          })
+          .catch((err) => console.warn("[webhook:wa] Failed to save address:", err));
+      }
 
       // ── DELIVERY: si hay delivery configurado, reenviar ubicación ──
       const deliveryPhoneCfg = config.deliveryPhoneNumber?.trim();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
@@ -111,12 +112,16 @@ export function ClientsView({
           </div>
         ) : (
           clients.map((client, i) => (
-            <motion.div
+            <Link
               key={client.phone}
+              href={`/admin/clients/${encodeURIComponent(client.phone)}`}
+              className="block"
+            >
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: (i % 10) * 0.03 }}
-              className="rounded-xl border border-white/[0.06] p-4 flex flex-col gap-3 bg-[#0a0a0a] hover:border-white/15 transition-all duration-200"
+              className="rounded-xl border border-white/[0.06] p-4 flex flex-col gap-3 bg-[#0a0a0a] hover:border-white/25 hover:bg-white/[0.02] transition-all duration-200 cursor-pointer"
             >
               {/* Header */}
               <div className="flex items-start justify-between">
@@ -187,6 +192,7 @@ export function ClientsView({
                 </span>
               </div>
             </motion.div>
+            </Link>
           ))
         )}
       </motion.div>

@@ -131,7 +131,7 @@ export async function runWhatsAppAgent({
   // El prompt V2 siempre va como base. Lo del admin UI se agrega como seccion extra.
   // customPrompt del webhook ya NO se usa como override — buildSystemPrompt maneja todo.
   let system: string;
-  let customerContext: { name?: string; phone?: string; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null } } | undefined;
+  let customerContext: { name?: string; phone?: string; address?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null } } | undefined;
   
   try {
     // Cargar contexto del cliente (nombre, historial de pedidos)
@@ -147,6 +147,35 @@ export async function runWhatsAppAgent({
         .limit(1);
       
       if (conv?.phone) {
+        // Dirección guardada del lead
+        const { leads } = await import("@/db/schema");
+        const [lead] = await db
+          .select({ address: leads.address, tags: leads.tags })
+          .from(leads)
+          .where(eq(leads.phone, conv.phone))
+          .limit(1);
+
+        // Productos que más repite (preferencias)
+        const allOrders = await db
+          .select({ items: orders.items })
+          .from(orders)
+          .where(eq(orders.phoneNumber, conv.phone))
+          .orderBy(desc(orders.createdAt))
+          .limit(20);
+        const prefCounter = new Map<string, number>();
+        for (const o of allOrders) {
+          const items = o.items as { name?: string }[] | null;
+          if (!items) continue;
+          for (const item of items) {
+            if (item.name) prefCounter.set(item.name, (prefCounter.get(item.name) ?? 0) + 1);
+          }
+        }
+        const preferences = [...prefCounter.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .filter(([, count]) => count >= 2)
+          .slice(0, 5)
+          .map(([name]) => name);
+
         // Órdenes anteriores (historial)
         const recentOrders = await db
           .select({ items: orders.items, status: orders.status, id: orders.id, orderType: orders.orderType, address: orders.address })
@@ -177,6 +206,8 @@ export async function runWhatsAppAgent({
         customerContext = {
           name: conv.name || undefined,
           phone: conv.phone,
+          address: lead?.address || null,
+          preferences: preferences.length > 0 ? preferences : undefined,
           orderHistory: recentOrders.map(o => ({ items: o.items, status: o.status, id: o.id })),
           pendingOrder: pendingOrder ? {
             id: pendingOrder.id,
