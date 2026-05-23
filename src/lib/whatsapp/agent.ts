@@ -236,7 +236,7 @@ export async function runWhatsAppAgent({
 
   try {
     const result = await generateText({
-      model: openai("gpt-5.5-mini"),
+      model: openai("gpt-5.4-mini"),
       system,
       messages,
       tools: {
@@ -308,7 +308,7 @@ export async function runWhatsAppAgent({
       ];
 
       const retryResult = await generateText({
-        model: openai("gpt-5.5-mini"),
+        model: openai("gpt-5.4-mini"),
         system,
         messages: nudgeMessages,
         tools: {
