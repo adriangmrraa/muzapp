@@ -82,10 +82,10 @@ function ConversationsInboxInner({ initialConversations }: Props) {
   ) : null;
 
   return (
-    <div className="flex flex-1 overflow-hidden bg-[#0f0f0f]">
+    <div className="flex flex-1 min-h-0 overflow-hidden bg-[#0f0f0f]">
       {/* ── Col 1: Listado de Chats ─────────────────────────────────────── */}
       <div
-        className={`flex-shrink-0 border-r border-white/5 ${
+        className={`flex-shrink-0 border-r border-white/5 overflow-hidden ${
           currentView === "list" ? "flex flex-col w-full md:w-80" : "hidden md:flex md:flex-col md:w-80"
         }`}
       >
