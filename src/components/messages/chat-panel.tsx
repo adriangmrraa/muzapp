@@ -97,21 +97,24 @@ export function ChatPanel({
           {initial}
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
+        {/* Info — clickeable para abrir perfil en mobile */}
+        <button
+          onClick={onShowContext}
+          className="flex-1 min-w-0 text-left"
+        >
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-neutral-100 truncate">
               {displayName}
             </span>
             <ChannelBadge channel={conversation.channel} size="sm" />
             {conversation.status === "active" && (
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span className="h-2 w-2 rounded-full bg-emerald-400 flex-shrink-0" />
             )}
           </div>
           <p className="text-[11px] text-neutral-500 truncate">
             {conversation.customerPhone}
           </p>
-        </div>
+        </button>
 
         {/* Actions */}
         <div className="flex items-center gap-1">

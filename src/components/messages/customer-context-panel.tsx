@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Phone, Mail, MapPin, BarChart3, ShoppingBag, StickyNote, Tags, Target } from "lucide-react";
+import { Phone, Mail, MapPin, ShoppingBag, Calendar, UserPlus, Bot, Shield, ChevronDown } from "lucide-react";
 import { useCustomerProfile, useMessages } from "@/lib/conversations/queries";
 import { LeadStatusBadge } from "./lead-status-badge";
 import { TagList } from "./tag-list";
@@ -14,62 +13,21 @@ interface CustomerContextPanelProps {
   className?: string;
 }
 
-function CollapsibleSection({
-  icon: Icon,
-  title,
-  defaultOpen = false,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <div className="border-b border-white/5 last:border-b-0">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-medium text-neutral-400 hover:text-neutral-200 transition-colors"
-      >
-        <span className="flex items-center gap-2">
-          <Icon className="h-3.5 w-3.5" />
-          {title}
-        </span>
-        <motion.div
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronDown className="h-3.5 w-3.5" />
-        </motion.div>
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key="content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-3">{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="text-[11px] text-neutral-500">{label}</span>
-      <span className="text-xs text-neutral-300 truncate max-w-[180px] text-right">{value}</span>
+      <span className="text-[11px] text-neutral-400">{label}</span>
+      <span className="text-xs text-neutral-200 truncate max-w-[200px] text-right">{value}</span>
     </div>
   );
+}
+
+function formatDate(iso: string | undefined) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("es-AR", {
+    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+  });
 }
 
 export function CustomerContextPanel({ conversationId, className }: CustomerContextPanelProps) {
@@ -94,49 +52,29 @@ export function CustomerContextPanel({ conversationId, className }: CustomerCont
   }
 
   const initials = (profile.name ?? "?")
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+    .split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 
   const messageCount = messages?.length ?? 0;
   const firstMsg = messages?.[0]?.createdAt;
   const lastMsg = messages?.[messages.length - 1]?.createdAt;
 
-  function formatDate(iso: string | undefined) {
-    if (!iso) return "—";
-    const d = new Date(iso);
-    return d.toLocaleDateString("es-AR", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
-
   return (
     <div className={cn("flex flex-col h-full overflow-y-auto bg-[#0a0a0a]", className)}>
-      {/* Header — siempre visible */}
+      {/* ── Header: Avatar + Nombre + Status ───────────────────────────── */}
       <div className="flex flex-col items-center gap-2 px-4 py-6 border-b border-white/5">
         <div className="h-14 w-14 rounded-full bg-gradient-to-br from-[#D4A017]/30 to-[#D4A017]/10 flex items-center justify-center text-lg font-bold text-[#D4A017]">
           {initials}
         </div>
         <div className="text-center">
           <h3 className="text-sm font-medium text-neutral-100">{profile.name ?? "Sin nombre"}</h3>
-          <p className="text-[11px] text-neutral-500 mt-0.5">{profile.phone}</p>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <LeadStatusBadge status={profile.status} />
+            {profile.tags.length > 0 && <TagList tags={profile.tags} />}
+          </div>
         </div>
-        <LeadStatusBadge status={profile.status} />
       </div>
 
-      {/* Tags — siempre visible */}
-      {profile.tags.length > 0 && (
-        <div className="px-4 py-3 border-b border-white/5">
-          <TagList tags={profile.tags} />
-        </div>
-      )}
-
-      {/* Stats — siempre visible */}
+      {/* ── Stats ──────────────────────────────────────────────────────── */}
       <div className="px-4 py-3 border-b border-white/5">
         <div className="flex items-center gap-4 text-center">
           <div className="flex-1">
@@ -154,54 +92,103 @@ export function CustomerContextPanel({ conversationId, className }: CustomerCont
         </div>
       </div>
 
-      {/* Identity */}
-      <CollapsibleSection icon={Phone} title="Contacto">
-        <InfoRow label="Teléfono" value={profile.phone} />
-        <InfoRow label="Email" value={profile.email} />
-        <InfoRow label="Dirección" value={profile.address} />
-      </CollapsibleSection>
+      {/* ── Card: Estado del Bot ────────────────────────────────────────── */}
+      <div className="px-4 py-3 border-b border-white/5">
+        <div className="rounded-lg bg-white/[0.03] border border-white/5 px-3.5 py-3">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-full bg-emerald-500/15 flex items-center justify-center">
+              <Bot className="h-4 w-4 text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-medium text-neutral-200">IA Activa</p>
+              <p className="text-[10px] text-neutral-500">Atención automática</p>
+            </div>
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          </div>
+        </div>
+      </div>
 
-      {/* Lead Status */}
-      <CollapsibleSection icon={BarChart3} title="Estado del Lead">
-        <InfoRow label="Estado" value={profile.status} />
-        <InfoRow label="Origen" value={profile.platform} />
-        <InfoRow label="Campaña" value={profile.utmCampaign} />
-        <InfoRow label="UTM Source" value={profile.utmSource} />
-        <InfoRow label="UTM Medium" value={profile.utmMedium} />
-        <InfoRow label="UTM Content" value={profile.utmContent} />
-      </CollapsibleSection>
+      {/* ── Card: CONTACTO / DETALLES ──────────────────────────────────── */}
+      <div className="px-4 py-3 border-b border-white/5">
+        <p className="text-[10px] font-semibold text-neutral-500 tracking-wider mb-2.5">CONTACTO / DETALLES</p>
+        <div className="rounded-lg bg-white/[0.03] border border-white/5 divide-y divide-white/5">
+          <div className="flex items-center gap-3 px-3.5 py-2.5">
+            <UserPlus className="h-3.5 w-3.5 text-neutral-500 flex-shrink-0" />
+            <span className="text-xs text-neutral-200">{profile.name ?? "Sin nombre"}</span>
+          </div>
+          <div className="flex items-center gap-3 px-3.5 py-2.5">
+            <Phone className="h-3.5 w-3.5 text-neutral-500 flex-shrink-0" />
+            <span className="text-xs text-neutral-200">{profile.phone}</span>
+          </div>
+          {profile.email && (
+            <div className="flex items-center gap-3 px-3.5 py-2.5">
+              <Mail className="h-3.5 w-3.5 text-neutral-500 flex-shrink-0" />
+              <span className="text-xs text-neutral-200">{profile.email}</span>
+            </div>
+          )}
+          {profile.address && (
+            <div className="flex items-center gap-3 px-3.5 py-2.5">
+              <MapPin className="h-3.5 w-3.5 text-neutral-500 flex-shrink-0" />
+              <span className="text-xs text-neutral-200 truncate">{profile.address}</span>
+            </div>
+          )}
+        </div>
+      </div>
 
-      {/* Orders — lazy load */}
-      <div className="border-b border-white/5">
+      {/* ── Acciones Rápidas ────────────────────────────────────────────── */}
+      <div className="px-4 py-3 border-b border-white/5 space-y-2">
+        <p className="text-[10px] font-semibold text-neutral-500 tracking-wider mb-2.5">ACCIONES</p>
+        <a
+          href="/admin/orders"
+          className="flex items-center justify-center gap-2 w-full rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/5 px-4 py-2.5 text-xs font-medium text-neutral-200 transition-colors"
+        >
+          <ShoppingBag className="h-3.5 w-3.5" />
+          Crear pedido
+        </a>
+        <a
+          href="/admin/orders"
+          className="flex items-center justify-center gap-2 w-full rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/5 px-4 py-2.5 text-xs font-medium text-neutral-200 transition-colors"
+        >
+          <Calendar className="h-3.5 w-3.5" />
+          Agendar entrega
+        </a>
+        <a
+          href={`/admin/clients?search=${encodeURIComponent(profile.phone)}`}
+          className="flex items-center justify-center gap-2 w-full rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/5 px-4 py-2.5 text-xs font-medium text-neutral-200 transition-colors"
+        >
+          <Shield className="h-3.5 w-3.5" />
+          Ver ficha completa
+        </a>
+      </div>
+
+      {/* ── Historial de Pedidos ────────────────────────────────────────── */}
+      <div className="px-4 py-3 border-b border-white/5">
         <button
           onClick={() => setOrdersOpen(!ordersOpen)}
-          className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-medium text-neutral-400 hover:text-neutral-200 transition-colors"
+          className="flex w-full items-center justify-between text-[10px] font-semibold text-neutral-500 tracking-wider mb-2.5"
         >
-          <span className="flex items-center gap-2">
-            <ShoppingBag className="h-3.5 w-3.5" />
-            Pedidos
-          </span>
-          <motion.div animate={{ rotate: ordersOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown className="h-3.5 w-3.5" />
-          </motion.div>
+          <span>HISTORIAL DE PEDIDOS</span>
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${ordersOpen ? "rotate-180" : ""}`} />
         </button>
         <OrderHistory leadId={profile.id} expanded={ordersOpen} />
       </div>
 
-      {/* Notes */}
-      <CollapsibleSection icon={StickyNote} title="Notas">
-        <p className="text-xs text-neutral-300 leading-relaxed">
-          {profile.notes ?? "Sin notas"}
-        </p>
-      </CollapsibleSection>
+      {/* ── Notes + Attribution (compactas) ────────────────────────────── */}
+      {profile.notes && (
+        <div className="px-4 py-3 border-b border-white/5">
+          <p className="text-[10px] font-semibold text-neutral-500 tracking-wider mb-1.5">NOTAS</p>
+          <p className="text-xs text-neutral-400 leading-relaxed">{profile.notes}</p>
+        </div>
+      )}
 
-      {/* Attribution */}
-      <CollapsibleSection icon={Target} title="Atribución">
-        <InfoRow label="Platform" value={profile.platform} />
-        <InfoRow label="Ad ID" value={profile.adId} />
-        <InfoRow label="Campaign ID" value={profile.campaignId} />
-        <InfoRow label="Adset ID" value={null} />
-      </CollapsibleSection>
+      {profile.platform && (
+        <div className="px-4 py-3 border-b border-white/5">
+          <p className="text-[10px] font-semibold text-neutral-500 tracking-wider mb-1.5">ATRIBUCIÓN</p>
+          <InfoRow label="Origen" value={profile.platform} />
+          <InfoRow label="Campaña" value={profile.utmCampaign} />
+          <InfoRow label="UTM" value={profile.utmSource ? `${profile.utmSource} / ${profile.utmMedium}` : null} />
+        </div>
+      )}
     </div>
   );
 }
