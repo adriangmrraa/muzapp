@@ -196,7 +196,7 @@ export async function handleTelegramUpdate(
 
   try {
     const result = await generateText({
-      model: openai.chat("gpt-5"),
+      model: openai.chat("gpt-5-mini"),
       system: INTERNAL_AGENT_SYSTEM_PROMPT,
       messages: conversationMessages,
       tools: internalAgentTools,

@@ -1,5 +1,5 @@
 import { generateText, stepCountIs } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { openai, type OpenAILanguageModelChatOptions } from "@ai-sdk/openai";
 import {
   getMenuTool,
   checkAvailabilityTool,
@@ -236,9 +236,14 @@ export async function runWhatsAppAgent({
 
   try {
     const result = await generateText({
-      model: openai.chat("gpt-5"),
+      model: openai.chat("gpt-5-mini"),
       system,
       messages,
+      providerOptions: {
+        openai: {
+          systemMessageMode: "developer",
+        } satisfies OpenAILanguageModelChatOptions,
+      },
       tools: {
         // Grupo A: Menú y productos
         getMenu: getMenuTool,
@@ -308,9 +313,14 @@ export async function runWhatsAppAgent({
       ];
 
       const retryResult = await generateText({
-        model: openai.chat("gpt-5"),
+        model: openai.chat("gpt-5-mini"),
         system,
         messages: nudgeMessages,
+        providerOptions: {
+          openai: {
+            systemMessageMode: "developer",
+          } satisfies OpenAILanguageModelChatOptions,
+        },
         tools: {
           getMenu: getMenuTool,
           getProductDetails: getProductDetailsTool,

@@ -67,7 +67,7 @@ export async function processMessage({
     ];
 
     const result = await generateText({
-      model: openai.chat("gpt-5"),
+      model: openai.chat("gpt-5-mini"),
       system: systemPrompt,
       messages,
       tools: {
