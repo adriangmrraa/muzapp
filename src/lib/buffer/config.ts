@@ -1,6 +1,6 @@
 export const BUFFER_CONFIG = {
   whatsapp: {
-    debounceMs: 11_000,  // 11 seconds grace period
+    debounceMs: 60_000,  // 60 seconds sliding window (Leandro: clients send multiple msgs)
     lockTtlMs: 300_000,  // 5 min lock safety
     maxBufferSize: 20,
   },
