@@ -129,3 +129,69 @@ export async function sendImage(
 
   return { ok: false, error: "Max retries exceeded" };
 }
+
+export async function sendDocument(
+  to: string,
+  documentUrl: string,
+  caption?: string,
+  fileName?: string
+): Promise<SendTextResult> {
+  const apiKey = process.env.YCLOUD_API_KEY;
+  const from = process.env.WHATSAPP_PHONE_NUMBER;
+
+  if (!apiKey || !from) {
+    return { ok: false, error: "Missing YCLOUD_API_KEY or WHATSAPP_PHONE_NUMBER" };
+  }
+
+  const body = JSON.stringify({
+    from,
+    to,
+    type: "document",
+    document: {
+      link: documentUrl,
+      caption: caption || "",
+      filename: fileName || "documento.pdf",
+    },
+  });
+
+  for (let attempt = 0; attempt <= 2; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20_000);
+
+    try {
+      const response = await fetch(YCLOUD_API_URL, {
+        method: "POST",
+        headers: {
+          "X-API-Key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        return { ok: true };
+      }
+
+      if (response.status >= 500 && attempt < 2) {
+        await sleep(Math.pow(2, attempt) * 1000);
+        continue;
+      }
+
+      const errorText = await response.text().catch(() => "unknown error");
+      return { ok: false, error: `YCloud error ${response.status}: ${errorText}` };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (attempt < 2) {
+        await sleep(Math.pow(2, attempt) * 1000);
+        continue;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      return { ok: false, error: `Fetch error: ${message}` };
+    }
+  }
+
+  return { ok: false, error: "Max retries exceeded" };
+}

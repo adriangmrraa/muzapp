@@ -23,5 +23,6 @@ export { createTransferToHumanTool } from "./transfer-to-human";
 // Grupo F: Cocina + Stock + Alias (3)
 export { checkKitchenStatusTool, checkPanStockTool, getPaymentAliasTool } from "./kitchen-tools";
 
-// Grupo G: Multimedia (2) — factory functions, se crean con número del cliente
+// Grupo G: Multimedia (4) — factory functions, se crean con número del cliente
 export { createSendStickerTool, createSendMenuImageTool } from "./sticker-tools";
+export { createSendImageTool, createSendDocumentTool } from "./send-media-tools";
