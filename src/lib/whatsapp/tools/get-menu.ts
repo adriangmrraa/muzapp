@@ -5,10 +5,10 @@ import { products } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export const getMenuTool = tool({
-  description: "Obtiene el menú de productos disponibles. Puede filtrar por categoría: hamburguesa, acompanamiento, pan_mayorista",
+  description: "Obtiene el menú de productos disponibles. Categorías: hamburguesa, acompanamiento, pan_mayorista, tragos_vip (Tragos V.I.P), bebidas",
   inputSchema: z.object({
-    category: z.enum(["hamburguesa", "acompanamiento", "pan_mayorista"]).optional()
-      .describe("Categoría para filtrar. Si no se especifica, devuelve todo el menú"),
+    category: z.enum(["hamburguesa", "acompanamiento", "pan_mayorista", "tragos_vip", "bebidas"]).optional()
+      .describe("Categoría para filtrar. tragos_vip = Tragos V.I.P de 1 Litro. Si no se especifica, devuelve todo el menú"),
   }),
   execute: async ({ category }) => {
     const conditions = [eq(products.available, true)];
