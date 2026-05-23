@@ -86,29 +86,31 @@ export async function fetchOrders(params: {
   };
 }
 
-// ─── Mensajes personalizados segun estado, tipo y entrega ───────────────
+// ─── Mensajes profesionales segun estado, tipo y entrega ───────────────
 function buildWhatsAppMessage(status: string, order: OrderRow): string | null {
-  const name = order.customerName || "amigo";
-  const isDelivery = order.notes?.toLowerCase().includes("delivery") || !order.notes?.toLowerCase().includes("retiro");
+  const name = order.customerName || "";
+  const greeting = name ? `Hola ${name}` : "Hola";
+  const isDelivery = order.address && order.address.trim().length > 0;
   const isPan = order.orderType === "pan_mayorista";
 
   switch (status) {
     case "preparing":
-      return isPan
-        ? `hola ${name}, ya estamos preparando tu pedido de pan 👍`
-        : `hola ${name}, ya estamos preparando tu pedido 👍`;
+      return `${greeting}, tu pedido ya está en preparación. Te aviso cuando esté listo.`;
 
     case "ready":
-      if (isPan) return `hola ${name}, tu pedido de pan está listo para retirar en Neuquen 1245 🔥`;
-      return isDelivery
-        ? `hola ${name}, tu pedido está listo! te lo estamos llevando 🛵`
-        : `hola ${name}, tu pedido está listo para retirar en Neuquen 1245 🔥`;
+      if (isPan) {
+        return `${greeting}, tu pedido de pan ya está listo para retirar por Neuquen 1245.`;
+      }
+      if (isDelivery) {
+        return `${greeting}, tu pedido ya está listo. En breve el delivery lo va a estar llevando a tu domicilio.`;
+      }
+      return `${greeting}, tu pedido ya está listo. Pasá a buscarlo por Neuquen 1245.`;
 
     case "delivered":
-      return `gracias ${name}! esperamos que te haya gustado. etiquetanos en ig @mrs_mozzarella ❤️`;
+      return `${greeting}! Espero que lo hayas disfrutado. Cualquier cosa, acá estoy.`;
 
     case "cancelled":
-      return `hola ${name}, tu pedido fue cancelado. cualquier cosa nos contactamos`;
+      return `${greeting}, tu pedido fue cancelado. Si necesitas algo más, no dudes en consultarnos.`;
 
     default:
       return null;
