@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { conversations, chatMessages } from "@/db/schema";
+import { conversations, chatMessages, leads, orders } from "@/db/schema";
 import { eq, desc, and, ilike, or, sql, count } from "drizzle-orm";
 
 const PAGE_SIZE = 50;
@@ -172,4 +172,28 @@ export async function getConversation(
     .where(eq(conversations.id, conversationId))
     .limit(1);
   return conv ?? null;
+}
+
+/**
+ * Obtiene el lead vinculado a una conversación.
+ */
+export async function getLeadByConversation(conversationId: number) {
+  const [lead] = await db
+    .select()
+    .from(leads)
+    .where(eq(leads.conversationId, conversationId))
+    .limit(1);
+  return lead ?? null;
+}
+
+/**
+ * Obtiene las órdenes de un lead.
+ */
+export async function getOrdersByLead(leadId: number) {
+  return db
+    .select()
+    .from(orders)
+    .where(eq(orders.leadId, leadId))
+    .orderBy(desc(orders.createdAt))
+    .limit(20);
 }

@@ -84,7 +84,39 @@ export async function findOrCreateConversation(
     })
     .returning({ id: conversations.id });
 
+  // Auto-link lead by phone number if a new conversation was created
+  if (customerPhone) {
+    await autoLinkLeadToConversation(customerPhone, conv.id);
+  }
+
   return { id: conv.id, isNew: true };
+}
+
+/**
+ * Busca un lead por phone y vincula su conversationId si no lo tiene.
+ * Se llama automáticamente cuando se crea una conversación nueva.
+ */
+async function autoLinkLeadToConversation(
+  phone: string,
+  conversationId: number
+): Promise<void> {
+  try {
+    const [lead] = await db
+      .select({ id: leads.id, conversationId: leads.conversationId })
+      .from(leads)
+      .where(eq(leads.phone, phone))
+      .limit(1);
+
+    if (lead && !lead.conversationId) {
+      await db
+        .update(leads)
+        .set({ conversationId })
+        .where(eq(leads.id, lead.id));
+      console.log(`[leads] Auto-linked lead #${lead.id} → conversation #${conversationId}`);
+    }
+  } catch (err) {
+    console.warn(`[leads] Auto-link failed for phone ${phone}:`, err);
+  }
 }
 
 // Insert a message into chat_messages table

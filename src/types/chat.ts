@@ -35,3 +35,48 @@ export interface ConversationSummary {
 }
 
 export type ConversationFilter = "all" | "whatsapp" | "telegram" | "active" | "closed";
+
+// ─── Customer Profile (para context panel) ───────────────────────────────
+
+export interface CustomerProfile {
+  id: number;
+  name: string | null;
+  phone: string;
+  email: string | null;
+  address: string | null;
+  status: "new" | "contacted" | "converted" | "lost";
+  tags: string[];
+  notes: string | null;
+  platform: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmContent: string | null;
+  adId: string | null;
+  campaignId: string | null;
+  conversationId: number | null;
+  createdAt: string;
+}
+
+export interface OrderSummary {
+  id: number;
+  orderType: string | null;
+  status: string;
+  total: string | null;
+  createdAt: string;
+}
+
+export interface TagVariant {
+  label: string;
+  color: "default" | "purple" | "blue" | "amber" | "orange" | "red" | "green";
+}
+
+export type ContextPanelSection =
+  | "header"
+  | "tags"
+  | "identity"
+  | "leadStatus"
+  | "stats"
+  | "orders"
+  | "notes"
+  | "attribution";

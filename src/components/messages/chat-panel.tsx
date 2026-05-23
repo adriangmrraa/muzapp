@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Phone, MoreVertical, UserCheck } from "lucide-react";
+import { ArrowLeft, Phone, MoreVertical, UserCheck, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChannelBadge } from "./channel-badge";
 import { MessageBubble } from "./message-bubble";
@@ -15,6 +15,7 @@ interface ChatPanelProps {
   onSend: (message: string) => void;
   onBack?: () => void;
   onHumanOverride?: () => void;
+  onShowContext?: () => void;
   className?: string;
 }
 
@@ -61,6 +62,7 @@ export function ChatPanel({
   onSend,
   onBack,
   onHumanOverride,
+  onShowContext,
   className,
 }: ChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -113,6 +115,16 @@ export function ChatPanel({
 
         {/* Actions */}
         <div className="flex items-center gap-1">
+          {/* Customer context — visible en mobile (<xl) porque en xl+ está siempre visible */}
+          {onShowContext && (
+            <button
+              onClick={onShowContext}
+              className="p-2 rounded-lg hover:bg-white/5 text-neutral-400 transition-colors xl:hidden"
+              title="Datos del cliente"
+            >
+              <UserRound className="h-4 w-4" />
+            </button>
+          )}
           {onHumanOverride && (
             <button
               onClick={onHumanOverride}
