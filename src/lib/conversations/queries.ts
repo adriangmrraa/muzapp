@@ -115,12 +115,30 @@ export function useCustomerProfile(conversationId: number | null) {
     queryFn: async (): Promise<CustomerProfile | null> => {
       if (!conversationId) return null;
 
-      // Find lead linked to this conversation
-      const [lead] = await db
+      // Try 1: Find lead by conversationId (auto-linked)
+      let [lead] = await db
         .select()
         .from(leads)
         .where(eq(leads.conversationId, conversationId))
         .limit(1);
+
+      // Try 2: Fallback — buscar por teléfono de la conversación
+      if (!lead) {
+        const { conversations: convTable } = await import("@/db/schema");
+        const [conv] = await db
+          .select({ phone: convTable.customerPhone })
+          .from(convTable)
+          .where(eq(convTable.id, conversationId))
+          .limit(1);
+
+        if (conv?.phone) {
+          [lead] = await db
+            .select()
+            .from(leads)
+            .where(eq(leads.phone, conv.phone))
+            .limit(1);
+        }
+      }
 
       if (!lead) return null;
 
