@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react"
 import { toast } from "sonner"
+import { z } from "zod"
 
 export type CartItem = {
   product: {
@@ -35,11 +36,29 @@ const CartContext = createContext<CartContextValue | null>(null)
 
 const STORAGE_KEY = "muzapp-cart"
 
+const cartItemSchema = z.object({
+  product: z.object({
+    id: z.string(),
+    name: z.string(),
+    price: z.number(),
+    emoji: z.string(),
+  }),
+  quantity: z.number().int().positive(),
+});
+
 function loadCart(): CartItem[] {
   if (typeof window === "undefined") return []
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as CartItem[]) : []
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    const result = z.array(cartItemSchema).safeParse(parsed)
+    if (!result.success) {
+      console.warn("[cart] Invalid cart data in localStorage, clearing")
+      localStorage.removeItem(STORAGE_KEY)
+      return []
+    }
+    return result.data
   } catch {
     return []
   }

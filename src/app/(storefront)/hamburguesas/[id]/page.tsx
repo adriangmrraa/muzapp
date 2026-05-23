@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProductDetail } from "@/components/products/product-detail";
+import { useCart } from "@/lib/cart/cart-context";
 
 type ProductFromAPI = {
   id: number;
@@ -50,9 +51,16 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [productId]);
 
+  const { addItem } = useCart();
+
   function handleAddToCart(p: ProductFromAPI) {
-    // TODO: Add to actual cart state (could use context)
-    console.log("Added to cart:", p.name);
+    const price = p.price ? parseFloat(p.price.replace(/[^0-9]/g, "")) : 0;
+    addItem({
+      id: String(p.id),
+      name: p.name,
+      price,
+      emoji: "🍔",
+    });
   }
 
   if (loading) {
