@@ -39,6 +39,7 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   tiempoEspera: "",
   menuImageUrlHamburguesas: "",
   menuImageUrlPan: "",
+  deliveryPhoneNumber: "",
 };
 
 export default async function AgentPage() {
@@ -81,6 +82,7 @@ export default async function AgentPage() {
         tiempoEspera: (row.tiempoEspera as string) ?? "",
         menuImageUrlHamburguesas: (row.menuImageUrlHamburguesas as string) ?? "",
         menuImageUrlPan: (row.menuImageUrlPan as string) ?? "",
+        deliveryPhoneNumber: (row.deliveryPhoneNumber as string) ?? "",
       }
     : DEFAULT_CONFIG;
 

@@ -72,6 +72,8 @@ export type AgentConfigFormData = {
   // ─── Menu Images ─────────────────────────────────────────────────────────
   menuImageUrlHamburguesas: string;
   menuImageUrlPan: string;
+  // ─── Delivery ──────────────────────────────────────────────────────────
+  deliveryPhoneNumber: string;
 };
 
 const initialState: AgentConfigState = {
