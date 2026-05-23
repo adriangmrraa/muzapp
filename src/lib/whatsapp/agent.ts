@@ -236,12 +236,9 @@ export async function runWhatsAppAgent({
 
   try {
     const result = await generateText({
-      model: openai("gpt-4o"),
+      model: openai.chat("gpt-4o"),
       system,
       messages,
-      providerOptions: {
-        openai: { systemMessageMode: "developer" } satisfies Record<string, unknown>,
-      },
       tools: {
         // Grupo A: Menú y productos
         getMenu: getMenuTool,
@@ -311,12 +308,9 @@ export async function runWhatsAppAgent({
       ];
 
       const retryResult = await generateText({
-        model: openai("gpt-4o"),
+        model: openai.chat("gpt-4o"),
         system,
         messages: nudgeMessages,
-        providerOptions: {
-          openai: { systemMessageMode: "developer" } satisfies Record<string, unknown>,
-        },
         tools: {
           getMenu: getMenuTool,
           getProductDetails: getProductDetailsTool,
