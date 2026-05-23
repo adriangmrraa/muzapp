@@ -32,6 +32,7 @@ export interface ConversationSummary {
   lastMessageAt: string | null;
   status: "active" | "closed" | "archived";
   messageCount?: number;
+  humanOverrideUntil?: string | null;
 }
 
 export type ConversationFilter = "all" | "whatsapp" | "telegram" | "active" | "closed";

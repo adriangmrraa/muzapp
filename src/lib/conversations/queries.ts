@@ -25,6 +25,9 @@ function mapToSummary(row: Record<string, unknown>): ConversationSummary {
       : (row.lastMessageAt as string | null),
     status: row.status as ConversationSummary["status"],
     messageCount: row.messageCount as number | undefined,
+    humanOverrideUntil: row.humanOverrideUntil instanceof Date
+      ? (row.humanOverrideUntil as Date).toISOString()
+      : (row.humanOverrideUntil as string | null),
   };
 }
 

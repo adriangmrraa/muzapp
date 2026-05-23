@@ -11,6 +11,7 @@ import {
   useMessages,
   useSendReply,
 } from "@/lib/conversations/queries";
+import { toggleHumanOverride } from "./actions";
 import type { ConversationSummary } from "@/types/chat";
 
 // ─── Query Client ────────────────────────────────────────────────────────────
@@ -54,6 +55,14 @@ function ConversationsInboxInner({ initialConversations }: Props) {
   const handleBackToChat = useCallback(() => setCurrentView("chat"), []);
 
   const selectedConversation = conversations.find((c) => c.id === selectedId);
+  const isHumanOverride = selectedConversation?.humanOverrideUntil
+    ? new Date(selectedConversation.humanOverrideUntil) > new Date()
+    : false;
+
+  const handleHumanOverride = useCallback(async () => {
+    if (!selectedId) return;
+    await toggleHumanOverride(selectedId, !isHumanOverride);
+  }, [selectedId, isHumanOverride]);
 
   // ── Context panel (shared between inline desktop + fullscreen mobile) ──
   const contextPanel = selectedId ? (
@@ -104,6 +113,8 @@ function ConversationsInboxInner({ initialConversations }: Props) {
             onSend={handleSend}
             onBack={handleBackToList}
             onShowContext={handleOpenContext}
+            onHumanOverride={handleHumanOverride}
+            humanOverrideActive={isHumanOverride}
           />
         )}
       </div>

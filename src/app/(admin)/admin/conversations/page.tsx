@@ -19,6 +19,10 @@ export default async function ConversationsPage() {
           ? r.lastMessageAt.toISOString()
           : (r.lastMessageAt ?? null),
       status: r.status ?? "active",
+      humanOverrideUntil:
+        r.humanOverrideUntil instanceof Date
+          ? r.humanOverrideUntil.toISOString()
+          : (r.humanOverrideUntil ?? null),
     })
   );
 

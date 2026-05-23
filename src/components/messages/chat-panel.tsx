@@ -16,6 +16,7 @@ interface ChatPanelProps {
   onBack?: () => void;
   onHumanOverride?: () => void;
   onShowContext?: () => void;
+  humanOverrideActive?: boolean;
   className?: string;
 }
 
@@ -63,6 +64,7 @@ export function ChatPanel({
   onBack,
   onHumanOverride,
   onShowContext,
+  humanOverrideActive,
   className,
 }: ChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -109,8 +111,13 @@ export function ChatPanel({
               {displayName}
             </span>
             <ChannelBadge channel={conversation.channel} size="sm" />
-            {conversation.status === "active" && (
+            {conversation.status === "active" && !humanOverrideActive && (
               <span className="h-2 w-2 rounded-full bg-emerald-400 flex-shrink-0" />
+            )}
+            {humanOverrideActive && (
+              <span className="text-[10px] font-medium text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded flex-shrink-0">
+                Manual
+              </span>
             )}
           </div>
           <p className="text-[11px] text-neutral-500 truncate">
@@ -133,8 +140,12 @@ export function ChatPanel({
           {onHumanOverride && (
             <button
               onClick={onHumanOverride}
-              className="p-2 rounded-lg hover:bg-white/5 text-neutral-400 transition-colors"
-              title="Tomar control humano"
+              className={`p-2 rounded-lg transition-colors ${
+                humanOverrideActive
+                  ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                  : "hover:bg-white/5 text-neutral-400"
+              }`}
+              title={humanOverrideActive ? "Modo manual activo — desactivar" : "Tomar control manual"}
             >
               <UserCheck className="h-4 w-4" />
             </button>
