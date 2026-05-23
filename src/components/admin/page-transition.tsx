@@ -12,7 +12,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        className={`flex-1 min-h-0 ${isFullBleed ? "overflow-hidden" : "overflow-y-auto"}`}
+        className={`flex-1 min-h-0 ${isFullBleed ? "flex flex-col overflow-hidden" : "overflow-y-auto"}`}
         style={{
           background:
             "radial-gradient(ellipse at 60% 0%, rgba(212,160,23,0.04) 0%, #0a0a0a 60%)",
