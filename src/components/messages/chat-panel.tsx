@@ -68,14 +68,13 @@ export function ChatPanel({
   className,
 }: ChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const displayName = conversation.customerName || conversation.customerPhone;
   const initial = (conversation.customerName?.[0] || conversation.customerPhone.slice(-2)).toUpperCase();
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll messages container to bottom (NUNCA scrollIntoView — scrollea la ventana)
   useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -160,8 +159,12 @@ export function ChatPanel({
       </motion.div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
-        <div className="px-4 py-4 space-y-1 min-h-full flex flex-col justify-end">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto"
+        style={{ scrollbarWidth: "thin" }}
+      >
+        <div className="px-4 py-4 space-y-1">
           <AnimatePresence mode="popLayout">
             {messages.map((msg, i) => {
               const showDate =
@@ -184,8 +187,6 @@ export function ChatPanel({
               );
             })}
           </AnimatePresence>
-          {/* Scroll anchor — siempre al final de los mensajes */}
-          <div ref={bottomRef} />
         </div>
       </div>
 
