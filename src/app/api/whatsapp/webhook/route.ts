@@ -7,6 +7,8 @@ import {
   insertMessage,
   isMessageDuplicate,
   getConversationMessages,
+  notifyCustomerDeliveryArrived,
+  forwardLocationToDelivery,
   type MediaAttachment,
 } from "@/lib/channels/router";
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
@@ -176,6 +178,42 @@ async function handleEcho(
   return NextResponse.json({ ok: true }, { status: 200 });
 }
 
+// ─── Delivery handler ───────────────────────────────────────────────────────
+async function handleDeliveryNotification(
+  payload: Record<string, unknown>,
+  config: typeof agentConfig.$inferSelect
+): Promise<NextResponse> {
+  try {
+    const message = payload.whatsappInboundMessage as Record<string, unknown> | undefined;
+    if (!message) {
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    const msgType = message.type as string;
+    const deliveryPhone = config.deliveryPhoneNumber;
+
+    if (!deliveryPhone) {
+      console.warn("[delivery] No delivery phone configured — ignoring message");
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    console.log(`[delivery] Message from delivery (${deliveryPhone}): type=${msgType}`);
+
+    if (msgType === "text") {
+      // Delivery confirms arrival → notify customer
+      const text = (message.text as Record<string, unknown> | undefined)?.body as string || "";
+      console.log(`[delivery] Delivery says: "${text.slice(0, 80)}"`);
+
+      await notifyCustomerDeliveryArrived(deliveryPhone);
+    }
+
+    return NextResponse.json({ ok: true }, { status: 200 });
+  } catch (error) {
+    console.error("[delivery] Error handling delivery notification:", error);
+    return NextResponse.json({ ok: true }, { status: 200 });
+  }
+}
+
 // ─── Check if AI is overridden by human ────────────────────────────────────
 async function checkHumanOverride(conversationId: number): Promise<boolean> {
   try {
@@ -262,7 +300,14 @@ export async function POST(request: NextRequest) {
     }
     console.log(`[webhook:wa] Config loaded — enabled:${config.enabled} phone:${config.phoneNumber || "N/A"}`);
 
-    // 4b. Check if customer phone is in allowed IDs list
+    // 4b. DELIVERY DETECTION: si el mensaje es del número del delivery,
+    //     tratar como notificación de delivery, no como mensaje de cliente.
+    const deliveryPhone = config.deliveryPhoneNumber?.trim();
+    if (deliveryPhone && customerPhone === deliveryPhone) {
+      return handleDeliveryNotification(payload, config);
+    }
+
+    // 4c. Check if customer phone is in allowed IDs list
     const allowedIds = (config.allowedPhoneIds ?? []) as { name: string; phone: string }[];
     if (allowedIds.length > 0 && !allowedIds.some((entry) => entry.phone === customerPhone)) {
       console.log(`[webhook:wa] BLOCKED — phone ${customerPhone} not in allowedPhoneIds (${allowedIds.map(a => a.phone).join(",")})`);
@@ -332,6 +377,23 @@ export async function POST(request: NextRequest) {
         description: `Ubicación compartida: ${address}${coords}`,
       }];
       await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+
+      // ── DELIVERY: si hay delivery configurado, reenviar ubicación ──
+      const deliveryPhoneCfg = config.deliveryPhoneNumber?.trim();
+      if (deliveryPhoneCfg && loc?.latitude && loc?.longitude) {
+        const addr = loc?.address || loc?.name || address;
+        // No await — no bloquear el flujo del webhook
+        forwardLocationToDelivery(
+          customerName,
+          customerPhone,
+          addr,
+          loc.latitude,
+          loc.longitude,
+          deliveryPhoneCfg
+        ).then((sent) => {
+          if (sent) console.log(`[webhook:wa] Location forwarded to delivery for ${customerPhone}`);
+        }).catch((err) => console.warn("[webhook:wa] Location forward failed:", err));
+      }
 
     } else if (msgType === "text") {
       // ── TEXT ──────────────────────────────────────────────────────────────

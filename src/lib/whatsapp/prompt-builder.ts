@@ -178,6 +178,11 @@ export async function getOperationalData(): Promise<string> {
       sections.push(`STOCK PAN MAYORISTA: ${config.stockPanDocenas} docenas disponibles actualmente`);
     }
 
+    // Delivery
+    if (config.deliveryPhoneNumber) {
+      sections.push(`DELIVERY WHATSAPP: El número del delivery es ${config.deliveryPhoneNumber}. No le des este número al cliente — decile "mandale tu ubicación al delivery" y el sistema se encarga.`);
+    }
+
     // Alias de pago
     const aliasParts: string[] = [];
     if (config.aliasB2c) {
@@ -306,6 +311,14 @@ REGLAS ABSOLUTAS:
 
 9. STATUS PEDIDO: Si pregunta por el tiempo o estado de su pedido → EJECUTÁ getOrderStatus. No des estimaciones de memoria.
 
+10. FLUJO DELIVERY (crucial):
+- Si el cliente elige delivery, pedí dirección ESCRITA + UBICACIÓN GPS (que mande la ubicación por WhatsApp)
+- Cuando el cliente manda la ubicación, decí: "Gracias, ya le reenviamos tu ubicación al delivery. En {{TIEMPO_ESPERA}} aproximadamente lo tenés."
+- El delivery se comunica DIRECTAMENTE con el cliente cuando está por llegar. Vos NO intervengas en esa comunicación, excepto para:
+  a) Recibir la confirmación del delivery de que ya llegó
+  b) Avisarle al cliente que el delivery ya está afuera
+- Esto lo hace el sistema automáticamente, vos solo ocupate de tomar el pedido y la ubicación.
+
 ORDEN DE PEDIDO:
 
 REGLAS DE ACTUALIZACION Y DUPLICACION:
@@ -322,7 +335,7 @@ PASO 1 — QUE QUIERE
 PASO 2 — ENTREGA
 - Preguntá: "¿es para delivery o pasás a buscar?"
 - Si PASA A BUSCAR → "Pasá por Neuquen 1245, en aproximadamente {{TIEMPO_ESPERA}} lo tenés listo"
-- Si DELIVERY → "¿a qué dirección?" + "¿tenés Uber o preferís que lo gestionemos?"
+- Si DELIVERY → "¿a qué dirección?" + "¿me podés mandar tu ubicación por GPS así se la pasamos al delivery?"
 
 PASO 3 — TOTAL: informá el total (producto + envío si aplica)
 

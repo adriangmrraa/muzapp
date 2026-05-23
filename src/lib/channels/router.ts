@@ -269,3 +269,112 @@ export async function sendOutboundMessage(
     console.log(`[router] Human override set for conv ${conversationId} until ${overrideUntil.toISOString()}`);
   }
 }
+
+// ─── Delivery helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Notifica al cliente que el delivery ya llegó.
+ * Busca el último pedido pendiente/preparando y le manda WhatsApp.
+ */
+export async function notifyCustomerDeliveryArrived(
+  deliveryPhone: string
+): Promise<string | null> {
+  try {
+    const { orders, agentConfig } = await import("@/db/schema");
+    const { desc, and, inArray } = await import("drizzle-orm");
+    
+    // Buscar el último pedido pendiente o en preparación
+    const [order] = await db
+      .select({
+        id: orders.id,
+        phoneNumber: orders.phoneNumber,
+        customerName: orders.customerName,
+      })
+      .from(orders)
+      .where(
+        and(
+          inArray(orders.status, ["pending", "preparing"]),
+        )
+      )
+      .orderBy(desc(orders.createdAt))
+      .limit(1);
+
+    if (!order?.phoneNumber) {
+      // No hay pedidos pendientes — avisar al delivery
+      const { sendWhatsAppMessage } = await import("@/lib/whatsapp/ycloud-client");
+      const [cfg] = await db.select().from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
+      const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+      const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
+      if (apiKey && from) {
+        await sendWhatsAppMessage({ to: deliveryPhone, body: "Gracias, no hay pedidos pendientes.", apiKey, from });
+      }
+      return null;
+    }
+
+    // Enviar WhatsApp al cliente
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/ycloud-client");
+    const [cfg] = await db.select().from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
+    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
+    
+    const customerMsg = `¡Hola ${order.customerName || ""}! El delivery ya está afuera con tu pedido. Que lo disfrutes 🍔`.trim();
+    
+    if (apiKey && from) {
+      await sendWhatsAppMessage({
+        to: order.phoneNumber,
+        body: customerMsg,
+        apiKey,
+        from,
+      });
+      console.log(`[delivery] Notified customer ${order.phoneNumber} about delivery arrival`);
+    }
+
+    return order.phoneNumber;
+  } catch (error) {
+    console.error("[delivery] Error notifying customer:", error);
+    return null;
+  }
+}
+
+/**
+ * Reenvía la ubicación del cliente al número de delivery.
+ */
+export async function forwardLocationToDelivery(
+  customerName: string | null,
+  customerPhone: string,
+  address: string,
+  lat: number,
+  lng: number,
+  deliveryPhone: string
+): Promise<boolean> {
+  try {
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/ycloud-client");
+    const { agentConfig } = await import("@/db/schema");
+    const [cfg] = await db.select().from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
+    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
+
+    if (!apiKey || !from || !deliveryPhone) return false;
+
+    const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+    const message = [
+      `📍 Cliente: ${customerName || "Sin nombre"}`,
+      `Dirección: ${address}`,
+      `Ubicación: ${mapsLink}`,
+      `Tel: ${customerPhone}`,
+    ].join("\n");
+
+    await sendWhatsAppMessage({
+      to: deliveryPhone,
+      body: message,
+      apiKey,
+      from,
+    });
+
+    console.log(`[delivery] Location forwarded to ${deliveryPhone} for customer ${customerPhone}`);
+    return true;
+  } catch (error) {
+    console.error("[delivery] Error forwarding location:", error);
+    return false;
+  }
+}
