@@ -8,11 +8,7 @@ import { products } from "@/db/schema";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
-    const category = searchParams.get("category") as
-      | "hamburguesa"
-      | "acompanamiento"
-      | "pan_mayorista"
-      | null;
+    const category = searchParams.get("category") as string | null;
     const available = searchParams.get("available");
 
     const conditions = [];
@@ -22,9 +18,9 @@ export async function GET(req: NextRequest) {
       conditions.push(eq(products.available, true));
     }
 
-    // Filter by category
-    if (category && ["hamburguesa", "acompanamiento", "pan_mayorista"].includes(category)) {
-      conditions.push(eq(products.category, category as "hamburguesa" | "acompanamiento" | "pan_mayorista"));
+    // Filter by category (any valid category)
+    if (category) {
+      conditions.push(eq(products.category, category as any));
     }
 
     const items = await db
@@ -39,6 +35,7 @@ export async function GET(req: NextRequest) {
         available: products.available,
         comingSoon: products.comingSoon,
         sortOrder: products.sortOrder,
+        variants: products.variants,
       })
       .from(products)
       .where(conditions.length > 0 ? and(...conditions) : undefined)

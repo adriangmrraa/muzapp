@@ -12,6 +12,7 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/hamburguesas", label: "Hamburguesas" },
+  { href: "/tragos-vip", label: "Tragos VIP" },
   { href: "/pan-mayorista", label: "Pan Mayorista" },
 ];
 
