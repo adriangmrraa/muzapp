@@ -21,6 +21,8 @@ export const productCategoryEnum = pgEnum("product_category", [
   "hamburguesa",
   "acompanamiento",
   "pan_mayorista",
+  "tragos_vip",
+  "bebidas",
 ]);
 
 export const productLineEnum = pgEnum("product_line", [
@@ -28,6 +30,8 @@ export const productLineEnum = pgEnum("product_line", [
   "carne",
   "clasica",
   "pan",
+  "tragos",
+  "bebidas",
 ]);
 
 export const conversationStatusEnum = pgEnum("conversation_status", [
@@ -69,6 +73,11 @@ export const products = pgTable("products", {
   available: boolean("available").notNull().default(true),
   comingSoon: boolean("coming_soon").notNull().default(false),
   sortOrder: integer("sort_order").notNull().default(0),
+  variants: jsonb("variants").$type<{
+    name: string;
+    priceDelta: number;
+    default?: boolean;
+  }[]>().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

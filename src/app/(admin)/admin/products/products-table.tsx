@@ -54,8 +54,8 @@ type Product = {
   description: string | null;
   price: string | null;
   imageUrl: string | null;
-  category: "hamburguesa" | "acompanamiento" | "pan_mayorista";
-  line: "pollo" | "carne" | "clasica" | "pan";
+  category: "hamburguesa" | "acompanamiento" | "pan_mayorista" | "tragos_vip" | "bebidas";
+  line: "pollo" | "carne" | "clasica" | "pan" | "tragos" | "bebidas";
   available: boolean;
   comingSoon: boolean;
   sortOrder: number;
@@ -73,6 +73,8 @@ const CATEGORY_LABEL: Record<Product["category"], string> = {
   hamburguesa: "Hamburguesa",
   acompanamiento: "Acompañamiento",
   pan_mayorista: "Pan Mayorista",
+  tragos_vip: "Tragos V.I.P",
+  bebidas: "Bebidas",
 };
 
 const LINE_LABEL: Record<Product["line"], string> = {
@@ -80,6 +82,8 @@ const LINE_LABEL: Record<Product["line"], string> = {
   carne: "Carne",
   clasica: "Clásica",
   pan: "Pan",
+  tragos: "Tragos",
+  bebidas: "Bebidas",
 };
 
 const CATEGORY_VARIANT: Record<
@@ -89,6 +93,8 @@ const CATEGORY_VARIANT: Record<
   hamburguesa: "default",
   acompanamiento: "secondary",
   pan_mayorista: "outline",
+  tragos_vip: "default",
+  bebidas: "secondary",
 };
 
 const LINE_VARIANT: Record<
@@ -99,6 +105,8 @@ const LINE_VARIANT: Record<
   carne: "secondary",
   clasica: "default",
   pan: "outline",
+  tragos: "default",
+  bebidas: "secondary",
 };
 
 // ─── Product Form ─────────────────────────────────────────────────────────────
