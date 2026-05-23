@@ -939,6 +939,39 @@ export default function AgentConfigForm({
         </motion.div>
 
         {/* ═════════════════════════════════════════════════════════════════════
+            10b. Delivery
+            ═════════════════════════════════════════════════════════════════════ */}
+        <motion.div variants={fadeUpSmall}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Delivery</CardTitle>
+              <CardDescription>
+                Número de WhatsApp del repartidor. Karen le reenvía la ubicación del cliente
+                y cuando el delivery avisa que llegó, Karen le manda un WhatsApp al cliente
+                avisándole que ya está afuera.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="deliveryPhoneNumber">
+                  Número de WhatsApp del delivery
+                </Label>
+                <Input
+                  id="deliveryPhoneNumber"
+                  name="deliveryPhoneNumber"
+                  defaultValue={config.deliveryPhoneNumber ?? ""}
+                  placeholder="5493705115020"
+                  className="font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Sin +, sin espacios. Ej: 5493705115020
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ═════════════════════════════════════════════════════════════════════
             11. Quick Actions
             ═════════════════════════════════════════════════════════════════════ */}
         <motion.div variants={fadeUpSmall}>

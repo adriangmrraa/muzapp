@@ -62,6 +62,7 @@ const agentConfigSchema = z.object({
   tiempoEspera: z.string().optional(),
   menuImageUrlHamburguesas: z.string().optional(),
   menuImageUrlPan: z.string().optional(),
+  deliveryPhoneNumber: z.string().optional(),
 });
 
 // ─── Actions ────────────────────────────────────────────────────────────────────
@@ -140,6 +141,7 @@ export async function saveAgentConfig(
     tiempoEspera: formData.get("tiempoEspera") || undefined,
     menuImageUrlHamburguesas: formData.get("menuImageUrlHamburguesas") || undefined,
     menuImageUrlPan: formData.get("menuImageUrlPan") || undefined,
+    deliveryPhoneNumber: formData.get("deliveryPhoneNumber") || undefined,
   };
 
   const parsed = agentConfigSchema.safeParse(raw);
@@ -177,6 +179,7 @@ export async function saveAgentConfig(
       tiempoEspera: parsed.data.tiempoEspera ?? null,
       menuImageUrlHamburguesas: parsed.data.menuImageUrlHamburguesas ?? null,
       menuImageUrlPan: parsed.data.menuImageUrlPan ?? null,
+      deliveryPhoneNumber: parsed.data.deliveryPhoneNumber ?? null,
       updatedAt: new Date(),
     };
 

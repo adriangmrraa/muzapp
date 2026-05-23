@@ -115,6 +115,9 @@ export const agentConfig = pgTable("agent_config", {
   menuImageUrlHamburguesas: text("menu_image_url_hamburguesas"),
   menuImageUrlPan: text("menu_image_url_pan"),
   // ───────────────────────────────────────────────────────────────────────────
+  // ─── Delivery ────────────────────────────────────────────────────────────
+  deliveryPhoneNumber: varchar("delivery_phone_number", { length: 50 }),
+  // ───────────────────────────────────────────────────────────────────────────
   // ─── Meta Business OAuth ───────────────────────────────────────────────────
   metaAccessToken: text("meta_access_token"),
   metaTokenExpiresAt: timestamp("meta_token_expires_at", { withTimezone: true }),
