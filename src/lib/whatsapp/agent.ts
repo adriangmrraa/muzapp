@@ -245,14 +245,81 @@ export async function runWhatsAppAgent({
       toolChoice: "auto",
     });
 
-    let rawText = result.text || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
+    let rawText = result.text || "";
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DEAD-END RECOVERY (ClinicForge pattern)
+    // Detecta si el agente dijo "un momento", "voy a buscar", etc.
+    // sin haber ejecutado ninguna herramienta.
+    // ─────────────────────────────────────────────────────────────────────────
+    const stallPhrases = [
+      "un momento", "un instante", "dejame buscar", "voy a buscar",
+      "voy a verificar", "voy a consultar", "voy a agendar", "voy a proceder",
+      "ya verifico", "ya busco", "permití", "dame un segundo",
+      "dejame ver", "voy a fijarme", "dame un toque",
+    ];
+    const responseLower = rawText.toLowerCase();
+    const isStall = stallPhrases.some((phrase) => responseLower.includes(phrase));
+    const noToolsCalled = !result.toolCalls || result.toolCalls.length === 0;
+    const isShortResponse = rawText.length < 200;
+
+    if (isStall && noToolsCalled && isShortResponse) {
+      console.log("[agent] Dead-end detected — re-invoking with nudge");
+      console.log(`[agent] Stall text: "${rawText.slice(0, 100)}..."`);
+
+      // Append nudge as a system instruction in the messages
+      const nudgeMessages = [
+        ...messages,
+        {
+          role: "system" as const,
+          content: "[SISTEMA: Ejecutá la herramienta AHORA con los datos que ya tenés. No digas 'un momento' ni frases similares. Respondé directamente.]",
+        },
+      ];
+
+      const retryResult = await generateText({
+        model: openai("gpt-5.4-mini"),
+        system,
+        messages: nudgeMessages,
+        tools: {
+          getMenu: getMenuTool,
+          getProductDetails: getProductDetailsTool,
+          getProductPrice: getProductPriceTool,
+          searchProducts: searchProductsTool,
+          checkAvailability: checkAvailabilityTool,
+          checkProductAvailability: checkProductAvailabilityTool,
+          checkDelivery: checkDeliveryTool,
+          getDeliveryTime: getDeliveryTimeTool,
+          listAvailableProducts: listAvailableProductsTool,
+          createOrder: createOrderTool,
+          getOrderStatus: getOrderStatusTool,
+          addToOrder: addToOrderTool,
+          updateOrder: updateOrderTool,
+          cancelOrder: cancelOrderTool,
+          suggestProducts: suggestProductsTool,
+          getClientHistory: getClientHistoryTool,
+          getBusinessHours: getBusinessHoursTool,
+          transferToHuman: createTransferToHumanTool(conversationId),
+          checkKitchenStatus: checkKitchenStatusTool,
+          checkPanStock: checkPanStockTool,
+          getPaymentAlias: getPaymentAliasTool,
+          sendProductImage: createSendProductImageTool(customerPhone),
+          sendSticker: createSendStickerTool(customerPhone),
+          sendMenuImage: createSendMenuImageTool(customerPhone),
+        },
+        stopWhen: stepCountIs(10),
+        toolChoice: "auto",
+      });
+
+      rawText = retryResult.text || rawText;
+      console.log("[agent] Dead-end recovery — response after nudge");
+    }
 
     // Limpiar markers internos que el LLM pueda haber incluido
     const finalText = rawText.replace(/\[INTERNAL_[^\]]*\]/g, "").trim();
     
-    return finalText;
+    return finalText || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
   } catch (error) {
     console.error("[agent] Error running WhatsApp agent:", error);
-    return "¡Uy! Tuve un problema técnico. Intentá de nuevo en unos minutos o escribí 'hablar con humano' para que te atienda una persona.";
+    return "Disculpá, tuve un problema técnico. Escribí 'hablar con humano' si querés que te atienda Leandro personalmente.";
   }
 }

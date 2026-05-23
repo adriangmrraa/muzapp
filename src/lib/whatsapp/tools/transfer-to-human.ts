@@ -68,7 +68,7 @@ export function createTransferToHumanTool(conversationId: number) {
         lastMessages,
       });
 
-      return "Te paso con Karen, ella se va a encargar de tu consulta. Gracias por esperar.";
+      return "Te paso con Leandro, el dueño, él se va a encargar personalmente. Gracias por esperar.";
     },
   });
 }

@@ -101,7 +101,7 @@ export function createSendMenuImageTool(customerPhone: string) {
 
         if (dbUrl) {
           const absoluteUrl = dbUrl.startsWith("http") ? dbUrl : `${baseUrl}${dbUrl}`;
-          const result = await sendImage(customerPhone, absoluteUrl, "Acá tenés el menú amigo ❤️");
+          const result = await sendImage(customerPhone, absoluteUrl, "Acá tenés el menú");
           if (result.ok) return `Te mandé el menú 📸`;
           console.warn("[menuImage] DB URL failed, trying fallback:", result.error);
         }
@@ -113,7 +113,7 @@ export function createSendMenuImageTool(customerPhone: string) {
       const filename = tipo === "hamburguesas" ? "menu-pizzas.jpeg" : "menu-pan.jpeg";
       const imageUrl = `${baseUrl}/assets/images/${filename}`;
 
-      const caption = "Acá tenés el menú amigo ❤️";
+      const caption = "Acá tenés el menú";
       const result = await sendImage(customerPhone, imageUrl, caption);
 
       if (!result.ok) {
