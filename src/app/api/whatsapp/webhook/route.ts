@@ -19,6 +19,8 @@ import { agentConfig, conversations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { downloadYCloudMedia, saveMediaLocally } from "@/lib/media/downloader";
 import { transcribeAudio } from "@/lib/media/transcription";
+import { analyzeVideo } from "@/lib/media/video";
+import { extractDocumentText } from "@/lib/media/document";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 
@@ -469,14 +471,27 @@ export async function POST(request: NextRequest) {
           }
 
         } else if (msgType === "video") {
-          agentText = `El cliente envió un video${mediaObj.caption ? `: "${mediaObj.caption}"` : ""}`;
+          // Video → transcribe audio track + description
+          const clip = await analyzeVideo(buffer, filename, mimeType, mediaObj.caption);
+          attachment.transcription = clip.transcription;
           contentAttributes = [attachment];
+          agentText = clip.agentText;
           await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
 
         } else {
-          // Document (non-image): PDF, etc
-          agentText = `El cliente envió un documento: ${mediaObj.filename || filename}${mediaObj.caption ? ` — "${mediaObj.caption}"` : ""}`;
+          // Document (non-image): PDF, text, etc — intentar extraer texto
+          const extractedText = mimeType === "application/pdf" || mimeType === "text/plain"
+            ? await extractDocumentText(buffer, filename, mimeType)
+            : null;
+
+          if (extractedText) {
+            agentText = `El cliente envió un documento "${mediaObj.filename || filename}". Contenido extraído:\n\n${extractedText}`;
+          } else {
+            agentText = `El cliente envió un documento: ${mediaObj.filename || filename}${mediaObj.caption ? ` — "${mediaObj.caption}"` : ""}`;
+          }
+
           contentAttributes = [attachment];
+          if (extractedText) attachment.description = extractedText;
           await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
         }
 
