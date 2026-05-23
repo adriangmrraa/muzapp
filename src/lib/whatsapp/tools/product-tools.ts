@@ -2,8 +2,9 @@ import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
 import { products } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, like, or, sql } from "drizzle-orm";
 import { sendImage } from "@/lib/ycloud";
+import { PRODUCT_IMAGE_BY_NAME } from "@/lib/constants";
 
 // getProductDetails - Ver detalles de un producto
 export const getProductDetailsTool = tool({
@@ -124,16 +125,25 @@ export function createSendProductImageTool(customerPhone: string) {
         return "No encontré ese producto.";
       }
 
-      if (!product.imageUrl) {
-        return "Este producto no tiene foto.";
-      }
-
+      // Fallback: imageUrl de DB → static assets por nombre
       const baseUrl =
         process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
         "https://muzapp.onrender.com";
-      const fullImageUrl = product.imageUrl.startsWith("/")
-        ? `${baseUrl}${product.imageUrl}`
-        : product.imageUrl;
+
+      let fullImageUrl: string;
+      if (product.imageUrl) {
+        fullImageUrl = product.imageUrl.startsWith("/")
+          ? `${baseUrl}${product.imageUrl}`
+          : product.imageUrl;
+      } else {
+        // Buscar en assets estáticos por nombre
+        const staticPath = PRODUCT_IMAGE_BY_NAME[product.name.toLowerCase()];
+        if (!staticPath) {
+          // También buscar en bread images
+          return "Este producto no tiene foto.";
+        }
+        fullImageUrl = `${baseUrl}${staticPath}`;
+      }
 
       const caption = `${product.name} - $${product.price}`;
       const result = await sendImage(customerPhone, fullImageUrl, caption);
