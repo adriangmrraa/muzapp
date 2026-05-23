@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { MediaRenderer } from "./media-renderer";
+import { LinkPreview } from "./link-preview";
 import type { ChatMessage } from "@/types/chat";
 
 interface MessageBubbleProps {
@@ -31,9 +32,29 @@ const roleLabels: Record<string, string | null> = {
   system: null,
 };
 
+const URL_REGEX = /https?:\/\/[^\s<>"']+/gi;
+
+function extractUrls(text: string): string[] {
+  const matches = text.match(URL_REGEX);
+  if (!matches) return [];
+  // Deduplicate
+  return [...new Set(matches)];
+}
+
+/**
+ * Replace URLs in text with plain text (link preview renders below).
+ */
+function stripUrls(text: string): string {
+  return text.replace(URL_REGEX, "").replace(/\s+/g, " ").trim();
+}
+
 export function MessageBubble({ message }: MessageBubbleProps) {
   const label = roleLabels[message.role];
   const isSystem = message.role === "system";
+
+  // Detect URLs for link previews
+  const urls = message.content ? extractUrls(message.content) : [];
+  const hasLinks = urls.length > 0;
 
   return (
     <motion.div
@@ -61,14 +82,23 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
       )}
 
-      {/* Text content */}
+      {/* Text content (URLs are stripped — rendered as link previews below) */}
       {message.content && !isSystem && (
         <p className="text-sm text-neutral-200 whitespace-pre-wrap break-words">
-          {message.content}
+          {hasLinks ? stripUrls(message.content) : message.content}
         </p>
       )}
       {isSystem && (
         <p className="text-xs text-neutral-500 italic">{message.content}</p>
+      )}
+
+      {/* Link previews */}
+      {hasLinks && (
+        <div className="space-y-1.5 mt-1.5">
+          {urls.map((url, i) => (
+            <LinkPreview key={i} url={url} />
+          ))}
+        </div>
       )}
 
       {/* Timestamp */}
