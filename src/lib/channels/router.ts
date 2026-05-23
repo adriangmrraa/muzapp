@@ -240,7 +240,9 @@ export async function getConversationMessages(
 export async function sendOutboundMessage(
   conversationId: number,
   content: string,
-  role: "assistant" | "human" = "human"
+  role: "assistant" | "human" = "human",
+  mediaUrl?: string,
+  mediaType?: "image" | "document"
 ): Promise<void> {
   // Get conversation to know channel
   const [conv] = await db
@@ -254,22 +256,25 @@ export async function sendOutboundMessage(
   const channel = conv.channel || "whatsapp";
 
   if (channel === "whatsapp") {
-    // Dynamic import to avoid circular deps
     const { sendWhatsAppMessage } = await import(
       "@/lib/whatsapp/ycloud-client"
     );
+    const { sendImage, sendDocument } = await import("@/lib/ycloud");
     const { agentConfig } = await import("@/db/schema");
     const config = await db.select().from(agentConfig).limit(1);
     const cfg = config[0];
     const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
     const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
+    const to = conv.customerPhone ?? conv.externalUserId ?? "";
+
     if (apiKey && from) {
-      await sendWhatsAppMessage({
-        to: conv.customerPhone ?? conv.externalUserId ?? "",
-        body: content,
-        apiKey,
-        from,
-      });
+      if (mediaUrl && mediaType === "image") {
+        await sendImage(to, mediaUrl, content || undefined);
+      } else if (mediaUrl && mediaType === "document") {
+        await sendDocument(to, mediaUrl, content || undefined);
+      } else {
+        await sendWhatsAppMessage({ to, body: content || " ", apiKey, from });
+      }
     }
   } else if (channel === "telegram") {
     const { sendTelegramMessage, getTelegramConfigFromDB } = await import(
@@ -280,17 +285,17 @@ export async function sendOutboundMessage(
       await sendTelegramMessage(
         tgConfig.botToken,
         Number(conv.externalUserId),
-        content
+        content || (mediaUrl || "")
       );
     }
   }
 
-  // Save the outbound message — store "human" as "assistant" for AI compatibility
+  // Save the outbound message with contentAttributes if media attached
   const dbRole = role === "human" ? "assistant" : role;
-  await insertMessage(conversationId, dbRole, content);
+  const attrs = mediaUrl && mediaType ? [{ type: mediaType, url: mediaUrl }] : undefined;
+  await insertMessage(conversationId, dbRole, content || "[Media]", attrs);
 
   // If a human sent this from the admin panel, set humanOverrideUntil
-  // para que la IA no responda automáticamente después (ClinicForge pattern)
   if (role === "human") {
     const overrideUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await db
