@@ -73,7 +73,7 @@ function ConversationsInboxInner({ initialConversations }: Props) {
   ) : null;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden rounded-xl border border-white/10 bg-[#0f0f0f]">
+    <div className="flex flex-1 overflow-hidden bg-[#0f0f0f]">
       {/* ── Col 1: Listado de Chats ─────────────────────────────────────── */}
       <div
         className={`flex-shrink-0 border-r border-white/5 ${
@@ -119,10 +119,9 @@ function ConversationsInboxInner({ initialConversations }: Props) {
       {/* Mobile: fullscreen overlay cuando currentView === 'context' */}
       {selectedId && (
         <div
-          className={`fixed inset-0 z-40 bg-[#0f0f0f] xl:hidden ${
+          className={`absolute inset-0 z-40 bg-[#0f0f0f] xl:hidden ${
             currentView === "context" ? "flex flex-col" : "hidden"
           }`}
-          style={{ top: "4rem" }}
         >
           {contextPanel}
         </div>

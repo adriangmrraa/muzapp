@@ -23,8 +23,7 @@ export default async function ConversationsPage() {
   );
 
   return (
-    <div className="p-4 md:p-6">
-      <h1 className="mb-4 text-2xl font-bold text-white">Mensajes</h1>
+    <div className="flex flex-col h-full overflow-hidden">
       <ConversationsInbox initialConversations={initialConversations} />
     </div>
   );
