@@ -25,6 +25,8 @@ import {
   getPaymentAliasTool,
   createSendStickerTool,
   createSendMenuImageTool,
+  createSendImageTool,
+  createSendDocumentTool,
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
@@ -272,10 +274,12 @@ export async function runWhatsAppAgent({
         checkKitchenStatus: checkKitchenStatusTool,
         checkPanStock: checkPanStockTool,
         getPaymentAlias: getPaymentAliasTool,
-        // Grupo G: Multimedia + Stickers (3)
+        // Grupo G: Multimedia + Stickers (5)
         sendProductImage: createSendProductImageTool(customerPhone),
         sendSticker: createSendStickerTool(customerPhone),
         sendMenuImage: createSendMenuImageTool(customerPhone),
+        sendImage: createSendImageTool(customerPhone),
+        sendDocument: createSendDocumentTool(customerPhone),
       },
       stopWhen: stepCountIs(10),
       toolChoice: "auto",
@@ -346,6 +350,8 @@ export async function runWhatsAppAgent({
           sendProductImage: createSendProductImageTool(customerPhone),
           sendSticker: createSendStickerTool(customerPhone),
           sendMenuImage: createSendMenuImageTool(customerPhone),
+          sendImage: createSendImageTool(customerPhone),
+          sendDocument: createSendDocumentTool(customerPhone),
         },
         stopWhen: stepCountIs(10),
         toolChoice: "auto",
