@@ -11,7 +11,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
 
   if (isFullBleed) {
     return (
-      <div className="flex-1 overflow-hidden bg-[#0a0a0a]">
+      <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0a]">
         {children}
       </div>
     );
