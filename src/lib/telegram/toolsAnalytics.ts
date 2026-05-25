@@ -10,6 +10,7 @@ interface OrderItem {
   name: string;
   quantity: number;
   price?: number;
+  unitPrice?: number;
 }
 
 function parseItems(items: unknown): OrderItem[] {
@@ -19,7 +20,7 @@ function parseItems(items: unknown): OrderItem[] {
 
 function orderTotal(items: unknown): number {
   return parseItems(items).reduce(
-    (sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 1),
+    (sum, item) => sum + ((item.price ?? item.unitPrice ?? 0) * (item.quantity ?? 1)),
     0
   );
 }
