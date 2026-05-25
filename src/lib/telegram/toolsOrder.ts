@@ -449,6 +449,117 @@ export const markPaymentMethod = tool({
   },
 });
 
+// createDeliveredOrder - Cargar pedido ya entregado (backfill)
+export const createDeliveredOrder = tool({
+  description:
+    "CARGA un pedido que YA FUE ENTREGADO (backfill). Para cuando el dueño se olvidó de cargar el pedido en el momento y quiere registrarlo después. Crea el lead si no existe. SIN notificaciones, SIN WhatsApp. PREGUNTAS: 'cargá un pedido de hoy que ya entregamos', 'subí un pedido viejo', 'registrá un pedido que ya se entregó'",
+  inputSchema: z.object({
+    customerName: z.string().describe("Nombre del cliente"),
+    customerPhone: z.string().describe("Teléfono del cliente (con código de país)"),
+    orderType: z.enum(["hamburguesas", "pan_mayorista"]).describe("Tipo de pedido"),
+    items: z.array(z.object({
+      name: z.string(),
+      quantity: z.number(),
+      price: z.number().optional(),
+    })).describe("Items del pedido"),
+    deliveryFee: z.number().min(0).optional().describe("Costo de delivery (0 si no aplica)"),
+    paymentStatus: z.enum(["pending", "paid"]).optional().describe("Default: paid (ya está pagado porque fue entregado)"),
+    paymentMethod: z.string().optional().describe("Método de pago"),
+    notes: z.string().optional().describe("Notas del pedido"),
+    deliveredAt: z.string().optional().describe("Fecha/hora de entrega. Si no se especifica, se usa la fecha actual. Formato: DD/MM o YYYY-MM-DD HH:MM"),
+  }),
+  execute: async ({ customerName, customerPhone, orderType, items, deliveryFee, paymentStatus, paymentMethod, notes, deliveredAt }) => {
+    // 1. Crear o actualizar lead
+    let leadId: number | null = null;
+    let leadName = customerName;
+
+    const [existingLead] = await db
+      .select({ id: leads.id, status: leads.status, name: leads.name })
+      .from(leads)
+      .where(eq(leads.phone, customerPhone))
+      .limit(1);
+
+    if (existingLead) {
+      leadId = existingLead.id;
+      leadName = existingLead.name || customerName;
+      // Actualizar a converted si era lead nuevo
+      if (existingLead.status === "new" || existingLead.status === "contacted") {
+        await db.update(leads).set({ status: "converted", name: customerName }).where(eq(leads.id, existingLead.id));
+      } else if (customerName) {
+        await db.update(leads).set({ name: customerName }).where(eq(leads.id, existingLead.id));
+      }
+    } else {
+      // Crear lead nuevo
+      const [newLead] = await db.insert(leads).values({
+        name: customerName,
+        phone: customerPhone,
+        status: "converted",
+      }).returning({ id: leads.id });
+      leadId = newLead.id;
+    }
+
+    // 2. Parsear fecha de entrega
+    let deliveredTimestamp: Date;
+    if (deliveredAt) {
+      // Intentar parsear la fecha
+      const clean = deliveredAt.trim();
+      // Formatos soportados: "DD/MM" (asume hoy), "DD/MM HH:MM", "YYYY-MM-DD HH:MM"
+      const now = new Date();
+      if (/^\d{1,2}\/\d{1,2}$/.test(clean)) {
+        // Solo día/mes → asume este año
+        const [d, m] = clean.split("/").map(Number);
+        deliveredTimestamp = new Date(now.getFullYear(), m - 1, d, 12, 0);
+      } else if (/^\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}$/.test(clean)) {
+        const [dm, h] = clean.split(" ");
+        const [d, m] = dm.split("/").map(Number);
+        const [hh, mi] = h.split(":").map(Number);
+        deliveredTimestamp = new Date(now.getFullYear(), m - 1, d, hh, mi);
+      } else if (/^\d{4}-\d{2}-\d{2}/.test(clean)) {
+        deliveredTimestamp = new Date(clean);
+      } else {
+        deliveredTimestamp = now;
+      }
+    } else {
+      deliveredTimestamp = new Date();
+    }
+
+    // 3. Calcular total
+    let subtotal = 0;
+    for (const item of items) {
+      subtotal += (item.price ?? 0) * item.quantity;
+    }
+    const delivery = deliveryFee || 0;
+    const total = subtotal + delivery;
+
+    // 4. Crear pedido como delivered SIN notificaciones
+    const [created] = await db.insert(orders).values({
+      leadId,
+      phoneNumber: customerPhone,
+      customerName: leadName,
+      orderType,
+      items,
+      deliveryFee: delivery ? String(delivery) : "0",
+      paymentStatus: paymentStatus || "paid",
+      paymentMethod: paymentMethod || null,
+      notes: notes || null,
+      status: "delivered",
+      deliveredAt: deliveredTimestamp,
+      followupSent: true, // ya se entregó, no mandar followup
+    }).returning({ id: orders.id });
+
+    const dateStr = deliveredTimestamp.toLocaleDateString("es-AR", {
+      day: "2-digit", month: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    });
+
+    return {
+      success: true,
+      id: created.id,
+      message: `📦 Pedido #${created.id} cargado como ENTREGADO (${dateStr}) para ${leadName}. Total: $${total}. Sin notificaciones enviadas.`,
+    };
+  },
+});
+
 // Export all manageOrder tools
 export const manageOrderTools = {
   createOrder,
@@ -460,4 +571,5 @@ export const manageOrderTools = {
   confirmOrder,
   markAsPaid,
   markPaymentMethod,
+  createDeliveredOrder,
 };

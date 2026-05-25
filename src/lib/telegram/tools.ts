@@ -89,7 +89,7 @@ export const internalAgentTools = {
   updateProduct: manageProductTools.updateProduct,
   deleteProduct: manageProductTools.deleteProduct,
 
-  // manageOrder (~9 tools)
+  // manageOrder (~10 tools)
   createOrder: manageOrderTools.createOrder,
   addItemToOrder: manageOrderTools.addItemToOrder,
   removeItemFromOrder: manageOrderTools.removeItemFromOrder,
@@ -99,6 +99,7 @@ export const internalAgentTools = {
   confirmOrder: manageOrderTools.confirmOrder,
   markAsPaid: manageOrderTools.markAsPaid,
   markPaymentMethod: manageOrderTools.markPaymentMethod,
+  createDeliveredOrder: manageOrderTools.createDeliveredOrder,
 
   // manageManagement (13 tools)
   getClients: managementTools.getClients,

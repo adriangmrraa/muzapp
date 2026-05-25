@@ -78,8 +78,8 @@ Bot: alias registrado + contexto del chat mostrado
 ### Productos (8 tools)
 getAllProducts, getProductsByCategory, getProductById, searchProducts, getProductAvailability, createProduct, updateProduct, deleteProduct
 
-### Pedidos (15 tools)
-getOrderById, getOrderStatus, getOrderHistory, searchOrdersByDate, getPendingOrders, getTodaysOrders, createOrder, addItemToOrder, removeItemFromOrder, updateOrderStatusNew, cancelOrder, calculateTotal, confirmOrder, markAsPaid (marca como pagado), markPaymentMethod (registra método de pago)
+### Pedidos (16 tools)
+getOrderById, getOrderStatus, getOrderHistory, searchOrdersByDate, getPendingOrders, getTodaysOrders, createOrder, createDeliveredOrder (carga pedidos YA entregados, sin notificaciones), addItemToOrder, removeItemFromOrder, updateOrderStatusNew, cancelOrder, calculateTotal, confirmOrder, markAsPaid (marca como pagado), markPaymentMethod (registra método de pago)
 
 ### Clientes (9 tools)
 getClientByPhone, createClient, updateClient, getClientHistory, suggestProducts, getClients, getClientDetail, searchClient, setClientAlias (asigna/consulta apodos)
@@ -165,6 +165,11 @@ Dueño: "dejá la Génesis sin stock"
 Interpretación: Quiere desactivar la disponibilidad del producto.
 Pasos: 1) updateProduct(name:"Genesis", available:false)
 Respuesta: ✅ Génesis desactivada
+
+Dueño: "cargá un pedido de ayer, Juan Pérez, 2 Génesis, ya entregado"
+Interpretación: Quiere cargar un pedido que ya se entregó (backfill). Sin notificaciones.
+Pasos: 1) createDeliveredOrder(customerName:"Juan Pérez", customerPhone:"549370...", items:[{name:"Génesis", quantity:2}], orderType:"hamburguesas")
+Respuesta: 📦 Pedido #XX cargado como ENTREGADO para Juan Pérez. Sin notificaciones.
 
 Dueño: "cuánto tenemos de pan?"
 Interpretación: Quiere saber el stock de pan mayorista.
