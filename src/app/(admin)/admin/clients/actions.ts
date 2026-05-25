@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { orders, leads } from "@/db/schema";
 import { desc, count, sql, and, or, ilike, eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 
 const PAGE_SIZE = 30;
 
@@ -128,11 +129,11 @@ export async function fetchClients(params: {
 }
 
 /**
- * Actualiza datos de un cliente (name, type, notes) en la tabla leads.
+ * Actualiza datos de un cliente en la tabla leads.
  */
 export async function updateClient(
   phone: string,
-  data: { name?: string; type?: "b2c" | "b2b" | null; notes?: string }
+  data: { name?: string; email?: string; address?: string; type?: "b2c" | "b2b" | null; notes?: string }
 ): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
   if (!session) return { success: false, error: "No autorizado" };
@@ -140,15 +141,26 @@ export async function updateClient(
   try {
     const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) updateData.name = data.name;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.address !== undefined) updateData.address = data.address;
     if (data.type !== undefined) updateData.type = data.type;
     if (data.notes !== undefined) updateData.notes = data.notes;
 
     await db.update(leads).set(updateData).where(eq(leads.phone, phone));
+
+    // Revalidar TODAS las páginas
+    revalidatePath("/admin/clients");
+    revalidatePath("/admin/clients/[id]", "page");
+    revalidatePath("/admin/leads");
+    revalidatePath("/admin/orders");
+    revalidatePath("/admin/conversations");
+    revalidatePath("/admin");
+
     return { success: true };
   } catch (e) {
-      return { success: false, error: "Error al actualizar" };
-    }
+    return { success: false, error: "Error al actualizar" };
   }
+}
 
 /**
  * Elimina un lead y todas sus órdenes asociadas

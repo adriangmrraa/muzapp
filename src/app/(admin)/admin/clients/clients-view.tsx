@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
 import type { ClientSummary } from "./actions";
+import { updateClient } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Edit, X, Save } from "lucide-react";
@@ -248,15 +249,10 @@ export function ClientsView({
               <button onClick={async () => {
                 setSavingEdit(true);
                 try {
-                  await fetch("/api/leads/update", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      phone: editClient.phone,
-                      name: editName,
-                      type: editType || null,
-                      notes: editNotes || null,
-                    }),
+                  await updateClient(editClient.phone, {
+                    name: editName,
+                    type: editType === "b2c" || editType === "b2b" ? editType : null,
+                    notes: editNotes || undefined,
                   });
                   setEditClient(null);
                   router.refresh();
