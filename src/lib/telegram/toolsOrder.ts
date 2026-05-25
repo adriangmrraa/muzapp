@@ -65,8 +65,8 @@ export const createOrder = tool({
   description:
     "Crea un nuevo pedido. Acepta teléfono o nombre del cliente (si ponés nombre busca automáticamente). Preguntas: 'nuevo pedido', 'arma mi pedido', 'agregale un pedido a flor'",
   inputSchema: z.object({
-    phone: z.string().optional().describe("Teléfono del cliente (alternativa al nombre)"),
-    customerName: z.string().optional().describe("Nombre del cliente (si no sabés el teléfono, poné el nombre y lo busco)"),
+    customerName: z.string().describe("Nombre del cliente (OBLIGATORIO). Usá el nombre real del lead, no inventes."),
+    phone: z.string().describe("Teléfono del cliente (OBLIGATORIO). NO inventes el número, debe ser real."),
     orderType: z
       .enum(["hamburguesas", "pan_mayorista"])
       .describe("Tipo de pedido"),
@@ -83,74 +83,39 @@ export const createOrder = tool({
     paymentMethod: z.string().optional().describe("Método de pago: efectivo, alias, etc."),
     notes: z.string().optional().describe("Notas especiales"),
   }),
-  execute: async ({ phone, customerName, orderType, items, deliveryFee, paymentStatus, paymentMethod, notes }) => {
+  execute: async ({ customerName, phone, orderType, items, deliveryFee, paymentStatus, paymentMethod, notes }) => {
     // Normalizar items contra productos reales de la DB
     const resolvedItems = await resolveItems(items);
 
-    // REGLA: SIEMPRE se necesita un teléfono válido. Buscar lead o pedirlo.
-    // Si no hay phone pero hay nombre, buscar el lead
-    if (!phone && customerName) {
-      const leadsEncontrados = await db
-        .select({ phone: leads.phone, name: leads.name })
-        .from(leads)
-        .where(
-          or(
-            ilike(leads.name, `%${customerName}%`),
-            ilike(leads.phone, `%${customerName}%`)
-          )
-        )
-        .limit(5);
-
-      if (leadsEncontrados.length === 1) {
-        phone = leadsEncontrados[0].phone;
-        customerName = leadsEncontrados[0].name ?? customerName;
-      } else if (leadsEncontrados.length > 1) {
-        const opciones = leadsEncontrados.map(l => `• ${l.name || "?"} (${l.phone})`).join("\n");
-        return { success: false, message: `Varios clientes coinciden con "${customerName}":\n${opciones}\n\n¿Cuál es el teléfono?` };
-      }
-    }
-
     // Validar formato de teléfono
-    if (!phone) {
-      return { success: false, message: "Necesito el número de teléfono del cliente." };
-    }
     const cleanedPhone = cleanPhone(phone);
     if (!isValidPhone(cleanedPhone)) {
-      return { success: false, message: `El teléfono "${phone}" no parece válido. Los teléfonos de la zona empiezan con 549370 y tienen 10-12 dígitos. Ej: 5493705241065` };
+      return { success: false, message: `El teléfono "${phone}" no es válido. Usá un número real como 5493704868421.` };
     }
     phone = cleanedPhone;
 
-    // Vincular o crear lead SIEMPRE por teléfono
-    let leadId: number | null = null;
-    let leadName = customerName;
-    try {
-      const [existingLead] = await db
-        .select({ id: leads.id, status: leads.status, name: leads.name })
-        .from(leads)
-        .where(eq(leads.phone, phone))
-        .limit(1);
-      if (existingLead) {
-        leadId = existingLead.id;
-        leadName = existingLead.name ?? customerName ?? phone;
-        // Si era lead sin pedidos, pasar a converted
-        if (existingLead.status === "new" || existingLead.status === "contacted") {
-          await db.update(leads).set({ status: "converted" }).where(eq(leads.id, existingLead.id));
-        }
-        // Actualizar nombre si tenemos uno mejor
-        if (customerName) {
-          await db.update(leads).set({ name: customerName }).where(eq(leads.id, existingLead.id));
-        }
-      } else {
-        // Crear lead nuevo automáticamente
-        const [newLead] = await db.insert(leads).values({
-          name: customerName || phone,
-          phone,
-          status: "converted",
-        }).returning({ id: leads.id });
-        leadId = newLead.id;
-        leadName = customerName || phone;
-      }
-    } catch {} // non-fatal
+    // Verificar que el lead EXISTE con ese teléfono
+    const [existingLead] = await db
+      .select({ id: leads.id, status: leads.status, name: leads.name })
+      .from(leads)
+      .where(eq(leads.phone, phone))
+      .limit(1);
+
+    if (!existingLead) {
+      return { success: false, message: `No encontré ningún lead con el teléfono ${phone}. Primero buscá al cliente con searchClient para confirmar su número.` };
+    }
+
+    // Vincular con lead existente
+    const leadId = existingLead.id;
+    const leadName = existingLead.name ?? customerName;
+    // Si era lead sin pedidos, pasar a converted
+    if (existingLead.status === "new" || existingLead.status === "contacted") {
+      await db.update(leads).set({ status: "converted" }).where(eq(leads.id, existingLead.id));
+    }
+    // Actualizar nombre si corresponde
+    if (customerName && customerName !== existingLead.name) {
+      await db.update(leads).set({ name: customerName }).where(eq(leads.id, existingLead.id));
+    }
 
     // Calcular total
     let subtotal = 0;
