@@ -177,7 +177,7 @@ export async function handleTelegramUpdate(
     );
 
     const { getConversationMessages } = await import("@/lib/channels/router");
-    const history = await getConversationMessages(conversationId, 20);
+    const history = await getConversationMessages(conversationId, 6);
     conversationMessages = history
       .filter((m) => m.role === "user" || m.role === "assistant")
       .map((m) => ({

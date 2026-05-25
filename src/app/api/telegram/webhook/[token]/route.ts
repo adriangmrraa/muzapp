@@ -221,8 +221,8 @@ export async function POST(
       // Concatenate all buffered messages
       const combinedText = bufferedMessages.map((m) => m.content).join("\n");
 
-      // Get conversation history for persistent context (last 30 messages)
-      const history = await getConversationMessages(convId, 30);
+      // Get conversation history for persistent context (last 6 messages)
+      const history = await getConversationMessages(convId, 6);
       const aiMessages = history
         .filter((m) => m.role === "user" || m.role === "assistant")
         .map((m) => ({
