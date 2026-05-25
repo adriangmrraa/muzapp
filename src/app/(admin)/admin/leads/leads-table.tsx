@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { ShoppingBag } from "lucide-react";
 import { CreateOrderModal } from "@/components/orders/create-order-modal";
+import { deleteLead } from "@/app/(admin)/admin/clients/actions";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -119,6 +120,8 @@ export default function LeadsTable({
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const buildUrl = useCallback(
     (overrides: Record<string, string | undefined>) => {
@@ -374,6 +377,41 @@ export default function LeadsTable({
                     </button>
                   </div>
                 )}
+
+                {/* Botón eliminar lead */}
+                <div className="pt-2 border-t border-border">
+                  {confirmDelete ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          setDeleting(true);
+                          await deleteLead(selectedLead!.phone);
+                          setSheetOpen(false);
+                          setConfirmDelete(false);
+                          setDeleting(false);
+                          window.location.reload();
+                        }}
+                        disabled={deleting}
+                        className="flex-1 rounded-lg bg-red-500/20 text-red-400 px-4 py-2.5 text-xs font-semibold hover:bg-red-500/30 transition-colors"
+                      >
+                        {deleting ? "Eliminando..." : "Confirmar eliminación"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(false)}
+                        className="rounded-lg bg-white/5 text-white/60 px-4 py-2.5 text-xs hover:bg-white/10 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      className="w-full rounded-lg bg-white/[0.03] text-red-400/60 px-4 py-2.5 text-xs font-medium hover:bg-red-500/10 hover:text-red-400 transition-colors border border-red-500/10"
+                    >
+                      🗑️ Eliminar lead
+                    </button>
+                  )}
+                </div>
               </div>
             </>
           )}

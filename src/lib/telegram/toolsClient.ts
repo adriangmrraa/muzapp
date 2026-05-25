@@ -89,15 +89,16 @@ export const createClient = tool({
 // updateClient - Actualizar datos del cliente
 export const updateClient = tool({
   description:
-    "Actualiza datos de un cliente. Preguntas: 'cambia el email de fulano', 'actualiza cliente', 'decile que el Flaco es Pérez'",
+    "Actualiza datos de un cliente (nombre, email, notas, alias, teléfono). Busca por teléfono actual. PREGUNTAS: 'cambia el email de fulano', 'actualiza cliente', 'cambiá el teléfono de Neriza a +54937052410'",
   inputSchema: z.object({
-    phone: z.string().describe("Teléfono del cliente"),
+    phone: z.string().describe("Teléfono ACTUAL del cliente para identificarlo"),
+    newPhone: z.string().optional().describe("Nuevo teléfono (si querés cambiarlo)"),
     name: z.string().optional().describe("Nuevo nombre"),
     email: z.string().optional().describe("Nuevo email"),
     notes: z.string().optional().describe("Nuevas notas"),
     alias: z.string().optional().describe("Apodo o sobrenombre para buscarlo rápido en Telegram"),
   }),
-  execute: async ({ phone, name, email, notes, alias }) => {
+  execute: async ({ phone, newPhone, name, email, notes, alias }) => {
     const [existing] = await db
       .select({ id: leads.id })
       .from(leads)
@@ -113,6 +114,7 @@ export const updateClient = tool({
     if (email) updates.email = email;
     if (notes) updates.notes = notes;
     if (alias) updates.alias = alias;
+    if (newPhone) updates.phone = newPhone;
 
     await db
       .update(leads)
@@ -121,7 +123,7 @@ export const updateClient = tool({
 
     return {
       success: true,
-      message: "Cliente actualizado",
+      message: `✅ Cliente actualizado`,
     };
   },
 });

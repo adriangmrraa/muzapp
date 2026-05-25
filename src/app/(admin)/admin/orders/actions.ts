@@ -225,3 +225,21 @@ export async function getOrderCounts(): Promise<Record<string, number>> {
 
   return counts;
 }
+
+/**
+ * Delete an order permanently
+ */
+export async function deleteOrder(
+  orderId: number
+): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session) return { success: false, error: "No autorizado" };
+
+  try {
+    await db.delete(orders).where(eq(orders.id, orderId));
+    revalidatePath("/admin/orders");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: "Error al eliminar" };
+  }
+}

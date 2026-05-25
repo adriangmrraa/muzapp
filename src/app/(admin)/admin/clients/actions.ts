@@ -146,6 +146,36 @@ export async function updateClient(
     await db.update(leads).set(updateData).where(eq(leads.phone, phone));
     return { success: true };
   } catch (e) {
-    return { success: false, error: "Error al actualizar" };
+      return { success: false, error: "Error al actualizar" };
+    }
+  }
+
+/**
+ * Elimina un lead y todas sus órdenes asociadas
+ */
+export async function deleteLead(
+  phone: string
+): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session) return { success: false, error: "No autorizado" };
+
+  try {
+    // Buscar lead ID primero
+    const [lead] = await db
+      .select({ id: leads.id })
+      .from(leads)
+      .where(eq(leads.phone, phone))
+      .limit(1);
+
+    if (!lead) return { success: false, error: "Lead no encontrado" };
+
+    // Eliminar órdenes asociadas
+    await db.delete(orders).where(eq(orders.phoneNumber, phone));
+    // Eliminar lead
+    await db.delete(leads).where(eq(leads.id, lead.id));
+
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: "Error al eliminar" };
   }
 }

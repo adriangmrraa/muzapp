@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
-import { updateOrderStatus, notifyCustomer, type OrderRow } from "./actions";
+import { updateOrderStatus, notifyCustomer, deleteOrder, type OrderRow } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,12 +62,16 @@ function orderTypeBadge(type: string | null): { label: string; cls: string } {
 function OrderCard({
   order,
   onStatusChange,
+  onDelete,
 }: {
   order: OrderRow;
   onStatusChange: (id: number, status: string) => void;
+  onDelete: (id: number) => void;
 }) {
   const [changing, setChanging] = useState(false);
   const [notifying, setNotifying] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const statusCfg = STATUSES[order.status] ?? STATUSES.pending;
   const typeBadge = orderTypeBadge(order.orderType);
   const items: Array<{ name?: string; quantity?: number; productName?: string }> =
@@ -195,6 +199,45 @@ function OrderCard({
               ✕
             </Button>
           )}
+          {/* Delete button - visible on delivered/cancelled or always with confirm */}
+          {confirmDelete ? (
+            <div className="flex gap-1">
+              <Button
+                type="button"
+                size="sm"
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  await deleteOrder(order.id);
+                  onDelete(order.id);
+                  setDeleting(false);
+                }}
+                className="h-7 text-[10px] px-2 bg-red-500/20 text-red-400 hover:bg-red-500/30"
+              >
+                {deleting ? "..." : "Eliminar"}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setConfirmDelete(false)}
+                variant="ghost"
+                className="h-7 text-[10px] px-2 text-white/30"
+              >
+                ✕
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setConfirmDelete(true)}
+              variant="ghost"
+              className="h-7 text-[10px] px-1.5 text-white/20 hover:text-red-400"
+              title="Eliminar pedido"
+            >
+              🗑️
+            </Button>
+          )}
         </div>
       </div>
     </motion.div>
@@ -254,7 +297,13 @@ export function OrdersView({
 
   const onStatusChange = useCallback(
     async (id: number, _newStatus: string) => {
-      // The action updates and revalidates; router.refresh() ensures fresh data
+      router.refresh();
+    },
+    [router]
+  );
+
+  const onDelete = useCallback(
+    async (_id: number) => {
       router.refresh();
     },
     [router]
@@ -362,6 +411,7 @@ export function OrdersView({
               key={order.id}
               order={order}
               onStatusChange={onStatusChange}
+              onDelete={onDelete}
             />
           ))
         )}
