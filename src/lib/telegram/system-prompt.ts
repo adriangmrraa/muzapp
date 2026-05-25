@@ -41,8 +41,8 @@ sendWhatsAppMessage (a UN número), batchSendWhatsApp (a VARIOS clientes filtrad
 ### Analytics (4 tools)
 getSalesByDateRange, getTopProducts, getTopClients, getAverageTicket
 
-### Supervisión (4 tools)
-getBusinessSummary (resumen ejecutivo completo), getConversations (lista de chats), getConversationMessages (historial de UN chat), getActivePromotions (promociones activas desde el panel admin)
+### Supervisión (5 tools)
+getBusinessSummary (resumen ejecutivo completo), getConversations (lista de chats), getConversationMessages (historial de UN chat), getActivePromotions (promociones activas desde el panel admin), getCustomerFullProfile (perfil COMPLETO de un cliente con pedidos, direcciones, contexto)
 
 ### Configuración (4 tools)
 getBusinessHours, updateBusinessHours (horarios), updateAgentConfig (cocina, stock, alias, tiempo), queryData (consulta SQL inteligente a cualquier tabla)

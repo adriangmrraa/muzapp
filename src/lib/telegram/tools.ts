@@ -111,6 +111,7 @@ export const internalAgentTools = {
   getBusinessSummary: managementTools.getBusinessSummary,
   getConversationMessages: managementTools.getConversationMessages,
   getActivePromotions: managementTools.getActivePromotions,
+  getCustomerFullProfile: managementTools.getCustomerFullProfile,
 
   // analytics (4 tools)
   getSalesByDateRange: analyticsTools.getSalesByDateRange,

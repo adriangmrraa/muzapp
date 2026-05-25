@@ -699,7 +699,83 @@ export const getActivePromotionsTool = tool({
   },
 });
 
-// ─── Export ─────────────────────────────────────────────────────────────────
+// ─── getCustomerFullProfileTool - Perfil completo del cliente ────────────────
+
+export const getCustomerFullProfileTool = tool({
+  description:
+    "Obtiene el perfil COMPLETO de un cliente: datos del lead, pedidos anteriores, pedido actual, direcciones guardadas, items del pedido en curso, tipo de cliente (b2c/b2b), preferencias de productos. Preguntas: 'dame el perfil de flor', 'qué sabe de Juan', 'cómo viene el pedido de María'",
+  inputSchema: z.object({
+    query: z.string().describe("Nombre o teléfono del cliente a buscar"),
+  }),
+  execute: async ({ query }) => {
+    // 1. Buscar el lead
+    const [lead] = await db
+      .select()
+      .from(leads)
+      .where(
+        or(
+          ilike(leads.name, `%${query}%`),
+          ilike(leads.phone, `%${query}%`)
+        )
+      )
+      .limit(1);
+
+    if (!lead) return `No encontré un cliente para "${query}".`;
+
+    const sections: string[] = [];
+    sections.push(`📋 PERFIL DE ${lead.name?.toUpperCase() || "SIN NOMBRE"}`);
+    sections.push(`📱 ${lead.phone}${lead.email ? ` — ${lead.email}` : ""}`);
+    sections.push(`🏷️ ${lead.status || "sin estado"}${lead.type ? ` — ${lead.type === "b2b" ? "BUSINESS" : "CONSUMIDOR"}` : ""}`);
+    if (lead.address) sections.push(`📍 ${lead.address}`);
+    if (lead.notes) sections.push(`📝 ${lead.notes}`);
+
+    // 2. Pedidos anteriores
+    const clientOrders = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.phoneNumber, lead.phone))
+      .orderBy(desc(orders.createdAt))
+      .limit(10);
+
+    if (clientOrders.length > 0) {
+      sections.push(`\n📦 PEDIDOS (${clientOrders.length}):`);
+      for (const o of clientOrders.slice(0, 5)) {
+        const items = o.items as { name?: string; quantity?: number }[] | null;
+        const summary = items?.slice(0, 2).map(i => `${i.quantity || 1}x ${i.name || ""}`).join(", ") || "";
+        const delivery = o.deliveryFee && Number(o.deliveryFee) > 0 ? ` + $${Number(o.deliveryFee)} delivery` : "";
+        sections.push(`• #${o.id} ${o.status}: ${summary} — $${(o.items as any[])?.reduce?.((s: number, i: any) => s + (i.quantity || 0) * (i.unitPrice || i.price || 0), 0) || 0}${delivery}`);
+      }
+    } else {
+      sections.push(`\n📦 Sin pedidos (es lead, no cliente)`);
+    }
+
+    // 3. Direcciones guardadas
+    try {
+      const { getCustomerAddresses } = await import("@/lib/addresses");
+      const addrs = await getCustomerAddresses(lead.phone);
+      if (addrs.length > 0) {
+        sections.push(`\n📍 DIRECCIONES (${addrs.length}):`);
+        for (const a of addrs) {
+          sections.push(`• ${a.address}${a.mapsLink ? ` — ${a.mapsLink}` : ""}`);
+        }
+      }
+    } catch {}
+
+    // 4. Items del pedido en curso (order context)
+    try {
+      const { getOrderContextSummary, formatOrderSummary } = await import("@/lib/order-context");
+      if (lead.conversationId) {
+        const ctxItems = await getOrderContextSummary(lead.conversationId);
+        if (ctxItems.length > 0) {
+          const ctxText = formatOrderSummary(ctxItems);
+          sections.push(`\n${ctxText}`);
+        }
+      }
+    } catch {}
+
+    return sections.join("\n");
+  },
+});
 
 export const managementTools = {
   getClients: getClientsTool,
@@ -715,4 +791,5 @@ export const managementTools = {
   getBusinessSummary: getBusinessSummaryTool,
   getConversationMessages: getConversationMessagesTool,
   getActivePromotions: getActivePromotionsTool,
+  getCustomerFullProfile: getCustomerFullProfileTool,
 };
