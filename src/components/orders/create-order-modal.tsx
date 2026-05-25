@@ -39,6 +39,7 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
   const [items, setItems] = useState<OrderItem[]>([]);
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [products, setProducts] = useState<ProductoDisponible[]>([]);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
@@ -133,7 +134,7 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
     setItems((prev) => prev.filter((i) => i.name !== name));
   };
 
-  const total = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+  const total = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0) + deliveryFee;
 
   const handleSave = async () => {
     if (!customerName || !customerPhone || items.length === 0) return;
@@ -145,6 +146,7 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
       items,
       address: address || null,
       notes: notes || null,
+      deliveryFee: deliveryFee || 0,
     });
     setSaving(false);
     if (result.success) {
@@ -313,10 +315,15 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
                       className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40" />
                   </div>
                   <div>
-                    <label className="text-[10px] text-neutral-500 uppercase font-semibold">Notas</label>
-                    <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional"
+                    <label className="text-[10px] text-neutral-500 uppercase font-semibold">Costo delivery</label>
+                    <input type="number" min="0" value={deliveryFee || ""} onChange={(e) => setDeliveryFee(Number(e.target.value) || 0)} placeholder="0 = sin delivery"
                       className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40" />
                   </div>
+                </div>
+                <div>
+                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Notas</label>
+                  <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional"
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40" />
                 </div>
               </div>
             )}

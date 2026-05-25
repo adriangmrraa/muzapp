@@ -15,13 +15,16 @@ export async function createManualOrder(
     items: { name: string; quantity: number; unitPrice: number }[];
     address?: string | null;
     notes?: string | null;
+    deliveryFee?: number;
   }
 ): Promise<{ success: boolean; orderId?: number; error?: string }> {
   const session = await auth();
   if (!session) return { success: false, error: "No autorizado" };
 
   try {
-    const total = data.items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+    const subtotal = data.items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+    const delivery = data.deliveryFee || 0;
+    const total = subtotal + delivery;
 
     // Vincular con lead si existe
     let leadId: number | null = null;
@@ -56,6 +59,7 @@ export async function createManualOrder(
         orderType: data.orderType,
         items: data.items,
         notes: data.notes || null,
+        deliveryFee: data.deliveryFee ? String(data.deliveryFee) : "0",
         status: "pending",
       })
       .returning({ id: orders.id });

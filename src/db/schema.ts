@@ -239,6 +239,7 @@ export const orders = pgTable("orders", {
   notes: text("notes"),
   tags: jsonb("tags").$type<string[]>().default([]),
   status: orderStatusEnum("status").notNull().default("pending"),
+  deliveryFee: numeric("delivery_fee", { precision: 10, scale: 2 }).default("0"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -21,13 +21,13 @@ export const createOrder = tool({
         z.object({
           name: z.string(),
           quantity: z.number(),
-          price: z.number().optional(),
-        })
-      )
-      .describe("Items del pedido"),
+      price: z.number().optional(),
+    }))
+    .describe("Items del pedido"),
+    deliveryFee: z.number().min(0).optional().describe("Costo de delivery (0 si no aplica)"),
     notes: z.string().optional().describe("Notas especiales"),
   }),
-  execute: async ({ phone, customerName, orderType, items, notes }) => {
+  execute: async ({ phone, customerName, orderType, items, deliveryFee, notes }) => {
     // Buscar el lead por nombre si se proporcionó (siempre, incluso si hay phone)
     if (customerName) {
       const [lead] = await db
@@ -51,10 +51,12 @@ export const createOrder = tool({
     }
 
     // Calcular total
-    let total = 0;
+    let subtotal = 0;
     for (const item of items) {
-      total += (item.price ?? 0) * item.quantity;
+      subtotal += (item.price ?? 0) * item.quantity;
     }
+    const delivery = deliveryFee || 0;
+    const total = subtotal + delivery;
 
     // Vincular con lead existente
     let leadId: number | null = null;
@@ -85,6 +87,7 @@ export const createOrder = tool({
         customerName,
         orderType,
         items,
+        deliveryFee: delivery ? String(delivery) : "0",
         notes,
         status: "pending",
       })

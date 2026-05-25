@@ -65,10 +65,13 @@ export const createOrderTool = tool({
     })).describe("Lista de items del pedido con cantidad y precio unitario"),
     customerPhone: z.string().describe("Teléfono del cliente"),
     address: z.string().optional().describe("Dirección de entrega (si es delivery)"),
+    deliveryFee: z.number().min(0).optional().describe("Costo de delivery (0 si no aplica)"),
     notes: z.string().optional().describe("Notas adicionales del pedido"),
   }),
-  execute: async ({ customerName, orderType, items, customerPhone, address, notes }) => {
-    const total = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+  execute: async ({ customerName, orderType, items, customerPhone, address, deliveryFee, notes }) => {
+    const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+    const delivery = deliveryFee || 0;
+    const total = subtotal + delivery;
 
     // Find lead to link order + save address
     let leadId: number | null = null;
@@ -116,6 +119,7 @@ export const createOrderTool = tool({
       address: address || null,
       orderType,
       items: items,
+      deliveryFee: delivery ? String(delivery) : "0",
       notes: notes || null,
       status: "pending",
     }).returning({ id: orders.id });
