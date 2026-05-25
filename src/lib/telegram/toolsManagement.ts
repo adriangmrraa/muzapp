@@ -43,12 +43,12 @@ export const getClientsTool = tool({
 // getClientDetailTool - Detalle completo por teléfono o nombre
 export const getClientDetailTool = tool({
   description:
-    "Detalle completo de un cliente por teléfono o nombre. Preguntas: 'detalle de fulano', 'dame todo sobre el cliente 3411111111'",
+    "Detalle completo de un cliente por teléfono, nombre o alias. Preguntas: 'detalle de fulano', 'dame todo sobre el cliente 3411111111', 'quién es el Flaco?'",
   inputSchema: z.object({
     query: z.string().describe("Teléfono o nombre del cliente"),
   }),
   execute: async ({ query }) => {
-    // Buscar por teléfono exacto primero, luego por nombre parcial
+    // Buscar por teléfono exacto primero, luego por nombre o alias parcial
     const [lead] = await db
       .select({
         id: leads.id,
@@ -57,6 +57,7 @@ export const getClientDetailTool = tool({
         email: leads.email,
         status: leads.status,
         notes: leads.notes,
+        alias: leads.alias,
         tags: leads.tags,
         firstMessage: leads.firstMessage,
         utmSource: leads.utmSource,
@@ -67,7 +68,8 @@ export const getClientDetailTool = tool({
       .where(
         or(
           eq(leads.phone, query),
-          ilike(leads.name, `%${query}%`)
+          ilike(leads.name, `%${query}%`),
+          ilike(leads.alias, `%${query}%`)
         )
       )
       .orderBy(desc(leads.createdAt))
@@ -126,10 +128,10 @@ export const getClientDetailTool = tool({
   },
 });
 
-// searchClientTool - Buscar clientes por nombre, teléfono o email
+// searchClientTool - Buscar clientes por nombre, teléfono, email o alias
 export const searchClientTool = tool({
   description:
-    "Busca clientes por nombre, teléfono o email. Preguntas: 'buscá a García', 'hay algún cliente con email xxx', 'buscá el número 3411111111'",
+    "Busca clientes por nombre, teléfono, email o APODO. PREGUNTAS: 'buscá a García', 'hay algún cliente con email xxx', 'buscá el Flaco' (si tiene alias registrado)",
   inputSchema: z.object({
     query: z.string().describe("Nombre, teléfono o email a buscar"),
   }),
@@ -148,7 +150,8 @@ export const searchClientTool = tool({
         or(
           ilike(leads.name, `%${query}%`),
           ilike(leads.phone, `%${query}%`),
-          ilike(leads.email, `%${query}%`)
+          ilike(leads.email, `%${query}%`),
+          ilike(leads.alias, `%${query}%`)
         )
       )
       .orderBy(desc(leads.createdAt))

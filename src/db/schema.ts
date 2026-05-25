@@ -190,6 +190,7 @@ export const leads = pgTable("leads", {
   adsetId: varchar("adset_id", { length: 255 }),
   platform: varchar("platform", { length: 100 }),
   notes: text("notes"),
+  alias: varchar("alias", { length: 255 }),
   status: leadStatusEnum("status").notNull().default("new"),
   type: varchar("type", { length: 10 }),
   conversationId: integer("conversation_id").references(() => conversations.id),

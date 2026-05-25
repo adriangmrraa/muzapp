@@ -71,12 +71,13 @@ export const internalAgentTools = {
   getPendingOrders: queryOrderTools.getPendingOrders,
   getTodaysOrders: queryOrderTools.getTodaysOrders,
 
-  // manageClient (~5 tools)
+  // manageClient (~6 tools)
   getClientByPhone: manageClientTools.getClientByPhone,
   createClient: manageClientTools.createClient,
   updateClient: manageClientTools.updateClient,
   getClientHistory: manageClientTools.getClientHistory,
   suggestProducts: manageClientTools.suggestProducts,
+  setClientAlias: manageClientTools.setClientAlias,
 
   // manageProduct (~8 tools)
   getAllProducts: manageProductTools.getAllProducts,

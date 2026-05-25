@@ -89,14 +89,15 @@ export const createClient = tool({
 // updateClient - Actualizar datos del cliente
 export const updateClient = tool({
   description:
-    "Actualiza datos de un cliente. Preguntas: 'cambia el email de fulano', 'actualiza cliente'",
+    "Actualiza datos de un cliente. Preguntas: 'cambia el email de fulano', 'actualiza cliente', 'decile que el Flaco es Pérez'",
   inputSchema: z.object({
     phone: z.string().describe("Teléfono del cliente"),
     name: z.string().optional().describe("Nuevo nombre"),
     email: z.string().optional().describe("Nuevo email"),
     notes: z.string().optional().describe("Nuevas notas"),
+    alias: z.string().optional().describe("Apodo o sobrenombre para buscarlo rápido en Telegram"),
   }),
-  execute: async ({ phone, name, email, notes }) => {
+  execute: async ({ phone, name, email, notes, alias }) => {
     const [existing] = await db
       .select({ id: leads.id })
       .from(leads)
@@ -111,6 +112,7 @@ export const updateClient = tool({
     if (name) updates.name = name;
     if (email) updates.email = email;
     if (notes) updates.notes = notes;
+    if (alias) updates.alias = alias;
 
     await db
       .update(leads)
@@ -237,6 +239,37 @@ export const suggestProducts = tool({
   },
 });
 
+// setClientAlias - Asignar un apodo a un cliente
+export const setClientAlias = tool({
+  description:
+    "Asigna un APODO o sobrenombre a un cliente para buscarlo rápido desde Telegram. El dueño conoce a sus clientes por apodos (Flaco, Gordo, Negro, etc.), esto permite que el bot los entienda. PREGUNTAS: 'decile que el Flaco es el 341...', 'poné el apodo Gordo a Pérez', 'el Flaco es el cliente 3411111111'",
+  inputSchema: z.object({
+    phone: z.string().describe("Teléfono del cliente (con código de país)"),
+    alias: z.string().describe("Apodo o sobrenombre. Ej: Flaco, Gordo, Negro, etc."),
+  }),
+  execute: async ({ phone, alias }) => {
+    const [existing] = await db
+      .select({ id: leads.id, name: leads.name })
+      .from(leads)
+      .where(eq(leads.phone, phone))
+      .limit(1);
+
+    if (!existing) {
+      return { success: false, message: "No encontré un cliente con ese teléfono" };
+    }
+
+    await db
+      .update(leads)
+      .set({ alias })
+      .where(eq(leads.id, existing.id));
+
+    return {
+      success: true,
+      message: `✅ Apodo registrado: "${alias}" → ${existing.name || phone}. Ahora podés decir "el ${alias}" y te voy a entender.`,
+    };
+  },
+});
+
 // Export all manageClient tools
 export const manageClientTools = {
   getClientByPhone,
@@ -244,4 +277,5 @@ export const manageClientTools = {
   updateClient,
   getClientHistory,
   suggestProducts,
+  setClientAlias,
 };
