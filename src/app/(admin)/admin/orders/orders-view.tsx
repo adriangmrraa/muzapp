@@ -98,7 +98,8 @@ function OrderCard({
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border p-4 flex flex-col gap-3 bg-[#0a0a0a] transition-all duration-200 hover:border-white/20"
+      onClick={() => setEditOpen(true)}
+      className="rounded-xl border p-4 flex flex-col gap-3 bg-[#0a0a0a] transition-all duration-200 hover:border-white/20 cursor-pointer"
       style={{ borderColor: order.status === "pending" ? "rgba(212,160,23,0.3)" : "rgba(255,255,255,0.06)" }}
     >
       {/* Header: ID + Order Type */}
@@ -166,7 +167,7 @@ function OrderCard({
               type="button"
               size="sm"
               disabled={changing}
-              onClick={handleNext}
+              onClick={(e) => { e.stopPropagation(); handleNext(); }}
               className="h-7 text-[11px] px-3 bg-white/[0.06] hover:bg-white/[0.1] text-white/70"
             >
               → {STATUSES[NEXT_STATUS[order.status]]?.label}
@@ -177,7 +178,8 @@ function OrderCard({
               type="button"
               size="sm"
               disabled={notifying}
-              onClick={async () => {
+              onClick={async (e) => {
+                e.stopPropagation();
                 setNotifying(true);
                 await notifyCustomer(order.id);
                 setNotifying(false);
@@ -194,7 +196,7 @@ function OrderCard({
               type="button"
               size="sm"
               disabled={changing}
-              onClick={handleCancel}
+              onClick={(e) => { e.stopPropagation(); handleCancel(); }}
               variant="ghost"
               className="h-7 text-[11px] px-2 text-red-400/50 hover:text-red-400"
             >
@@ -208,7 +210,8 @@ function OrderCard({
                 type="button"
                 size="sm"
                 disabled={deleting}
-                onClick={async () => {
+                onClick={async (e) => {
+                  e.stopPropagation();
                   setDeleting(true);
                   await deleteOrder(order.id);
                   onDelete(order.id);
@@ -221,7 +224,7 @@ function OrderCard({
               <Button
                 type="button"
                 size="sm"
-                onClick={() => setConfirmDelete(false)}
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
                 variant="ghost"
                 className="h-7 text-[10px] px-2 text-white/30"
               >
@@ -232,7 +235,7 @@ function OrderCard({
             <Button
               type="button"
               size="sm"
-              onClick={() => setConfirmDelete(true)}
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
               variant="ghost"
               className="h-7 text-[10px] px-1.5 text-white/20 hover:text-red-400"
               title="Eliminar pedido"
@@ -244,7 +247,7 @@ function OrderCard({
           <Button
             type="button"
             size="sm"
-            onClick={() => setEditOpen(true)}
+            onClick={(e) => { e.stopPropagation(); setEditOpen(true); }}
             variant="ghost"
             className="h-7 text-[10px] px-1.5 text-white/20 hover:text-amber-400"
             title="Editar pedido"
