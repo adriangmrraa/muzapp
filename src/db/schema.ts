@@ -245,3 +245,21 @@ export const orders = pgTable("orders", {
   deliveredAt: timestamp("delivered_at", { withTimezone: true }),
   followupSent: boolean("followup_sent").notNull().default(false),
 });
+
+// ─── Order Context (items temporales del pedido actual) ─────────────────────────
+
+export const orderContextEnum = pgEnum("order_context_status", ["active", "ordered"]);
+
+export const orderContextItems = pgTable("order_context_items", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id),
+  phone: text("phone").notNull(),
+  productName: text("product_name").notNull(),
+  productPrice: numeric("product_price", { precision: 10, scale: 2 }),
+  quantity: integer("quantity").notNull().default(1),
+  variant: text("variant"),
+  notes: text("notes"),
+  status: orderContextEnum("status").notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});

@@ -26,3 +26,6 @@ export { checkKitchenStatusTool, checkPanStockTool, getPaymentAliasTool } from "
 // Grupo G: Multimedia (4) — factory functions, se crean con número del cliente
 export { createSendStickerTool, createSendMenuImageTool } from "./sticker-tools";
 export { createSendImageTool, createSendDocumentTool } from "./send-media-tools";
+
+// Grupo H: Order Context (memoria del pedido actual)
+export { createAddOrderItemTool, createGetOrderSummaryTool, createConfirmOrderTool } from "./order-context-tools";

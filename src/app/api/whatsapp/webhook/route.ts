@@ -21,6 +21,7 @@ import { downloadYCloudMedia, saveMediaLocally } from "@/lib/media/downloader";
 import { transcribeAudio } from "@/lib/media/transcription";
 import { analyzeVideo } from "@/lib/media/video";
 import { extractDocumentText } from "@/lib/media/document";
+import { getOrderContextSummary, formatOrderSummary } from "@/lib/order-context";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 
@@ -594,6 +595,14 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`[webhook:wa] Running agent with ${aiMessages.length} history messages`);
+
+      // ── Inject order context (memoria del pedido actual) ──────────────────
+      const orderItems = await getOrderContextSummary(conversationId);
+      const orderSummaryText = formatOrderSummary(orderItems);
+      if (orderSummaryText) {
+        aiMessages.unshift({ role: "user", content: orderSummaryText });
+        console.log(`[webhook:wa] Injected order context: ${orderItems.length} items`);
+      }
 
       // Run agent with combined context
       const responseText = await runWhatsAppAgent({

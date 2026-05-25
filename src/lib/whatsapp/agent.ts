@@ -27,6 +27,9 @@ import {
   createSendMenuImageTool,
   createSendImageTool,
   createSendDocumentTool,
+  createAddOrderItemTool,
+  createGetOrderSummaryTool,
+  createConfirmOrderTool,
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
@@ -280,6 +283,10 @@ export async function runWhatsAppAgent({
         sendMenuImage: createSendMenuImageTool(customerPhone),
         sendImage: createSendImageTool(customerPhone),
         sendDocument: createSendDocumentTool(customerPhone),
+        // Grupo H: Order Context (memoria del pedido)
+        addOrderItem: createAddOrderItemTool(conversationId, customerPhone),
+        getOrderSummary: createGetOrderSummaryTool(conversationId),
+        confirmOrder: createConfirmOrderTool(conversationId, customerPhone),
       },
       stopWhen: stepCountIs(10),
       toolChoice: "auto",
@@ -352,6 +359,9 @@ export async function runWhatsAppAgent({
           sendMenuImage: createSendMenuImageTool(customerPhone),
           sendImage: createSendImageTool(customerPhone),
           sendDocument: createSendDocumentTool(customerPhone),
+          addOrderItem: createAddOrderItemTool(conversationId, customerPhone),
+          getOrderSummary: createGetOrderSummaryTool(conversationId),
+          confirmOrder: createConfirmOrderTool(conversationId, customerPhone),
         },
         stopWhen: stepCountIs(10),
         toolChoice: "auto",
