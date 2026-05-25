@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { products, agentConfig } from "@/db/schema";
+import { products } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { MenuDigitalClient } from "./menu-digital-client";
 
@@ -8,6 +8,10 @@ export const metadata = {
   description: "Explorá nuestro menú, armá tu pedido y pedilo por WhatsApp",
 };
 
+// Forzar que siempre cargue datos frescos de la DB, sin caché
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function CartaDigitalPage() {
   const items = await db
     .select()
@@ -15,16 +19,9 @@ export default async function CartaDigitalPage() {
     .where(eq(products.available, true))
     .orderBy(products.sortOrder);
 
-  // Obtener número de WhatsApp desde la config o env
-  let whatsappPhone = process.env.WHATSAPP_PHONE_NUMBER || "5493705241065";
-  try {
-    const [cfg] = await db
-      .select({ phone: agentConfig.phoneNumber })
-      .from(agentConfig)
-      .where(eq(agentConfig.id, 1))
-      .limit(1);
-    if (cfg?.phone) whatsappPhone = cfg.phone.replace(/[+\s]/g, "");
-  } catch {}
+  const whatsappPhone = process.env.WHATSAPP_PHONE_NUMBER
+    ? process.env.WHATSAPP_PHONE_NUMBER.replace(/[+\s]/g, "")
+    : "5493705241065";
 
   return <MenuDigitalClient products={items} whatsappPhone={whatsappPhone} />;
 }
