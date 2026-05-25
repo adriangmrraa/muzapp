@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { orders, leads, agentConfig } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { orders, leads, agentConfig, addresses } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 
 async function notifyDeliveryOrder(
@@ -23,6 +23,14 @@ async function notifyDeliveryOrder(
     const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
     if (!apiKey || !from) return;
 
+    // Buscar el maps link más reciente del cliente
+    const [lastAddr] = await db
+      .select({ mapsLink: addresses.mapsLink })
+      .from(addresses)
+      .where(eq(addresses.phone, customerPhone))
+      .orderBy(desc(addresses.lastUsedAt))
+      .limit(1);
+
     const itemLines = items.map(i => `• ${i.quantity}x ${i.name} — $${(i.quantity * i.unitPrice).toLocaleString("es-AR")}`).join("\n");
 
     const message = [
@@ -31,6 +39,7 @@ async function notifyDeliveryOrder(
       `👤 ${customerName}`,
       `📱 ${customerPhone}`,
       address ? `📍 ${address}` : "",
+      lastAddr?.mapsLink ? `🗺️ ${lastAddr.mapsLink}` : "",
       ``,
       `${itemLines}`,
       ``,

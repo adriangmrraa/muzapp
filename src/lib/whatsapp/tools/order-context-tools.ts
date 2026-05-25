@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { addOrderContextItem, getOrderContextSummary, confirmOrderContext, formatOrderSummary } from "@/lib/order-context";
+import { getCustomerAddresses, formatAddressesForPrompt } from "@/lib/addresses";
 
 export function createAddOrderItemTool(conversationId: number, phone: string) {
   return tool({
@@ -39,6 +40,18 @@ export function createConfirmOrderTool(conversationId: number, phone: string) {
     execute: async () => {
       await confirmOrderContext(conversationId);
       return `✅ Pedido confirmado.`;
+    },
+  });
+}
+
+export function createGetAddressesTool(phone: string) {
+  return tool({
+    description: "Mostrá las direcciones guardadas del cliente para preguntarle a cuál enviar el pedido.",
+    inputSchema: z.object({}),
+    execute: async () => {
+      const addresses = await getCustomerAddresses(phone);
+      if (addresses.length === 0) return "El cliente no tiene direcciones guardadas.";
+      return formatAddressesForPrompt(addresses);
     },
   });
 }

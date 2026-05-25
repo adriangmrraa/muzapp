@@ -30,6 +30,7 @@ import {
   createAddOrderItemTool,
   createGetOrderSummaryTool,
   createConfirmOrderTool,
+  createGetAddressesTool,
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
@@ -287,6 +288,7 @@ export async function runWhatsAppAgent({
         addOrderItem: createAddOrderItemTool(conversationId, customerPhone),
         getOrderSummary: createGetOrderSummaryTool(conversationId),
         confirmOrder: createConfirmOrderTool(conversationId, customerPhone),
+        getAddresses: createGetAddressesTool(customerPhone),
       },
       stopWhen: stepCountIs(10),
       toolChoice: "auto",
@@ -362,6 +364,7 @@ export async function runWhatsAppAgent({
           addOrderItem: createAddOrderItemTool(conversationId, customerPhone),
           getOrderSummary: createGetOrderSummaryTool(conversationId),
           confirmOrder: createConfirmOrderTool(conversationId, customerPhone),
+          getAddresses: createGetAddressesTool(customerPhone),
         },
         stopWhen: stepCountIs(10),
         toolChoice: "auto",

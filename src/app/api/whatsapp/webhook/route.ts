@@ -15,13 +15,14 @@ import {
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
 import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
 import { db } from "@/db";
-import { agentConfig, conversations, leads } from "@/db/schema";
+import { agentConfig, conversations, leads, addresses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { downloadYCloudMedia, saveMediaLocally } from "@/lib/media/downloader";
 import { transcribeAudio } from "@/lib/media/transcription";
 import { analyzeVideo } from "@/lib/media/video";
 import { extractDocumentText } from "@/lib/media/document";
 import { getOrderContextSummary, formatOrderSummary } from "@/lib/order-context";
+import { getCustomerAddresses, formatAddressesForPrompt } from "@/lib/addresses";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 
@@ -382,9 +383,10 @@ export async function POST(request: NextRequest) {
       }];
       await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
 
-      // ── PERSISTIR dirección en leads.address ──
+      // ── PERSISTIR dirección en leads.address + tabla addresses ──
       const addrToSave = loc?.address || loc?.name || "";
       if (addrToSave) {
+        // Actualizar leads.address como dirección principal
         db.update(leads)
           .set({ address: addrToSave })
           .where(eq(leads.phone, customerPhone))
@@ -393,6 +395,18 @@ export async function POST(request: NextRequest) {
               console.log(`[webhook:wa] Address saved to lead ${customerPhone}: ${addrToSave}`);
           })
           .catch((err) => console.warn("[webhook:wa] Failed to save address:", err));
+
+        // Guardar en tabla addresses (histórico de ubicaciones)
+        const mapsLink = loc?.latitude && loc?.longitude
+          ? `https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`
+          : null;
+        db.insert(addresses).values({
+          phone: customerPhone,
+          address: addrToSave,
+          latitude: loc?.latitude ? String(loc.latitude) : null,
+          longitude: loc?.longitude ? String(loc.longitude) : null,
+          mapsLink,
+        }).catch((err) => console.warn("[webhook:wa] Failed to save address record:", err));
       }
 
       // NOTA: la ubicación NO se reenvía al delivery acá.
@@ -588,6 +602,14 @@ export async function POST(request: NextRequest) {
       if (orderSummaryText) {
         aiMessages.unshift({ role: "user", content: orderSummaryText });
         console.log(`[webhook:wa] Injected order context: ${orderItems.length} items`);
+      }
+
+      // ── Inject direcciones guardadas del cliente ──────────────────────────
+      const customerAddresses = await getCustomerAddresses(customerPhone);
+      const addressesText = formatAddressesForPrompt(customerAddresses);
+      if (addressesText) {
+        aiMessages.unshift({ role: "user", content: addressesText });
+        console.log(`[webhook:wa] Injected ${customerAddresses.length} saved addresses`);
       }
 
       // Run agent with combined context

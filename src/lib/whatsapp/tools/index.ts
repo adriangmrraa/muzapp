@@ -28,4 +28,4 @@ export { createSendStickerTool, createSendMenuImageTool } from "./sticker-tools"
 export { createSendImageTool, createSendDocumentTool } from "./send-media-tools";
 
 // Grupo H: Order Context (memoria del pedido actual)
-export { createAddOrderItemTool, createGetOrderSummaryTool, createConfirmOrderTool } from "./order-context-tools";
+export { createAddOrderItemTool, createGetOrderSummaryTool, createConfirmOrderTool, createGetAddressesTool } from "./order-context-tools";

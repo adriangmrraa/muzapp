@@ -263,3 +263,17 @@ export const orderContextItems = pgTable("order_context_items", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
+
+// ─── Addresses (ubicaciones guardadas de clientes) ──────────────────────────────
+
+export const addresses = pgTable("addresses", {
+  id: serial("id").primaryKey(),
+  phone: text("phone").notNull(),
+  address: text("address").notNull(),
+  latitude: text("latitude"),
+  longitude: text("longitude"),
+  mapsLink: text("maps_link"),
+  label: text("label"), // "Casa", "Trabajo", etc — lo puede poner el agente
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }).notNull().defaultNow(),
+});
