@@ -28,6 +28,7 @@ const stagger = {
 export default function TragosVIPPage() {
   const [products, setProducts] = useState<ProductFromAPI[]>([]);
   const [loading, setLoading] = useState(true);
+  const [whatsappPhone, setWhatsappPhone] = useState("5493705241065");
 
   useEffect(() => {
     fetch("/api/products?available=true&category=tragos_vip")
@@ -35,6 +36,12 @@ export default function TragosVIPPage() {
       .then(setProducts)
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    // Obtener número de WhatsApp
+    fetch("/api/whatsapp-phone")
+      .then((r) => r.json())
+      .then((d) => d.phone && setWhatsappPhone(d.phone))
+      .catch(() => {});
   }, []);
 
   return (
@@ -110,7 +117,7 @@ export default function TragosVIPPage() {
                     }}>
                     ${basePrice.toLocaleString("es-AR")}
                   </span>
-                  <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP || "5493705241065"}?text=${encodeURIComponent("Hola! Quiero info sobre " + p.name)}`}
+                  <a href={`https://wa.me/${whatsappPhone}?text=${encodeURIComponent("Hola! Quiero info sobre " + p.name)}`}
                     target="_blank" rel="noopener noreferrer"
                     className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-105"
                     style={{
