@@ -43,7 +43,7 @@ export function OrderEditModal({ order, open, onClose }: OrderEditModalProps) {
     const currentItems = Array.isArray(order.items) ? order.items.map((i: any) => ({
       name: i.name || "",
       quantity: i.quantity || 1,
-      price: i.price || i.unitPrice || 0,
+      price: Number(i.price ?? i.unitPrice ?? 0),
     })) : [];
     setItems(currentItems);
     setCustomerName(order.customerName || "");
@@ -62,7 +62,7 @@ export function OrderEditModal({ order, open, onClose }: OrderEditModalProps) {
   }, [open, order]);
 
   const addItem = (product: ProductOption) => {
-    const price = product.price ? parseFloat(product.price) : 0;
+    const price = Number(product.price) || 0;
     setItems((prev) => {
       const ex = prev.find((i) => i.name === product.name);
       if (ex) return prev.map((i) => (i.name === product.name ? { ...i, quantity: i.quantity + 1 } : i));
@@ -75,7 +75,7 @@ export function OrderEditModal({ order, open, onClose }: OrderEditModalProps) {
     setItems((prev) => prev.map((i) => (i.name === name ? { ...i, quantity: qty } : i)));
   };
 
-  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const subtotal = items.reduce((s, i) => s + (Number(i.price) || 0) * i.quantity, 0);
   const total = subtotal + deliveryFee;
 
   const handleSave = async () => {
@@ -139,7 +139,7 @@ export function OrderEditModal({ order, open, onClose }: OrderEditModalProps) {
                       .map((p) => (
                         <button key={p.id} onClick={() => addItem(p)}
                           className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[11px] text-neutral-300 hover:border-[#D4A017]/30 hover:bg-[#D4A017]/5 transition-colors">
-                          {p.name} (${parseFloat(p.price || "0").toLocaleString("es-AR")})
+                          {p.name} (${(Number(p.price) || 0).toLocaleString("es-AR")})
                         </button>
                       ))}
                   </div>
@@ -160,7 +160,7 @@ export function OrderEditModal({ order, open, onClose }: OrderEditModalProps) {
                             <span className="text-xs text-neutral-200 w-5 text-center">{item.quantity}</span>
                             <button onClick={() => updateQty(item.name, item.quantity + 1)} className="p-0.5 rounded hover:bg-white/10 text-neutral-500"><Plus className="h-3 w-3" /></button>
                           </div>
-                          <span className="text-xs text-neutral-400 w-16 text-right">${(item.price * item.quantity).toLocaleString("es-AR")}</span>
+                          <span className="text-xs text-neutral-400 w-16 text-right">${((Number(item.price) || 0) * item.quantity).toLocaleString("es-AR")}</span>
                           <button onClick={() => setItems((prev) => prev.filter((i) => i.name !== item.name))} className="p-0.5 rounded hover:bg-red-500/20 text-neutral-600 hover:text-red-400">✕</button>
                         </div>
                       ))}
