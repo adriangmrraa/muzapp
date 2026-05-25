@@ -21,6 +21,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { ShoppingBag } from "lucide-react";
+import { CreateOrderModal } from "@/components/orders/create-order-modal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -116,6 +118,7 @@ export default function LeadsTable({
   const searchParams = useSearchParams();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
 
   const buildUrl = useCallback(
     (overrides: Record<string, string | undefined>) => {
@@ -358,11 +361,34 @@ export default function LeadsTable({
                     value={selectedLead.conversationId}
                   />
                 </section>
+
+                {/* Botón convertir a cliente */}
+                {selectedLead?.status !== "converted" && (
+                  <div className="pt-2">
+                    <button
+                      onClick={() => { setSheetOpen(false); setOrderModalOpen(true); }}
+                      className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#D4A017] text-black px-4 py-2.5 text-xs font-semibold hover:bg-[#F5A623] transition-colors"
+                    >
+                      <ShoppingBag className="h-3.5 w-3.5" />
+                      Convertir a Cliente — Crear Pedido
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Modal de pedido */}
+      {selectedLead && (
+        <CreateOrderModal
+          open={orderModalOpen}
+          onClose={() => setOrderModalOpen(false)}
+          clientName={selectedLead.name ?? undefined}
+          clientPhone={selectedLead.phone}
+        />
+      )}
     </>
   );
 }
