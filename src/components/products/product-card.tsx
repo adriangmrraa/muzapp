@@ -19,7 +19,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { ref, style, onMouseMove, onMouseLeave } = useTilt({ maxAngle: 8 });
-  const imageSrc = product.imageUrl || PRODUCT_IMAGE_MAP[product.id] || PRODUCT_IMAGE_BY_NAME[product.name.toLowerCase()];
+  const imageSrc = (product.imageUrl && product.imageUrl.startsWith("http")) ? product.imageUrl : PRODUCT_IMAGE_MAP[product.id] || PRODUCT_IMAGE_BY_NAME[product.name.toLowerCase()];
   const { addItem } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
