@@ -4,8 +4,9 @@ import { eq, desc, and, sql } from "drizzle-orm";
 import { calculateClientStats, formatCurrency } from "@/lib/client-utils";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, MapPin, ShoppingBag, MessageSquare, Star, Tag } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, ShoppingBag, MessageSquare, Star, Tag, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { CreateOrderModalWrapperClient } from "../create-order-modal-wrapper-client";
 
 export const metadata = { title: "Ficha de Cliente — Mrs Muzzarella Admin" };
 
@@ -99,6 +100,7 @@ export default async function ClientDetailPage({ params }: Props) {
 
       {/* ── Actions Row ────────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-2">
+        <CreateOrderModalWrapperClient clientName={name} clientPhone={phone} />
         {currentOrder && (
           <Link href="/admin/orders" className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3.5 py-2 text-xs font-medium text-amber-400 hover:bg-amber-500/20 transition-colors">
             <ShoppingBag className="h-3.5 w-3.5" />
