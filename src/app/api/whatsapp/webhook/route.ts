@@ -395,22 +395,8 @@ export async function POST(request: NextRequest) {
           .catch((err) => console.warn("[webhook:wa] Failed to save address:", err));
       }
 
-      // ── DELIVERY: si hay delivery configurado, reenviar ubicación ──
-      const deliveryPhoneCfg = config.deliveryPhoneNumber?.trim();
-      if (deliveryPhoneCfg && loc?.latitude && loc?.longitude) {
-        const addr = loc?.address || loc?.name || address;
-        // No await — no bloquear el flujo del webhook
-        forwardLocationToDelivery(
-          customerName,
-          customerPhone,
-          addr,
-          loc.latitude,
-          loc.longitude,
-          deliveryPhoneCfg
-        ).then((sent) => {
-          if (sent) console.log(`[webhook:wa] Location forwarded to delivery for ${customerPhone}`);
-        }).catch((err) => console.warn("[webhook:wa] Location forward failed:", err));
-      }
+      // NOTA: la ubicación NO se reenvía al delivery acá.
+      // Se guarda y se envía junto con el pedido confirmado en createOrder.
 
     } else if (msgType === "text") {
       // ── TEXT ──────────────────────────────────────────────────────────────

@@ -1,9 +1,48 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { orders, leads } from "@/db/schema";
+import { orders, leads, agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
+
+async function notifyDeliveryOrder(
+  customerName: string,
+  customerPhone: string,
+  address: string | null,
+  items: { name: string; quantity: number; unitPrice: number }[],
+  total: number,
+  orderId: number
+): Promise<void> {
+  try {
+    const [cfg] = await db.select().from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
+    const deliveryPhone = cfg?.deliveryPhoneNumber?.trim();
+    if (!deliveryPhone) return;
+
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/ycloud-client");
+    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
+    if (!apiKey || !from) return;
+
+    const itemLines = items.map(i => `• ${i.quantity}x ${i.name} — $${(i.quantity * i.unitPrice).toLocaleString("es-AR")}`).join("\n");
+
+    const message = [
+      `🚚 NUEVO PEDIDO #${orderId} PARA DELIVERY`,
+      ``,
+      `👤 ${customerName}`,
+      `📱 ${customerPhone}`,
+      address ? `📍 ${address}` : "",
+      ``,
+      `${itemLines}`,
+      ``,
+      `💰 Total: $${total.toLocaleString("es-AR")}`,
+    ].filter(Boolean).join("\n");
+
+    await sendWhatsAppMessage({ to: deliveryPhone, body: message, apiKey, from });
+    console.log(`[delivery] Order #${orderId} notified to ${deliveryPhone}`);
+  } catch (err) {
+    console.warn("[delivery] Failed to notify delivery:", err);
+  }
+}
 
 export const createOrderTool = tool({
   description: "Crea un pedido una vez que el cliente confirmó los items. SIEMPRE confirmar con el cliente antes de usar esta herramienta. Preguntá el nombre al cliente si no lo sabés.",
@@ -56,6 +95,11 @@ export const createOrderTool = tool({
     }).returning({ id: orders.id });
 
     notifyNewOrder({ id: order.id, customerName, orderType, items, total, status: "pending", phoneNumber: customerPhone, notes });
+
+    // Notificar al delivery con pedido + dirección
+    if (address) {
+      notifyDeliveryOrder(customerName, customerPhone, address, items, total, order.id);
+    }
 
     const typeLabel = orderType === "hamburguesas" ? "🍔 Hamburguesas" : "🍞 Pan Mayorista";
 
