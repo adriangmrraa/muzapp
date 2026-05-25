@@ -18,11 +18,11 @@ interface CartItem {
 }
 
 const CATEGORIES = [
-  { key: "hamburguesa", label: "🍔 Hamburguesas" },
-  { key: "acompanamiento", label: "🍟 Acompañamientos" },
-  { key: "bebidas", label: "🥤 Bebidas" },
-  { key: "pan_mayorista", label: "🍞 Pan Mayorista" },
-  { key: "tragos_vip", label: "🍹 Tragos V.I.P" },
+  { key: "hamburguesa", label: "Hamburguesas" },
+  { key: "acompanamiento", label: "Acompañamientos" },
+  { key: "bebidas", label: "Bebidas" },
+  { key: "pan_mayorista", label: "Pan Mayorista" },
+  { key: "tragos_vip", label: "Tragos V.I.P" },
 ];
 
 const styles = {
@@ -86,18 +86,18 @@ const styles = {
     borderBottom: "1px solid rgba(255,255,255,0.04)",
   },
   tab: (active: boolean) => ({
-    padding: "10px 18px",
-    borderRadius: "22px",
-    border: active ? "1px solid rgba(212,160,23,0.5)" : "1px solid rgba(255,255,255,0.06)",
-    background: active ? "linear-gradient(135deg, rgba(212,160,23,0.15), rgba(212,160,23,0.05))" : "rgba(255,255,255,0.03)",
+    padding: "12px 22px",
+    borderRadius: "100px",
+    border: "none",
+    background: active ? "linear-gradient(135deg, rgba(212,160,23,0.18), rgba(212,160,23,0.06))" : "rgba(255,255,255,0.04)",
     color: active ? "#D4A017" : "rgba(255,255,255,0.5)",
-    fontSize: "13px",
-    fontWeight: active ? 700 : 500,
+    fontSize: "14px",
+    fontWeight: active ? 600 : 450,
     cursor: "pointer",
     whiteSpace: "nowrap" as const,
-    transition: "all 0.25s ease",
+    transition: "all 0.3s ease",
     fontFamily: "inherit",
-    boxShadow: active ? "0 0 20px rgba(212,160,23,0.10)" : "none",
+    boxShadow: active ? "0 4px 16px rgba(212,160,23,0.15)" : "none",
   }),
   scrollArea: {
     display: "flex",
@@ -108,33 +108,30 @@ const styles = {
     scrollbarWidth: "none" as const,
   },
   card: {
-    minWidth: "290px",
-    maxWidth: "310px",
-    background: "linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    border: "1px solid rgba(212,160,23,0.10)",
-    borderRadius: "20px",
-    padding: "24px 20px 20px",
+    minWidth: "300px",
+    maxWidth: "340px",
+    background: "linear-gradient(165deg, #111111, #0d0d0d)",
+    borderRadius: "28px",
+    padding: "28px 24px 24px",
     scrollSnapAlign: "start" as const,
     display: "flex",
     flexDirection: "column" as const,
-    gap: "14px",
+    gap: "16px",
     flexShrink: 0,
-    transition: "all 0.3s ease",
-    boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(212,160,23,0.06), inset 0 1px 0 rgba(255,255,255,0.04)",
   },
   imageContainer: {
     width: "100%",
-    height: "170px",
-    borderRadius: "14px",
-    background: "linear-gradient(135deg, rgba(212,160,23,0.06), rgba(232,113,42,0.03))",
+    height: "180px",
+    borderRadius: "20px",
+    background: "linear-gradient(135deg, rgba(212,160,23,0.06), rgba(232,113,42,0.02))",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden" as const,
     position: "relative" as const,
-    border: "1px solid rgba(212,160,23,0.06)",
+    boxShadow: "inset 0 2px 12px rgba(0,0,0,0.2)",
   },
   productName: {
     fontSize: "18px",
@@ -152,36 +149,37 @@ const styles = {
     backgroundClip: "text" as const,
   },
   addBtn: {
-    padding: "10px 22px",
-    borderRadius: "12px",
-    border: "1px solid rgba(212,160,23,0.2)",
+    padding: "12px 24px",
+    borderRadius: "100px",
+    border: "none",
     background: "linear-gradient(135deg, rgba(212,160,23,0.2), rgba(212,160,23,0.08))",
     color: "#D4A017",
     fontSize: "13px",
     fontWeight: 600,
     cursor: "pointer",
     fontFamily: "inherit",
-    transition: "all 0.2s ease",
+    transition: "all 0.3s ease",
   },
   qtyBtn: (isAdd: boolean) => ({
-    width: "34px", height: "34px", borderRadius: "50%",
-    border: isAdd ? "none" : "1px solid rgba(212,160,23,0.25)",
-    background: isAdd ? "#D4A017" : "rgba(212,160,23,0.08)",
+    width: "38px", height: "38px", borderRadius: "50%",
+    border: "none",
+    background: isAdd ? "#D4A017" : "rgba(255,255,255,0.06)",
     color: isAdd ? "#000" : "#D4A017",
-    fontSize: "16px", fontWeight: 700,
+    fontSize: "18px", fontWeight: 600,
     cursor: "pointer", display: "flex" as const, alignItems: "center" as const,
     justifyContent: "center" as const, fontFamily: "inherit",
-    transition: "all 0.2s ease",
+    transition: "all 0.25s ease",
+    boxShadow: isAdd ? "0 4px 16px rgba(212,160,23,0.25)" : "none",
   }),
   cartBtn: {
-    padding: "16px 32px", borderRadius: "16px", border: "none",
+    padding: "18px 36px", borderRadius: "100px", border: "none",
     background: "linear-gradient(135deg, #D4A017, #F5A623)",
     color: "#000",
-    fontSize: "15px", fontWeight: 700, cursor: "pointer",
-    boxShadow: "0 4px 30px rgba(212,160,23,0.35)",
-    display: "flex", alignItems: "center" as const, gap: "10px",
+    fontSize: "16px", fontWeight: 700, cursor: "pointer",
+    boxShadow: "0 8px 32px rgba(212,160,23,0.3)",
+    display: "flex", alignItems: "center" as const, gap: "12px",
     fontFamily: "inherit",
-    transition: "all 0.2s ease",
+    transition: "all 0.3s ease",
   },
   drawerOverlay: {
     position: "fixed" as const, inset: 0, zIndex: 200,
@@ -199,17 +197,17 @@ const styles = {
     transition: "all 0.2s ease",
   },
   cartItem: {
-    display: "flex", alignItems: "center" as const, gap: "12px",
-    padding: "14px 18px", borderRadius: "14px",
+    display: "flex", alignItems: "center" as const, gap: "14px",
+    padding: "16px 20px", borderRadius: "20px",
     background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.06)",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.03)",
   },
   sendBtn: (disabled: boolean) => ({
-    width: "100%", padding: "16px", borderRadius: "16px", border: "none",
-    background: disabled ? "rgba(212,160,23,0.2)" : "linear-gradient(135deg, #D4A017, #F5A623)",
+    width: "100%", padding: "18px", borderRadius: "100px", border: "none",
+    background: disabled ? "rgba(212,160,23,0.15)" : "linear-gradient(135deg, #D4A017, #F5A623)",
     color: disabled ? "rgba(255,255,255,0.3)" : "#000",
     fontSize: "16px", fontWeight: 700, cursor: disabled ? "default" : "pointer",
-    fontFamily: "inherit", transition: "all 0.2s ease",
+    fontFamily: "inherit", transition: "all 0.3s ease",
   }),
 };
 
@@ -314,8 +312,8 @@ export function MenuDigitalClient({
           };
           return (
             <div key={product.id} style={styles.card}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(212,160,23,0.25)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(212,160,23,0.10)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 12px 48px rgba(0,0,0,0.5), 0 4px 16px rgba(212,160,23,0.12), inset 0 1px 0 rgba(255,255,255,0.06)"; e.currentTarget.style.transform = "translateY(-4px)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(212,160,23,0.06), inset 0 1px 0 rgba(255,255,255,0.04)"; e.currentTarget.style.transform = "translateY(0)"; }}>
               {/* Image */}
               <div style={styles.imageContainer}>
                 {imgUrl ? (
