@@ -125,6 +125,8 @@ export const agentConfig = pgTable("agent_config", {
   tiempoEspera: varchar("tiempo_espera", { length: 50 }),
   menuImageUrlHamburguesas: text("menu_image_url_hamburguesas"),
   menuImageUrlPan: text("menu_image_url_pan"),
+  menuImageUrlsHamburguesas: jsonb("menu_image_urls_hamburguesas").$type<string[]>().default([]),
+  menuImageUrlsPan: jsonb("menu_image_urls_pan").$type<string[]>().default([]),
   // ───────────────────────────────────────────────────────────────────────────
   // ─── Delivery ────────────────────────────────────────────────────────────
   deliveryPhoneNumber: varchar("delivery_phone_number", { length: 50 }),
@@ -283,4 +285,17 @@ export const addresses = pgTable("addresses", {
   label: text("label"), // "Casa", "Trabajo", etc — lo puede poner el agente
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   lastUsedAt: timestamp("last_used_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Promotions (promociones con productos reales) ──────────────────────────
+
+export const promotions = pgTable("promotions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  items: jsonb("items").$type<{ productId: number; productName: string; quantity: number }[]>().default([]),
+  customPrice: numeric("custom_price", { precision: 10, scale: 2 }),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
