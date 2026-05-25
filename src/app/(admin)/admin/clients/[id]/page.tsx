@@ -151,7 +151,7 @@ export default async function ClientDetailPage({ params }: Props) {
             <InfoRow label="Creado" value={lead?.createdAt ? new Date(lead.createdAt).toLocaleDateString("es-AR") : null} />
             <InfoRow label="Origen" value={lead?.platform ?? null} />
           </div>
-          {lead?.tags && lead.tags.length > 0 && (
+          {Array.isArray(lead?.tags) && lead.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
               {lead.tags.map((tag: string) => (
                 <span key={tag} className="inline-flex items-center rounded-full bg-neutral-500/20 text-neutral-300 px-2 py-0.5 text-[10px] font-medium">
