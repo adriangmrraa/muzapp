@@ -1,10 +1,53 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { orders, leads } from "@/db/schema";
-import { eq, or, ilike, asc } from "drizzle-orm";
+import { orders, leads, products } from "@/db/schema";
+import { eq, or, ilike, asc, sql } from "drizzle-orm";
 
-// ─── manageOrder: Herramientas de gestión de pedidos ──────────────────────
+// ─── Helper: Resolver nombre de producto contra DB ──────────────────────
+// El empleado dice "genesis", "2 de pollo", "hamburguesa clasica"
+// Esto busca el producto REAL en la DB y devuelve su nombre + precio oficial
+
+type ResolvedItem = { name: string; quantity: number; price: number };
+
+async function resolveItems(items: { name: string; quantity: number; price?: number }[]): Promise<ResolvedItem[]> {
+  try {
+    const dbProducts = await db
+      .select({ name: products.name, price: products.price })
+      .from(products)
+      .where(eq(products.available, true));
+
+    return items.map(item => {
+      const input = item.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      // Buscar el producto más parecido en la DB
+      const match = dbProducts.find(p => {
+        const pName = p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return pName === input || pName.includes(input) || input.includes(pName);
+      });
+      if (match) {
+        // Usar el nombre REAL del producto y su precio (o el que pasaron)
+        return {
+          name: match.name,
+          quantity: item.quantity,
+          price: item.price ?? (match.price ? Number(match.price) : 0),
+        };
+      }
+      // Si no hay match, dejar lo que el usuario puso
+      return {
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price ?? 0,
+      };
+    });
+  } catch {
+    // Si falla la consulta, devolver items originales
+    return items.map(item => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price ?? 0,
+    }));
+  }
+}
 
 // createOrder - Crear nuevo pedido
 export const createOrder = tool({
@@ -30,9 +73,13 @@ export const createOrder = tool({
     notes: z.string().optional().describe("Notas especiales"),
   }),
   execute: async ({ phone, customerName, orderType, items, deliveryFee, paymentStatus, paymentMethod, notes }) => {
-    // Buscar el lead por nombre si se proporcionó (siempre, incluso si hay phone)
-    if (customerName) {
-      const [lead] = await db
+    // Normalizar items contra productos reales de la DB
+    const resolvedItems = await resolveItems(items);
+
+    // REGLA: SIEMPRE se necesita un teléfono válido. Buscar lead o pedirlo.
+    // Si no hay phone pero hay nombre, buscar el lead
+    if (!phone && customerName) {
+      const leadsEncontrados = await db
         .select({ phone: leads.phone, name: leads.name })
         .from(leads)
         .where(
@@ -41,45 +88,64 @@ export const createOrder = tool({
             ilike(leads.phone, `%${customerName}%`)
           )
         )
-        .limit(1);
-      if (lead) {
-        phone = lead.phone; // usar el teléfono REAL del lead, no el inventado
-        customerName = lead.name ?? customerName; // usar el nombre REAL
+        .limit(5);
+
+      if (leadsEncontrados.length === 1) {
+        // Encontró exactamente uno -> usarlo
+        phone = leadsEncontrados[0].phone;
+        customerName = leadsEncontrados[0].name ?? customerName;
+      } else if (leadsEncontrados.length > 1) {
+        // Múltiples coincidencias -> pedir el teléfono
+        const opciones = leadsEncontrados.map(l => `• ${l.name || "?"} (${l.phone})`).join("\n");
+        return { success: false, message: `Varios clientes coinciden con "${customerName}":\n${opciones}\n\n¿Cuál es el teléfono?` };
       }
+      // Si no encontró ningún lead, sigue sin phone -> va a pedirlo abajo
     }
 
+    // Si no hay phone, no se puede crear el pedido
     if (!phone) {
-      return { success: false, message: "Necesito el teléfono o el nombre del cliente. Probá con searchClient primero." };
+      return { success: false, message: "Necesito el número de teléfono del cliente. Probá con searchClient primero o pasame el número." };
     }
+
+    // Vincular o crear lead SIEMPRE por teléfono
+    let leadId: number | null = null;
+    let leadName = customerName;
+    try {
+      const [existingLead] = await db
+        .select({ id: leads.id, status: leads.status, name: leads.name })
+        .from(leads)
+        .where(eq(leads.phone, phone))
+        .limit(1);
+      if (existingLead) {
+        leadId = existingLead.id;
+        leadName = existingLead.name ?? customerName ?? phone;
+        // Si era lead sin pedidos, pasar a converted
+        if (existingLead.status === "new" || existingLead.status === "contacted") {
+          await db.update(leads).set({ status: "converted" }).where(eq(leads.id, existingLead.id));
+        }
+        // Actualizar nombre si tenemos uno mejor
+        if (customerName) {
+          await db.update(leads).set({ name: customerName }).where(eq(leads.id, existingLead.id));
+        }
+      } else {
+        // Crear lead nuevo automáticamente
+        const [newLead] = await db.insert(leads).values({
+          name: customerName || phone,
+          phone,
+          status: "converted",
+        }).returning({ id: leads.id });
+        leadId = newLead.id;
+        leadName = customerName || phone;
+      }
+    } catch {} // non-fatal
 
     // Calcular total
     let subtotal = 0;
-    for (const item of items) {
+    for (const item of resolvedItems) {
       subtotal += (item.price ?? 0) * item.quantity;
     }
     const delivery = deliveryFee || 0;
     const total = subtotal + delivery;
-
-    // Vincular con lead existente
-    let leadId: number | null = null;
-    try {
-      const [lead] = await db
-        .select({ id: leads.id, status: leads.status })
-        .from(leads)
-        .where(eq(leads.phone, phone))
-        .limit(1);
-      if (lead) {
-        leadId = lead.id;
-        // Si era un lead sin pedidos, actualizar a "converted" (cliente)
-        if (lead.status === "new" || lead.status === "contacted") {
-          await db.update(leads).set({ status: "converted" }).where(eq(leads.id, lead.id));
-        }
-        // Actualizar nombre si tenemos uno mejor
-        if (customerName) {
-          await db.update(leads).set({ name: customerName }).where(eq(leads.id, lead.id));
-        }
-      }
-    } catch {}
 
     const [created] = await db
       .insert(orders)
@@ -88,7 +154,7 @@ export const createOrder = tool({
         phoneNumber: phone,
         customerName,
         orderType,
-        items,
+        items: resolvedItems,
         deliveryFee: delivery ? String(delivery) : "0",
         paymentStatus: paymentStatus || "pending",
         paymentMethod: paymentMethod || null,
@@ -104,7 +170,7 @@ export const createOrder = tool({
         id: created.id,
         customerName: customerName || phone,
         orderType,
-        items,
+        items: resolvedItems,
         total,
         status: "pending",
         phoneNumber: phone,
@@ -112,11 +178,13 @@ export const createOrder = tool({
       });
     } catch {}
 
+    const itemSummary = resolvedItems.map(i => `${i.quantity}x ${i.name}`).join(", ");
+
     return {
       success: true,
       id: created.id,
       total,
-      message: `✅ Pedido #${created.id} creado para ${customerName || phone}. Total: $${total}`,
+      message: `✅ Pedido #${created.id} creado para ${customerName || phone}. Total: $${total} (${itemSummary})`,
     };
   },
 });
@@ -134,6 +202,11 @@ export const addItemToOrder = tool({
     }),
   }),
   execute: async ({ orderId, item }) => {
+    // Normalizar item contra productos reales de la DB
+    const resolvedItems = await resolveItems([item]);
+    const resolved = resolvedItems[0];
+    if (!resolved) return { success: false, message: "Item inválido" };
+
     // Verificar que el pedido exista y no esté terminado
     const [existing] = await db
       .select({ id: orders.id, status: orders.status, items: orders.items })
@@ -154,7 +227,7 @@ export const addItemToOrder = tool({
 
     // Agregar item
     const currentItems = (existing.items as { name: string; quantity: number }[]) ?? [];
-    const newItems = [...currentItems, item];
+    const newItems = [...currentItems, resolved];
 
     await db
       .update(orders)
@@ -163,7 +236,7 @@ export const addItemToOrder = tool({
 
     return {
       success: true,
-      message: `Agregado ${item.quantity}x ${item.name} al pedido #${orderId}`,
+      message: `Agregado ${resolved.quantity}x ${resolved.name} al pedido #${orderId}`,
     };
   },
 });
@@ -469,6 +542,9 @@ export const createDeliveredOrder = tool({
     deliveredAt: z.string().optional().describe("Fecha/hora de entrega. Si no se especifica, se usa la fecha actual. Formato: DD/MM o YYYY-MM-DD HH:MM"),
   }),
   execute: async ({ customerName, customerPhone, orderType, items, deliveryFee, paymentStatus, paymentMethod, notes, deliveredAt }) => {
+    // Normalizar items contra productos reales de la DB
+    const resolvedItems = await resolveItems(items);
+
     // 1. Crear o actualizar lead
     let leadId: number | null = null;
     let leadName = customerName;
@@ -525,7 +601,7 @@ export const createDeliveredOrder = tool({
 
     // 3. Calcular total
     let subtotal = 0;
-    for (const item of items) {
+    for (const item of resolvedItems) {
       subtotal += (item.price ?? 0) * item.quantity;
     }
     const delivery = deliveryFee || 0;
@@ -537,7 +613,7 @@ export const createDeliveredOrder = tool({
       phoneNumber: customerPhone,
       customerName: leadName,
       orderType,
-      items,
+      items: resolvedItems,
       deliveryFee: delivery ? String(delivery) : "0",
       paymentStatus: paymentStatus || "paid",
       paymentMethod: paymentMethod || null,
@@ -552,10 +628,12 @@ export const createDeliveredOrder = tool({
       hour: "2-digit", minute: "2-digit",
     });
 
+    const itemSummary = resolvedItems.map(i => `${i.quantity}x ${i.name}`).join(", ");
+
     return {
       success: true,
       id: created.id,
-      message: `📦 Pedido #${created.id} cargado como ENTREGADO (${dateStr}) para ${leadName}. Total: $${total}. Sin notificaciones enviadas.`,
+      message: `📦 Pedido #${created.id} cargado como ENTREGADO (${dateStr}) para ${leadName}. Total: $${total}. Items: ${itemSummary}. Sin notificaciones.`,
     };
   },
 });
