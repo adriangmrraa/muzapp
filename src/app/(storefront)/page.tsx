@@ -28,8 +28,10 @@ export default function HomePage() {
 
       <ParallaxDivider image="/assets/images/background/2.png" />
 
-      <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
-        <div className="max-w-5xl mx-auto">
+      <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative overflow-hidden">
+        <div className="orb-glow orb-1" style={{ width: "450px", height: "450px", background: "radial-gradient(circle, rgba(212,160,23,0.08), transparent 70%)", top: "-10%", right: "-5%" }} />
+        <div className="orb-glow orb-2" style={{ width: "350px", height: "350px", background: "radial-gradient(circle, rgba(232,113,42,0.06), transparent 70%)", bottom: "-15%", left: "-5%" }} />
+        <div className="max-w-5xl mx-auto relative z-10">
           <GlassPanel>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
               <motion.div
@@ -112,8 +114,9 @@ export default function HomePage() {
       <BreadShowcase />
 
       {/* Digital Menu CTA */}
-      <section className="py-16 px-4 bg-[#0a0a0a]">
-        <div className="max-w-3xl mx-auto text-center">
+      <section className="py-16 px-4 bg-[#0a0a0a] relative overflow-hidden">
+        <div className="orb-glow orb-1" style={{ width: "400px", height: "400px", background: "radial-gradient(circle, rgba(212,160,23,0.07), transparent 70%)", top: "-20%", left: "10%" }} />
+        <div className="max-w-3xl mx-auto text-center relative z-10">
           <motion.div
             className="rounded-3xl p-10 flex flex-col items-center gap-4"
             variants={fadeUp}
