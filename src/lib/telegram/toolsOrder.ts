@@ -1,18 +1,18 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { orders } from "@/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { orders, leads } from "@/db/schema";
+import { eq, or, ilike, asc } from "drizzle-orm";
 
 // ─── manageOrder: Herramientas de gestión de pedidos ──────────────────────
 
 // createOrder - Crear nuevo pedido
 export const createOrder = tool({
   description:
-    "Crea un nuevo pedido. Preguntas: 'nuevo pedido', 'arma mi pedido'",
+    "Crea un nuevo pedido. Acepta teléfono o nombre del cliente (si ponés nombre busca automáticamente). Preguntas: 'nuevo pedido', 'arma mi pedido', 'agregale un pedido a flor'",
   inputSchema: z.object({
-    phone: z.string().describe("Teléfono del cliente"),
-    customerName: z.string().optional().describe("Nombre del cliente"),
+    phone: z.string().optional().describe("Teléfono del cliente (alternativa al nombre)"),
+    customerName: z.string().optional().describe("Nombre del cliente (si no sabés el teléfono, poné el nombre y lo busco)"),
     orderType: z
       .enum(["hamburguesas", "pan_mayorista"])
       .describe("Tipo de pedido"),
@@ -28,15 +28,51 @@ export const createOrder = tool({
     notes: z.string().optional().describe("Notas especiales"),
   }),
   execute: async ({ phone, customerName, orderType, items, notes }) => {
+    // Si no hay teléfono pero hay nombre, buscar el cliente
+    if (!phone && customerName) {
+      const [lead] = await db
+        .select({ phone: leads.phone, name: leads.name })
+        .from(leads)
+        .where(
+          or(
+            ilike(leads.name, `%${customerName}%`),
+            ilike(leads.phone, `%${customerName}%`)
+          )
+        )
+        .limit(1);
+      if (lead) {
+        phone = lead.phone;
+        if (!customerName) customerName = lead.name ?? undefined;
+      } else {
+        return { success: false, message: `No encontré un cliente llamado "${customerName}". Usá searchClient para buscar.` };
+      }
+    }
+
+    if (!phone) {
+      return { success: false, message: "Necesito el teléfono o el nombre del cliente." };
+    }
+
     // Calcular total
     let total = 0;
     for (const item of items) {
       total += (item.price ?? 0) * item.quantity;
     }
 
+    // Vincular con lead existente
+    let leadId: number | null = null;
+    try {
+      const [lead] = await db
+        .select({ id: leads.id })
+        .from(leads)
+        .where(eq(leads.phone, phone))
+        .limit(1);
+      if (lead) leadId = lead.id;
+    } catch {}
+
     const [created] = await db
       .insert(orders)
       .values({
+        leadId,
         phoneNumber: phone,
         customerName,
         orderType,
@@ -46,11 +82,26 @@ export const createOrder = tool({
       })
       .returning({ id: orders.id });
 
+    // Notificar
+    try {
+      const { notifyNewOrder } = await import("@/lib/telegram/notifier");
+      notifyNewOrder({
+        id: created.id,
+        customerName: customerName || phone,
+        orderType,
+        items,
+        total,
+        status: "pending",
+        phoneNumber: phone,
+        notes: notes || null,
+      });
+    } catch {}
+
     return {
       success: true,
       id: created.id,
       total,
-      message: `Pedido #${created.id} creado. Total: $${total}`,
+      message: `✅ Pedido #${created.id} creado para ${customerName || phone}. Total: $${total}`,
     };
   },
 });
