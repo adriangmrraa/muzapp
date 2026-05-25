@@ -28,8 +28,8 @@ export const createOrder = tool({
     notes: z.string().optional().describe("Notas especiales"),
   }),
   execute: async ({ phone, customerName, orderType, items, notes }) => {
-    // Si no hay teléfono pero hay nombre, buscar el cliente
-    if (!phone && customerName) {
+    // Buscar el lead por nombre si se proporcionó (siempre, incluso si hay phone)
+    if (customerName) {
       const [lead] = await db
         .select({ phone: leads.phone, name: leads.name })
         .from(leads)
@@ -41,15 +41,13 @@ export const createOrder = tool({
         )
         .limit(1);
       if (lead) {
-        phone = lead.phone;
-        if (!customerName) customerName = lead.name ?? undefined;
-      } else {
-        return { success: false, message: `No encontré un cliente llamado "${customerName}". Usá searchClient para buscar.` };
+        phone = lead.phone; // usar el teléfono REAL del lead, no el inventado
+        customerName = lead.name ?? customerName; // usar el nombre REAL
       }
     }
 
     if (!phone) {
-      return { success: false, message: "Necesito el teléfono o el nombre del cliente." };
+      return { success: false, message: "Necesito el teléfono o el nombre del cliente. Probá con searchClient primero." };
     }
 
     // Calcular total
