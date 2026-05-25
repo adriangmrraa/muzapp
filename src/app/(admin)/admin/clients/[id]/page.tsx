@@ -4,9 +4,10 @@ import { eq, desc, and, sql } from "drizzle-orm";
 import { calculateClientStats, formatCurrency } from "@/lib/client-utils";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, MapPin, ShoppingBag, MessageSquare, Star, Tag, Plus } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, ShoppingBag, MessageSquare, Star, Tag, Plus, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CreateOrderModalWrapperClient } from "../create-order-modal-wrapper-client";
+import { ClientEditForm } from "./client-edit-form";
 
 export const metadata = { title: "Ficha de Cliente — Mrs Muzzarella Admin" };
 
@@ -77,9 +78,12 @@ export default async function ClientDetailPage({ params }: Props) {
             {statusCfg && <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>}
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] text-neutral-500 uppercase tracking-wider">Total gastado</p>
-          <p className="text-2xl font-bold text-amber-400">${stats.totalSpent.toLocaleString("es-AR")}</p>
+        <div className="flex items-center gap-2">
+          <ClientEditForm lead={lead} />
+          <div className="text-right">
+            <p className="text-[10px] text-neutral-500 uppercase tracking-wider">Total gastado</p>
+            <p className="text-2xl font-bold text-amber-400">${stats.totalSpent.toLocaleString("es-AR")}</p>
+          </div>
         </div>
       </div>
 

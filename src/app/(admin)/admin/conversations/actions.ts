@@ -73,8 +73,26 @@ export async function getConversations(
     db.select({ count: count() }).from(conversations).where(where),
   ]);
 
+  // Enriquecer con el nombre del lead (el de la DB, no el de WhatsApp)
+  const enriched = await Promise.all(rows.map(async (conv) => {
+    if (conv.customerPhone) {
+      try {
+        const [lead] = await db
+          .select({ name: leads.name })
+          .from(leads)
+          .where(eq(leads.phone, conv.customerPhone))
+          .limit(1);
+        if (lead?.name && lead.name !== conv.customerName) {
+          // Si el lead tiene un nombre distinto al de WhatsApp, usamos el de la DB
+          return { ...conv, customerName: lead.name };
+        }
+      } catch {}
+    }
+    return conv;
+  }));
+
   return {
-    conversations: rows,
+    conversations: enriched,
     total: totalResult[0]?.count ?? 0,
     page,
     pageSize: PAGE_SIZE,
