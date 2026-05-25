@@ -612,6 +612,20 @@ export async function POST(request: NextRequest) {
         console.log(`[webhook:wa] Injected ${customerAddresses.length} saved addresses`);
       }
 
+      // ── Inject tipo de cliente (b2c/b2b) ─────────────────────────────────
+      try {
+        const { leads: leadsTable } = await import("@/db/schema");
+        const [leadData] = await db
+          .select({ type: leadsTable.type })
+          .from(leadsTable)
+          .where(eq(leadsTable.phone, customerPhone))
+          .limit(1);
+        if (leadData?.type) {
+          const typeLabel = leadData.type === "b2b" ? "cliente BUSINESS (pan mayorista)" : "cliente CONSUMIDOR FINAL (hamburguesas)";
+          aiMessages.unshift({ role: "user", content: `📋 Tipo de cliente: ${typeLabel}` });
+        }
+      } catch {} // non-fatal
+
       // Run agent with combined context
       const responseText = await runWhatsAppAgent({
         conversationId,

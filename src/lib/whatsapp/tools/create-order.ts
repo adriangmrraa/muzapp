@@ -87,6 +87,11 @@ export const createOrderTool = tool({
             .set({ address })
             .where(eq(leads.id, lead.id));
         }
+        // Set client type based on order type
+        const clientType = orderType === "pan_mayorista" ? "b2b" : "b2c";
+        await db.update(leads)
+          .set({ type: clientType })
+          .where(eq(leads.id, lead.id));
       }
     } catch {
       // non-fatal

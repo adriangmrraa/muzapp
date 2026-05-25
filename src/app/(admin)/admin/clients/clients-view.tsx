@@ -38,6 +38,13 @@ function leadStatusBadge(status: string | null): { label: string; cls: string } 
   return map[status] ?? null;
 }
 
+function clientTypeBadge(type: string | null): { label: string; cls: string } | null {
+  if (!type) return null;
+  return type === "b2b"
+    ? { label: "B2B", cls: "bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded-full" }
+    : { label: "B2C", cls: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded-full" };
+}
+
 function orderTypeIcon(type: string | null): string {
   if (type === "hamburguesas") return "🍔";
   if (type === "pan_mayorista") return "🍞";
@@ -133,11 +140,18 @@ export function ClientsView({
                     {client.phone}
                   </span>
                 </div>
-                {leadStatusBadge(client.leadStatus) && (
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${leadStatusBadge(client.leadStatus)!.cls}`}>
-                    {leadStatusBadge(client.leadStatus)!.label}
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {clientTypeBadge(client.type) && (
+                    <span className={clientTypeBadge(client.type)!.cls}>
+                      {clientTypeBadge(client.type)!.label}
+                    </span>
+                  )}
+                  {leadStatusBadge(client.leadStatus) && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${leadStatusBadge(client.leadStatus)!.cls}`}>
+                      {leadStatusBadge(client.leadStatus)!.label}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Stats grid */}
