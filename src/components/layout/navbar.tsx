@@ -11,10 +11,10 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
-  { href: "/hamburguesas", label: "🍔 Hamburguesas" },
-  { href: "/carta-digital", label: "📱 Carta Digital" },
-  { href: "/tragos-vip", label: "🍹 Tragos VIP" },
-  { href: "/pan-mayorista", label: "🍞 Pan Mayorista" },
+  { href: "/hamburguesas", label: "Hamburguesas" },
+  { href: "/carta-digital", label: "Carta Digital" },
+  { href: "/tragos-vip", label: "Tragos VIP" },
+  { href: "/pan-mayorista", label: "Pan Mayorista" },
 ];
 
 export function Navbar() {
