@@ -94,6 +94,7 @@ function OrderCard({
   }, [order.id]);
 
   return (
+    <>
     <motion.div
       layout
       initial={{ opacity: 0, y: 10 }}
@@ -256,8 +257,9 @@ function OrderCard({
           </Button>
         </div>
       </div>
-      <OrderEditModal order={order} open={editOpen} onClose={() => setEditOpen(false)} />
     </motion.div>
+    <OrderEditModal order={order} open={editOpen} onClose={() => setEditOpen(false)} />
+    </>
   );
 }
 
