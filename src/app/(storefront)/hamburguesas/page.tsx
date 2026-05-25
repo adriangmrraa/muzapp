@@ -137,6 +137,40 @@ export default function HamburguesasPage() {
 
       <ParallaxDivider image="/assets/images/background/3.png" height="35vh" />
 
+      {/* Digital Menu CTA */}
+      <section className="py-12 px-4 bg-[#0a0a0a]">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            className="rounded-2xl p-8"
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            style={{
+              background: "linear-gradient(135deg, rgba(212,160,23,0.08), rgba(212,160,23,0.02))",
+              border: "1px solid rgba(212,160,23,0.15)",
+            }}
+          >
+            <span className="text-3xl block mb-3">📱</span>
+            <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "var(--font-playfair), serif" }}>
+              Pedí directo desde la Carta Digital
+            </h2>
+            <p className="text-sm text-white/50 mb-5">
+              Deslizá productos, armá tu pedido y enviá por WhatsApp al toque
+            </p>
+            <a href="/carta-digital"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105"
+              style={{
+                background: "linear-gradient(135deg, #D4A017, #F5A623)",
+                color: "#000",
+              }}
+            >
+              📲 Abrir Carta Digital
+            </a>
+          </motion.div>
+        </div>
+      </section>
+
       <div className="bg-[#0a0a0a] py-16 px-4">
         <motion.div
           className="max-w-7xl mx-auto flex flex-col items-center gap-4 text-center"

@@ -111,6 +111,49 @@ export default function HomePage() {
       <ClientGallery />
       <BreadShowcase />
 
+      {/* Digital Menu CTA */}
+      <section className="py-16 px-4 bg-[#0a0a0a]">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            className="rounded-3xl p-10 flex flex-col items-center gap-4"
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            whileHover={{ boxShadow: "0 0 40px rgba(212,160,23,0.12)" }}
+            style={{
+              background: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid rgba(212,160,23,0.25)",
+            }}
+          >
+            <span className="text-5xl">📱</span>
+            <h2 className="text-2xl sm:text-3xl font-black"
+              style={{
+                fontFamily: "var(--font-playfair), serif",
+                background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}>
+              Carta Digital
+            </h2>
+            <p className="text-white/60 max-w-md leading-relaxed">
+              Deslizá todos nuestros productos, armá tu pedido y enviá directo por WhatsApp. Rápido y sin vueltas.
+            </p>
+            <a href="/carta-digital"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105"
+              style={{
+                background: "linear-gradient(135deg, #D4A017, #F5A623)",
+                color: "#000",
+              }}>
+              📲 Abrir Carta Digital
+            </a>
+          </motion.div>
+        </div>
+      </section>
+
       <ParallaxDivider image="/assets/images/background/b4.png" height="40vh" />
 
       <DeliveryCTA />
