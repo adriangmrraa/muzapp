@@ -240,8 +240,20 @@ function OrderCard({
               🗑️
             </Button>
           )}
+          {/* Edit button */}
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setEditOpen(true)}
+            variant="ghost"
+            className="h-7 text-[10px] px-1.5 text-white/20 hover:text-amber-400"
+            title="Editar pedido"
+          >
+            ✏️
+          </Button>
         </div>
       </div>
+      <OrderEditModal order={order} open={editOpen} onClose={() => setEditOpen(false)} />
     </motion.div>
   );
 }
