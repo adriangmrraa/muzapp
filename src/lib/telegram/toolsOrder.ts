@@ -4,6 +4,17 @@ import { db } from "@/db";
 import { orders, leads, products } from "@/db/schema";
 import { eq, or, ilike, asc, sql } from "drizzle-orm";
 
+// ─── Helper: Validar teléfono ──────────────────────────────────────────
+// Los teléfonos Argentinos válidos empiezan con 549 y tienen 10-12 dígitos
+function isValidPhone(phone: string): boolean {
+  const cleaned = phone.replace(/[+\s\-]/g, "");
+  return /^549\d{7,11}$/.test(cleaned);
+}
+
+function cleanPhone(phone: string): string {
+  return phone.replace(/[+\s\-]/g, "");
+}
+
 // ─── Helper: Resolver nombre de producto contra DB ──────────────────────
 // El empleado dice "genesis", "2 de pollo", "hamburguesa clasica"
 // Esto busca el producto REAL en la DB y devuelve su nombre + precio oficial
@@ -91,21 +102,23 @@ export const createOrder = tool({
         .limit(5);
 
       if (leadsEncontrados.length === 1) {
-        // Encontró exactamente uno -> usarlo
         phone = leadsEncontrados[0].phone;
         customerName = leadsEncontrados[0].name ?? customerName;
       } else if (leadsEncontrados.length > 1) {
-        // Múltiples coincidencias -> pedir el teléfono
         const opciones = leadsEncontrados.map(l => `• ${l.name || "?"} (${l.phone})`).join("\n");
         return { success: false, message: `Varios clientes coinciden con "${customerName}":\n${opciones}\n\n¿Cuál es el teléfono?` };
       }
-      // Si no encontró ningún lead, sigue sin phone -> va a pedirlo abajo
     }
 
-    // Si no hay phone, no se puede crear el pedido
+    // Validar formato de teléfono
     if (!phone) {
-      return { success: false, message: "Necesito el número de teléfono del cliente. Probá con searchClient primero o pasame el número." };
+      return { success: false, message: "Necesito el número de teléfono del cliente." };
     }
+    const cleanedPhone = cleanPhone(phone);
+    if (!isValidPhone(cleanedPhone)) {
+      return { success: false, message: `El teléfono "${phone}" no parece válido. Los teléfonos de la zona empiezan con 549370 y tienen 10-12 dígitos. Ej: 5493705241065` };
+    }
+    phone = cleanedPhone;
 
     // Vincular o crear lead SIEMPRE por teléfono
     let leadId: number | null = null;
@@ -545,6 +558,12 @@ export const createDeliveredOrder = tool({
     // Normalizar items contra productos reales de la DB
     const resolvedItems = await resolveItems(items);
 
+    // Validar y limpiar teléfono
+    const cleanedPhone = cleanPhone(customerPhone);
+    if (!isValidPhone(cleanedPhone)) {
+      return { success: false, message: `El teléfono "${customerPhone}" no parece válido. Los teléfonos de la zona empiezan con 549370 y tienen 10-12 dígitos.` };
+    }
+
     // 1. Crear o actualizar lead
     let leadId: number | null = null;
     let leadName = customerName;
@@ -552,7 +571,7 @@ export const createDeliveredOrder = tool({
     const [existingLead] = await db
       .select({ id: leads.id, status: leads.status, name: leads.name })
       .from(leads)
-      .where(eq(leads.phone, customerPhone))
+      .where(eq(leads.phone, cleanedPhone))
       .limit(1);
 
     if (existingLead) {
@@ -568,7 +587,7 @@ export const createDeliveredOrder = tool({
       // Crear lead nuevo
       const [newLead] = await db.insert(leads).values({
         name: customerName,
-        phone: customerPhone,
+        phone: cleanedPhone,
         status: "converted",
       }).returning({ id: leads.id });
       leadId = newLead.id;
@@ -610,7 +629,7 @@ export const createDeliveredOrder = tool({
     // 4. Crear pedido como delivered SIN notificaciones
     const [created] = await db.insert(orders).values({
       leadId,
-      phoneNumber: customerPhone,
+      phoneNumber: cleanedPhone,
       customerName: leadName,
       orderType,
       items: resolvedItems,
