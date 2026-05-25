@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
+import { resolveItems } from "@/lib/order-utils";
 
 export async function createManualOrder(
   data: {
@@ -24,7 +25,8 @@ export async function createManualOrder(
   if (!session) return { success: false, error: "No autorizado" };
 
   try {
-    const subtotal = data.items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+    const resolvedItems = await resolveItems(data.items);
+    const subtotal = resolvedItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
     const delivery = data.deliveryFee || 0;
     const total = subtotal + delivery;
 
@@ -59,7 +61,7 @@ export async function createManualOrder(
         customerName: data.customerName,
         address: data.address || null,
         orderType: data.orderType,
-        items: data.items,
+        items: resolvedItems,
         notes: data.notes || null,
         deliveryFee: data.deliveryFee ? String(data.deliveryFee) : "0",
         paymentStatus: data.paymentStatus || "pending",
@@ -73,7 +75,7 @@ export async function createManualOrder(
       id: order.id,
       customerName: data.customerName,
       orderType: data.orderType,
-      items: data.items,
+      items: resolvedItems,
       total,
       status: "pending",
       phoneNumber: data.customerPhone,

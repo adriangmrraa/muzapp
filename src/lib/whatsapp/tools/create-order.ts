@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { orders, leads, agentConfig, addresses } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
+import { resolveItems } from "@/lib/order-utils";
 
 async function notifyDeliveryOrder(
   customerName: string,
@@ -71,7 +72,9 @@ export const createOrderTool = tool({
     notes: z.string().optional().describe("Notas adicionales del pedido"),
   }),
   execute: async ({ customerName, orderType, items, customerPhone, address, deliveryFee, paymentStatus, paymentMethod, notes }) => {
-    const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
+    // Resolver items contra productos reales de la DB
+    const resolvedItems = await resolveItems(items);
+    const subtotal = resolvedItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
     const delivery = deliveryFee || 0;
     const total = subtotal + delivery;
 
@@ -120,7 +123,7 @@ export const createOrderTool = tool({
       customerName,
       address: address || null,
       orderType,
-      items: items,
+      items: resolvedItems,
       deliveryFee: delivery ? String(delivery) : "0",
       paymentStatus: paymentStatus || "pending",
       paymentMethod: paymentMethod || null,
@@ -128,11 +131,11 @@ export const createOrderTool = tool({
       status: "pending",
     }).returning({ id: orders.id });
 
-    notifyNewOrder({ id: order.id, customerName, orderType, items, total, status: "pending", phoneNumber: customerPhone, notes });
+    notifyNewOrder({ id: order.id, customerName, orderType, items: resolvedItems, total, status: "pending", phoneNumber: customerPhone, notes });
 
     // Notificar al delivery con pedido + dirección
     if (address) {
-      notifyDeliveryOrder(customerName, customerPhone, address, items, total, order.id);
+      notifyDeliveryOrder(customerName, customerPhone, address, resolvedItems, total, order.id);
     }
 
     const typeLabel = orderType === "hamburguesas" ? "🍔 Hamburguesas" : "🍞 Pan Mayorista";

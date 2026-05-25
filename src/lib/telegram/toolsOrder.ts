@@ -3,62 +3,10 @@ import { z } from "zod";
 import { db } from "@/db";
 import { orders, leads, products } from "@/db/schema";
 import { eq, or, ilike, asc, sql } from "drizzle-orm";
+import { resolveItems, isValidPhone, cleanPhone } from "@/lib/order-utils";
 
-// ─── Helper: Validar teléfono ──────────────────────────────────────────
-// Los teléfonos Argentinos válidos empiezan con 549 y tienen 10-12 dígitos
-function isValidPhone(phone: string): boolean {
-  const cleaned = phone.replace(/[+\s\-]/g, "");
-  return /^549\d{7,11}$/.test(cleaned);
-}
 
-function cleanPhone(phone: string): string {
-  return phone.replace(/[+\s\-]/g, "");
-}
-
-// ─── Helper: Resolver nombre de producto contra DB ──────────────────────
-// El empleado dice "genesis", "2 de pollo", "hamburguesa clasica"
-// Esto busca el producto REAL en la DB y devuelve su nombre + precio oficial
-
-type ResolvedItem = { name: string; quantity: number; price: number };
-
-async function resolveItems(items: { name: string; quantity: number; price?: number }[]): Promise<ResolvedItem[]> {
-  try {
-    const dbProducts = await db
-      .select({ name: products.name, price: products.price })
-      .from(products)
-      .where(eq(products.available, true));
-
-    return items.map(item => {
-      const input = item.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      // Buscar el producto más parecido en la DB
-      const match = dbProducts.find(p => {
-        const pName = p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        return pName === input || pName.includes(input) || input.includes(pName);
-      });
-      if (match) {
-        // Usar el nombre REAL del producto y su precio (o el que pasaron)
-        return {
-          name: match.name,
-          quantity: item.quantity,
-          price: item.price ?? (match.price ? Number(match.price) : 0),
-        };
-      }
-      // Si no hay match, dejar lo que el usuario puso
-      return {
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price ?? 0,
-      };
-    });
-  } catch {
-    // Si falla la consulta, devolver items originales
-    return items.map(item => ({
-      name: item.name,
-      quantity: item.quantity,
-      price: item.price ?? 0,
-    }));
-  }
-}
+// ─── manageOrder: Herramientas de gestión de pedidos
 
 // createOrder - Crear nuevo pedido
 export const createOrder = tool({

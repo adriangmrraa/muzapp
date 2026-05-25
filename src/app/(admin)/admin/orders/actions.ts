@@ -22,6 +22,9 @@ export interface OrderRow {
   tags: string[] | null;
   status: string;
   leadId: number | null;
+  deliveryFee: string | null;
+  paymentStatus: string | null;
+  paymentMethod: string | null;
   deliveredAt: Date | null;
   followupSent: boolean;
   createdAt: Date;
@@ -243,3 +246,45 @@ export async function deleteOrder(
     return { success: false, error: "Error al eliminar" };
   }
 }
+
+/**
+ * Actualiza un pedido (items, datos del cliente, etc.)
+ */
+export const updateOrder = async (
+  orderId: number,
+  data: {
+    customerName?: string;
+    phoneNumber?: string;
+    address?: string | null;
+    orderType?: "hamburguesas" | "pan_mayorista";
+    items?: { name: string; quantity: number; price?: number; unitPrice?: number }[];
+    deliveryFee?: number;
+    notes?: string | null;
+    paymentStatus?: string;
+    paymentMethod?: string | null;
+  }
+): Promise<{ success: boolean; error?: string }> => {
+  const session = await auth();
+  if (!session) return { success: false, error: "No autorizado" };
+
+  try {
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (data.customerName !== undefined) updates.customerName = data.customerName;
+    if (data.phoneNumber !== undefined) updates.phoneNumber = data.phoneNumber;
+    if (data.address !== undefined) updates.address = data.address;
+    if (data.orderType !== undefined) updates.orderType = data.orderType;
+    if (data.items !== undefined) updates.items = data.items;
+    if (data.deliveryFee !== undefined) updates.deliveryFee = String(data.deliveryFee);
+    if (data.notes !== undefined) updates.notes = data.notes;
+    if (data.paymentStatus !== undefined) updates.paymentStatus = data.paymentStatus;
+    if (data.paymentMethod !== undefined) updates.paymentMethod = data.paymentMethod;
+
+    await db.update(orders).set(updates).where(eq(orders.id, orderId));
+    revalidatePath("/admin/orders");
+    revalidatePath("/admin/clients");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: "Error al actualizar" };
+  }
+};

@@ -4,7 +4,8 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
-import { updateOrderStatus, notifyCustomer, deleteOrder, type OrderRow } from "./actions";
+import { updateOrderStatus, notifyCustomer, deleteOrder, updateOrder, type OrderRow } from "./actions";
+import { OrderEditModal } from "./order-edit-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +73,7 @@ function OrderCard({
   const [notifying, setNotifying] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const statusCfg = STATUSES[order.status] ?? STATUSES.pending;
   const typeBadge = orderTypeBadge(order.orderType);
   const items: Array<{ name?: string; quantity?: number; productName?: string }> =
