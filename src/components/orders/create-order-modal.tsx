@@ -65,11 +65,12 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
     fetch("/api/leads")
       .then((r) => r.json())
       .then((data) => {
-        const all = (data.leads || data || []).map((l: any) => ({
+        const list = Array.isArray(data) ? data : (data.leads || []);
+        const all = list.map((l: any) => ({
           name: l.name || "Sin nombre",
           phone: l.phone || "",
           status: l.status || "new",
-          hasOrders: l.totalOrders > 0 || false,
+          hasOrders: (l.totalOrders || 0) > 0,
         }));
         setLeads(all);
       })
