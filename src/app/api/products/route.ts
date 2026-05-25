@@ -41,15 +41,9 @@ export async function GET(req: NextRequest) {
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(products.sortOrder);
 
-    // Format price as string with $ prefix
-    const formatted = items.map((item) => ({
-      ...item,
-      price: item.price ? `$${Number(item.price).toLocaleString("es-AR")}` : null,
-    }));
-
-    return NextResponse.json(formatted, {
+    return NextResponse.json(items, {
       headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });
   } catch (err) {
