@@ -47,6 +47,8 @@ export const leadStatusEnum = pgEnum("lead_status", [
   "lost",
 ]);
 
+export const clientTypeEnum = pgEnum("client_type", ["b2c", "b2b"]);
+
 export const channelEnum = pgEnum("channel", ["whatsapp", "telegram"]);
 export const messageRoleEnum = pgEnum("message_role", ["user", "assistant", "system", "human"]);
 
@@ -189,6 +191,7 @@ export const leads = pgTable("leads", {
   platform: varchar("platform", { length: 100 }),
   notes: text("notes"),
   status: leadStatusEnum("status").notNull().default("new"),
+  type: varchar("type", { length: 10 }),
   conversationId: integer("conversation_id").references(() => conversations.id),
   tags: jsonb("tags").$type<string[]>().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
