@@ -112,7 +112,7 @@ export function MenuDigitalClient({
       overflow: "hidden",
     }}>
       {/* ── HEADER ── */}
-      <div style={{
+      <div className="header-padding" style={{
         position: "relative",
         padding: "52px 24px 32px",
         textAlign: "center",
@@ -151,7 +151,7 @@ export function MenuDigitalClient({
         borderBottom: "1px solid rgba(255,255,255,0.04)",
       }}>
         {categories.map((cat) => (
-          <button key={cat.key} onClick={() => setActiveCat(cat.key)}
+          <button key={cat.key} onClick={() => setActiveCat(cat.key)} className="cat-tab"
             style={{
               padding: "10px 20px", borderRadius: "100px", border: "none",
               background: activeCat === cat.key
@@ -176,7 +176,7 @@ export function MenuDigitalClient({
         transition: "background 0.5s ease",
       }}>
         {/* Background emoji gigante */}
-        <div style={{
+        <div className="bg-emoji" style={{
           position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
           fontSize: "300px", opacity: 0.03, pointerEvents: "none", userSelect: "none",
           transition: "all 0.5s ease",
@@ -199,7 +199,7 @@ export function MenuDigitalClient({
             const delay = idx * 0.08;
 
             return (
-              <div key={product.id} style={{
+              <div key={product.id} className="product-card" style={{
                 minWidth: "300px", maxWidth: "340px",
                 background: "rgba(255,255,255,0.03)",
                 backdropFilter: "blur(20px)",
@@ -227,7 +227,7 @@ export function MenuDigitalClient({
                   e.currentTarget.style.borderColor = "rgba(212,160,23,0.06)";
                 }}>
                 {/* Image */}
-                <div style={{
+                <div className="product-image" style={{
                   width: "100%", height: "180px", borderRadius: "20px",
                   background: `linear-gradient(135deg, ${catInfo.glow}, rgba(0,0,0,0.2))`,
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -249,7 +249,7 @@ export function MenuDigitalClient({
 
                 {/* Name + Desc */}
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "#fff", letterSpacing: "-0.3px" }}>
+                  <h3 className="product-name" style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "#fff", letterSpacing: "-0.3px" }}>
                     {product.name.trim()}
                   </h3>
                   {product.description && (
@@ -261,7 +261,7 @@ export function MenuDigitalClient({
 
                 {/* Price + Actions */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
-                  <span style={{
+                  <span className="product-price" style={{
                     fontSize: "26px", fontWeight: 800,
                     background: "linear-gradient(135deg, #D4A017, #F5A623)",
                     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
@@ -310,7 +310,7 @@ export function MenuDigitalClient({
       {/* ── FLOATING CART ── */}
       {count > 0 && !cartOpen && (
         <div style={{ position: "fixed", bottom: "24px", left: "50%", transform: "translateX(-50%)", zIndex: 100 }}>
-          <button onClick={() => setCartOpen(true)}
+          <button onClick={() => setCartOpen(true)} className="cart-pulse"
             style={{
               padding: "18px 36px", borderRadius: "100px", border: "none",
               background: "linear-gradient(135deg, #D4A017, #F5A623)",
@@ -379,7 +379,7 @@ export function MenuDigitalClient({
         </div>
       )}
 
-      {/* ── ANIMATIONS ── */}
+      {/* ── ANIMATIONS Y RESPONSIVE ── */}
       <style>{`
         @keyframes orbFloat {
           0%, 100% { transform: translate(0, 0) scale(1); }
@@ -390,7 +390,43 @@ export function MenuDigitalClient({
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-10px); }
         }
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 8px 40px rgba(212,160,23,0.35); }
+          50% { box-shadow: 0 12px 60px rgba(212,160,23,0.5); }
+        }
+        .cart-pulse {
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
         ::-webkit-scrollbar { display: none; }
+        
+        @media (max-width: 480px) {
+          .product-card {
+            min-width: 82vw !important;
+            max-width: 85vw !important;
+            padding: 18px !important;
+            border-radius: 22px !important;
+          }
+          .product-image {
+            height: 140px !important;
+            border-radius: 16px !important;
+          }
+          .product-name {
+            font-size: 16px !important;
+          }
+          .product-price {
+            font-size: 22px !important;
+          }
+          .cat-tab {
+            padding: 8px 14px !important;
+            font-size: 12px !important;
+          }
+          .header-padding {
+            padding: 40px 16px 24px !important;
+          }
+          .bg-emoji {
+            font-size: 200px !important;
+          }
+        }
       `}</style>
     </div>
   );
