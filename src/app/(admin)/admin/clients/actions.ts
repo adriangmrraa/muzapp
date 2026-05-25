@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { orders, leads, conversations } from "@/db/schema";
-import { desc, count, sql, and, or, ilike } from "drizzle-orm";
+import { orders, leads } from "@/db/schema";
+import { desc, count, sql, and, or, ilike, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 
 const PAGE_SIZE = 30;
@@ -15,6 +15,7 @@ export interface ClientSummary {
   lastOrderType: string | null;
   lastOrderStatus: string | null;
   leadStatus: string | null;
+  type: string | null;
   totalConversations: number;
   lastConversationDate: Date | null;
   tags: string[];
@@ -40,7 +41,7 @@ export async function fetchClients(params: {
   const page = Math.max(1, params.page ?? 1);
   const offset = (page - 1) * PAGE_SIZE;
 
-  // Get all unique phones from orders, leads, and conversations
+  // Get all unique phones from orders only (clients are leads who ordered)
   const orderPhones = await db
     .select({
       phone: orders.phoneNumber,
@@ -60,19 +61,10 @@ export async function fetchClients(params: {
       name: leads.name,
       status: leads.status,
       tags: leads.tags,
+      type: leads.type,
     })
     .from(leads)
-    .groupBy(leads.phone, leads.name, leads.status, leads.tags);
-
-  const convPhones = await db
-    .select({
-      phone: conversations.whatsappId,
-      customerName: conversations.customerName,
-      count: count(),
-      lastDate: sql<string>`MAX(${conversations.updatedAt})`,
-    })
-    .from(conversations)
-    .groupBy(conversations.whatsappId, conversations.customerName);
+    .groupBy(leads.phone, leads.name, leads.status, leads.tags, leads.type);
 
   // Merge by phone
   const phoneMap = new Map<string, ClientSummary>();
@@ -86,6 +78,7 @@ export async function fetchClients(params: {
       lastOrderType: o.lastType,
       lastOrderStatus: o.lastStatus,
       leadStatus: null,
+      type: null,
       totalConversations: 0,
       lastConversationDate: null,
       tags: [],
@@ -96,44 +89,11 @@ export async function fetchClients(params: {
     const existing = phoneMap.get(l.phone);
     if (existing) {
       existing.leadStatus = l.status;
+      existing.type = l.type;
       if (!existing.name && l.name) existing.name = l.name;
       if (l.tags) existing.tags = l.tags;
-    } else {
-      phoneMap.set(l.phone, {
-        phone: l.phone,
-        name: l.name,
-        totalOrders: 0,
-        lastOrderDate: null,
-        lastOrderType: null,
-        lastOrderStatus: null,
-        leadStatus: l.status,
-        totalConversations: 0,
-        lastConversationDate: null,
-        tags: l.tags ?? [],
-      });
     }
-  }
-
-  for (const c of convPhones) {
-    const existing = phoneMap.get(c.phone);
-    if (existing) {
-      existing.totalConversations = c.count;
-      existing.lastConversationDate = c.lastDate ? new Date(c.lastDate) : null;
-      if (!existing.name && c.customerName) existing.name = c.customerName;
-    } else {
-      phoneMap.set(c.phone, {
-        phone: c.phone,
-        name: c.customerName,
-        totalOrders: 0,
-        lastOrderDate: null,
-        lastOrderType: null,
-        lastOrderStatus: null,
-        leadStatus: null,
-        totalConversations: c.count,
-        lastConversationDate: c.lastDate ? new Date(c.lastDate) : null,
-        tags: [],
-      });
-    }
+    // leads without orders are NOT added as clients
   }
 
   let clients = Array.from(phoneMap.values());
@@ -165,4 +125,27 @@ export async function fetchClients(params: {
     totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
     currentPage: page,
   };
+}
+
+/**
+ * Actualiza datos de un cliente (name, type, notes) en la tabla leads.
+ */
+export async function updateClient(
+  phone: string,
+  data: { name?: string; type?: "b2c" | "b2b" | null; notes?: string }
+): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session) return { success: false, error: "No autorizado" };
+
+  try {
+    const updateData: Record<string, unknown> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.type !== undefined) updateData.type = data.type;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+
+    await db.update(leads).set(updateData).where(eq(leads.phone, phone));
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: "Error al actualizar" };
+  }
 }
