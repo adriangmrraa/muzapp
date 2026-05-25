@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { leads } from "@/db/schema";
 import { desc, eq, count } from "drizzle-orm";
 import LeadsTable from "./leads-table";
+import { CreateOrderModalWrapperClient } from "../clients/create-order-modal-wrapper-client";
 
 export const metadata = {
   title: "Leads — Mrs Muzzarella Admin",
@@ -45,13 +46,16 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gold-gradient">
-          Leads
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Contactos capturados desde campañas publicitarias
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gold-gradient">
+            Leads
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Contactos capturados desde campañas publicitarias
+          </p>
+        </div>
+        <CreateOrderModalWrapperClient />
       </div>
       <LeadsTable
         leads={rows}
