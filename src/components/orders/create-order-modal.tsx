@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, Trash2, ShoppingBag } from "lucide-react";
+import { X, Plus, Minus, Trash2, ShoppingBag, Search, ChevronDown } from "lucide-react";
 import { createManualOrder } from "@/app/(admin)/admin/orders/create-order-action";
 
 interface OrderItem {
@@ -14,7 +14,6 @@ interface OrderItem {
 interface CreateOrderModalProps {
   open: boolean;
   onClose: () => void;
-  /** Pre-cargar datos del cliente */
   clientName?: string;
   clientPhone?: string;
 }
@@ -24,6 +23,13 @@ type ProductoDisponible = {
   name: string;
   price: string | null;
   category: string;
+};
+
+type LeadOption = {
+  name: string;
+  phone: string;
+  status: string;
+  hasOrders: boolean;
 };
 
 export function CreateOrderModal({ open, onClose, clientName, clientPhone }: CreateOrderModalProps) {
@@ -36,6 +42,10 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
   const [products, setProducts] = useState<ProductoDisponible[]>([]);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [leads, setLeads] = useState<LeadOption[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setCustomerName(clientName || "");
@@ -49,6 +59,34 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
       .catch(() => {});
   }, []);
 
+  // Fetch leads when modal opens
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/leads")
+      .then((r) => r.json())
+      .then((data) => {
+        const all = (data.leads || data || []).map((l: any) => ({
+          name: l.name || "Sin nombre",
+          phone: l.phone || "",
+          status: l.status || "new",
+          hasOrders: l.totalOrders > 0 || false,
+        }));
+        setLeads(all);
+      })
+      .catch(() => {});
+  }, [open]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
   useEffect(() => {
     if (!open) {
       setItems([]);
@@ -56,8 +94,22 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
       setNotes("");
       setDone(false);
       setOrderType("hamburguesas");
+      setSearchTerm("");
     }
   }, [open]);
+
+  const filteredLeads = leads.filter(
+    (l) =>
+      l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      l.phone.includes(searchTerm)
+  );
+
+  const selectClient = (lead: LeadOption) => {
+    setCustomerName(lead.name);
+    setCustomerPhone(lead.phone);
+    setSearchTerm(lead.name);
+    setShowDropdown(false);
+  };
 
   const addItem = (name: string, price: string | null) => {
     const p = price ? parseFloat(price.replace(/[^0-9]/g, "")) : 0;
@@ -115,7 +167,7 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="fixed z-50 inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[600px] md:max-h-[85vh] bg-[#0f0f0f] border border-white/10 rounded-2xl flex flex-col shadow-2xl"
+            className="fixed z-50 inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[640px] md:max-h-[90vh] bg-[#0f0f0f] border border-white/10 rounded-2xl flex flex-col shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
@@ -134,7 +186,56 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-                {/* Cliente */}
+                {/* Buscador de Clientes / Leads */}
+                <div ref={searchRef} className="relative">
+                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Cliente / Lead</label>
+                  <div className="relative mt-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
+                    <input
+                      value={searchTerm}
+                      onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true); }}
+                      onFocus={() => setShowDropdown(true)}
+                      placeholder="Buscá por nombre o teléfono..."
+                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40"
+                    />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-600" />
+                  </div>
+
+                  {showDropdown && (
+                    <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-[#1a1a1a] shadow-xl">
+                      {filteredLeads.length === 0 ? (
+                        <p className="px-3 py-3 text-xs text-neutral-500">Sin resultados</p>
+                      ) : (
+                        filteredLeads.map((lead) => (
+                          <button
+                            key={lead.phone}
+                            onClick={() => selectClient(lead)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-white/5 transition-colors ${
+                              customerPhone === lead.phone ? "bg-[#D4A017]/10" : ""
+                            }`}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <span className="text-xs font-medium text-neutral-200 truncate block">
+                                {lead.name}
+                                {lead.hasOrders && <span className="ml-1.5 text-[10px] text-emerald-400">🟢 cliente</span>}
+                              </span>
+                              <span className="text-[10px] text-neutral-500 font-mono">{lead.phone}</span>
+                            </div>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                              lead.status === "new" ? "bg-blue-500/10 text-blue-300" :
+                              lead.status === "contacted" ? "bg-amber-500/10 text-amber-300" :
+                              lead.status === "converted" ? "bg-green-500/10 text-green-300" : "bg-white/10 text-neutral-400"
+                            }`}>
+                              {lead.status}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Cliente seleccionado */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[10px] text-neutral-500 uppercase font-semibold">Nombre</label>
@@ -176,7 +277,7 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
                   </div>
                 </div>
 
-                {/* Items del pedido */}
+                {/* Items */}
                 <div>
                   <label className="text-[10px] text-neutral-500 uppercase font-semibold">Items ({items.length})</label>
                   {items.length === 0 ? (
@@ -199,13 +300,11 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
                   )}
                 </div>
 
-                {/* Total */}
                 <div className="flex items-center justify-between py-2 border-t border-white/5">
                   <span className="text-xs text-neutral-500">Total</span>
                   <span className="text-sm font-bold text-[#D4A017]">${total.toLocaleString("es-AR")}</span>
                 </div>
 
-                {/* Dirección + Notas */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[10px] text-neutral-500 uppercase font-semibold">Dirección</label>
@@ -221,7 +320,6 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
               </div>
             )}
 
-            {/* Footer */}
             <div className="px-5 py-3 border-t border-white/5 flex justify-end gap-2">
               <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs text-neutral-400 hover:bg-white/5 transition-colors">Cancelar</button>
               <button onClick={handleSave} disabled={saving || !customerName || !customerPhone || items.length === 0}

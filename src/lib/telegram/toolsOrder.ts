@@ -62,11 +62,21 @@ export const createOrder = tool({
     let leadId: number | null = null;
     try {
       const [lead] = await db
-        .select({ id: leads.id })
+        .select({ id: leads.id, status: leads.status })
         .from(leads)
         .where(eq(leads.phone, phone))
         .limit(1);
-      if (lead) leadId = lead.id;
+      if (lead) {
+        leadId = lead.id;
+        // Si era un lead sin pedidos, actualizar a "converted" (cliente)
+        if (lead.status === "new" || lead.status === "contacted") {
+          await db.update(leads).set({ status: "converted" }).where(eq(leads.id, lead.id));
+        }
+        // Actualizar nombre si tenemos uno mejor
+        if (customerName) {
+          await db.update(leads).set({ name: customerName }).where(eq(leads.id, lead.id));
+        }
+      }
     } catch {}
 
     const [created] = await db
