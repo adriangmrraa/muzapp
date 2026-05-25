@@ -133,7 +133,7 @@ export async function fetchClients(params: {
  */
 export async function updateClient(
   phone: string,
-  data: { name?: string; email?: string; address?: string; type?: "b2c" | "b2b" | null; notes?: string }
+  data: { name?: string; email?: string; address?: string; type?: "b2c" | "b2b" | null; notes?: string; tags?: string[] }
 ): Promise<{ success: boolean; error?: string }> {
   const session = await auth();
   if (!session) return { success: false, error: "No autorizado" };
@@ -145,6 +145,7 @@ export async function updateClient(
     if (data.address !== undefined) updateData.address = data.address;
     if (data.type !== undefined) updateData.type = data.type;
     if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.tags !== undefined) updateData.tags = data.tags;
 
     await db.update(leads).set(updateData).where(eq(leads.phone, phone));
 

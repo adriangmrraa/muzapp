@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Edit, X, Save } from "lucide-react";
+import { updateClient } from "../actions";
 
 interface LeadData {
   id: number;
@@ -41,19 +42,13 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
     try {
       const tags = tagsStr.split(",").map((t) => t.trim()).filter(Boolean);
 
-      await fetch("/api/leads/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: lead.id,
-          name,
-          phone,
-          email: email || null,
-          address: address || null,
-          notes: notes || null,
-          type: type || null,
-          tags,
-        }),
+      await updateClient(phone, {
+        name,
+        email: email || undefined,
+        address: address || undefined,
+        notes: notes || undefined,
+        type: (type === "b2c" || type === "b2b") ? type : null,
+        tags: tags.length > 0 ? tags : undefined,
       });
 
       setOpen(false);
