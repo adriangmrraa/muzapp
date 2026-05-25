@@ -137,7 +137,7 @@ export async function runWhatsAppAgent({
   // El prompt V2 siempre va como base. Lo del admin UI se agrega como seccion extra.
   // customPrompt del webhook ya NO se usa como override — buildSystemPrompt maneja todo.
   let system: string;
-  let customerContext: { name?: string; phone?: string; address?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null } } | undefined;
+  let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null } } | undefined;
   
   try {
     // Cargar contexto del cliente (nombre, historial de pedidos)
@@ -153,10 +153,10 @@ export async function runWhatsAppAgent({
         .limit(1);
       
       if (conv?.phone) {
-        // Dirección guardada del lead
+        // Datos del lead (dirección, notas, tags)
         const { leads } = await import("@/db/schema");
         const [lead] = await db
-          .select({ address: leads.address, tags: leads.tags })
+          .select({ address: leads.address, tags: leads.tags, notes: leads.notes })
           .from(leads)
           .where(eq(leads.phone, conv.phone))
           .limit(1);
@@ -200,6 +200,7 @@ export async function runWhatsAppAgent({
             status: orders.status,
             address: orders.address,
             customerName: orders.customerName,
+            paymentStatus: orders.paymentStatus,
           })
           .from(orders)
           .where(and(
@@ -213,6 +214,7 @@ export async function runWhatsAppAgent({
           name: conv.name || undefined,
           phone: conv.phone,
           address: lead?.address || null,
+          notes: lead?.notes || null,
           preferences: preferences.length > 0 ? preferences : undefined,
           orderHistory: recentOrders.map(o => ({ items: o.items, status: o.status, id: o.id })),
           pendingOrder: pendingOrder ? {
@@ -220,6 +222,7 @@ export async function runWhatsAppAgent({
             items: pendingOrder.items,
             orderType: pendingOrder.orderType,
             address: pendingOrder.address,
+            paymentStatus: pendingOrder.paymentStatus,
           } : undefined,
         };
       }

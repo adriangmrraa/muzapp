@@ -88,7 +88,7 @@ export const internalAgentTools = {
   updateProduct: manageProductTools.updateProduct,
   deleteProduct: manageProductTools.deleteProduct,
 
-  // manageOrder (~7 tools)
+  // manageOrder (~9 tools)
   createOrder: manageOrderTools.createOrder,
   addItemToOrder: manageOrderTools.addItemToOrder,
   removeItemFromOrder: manageOrderTools.removeItemFromOrder,
@@ -96,6 +96,8 @@ export const internalAgentTools = {
   cancelOrder: manageOrderTools.cancelOrder,
   calculateTotal: manageOrderTools.calculateTotal,
   confirmOrder: manageOrderTools.confirmOrder,
+  markAsPaid: manageOrderTools.markAsPaid,
+  markPaymentMethod: manageOrderTools.markPaymentMethod,
 
   // manageManagement (13 tools)
   getClients: managementTools.getClients,
@@ -112,6 +114,10 @@ export const internalAgentTools = {
   getConversationMessages: managementTools.getConversationMessages,
   getActivePromotions: managementTools.getActivePromotions,
   getCustomerFullProfile: managementTools.getCustomerFullProfile,
+  getConversationContext: managementTools.getConversationContext,
+  setHumanOverride: managementTools.setHumanOverride,
+  sendMessageAsOperator: managementTools.sendMessageAsOperator,
+  injectCustomerNote: managementTools.injectCustomerNote,
 
   // analytics (4 tools)
   getSalesByDateRange: analyticsTools.getSalesByDateRange,

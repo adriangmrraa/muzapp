@@ -1,302 +1,475 @@
-
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./public/assets/images/banner-readme.png">
-    <img src="./public/assets/images/banner-readme.png" width="100%" alt="Mrs Muzzarella — Rotisería Premium" style="border-radius: 12px; max-width: 100%;">
+    <img src="./public/assets/images/banner-readme.png" width="100%" alt="Mrs Muzzarella — AI-Powered Food Business Platform" style="border-radius: 12px; max-width: 100%;">
   </picture>
 </p>
 
 <p align="center">
-  <strong>Sistema de gestión integral para rotisería premium</strong><br>
-  <em>WhatsApp Agent · Panel Admin · Telegram Bot · Meta Ads · Analytics</em>
+  <strong>AI-powered platform for food businesses</strong><br>
+  <em>WhatsApp Agent · Admin Dashboard · Telegram Bot · Meta Ads · Analytics</em>
 </p>
 
 <p align="center">
-  <a href="#-características"><img src="https://img.shields.io/badge/Features-8_Modules-gold?style=flat-square&labelColor=0a0a0a&color=D4A017" alt="Features"></a>
-  <a href="#-stack"><img src="https://img.shields.io/badge/Stack-Next.js_16_·_React_19_·_TypeScript_5-0a0a0a?style=flat-square&logo=next.js&logoColor=D4A017&color=D4A017" alt="Stack"></a>
-  <a href="#-deploy"><img src="https://img.shields.io/badge/Deploy-Render_·_Neon_·_Upstash-0a0a0a?style=flat-square&logo=render&logoColor=D4A017&color=D4A017" alt="Deploy"></a>
+  <a href="#-features"><img src="https://img.shields.io/badge/Features-8_Modules-gold?style=flat-square&labelColor=0a0a0a&color=D4A017" alt="Features"></a>
+  <a href="#-tech-stack"><img src="https://img.shields.io/badge/Stack-Next.js_16_·_React_19_·_TypeScript_5-0a0a0a?style=flat-square&logo=next.js&logoColor=D4A017&color=D4A017" alt="Stack"></a>
+  <a href="#-quick-deploy"><img src="https://img.shields.io/badge/Deploy-Render_·_Neon_·_Upstash-0a0a0a?style=flat-square&logo=render&logoColor=D4A017&color=D4A017" alt="Deploy"></a>
+  <a href="#-for-every-food-business"><img src="https://img.shields.io/badge/Replicable-Yes-0a0a0a?style=flat-square&color=059669" alt="Replicable"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-0a0a0a?style=flat-square&color=D4A017" alt="License"></a>
+  <a href="https://github.com/fusalabs/muzapp/stargazers"><img src="https://img.shields.io/github/stars/fusalabs/muzapp?style=flat-square&labelColor=0a0a0a&color=D4A017" alt="Stars"></a>
 </p>
 
 ---
 
-## 📋 Tabla de Contenidos
+## 📋 Table of Contents
 
-- [Visión General](#-visión-general)
-- [Características](#-características)
-- [Stack Tecnológico](#-stack)
-- [Arquitectura](#-arquitectura)
-- [Primeros Pasos](#-primeros-pasos)
-- [Scripts Disponibles](#-scripts)
-- [Estructura del Proyecto](#-estructura)
-- [Variables de Entorno](#-variables-de-entorno)
-- [Deploy](#-deploy)
-- [Contribuir](#-contribuir)
-- [Licencia](#-licencia)
-
----
-
-## 🎯 Visión General
-
-**Mrs Muzzarella** es un sistema de gestión integral construido para una rotisería premium en Formosa, Argentina. Combina un **agente de WhatsApp con IA**, un **panel de administración completo**, un **bot de Telegram** y **analytics** para ofrecer una solución 360° de ventas, atención al cliente y operaciones.
-
-El sistema maneja dos líneas de negocio:
-
-| Línea | Público | Enfoque |
-|-------|---------|---------|
-| 🍔 **Hamburguesas** | Consumidor final (B2C) | Ventas, promos, delivery |
-| 🍞 **Pan al por mayor** | Comercios (B2B) | Pedidos mayoristas, cuentas |
-
-> **Autor:** [Fusa Labs](https://github.com/fusalabs) · Código abierto (MIT)
+- [What is Muzapp?](#-what-is-muzapp)
+- [Features](#-features)
+- [For Every Food Business](#-for-every-food-business)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Getting Started](#-getting-started)
+- [Adapting to Your Business](#-adapting-to-your-business)
+- [Business Configuration](#-business-configuration)
+- [Scripts](#-scripts)
+- [Project Structure](#-project-structure)
+- [Environment Variables](#-environment-variables)
+- [Quick Deploy](#-quick-deploy)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
-## ✨ Características
+## 🎯 What is Muzapp?
 
-### 🤖 Agente WhatsApp con IA
+Muzapp is a **complete operational platform** for food businesses — pizzerias, burger joints, bakeries, rotiserias, or any food service that wants to:
 
-- **Procesamiento inteligente** de mensajes vía OpenAI GPT-4o-mini
-- **Detección emocional** con 7 flujos de conversación (F1-F7)
-- **Buffer de 16 segundos** para agregar mensajes entrantes
-- **Herramientas contextuales**: horarios, menú, disponibilidad, toma de pedidos
-- **Inyección de prompt segura** con detección de injection
-- **Configuración vía admin**: system prompt, horarios, contexto adicional
+- ✅ Automate WhatsApp sales with an AI agent
+- ✅ Coordinate kitchen, delivery, and management in real time
+- ✅ Replace paper notes and scattered WhatsApp messages
+- ✅ Get analytics and insights without spreadsheets
+- ✅ Offer a professional online storefront
 
-### 📊 Panel de Administración
+Built for **Mrs Muzzarella** (a premium rotisería in Formosa, Argentina), but designed to be **replicated and adapted** to any food business. Change the prompts, products, branding — and it's yours.
 
-- **Dashboard** con métricas en tiempo real
-- **Productos**: CRUD completo, toggle pollo/carne, coming soon
-- **Pedidos / Cocina**: visualización por estado (pendiente → preparando → listo → entregado)
-- **Clientes**: vista unificada con pedidos, conversaciones y leads
-- **Conversaciones**: historial completo con filtros
-- **Leads**: gestión con pipeline de conversión
-- **Analytics**: estadísticas y gráficos
-
-### 📱 Integraciones
-
-- **WhatsApp Business API** vía YCloud
-- **Meta Ads** (Pixel + Conversion API)
-- **Telegram Bot** para administración remota
-- **Facebook Login** (NextAuth)
-- **Atribución UTM** con códigos de referido
-
-### 🏗️ Infraestructura Profesional
-
-- **Rate Limiting** con @upstash/ratelimit (20 msg/min por usuario, 100 global)
-- **Redis Queue** con producer (LPUSH) + worker (RPOP + retry exponencial)
-- **Dead Letter Queue** con API de administración
-- **Circuit Breaker** para OpenAI (5 errores → 60s cooldown)
-- **Idempotency** para evitar duplicados
-- **Structured Logging** con pino + correlation ID
-- **Middleware de auth** con NextAuth v5
+> **Two lines of business supported out of the box:**
+> - 🍔 **B2C** — direct consumer sales (burgers, pizza, empanadas, etc.)
+> - 🍞 **B2B** — wholesale (bread, ingredients, bulk orders)
 
 ---
 
-## 🛠 Stack
+## ✨ Features
 
-| Capa | Tecnología |
-|------|-----------|
+### 🤖 WhatsApp AI Agent (Karen)
+
+| Feature | Description |
+|---------|-------------|
+| **Smart conversations** | OpenAI GPT-5-mini with 27+ tools |
+| **Emotional detection** | 7 conversation flows (urgency, doubt, price sensitivity) |
+| **Order memory** | Persistent context with 30min TTL per conversation |
+| **Photo menu** | Sends menu images, product photos, stickers |
+| **Dead-end recovery** | Auto-retry when agent stalls |
+| **Secure** | Prompt injection detection, HMAC webhook verification |
+| **Human override** | One-click take control, 24h auto-return |
+| **Scheduled tasks** | Program follow-ups, upsells, delivery notifications |
+
+### 📊 Admin Dashboard
+
+| Section | What you can do |
+|---------|-----------------|
+| **Dashboard** | Real-time metrics, recent activity feed |
+| **Products** | Full CRUD, categories, lines, variants, availability toggles |
+| **Orders / Kitchen** | Card-based order view, status progression, auto-WhatsApp on each change |
+| **Agent Config** | Full AI agent control: prompts, hours, stock, payment aliases, delivery zones |
+| **Telegram Bot** | Configure bot token, webhook, allowed chats |
+| **Meta Ads** | Pixel + Conversion API integration, OAuth setup |
+| **Conversations** | Full inbox with human override, customer context panel |
+| **Clients** | Unified view of customers with orders, conversations, tags |
+| **Leads** | Pipeline with UTM attribution, campaign tracking |
+| **Analytics** | Charts, top products, top clients, average ticket, campaign performance |
+
+### 📱 Multi-Channel
+
+- **WhatsApp** — YCloud Business API with HMAC signature verification
+- **Telegram** — Internal bot for management (35+ tools)
+- **Web** — Public storefront for online orders
+- **Admin Panel** — Full dashboard for operations
+
+### 🏗️ Production Infrastructure
+
+- **Rate limiting** — 20 req/min per user, 100 global (Upstash)
+- **Message buffer** — 60s sliding window debounce for WhatsApp
+- **Redis queue** — Producer/consumer with exponential backoff
+- **Dead Letter Queue** — Failed message inspection and replay
+- **Circuit Breaker** — OpenAI protection (5 errors → 60s cooldown)
+- **Idempotency** — Duplicate message prevention at DB and content level
+- **Structured logging** — Pino with correlation IDs
+- **Echo detection** — Handles human replies from WhatsApp Business App
+
+---
+
+## 🔄 For Every Food Business
+
+Muzapp is **open source and replicable**. Built for one business, designed for any business.
+
+### What you need to adapt
+
+| Component | What to change | Where |
+|-----------|---------------|-------|
+| **Agent identity** | Karen's name, tone, language | Admin Panel → Agent IA → System Prompt |
+| **Products** | Your menu, categories, prices | Admin Panel → Products |
+| **Business hours** | Schedule, holidays | Admin Panel → Agent IA → Horarios |
+| **Payment info** | Aliases, bank accounts | Admin Panel → Agent IA → Alias de pago |
+| **Delivery zones** | Coverage areas, costs, times | Admin Panel → Agent IA → Zonas de delivery |
+| **Promotions** | Active deals, combos | Admin Panel → Agent IA → Promociones |
+| **Branding** | Name, logo, colors | `public/assets/images/` + Tailwind config |
+| **Images** | Menu photos, product photos | Admin Panel → Agent IA → Imágenes de Menú |
+| **Telegram bot** | Name, token, allowed chats | Admin Panel → Telegram Bot |
+| **WhatsApp number** | Business phone | Admin Panel → Agent IA → Configuración general |
+| **Storefront text** | Business description, about | Storefront components in `src/app/(storefront)/` |
+
+### Use cases this supports
+
+| Business type | Adaptable? | What changes |
+|--------------|------------|--------------|
+| 🍕 Pizzeria | ✅ Fully | Products, agent prompt, delivery zones |
+| 🍔 Burger joint | ✅ Fully | Products, agent prompt (same as Mrs Muzzarella base) |
+| 🥟 Empanada shop | ✅ Fully | Products, categories, agent prompt |
+| 🥐 Bakery | ✅ Fully | B2B wholesale model, products |
+| 🥗 Healthy food | ✅ Fully | Products, categories, agent prompt |
+| 🍱 Rotisería | ✅ Fully | Products, categories, agent prompt |
+| 🧁 Coffee shop | ✅ Fully | Products, categories, storefront |
+| 🍦 Ice cream shop | ✅ Fully | Products, categories, storefront |
+
+### The AI Agent adapts to YOU
+
+Change one line in the system prompt and Karen becomes whoever you need:
+
+```
+Before (Mrs Muzzarella):
+  "Te llamás Karen, atendés el WhatsApp de Mrs Muzzarella (Formosa).
+   Vendés hamburguesas, pan mayorista, tragos V.I.P."
+
+After (Your business):
+  "Te llamás Luca, atendés el WhatsApp de Pizzería Napoli (Buenos Aires).
+   Vendés pizzas, empanadas, fainá, bebidas."
+```
+
+The entire sales flow, order memory, delivery coordination, and follow-ups work the same.
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
 | **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
 | **UI** | [React 19](https://react.dev/) · [shadcn/ui](https://ui.shadcn.com/) · [Framer Motion](https://www.framer.com/motion/) |
-| **Estilos** | [Tailwind CSS 4](https://tailwindcss.com/) · [Lucide Icons](https://lucide.dev/) |
+| **Styles** | [Tailwind CSS 4](https://tailwindcss.com/) · [Lucide Icons](https://lucide.dev/) |
 | **Backend** | [Next.js API Routes](https://nextjs.org/docs/app/building-your-application/routing/route-handlers) · Server Actions |
-| **Base de Datos** | [Neon PostgreSQL](https://neon.tech/) · [Drizzle ORM](https://orm.drizzle.team/) |
-| **Autenticación** | [NextAuth v5](https://next-auth.js.org/) (Credentials + Facebook) |
-| **AI / LLM** | [OpenAI](https://openai.com/) (GPT-4o-mini) · [AI SDK](https://sdk.vercel.ai/) |
+| **Database** | [Neon PostgreSQL](https://neon.tech/) · [Drizzle ORM](https://orm.drizzle.team/) |
+| **Auth** | [NextAuth v5](https://next-auth.js.org/) (Credentials + Facebook) |
+| **AI / LLM** | [OpenAI](https://openai.com/) (GPT-4o-mini · GPT-5-mini) · [AI SDK](https://sdk.vercel.ai/) |
 | **WhatsApp** | [YCloud API](https://ycloud.com/) |
-| **Caché / Queue** | [Upstash Redis](https://upstash.com/) |
+| **Cache / Queue** | [Upstash Redis](https://upstash.com/) (optional, in-memory fallback) |
+| **Media** | [Cloudinary](https://cloudinary.com/) (image uploads) |
+| **Audio** | OpenAI Whisper (transcription) |
+| **Vision** | OpenAI GPT-4 Vision (image analysis) |
 | **Logging** | [pino](https://getpino.io/) |
-| **Validador** | [Zod](https://zod.dev/) |
+| **Validation** | [Zod](https://zod.dev/) |
 | **Deploy** | [Render](https://render.com/) |
 
 ---
 
-## 🏛 Arquitectura
+## 🏛 Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     Clientes                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
-│  │ WhatsApp │  │ Telegram │  │  Admin   │  │  Meta   │ │
-│  │  (User)  │  │  (User)  │  │   Web    │  │  Ads    │ │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬────┘ │
-└───────┼──────────────┼──────────────┼──────────────┼──────┘
-        │              │              │              │
-┌───────┼──────────────┼──────────────┼──────────────┼──────┐
-│       ▼              ▼              ▼              ▼      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │ Webhook  │  │ Webhook  │  │  Admin   │  │   Meta   │ │
-│  │ WhatsApp │  │ Telegram │  │  Routes  │  │ Webhooks │ │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘ │
-│       │              │              │              │      │
-│  ┌────▼──────────────▼──────────────▼──────────────▼──┐  │
-│  │              Next.js App Router                     │  │
-│  │  ┌─────────────┐  ┌─────────────┐                   │  │
-│  │  │ Server      │  │ API Routes  │                   │  │
-│  │  │ Components  │  │ + Actions   │                   │  │
-│  │  └─────────────┘  └──────┬──────┘                   │  │
-│  └──────────────────────────┼──────────────────────────┘  │
-│                             │                             │
-│              ┌──────────────▼──────────────┐              │
-│              │       AI Agent Layer         │              │
-│              │  ┌────────┐ ┌─────────────┐ │              │
-│              │  │ Agent  │ │ WhatsApp    │ │              │
-│              │  │ Simple │ │ Agent V2    │ │              │
-│              │  └───┬────┘ └──────┬──────┘ │              │
-│              └──────┼─────────────┼────────┘              │
-│                     │             │                       │
-│              ┌──────▼─────────────▼────────┐              │
-│              │     OpenAI (GPT-4o-mini)     │              │
-│              └─────────────────────────────┘              │
-│                             │                             │
-│              ┌──────────────▼──────────────┐              │
-│              │      Infra Layer            │              │
-│              │  ┌──────────┐ ┌──────────┐  │              │
-│              │  │ Rate     │ │ Redis    │  │              │
-│              │  │ Limiting │ │ Queue    │  │              │
-│              │  ├──────────┤ ├──────────┤  │              │
-│              │  │ Circuit  │ │ DLQ      │  │              │
-│              │  │ Breaker  │ │          │  │              │
-│              │  └──────────┘ └──────────┘  │              │
-│              └──────────────┬──────────────┘              │
-│                             │                             │
-│              ┌──────────────▼──────────────┐              │
-│              │     Drizzle ORM + Neon      │              │
-│              │  ┌──────┐ ┌──────┐ ┌──────┐ │              │
-│              │  │Users │ │Orders│ │Leads │ │              │
-│              │  ├──────┤ ├──────┤ ├──────┤ │              │
-│              │  │Prods │ │Agent │ │Convs │ │              │
-│              │  └──────┘ └──────┘ └──────┘ │              │
-│              └─────────────────────────────┘              │
-└──────────────────────────────────────────────────────────┘
+                              ┌─────────────────────────────┐
+                              │      EXTERNAL CLIENTS        │
+                              │  ┌─────┐ ┌──────┐ ┌──────┐  │
+                              │  │ WA  │ │ TG   │ │ Web  │  │
+                              │  │Users│ │Users │ │Users │  │
+                              │  └──┬──┘ └──┬───┘ └──┬───┘  │
+                              └─────┼───────┼────────┼──────┘
+                                    │       │        │
+┌───────────────────────────────────┼───────┼────────┼──────────────┐
+│                    NEXT.JS APP ROUTER          │                  │
+│                                   │       │        │              │
+│  ┌──────────────┐  ┌──────────────▼───────▼────────▼─────────┐   │
+│  │  Public      │  │          API LAYER                      │   │
+│  │  Storefront  │  │  ┌──────────┐ ┌──────────┐ ┌─────────┐  │   │
+│  │  /hamburguesas│  │  │ WhatsApp │ │ Telegram │ │  Meta   │  │   │
+│  │  /pan-mayorist│  │  │ Webhook  │ │ Webhook  │ │Webhooks │  │   │
+│  └──────────────┘  │  └────┬─────┘ └────┬─────┘ └────┬────┘  │   │
+│                    │       │             │             │       │   │
+│  ┌──────────────┐  │  ┌────▼─────────────▼─────────────▼───┐   │   │
+│  │  Admin Panel  │  │  │     AI AGENT LAYER                │   │   │
+│  │  /admin/*     │  │  │  ┌──────────┐  ┌──────────────┐  │   │   │
+│  │  (Protected)   │  │  │  │WhatsApp │  │  Telegram    │  │   │   │
+│  │               │  │  │  │ Agent   │  │  Internal    │  │   │   │
+│  └──────────────┘  │  │  │ (Karen) │  │  Bot (Admin) │  │   │   │
+│                    │  │  │ 27 tools │  │  37 tools    │  │   │   │
+│                    │  │  └────┬─────┘  └──────┬───────┘  │   │   │
+│                    │  └───────┼────────────────┼──────────┘   │   │
+│                    │          │                │              │   │
+│                    │  ┌───────▼────────────────▼──────────┐   │   │
+│                    │  │         OPENAI (GPT-4o-mini)       │   │   │
+│                    │  │  + Whisper + Vision                │   │   │
+│                    │  └────────────────────────────────────┘   │   │
+│                    │                                           │   │
+│                    │  ┌─────────────────────────────────────┐  │   │
+│                    │  │      INFRASTRUCTURE LAYER            │  │   │
+│                    │  │  ┌─────────┐ ┌──────────┐ ┌──────┐  │  │   │
+│                    │  │  │ Rate    │ │  Redis   │ │Circuit│  │  │   │
+│                    │  │  │ Limiter │ │  Queue   │ │Breaker│  │  │   │
+│                    │  │  ├─────────┤ ├──────────┤ ├──────┤  │  │   │
+│                    │  │  │Idempo-  │ │   DLQ    │ │Buffer│  │  │   │
+│                    │  │  │tency    │ │          │ │System│  │  │   │
+│                    │  │  └─────────┘ └──────────┘ └──────┘  │  │   │
+│                    │  └─────────────────────────────────────┘  │   │
+│                    │                                           │   │
+│                    │  ┌─────────────────────────────────────┐  │   │
+│                    │  │   DRIZZLE ORM + NEON POSTGRESQL      │  │   │
+│                    │  │  ┌──────┐ ┌──────┐ ┌──────┐ ┌────┐ │  │   │
+│                    │  │  │Users │ │Orders│ │Leads │ │Prods│ │  │   │
+│                    │  │  ├──────┤ ├──────┤ ├──────┤ ├────┤ │  │   │
+│                    │  │  │Convs │ │Agent │ │Addr  │ │Atts│ │  │   │
+│                    │  │  └──────┘ └──────┘ └──────┘ └────┘ │  │   │
+│                    │  └─────────────────────────────────────┘  │   │
+│                    └──────────────────────────────────────────┘   │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Primeros Pasos
+## 🚀 Getting Started
 
-### Prerrequisitos
+### Prerequisites
 
-- **Node.js** 20+
-- **npm** 10+
-- **PostgreSQL** (o cuenta en [Neon](https://neon.tech/))
-- **Cuenta en YCloud** (para WhatsApp API)
-- **API Key de OpenAI**
-- **Cuenta en Upstash** (para Redis — opcional, fallback in-memory)
+| Requirement | Details | Cost |
+|-------------|---------|------|
+| **Node.js 20+** | Runtime | Free |
+| **PostgreSQL** | [Neon](https://neon.tech/) (serverless, free tier) | Free tier |
+| **OpenAI API Key** | [platform.openai.com](https://platform.openai.com/) | Pay-per-use (~$20-50/mo for small business) |
+| **YCloud Account** | [ycloud.com](https://ycloud.com/) for WhatsApp API | Free tier available |
+| **WhatsApp Business** | Meta-verified phone number | Free |
+| **Cloudinary** | [cloudinary.com](https://cloudinary.com/) for images | Free tier |
+| **Upstash Redis** | [upstash.com](https://upstash.com/) (optional) | Free tier |
+| **Render Account** | [render.com](https://render.com/) for hosting | Free tier (sleeps after inactivity) |
 
-### Instalación
+### Installation
 
 ```bash
-# Clonar el repositorio
+# Clone
 git clone https://github.com/fusalabs/muzapp.git
 cd muzapp
 
-# Instalar dependencias
+# Install dependencies
 npm install
 
-# Copiar variables de entorno
+# Environment setup
 cp .env.example .env.local
-# Editar .env.local con tus credenciales
+# Edit .env.local with your credentials (see Environment Variables section)
 
-# Inicializar la base de datos
-npm run db:push
+# Database setup
+npm run db:push    # Push schema to PostgreSQL
+npm run db:seed    # Seed initial data (admin user + sample products)
 
-# Sembrar datos iniciales
-npm run db:seed
-
-# Iniciar en desarrollo
-npm run dev
+# Start development
+npm run dev        # Opens at http://localhost:3000
 ```
 
-### Configuración Rápida
+### First-time Configuration
 
 ```bash
-# 1. Crear cuenta en Neon y obtener DATABASE_URL
-# 2. Generar AUTH_SECRET:
+# 1. Generate AUTH_SECRET
 openssl rand -base64 32
 
-# 3. Configurar YCloud:
-#    - Crear cuenta en ycloud.com
-#    - Obtener API Key
-#    - Configurar webhook → /api/webhook/whatsapp
+# 2. Login to admin panel
+#    → http://localhost:3000/login
+#    → admin@mrsmuzzarella.com / changeme123
 
-# 4. Configurar OpenAI:
-#    - Obtener API Key en platform.openai.com
+# 3. Go to Admin Panel → Agente IA → configure:
+#    - WhatsApp number (YCloud)
+#    - Business hours
+#    - Your products
+#    - Delivery zones
+#    - Payment aliases
 
-# 5. (Opcional) Configurar Upstash Redis:
-#    - Crear base de datos Redis en upstash.com
-#    - Agregar UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN
+# 4. Go to Admin Panel → Telegram Bot → set up your bot token
+
+# 5. Go to Admin Panel → Products → update menu with YOUR products
+```
+
+---
+
+## 🔧 Adapting to Your Business
+
+### 1. Fork the Repository
+
+```bash
+# On GitHub, click "Fork" or use gh CLI:
+gh repo fork fusalabs/muzapp --clone
+```
+
+### 2. Change the AI Agent Personality
+
+Go to **Admin Panel → Agente IA → Editor de Prompt** and change:
+
+```
+Before (default for Mrs Muzzarella):
+  "Te llamás Karen, atendés el WhatsApp de Mrs Muzzarella (Formosa)..."
+
+After (for your business, e.g., Pizzería Napoli):
+  "Te llamás Luca, atendés el WhatsApp de Pizzería Napoli (Buenos Aires).
+   Vendés pizzas, empanadas, fainá, bebidas..."
+```
+
+Or replace the entire default prompt in:
+- `src/lib/whatsapp/prompt-builder.ts` (the `DEFAULT_SYSTEM_PROMPT` constant)
+
+### 3. Update Products
+
+Delete the seed products and add yours via:
+- **Admin Panel → Products** — full CRUD with categories, prices, images
+- Or edit `src/db/seed.ts` and re-run `npm run db:seed`
+
+### 4. Configure Your Business
+
+| Setting | Where to change |
+|---------|-----------------|
+| Business name | `public/assets/images/banner-readme.png` + Storefront |
+| Business hours | Admin Panel → Agente IA → Horarios |
+| Delivery zones | Admin Panel → Agente IA → Zonas de delivery |
+| Payment info | Admin Panel → Agente IA → Alias de pago |
+| Promotions | Admin Panel → Agente IA → Promociones activas |
+| Menu photos | Admin Panel → Agente IA → Imágenes de Menú |
+| WhatsApp number | Admin Panel → Agente IA → Configuración general |
+| Telegram bot | Admin Panel → Telegram Bot |
+| Meta Ads | Admin Panel → Meta Ads |
+
+### 5. Customize the System Prompt (Advanced)
+
+For deeper customization, modify the WhatsApp agent's core prompt:
+
+**`src/lib/whatsapp/prompt-builder.ts`** — `DEFAULT_SYSTEM_PROMPT` (V4):
+- Agent identity and name
+- Sales flow steps
+- Tone and language
+- Product categories
+- Business-specific rules
+
+**`src/lib/telegram/system-prompt.ts`** — `INTERNAL_AGENT_SYSTEM_PROMPT`:
+- Admin bot identity
+- Available management capabilities
+- Example commands
+
+### 6. Customize the Storefront
+
+Edit the public-facing pages in `src/app/(storefront)/`:
+- `hamburguesas/` → change to your product categories
+- `pan-mayorista/` → change to your B2B offering
+
+### 7. Change Branding
+
+- **Logo/Images**: Replace `public/assets/images/`
+- **Colors**: Edit `tailwind.config.ts` and CSS variables
+- **Name**: Update page titles, meta tags, footer
+
+---
+
+## 💼 Business Configuration
+
+All configuration is done through the **Admin Panel** (no code changes needed):
+
+```
+Admin Panel → Agente IA
+├── Estado del agente (on/off)
+├── Configuración general
+│   ├── WhatsApp number
+│   └── System prompt
+├── Credenciales YCloud
+│   ├── API Key
+│   └── Bot number
+├── IDs permitidos (who can talk to the bot)
+├── Horarios de atención (per day)
+├── Ventana 24h (auto-reply)
+├── Entrenar bot (extra context)
+├── Editor de Prompt
+│   ├── Custom system prompt
+│   ├── Instructions
+│   ├── Promociones
+│   └── Delivery zones
+├── Estado del Local
+│   ├── Cocina operativa toggle
+│   ├── Stock (docenas para pan)
+│   ├── Alias de pago B2C/B2B
+│   └── Tiempo de espera
+├── Imágenes de Menú
+└── Delivery phone number
 ```
 
 ---
 
 ## 📜 Scripts
 
-| Comando | Descripción |
+| Command | Description |
 |---------|-------------|
-| `npm run dev` | Inicia servidor de desarrollo (Next.js 16) |
-| `npm run build` | Build de producción |
-| `npm start` | Inicia servidor de producción |
-| `npm run lint` | ESLint |
-| `npm run db:push` | Pushea schema a DB (Drizzle) |
-| `npm run db:generate` | Genera migraciones |
-| `npm run db:migrate` | Corre migraciones |
-| `npm run db:seed` | Siembra datos iniciales |
-| `npm run db:studio` | Abre Drizzle Studio |
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm start` | Start production server |
+| `npm run lint` | ESLint check |
+| `npm run db:push` | Push Drizzle schema to DB |
+| `npm run db:generate` | Generate migrations |
+| `npm run db:migrate` | Run migrations |
+| `npm run db:seed` | Seed initial data |
+| `npm run db:studio` | Open Drizzle Studio |
 
 ---
 
-## 📁 Estructura
+## 📁 Project Structure
 
 ```
 muzapp/
 ├── src/
 │   ├── app/
-│   │   ├── (admin)/              # Panel admin (protegido)
-│   │   │   └── admin/
-│   │   │       ├── agent/        # Config agente IA
-│   │   │       ├── clients/      # Clientes unificados
-│   │   │       ├── conversations/ # Conversaciones WhatsApp
-│   │   │       ├── leads/        # Leads pipeline
-│   │   │       ├── meta/         # Config Meta Ads
-│   │   │       ├── orders/       # Pedidos / Cocina
-│   │   │       ├── products/     # Gestión de productos
-│   │   │       └── analytics/    # Estadísticas
-│   │   ├── (storefront)/         # Frontend público
-│   │   │   ├── hamburguesas/     # Catálogo B2C
-│   │   │   └── pan-mayorista/    # Catálogo B2B
-│   │   ├── api/                  # API Routes
-│   │   │   ├── webhook/whatsapp/ # Webhook YCloud
-│   │   │   ├── whatsapp/         # Endpoints WhatsApp
-│   │   │   ├── telegram/         # Webhook Telegram
-│   │   │   ├── admin/dlq/        # Dead Letter Queue
-│   │   │   ├── auth/             # NextAuth handlers
-│   │   │   ├── leads/            # API leads
-│   │   │   └── products/         # API productos
-│   │   └── login/                # Login page
-│   ├── auth/                     # NextAuth config
-│   ├── components/
-│   │   ├── admin/                # Sidebar, Topbar, Nav
-│   │   ├── ui/                   # shadcn/ui components
-│   │   ├── products/             # Product cards, grids
-│   │   ├── meta/                 # Meta Ads components
-│   │   └── ...                   # Feature components
+│   │   ├── (admin)/admin/          # Admin panel (protected routes)
+│   │   │   ├── agent/              # AI Agent configuration
+│   │   │   ├── clients/            # Unified customer view
+│   │   │   ├── conversations/      # WhatsApp inbox + human override
+│   │   │   ├── leads/              # Lead pipeline with UTM
+│   │   │   ├── meta/               # Meta Ads integration
+│   │   │   ├── orders/             # Kitchen orders + status flow
+│   │   │   ├── products/           # Product management
+│   │   │   ├── telegram/           # Telegram bot config
+│   │   │   └── analytics/          # Stats and charts
+│   │   ├── (storefront)/           # Public product pages
+│   │   ├── api/                    # API routes + webhooks
+│   │   └── login/                  # Authentication page
+│   ├── auth/                       # NextAuth configuration
+│   ├── components/                 # Reusable UI components
+│   │   ├── admin/                  # Sidebar, topbar, nav
+│   │   ├── ui/                     # shadcn/ui primitives
+│   │   ├── orders/                 # Order cards, modals
+│   │   ├── messages/               # Chat panel, conversation components
+│   │   └── analytics/              # Charts and stats widgets
 │   ├── db/
-│   │   ├── schema.ts             # Drizzle schema (7 tablas)
-│   │   ├── index.ts              # DB connection
-│   │   └── seed.ts               # Seed data
-│   ├── lib/
-│   │   ├── agent/                # AI Agent (simple)
-│   │   ├── whatsapp/             # WhatsApp Agent V2 + tools
-│   │   ├── telegram/             # Telegram bot handlers
-│   │   ├── queue/                # Redis queue system
-│   │   ├── infra/                # Rate limit, circuit breaker
-│   │   ├── meta/                 # Meta Ads config
-│   │   ├── analytics/            # Analytics queries
-│   │   └── attribution/          # UTM / referidos
-│   └── auth/                     # NextAuth providers
-├── public/
-│   └── assets/images/            # Imágenes del proyecto
+│   │   ├── schema.ts               # Complete Drizzle schema (10 tables)
+│   │   ├── index.ts                # Database connection (Neon)
+│   │   └── seed.ts                 # Initial data seeder
+│   └── lib/
+│       ├── whatsapp/               # WhatsApp agent (Karen) + 27 tools
+│       ├── telegram/               # Telegram bot + 37 tools
+│       ├── channels/               # Unified channel router
+│       ├── buffer/                 # Message buffer (60s debounce)
+│       ├── queue/                  # Redis queue system
+│       ├── infra/                  # Rate limiting, circuit breaker
+│       ├── media/                  # Audio transcription, vision analysis
+│       └── ...                     # Addresses, order context, ycloud, etc.
+├── public/assets/images/           # Brand images, banners
+├── docs/                           # Documentation and manuals
+├── prompts/                        # System prompt archives
+├── sdd/                            # Design documents (SDD)
 ├── drizzle.config.ts
 ├── next.config.ts
 ├── tailwind.config.ts
@@ -305,50 +478,57 @@ muzapp/
 
 ---
 
-## 🔐 Variables de Entorno
+## 🔐 Environment Variables
 
 ```
-# Database + Auth
-DATABASE_URL=postgresql://...
-AUTH_SECRET=tu-secret
-AUTH_URL=https://muzzarella.onrender.com
+# ── Required ──────────────────────────────────────────────
+DATABASE_URL=postgresql://...          # Neon PostgreSQL connection string
+AUTH_SECRET=...                        # NextAuth + encryption master key
+AUTH_URL=https://yourapp.onrender.com  # Base URL for auth callbacks
+OPENAI_API_KEY=sk-...                  # OpenAI API key (GPT, Whisper, Vision)
 
-# WhatsApp Agent (YCloud)
-YCLOUD_API_KEY=tu-api-key
-YCLOUD_WEBHOOK_SECRET=tu-webhook-secret
-WHATSAPP_PHONE_NUMBER=5491112345678
+# ── WhatsApp (YCloud) ────────────────────────────────────
+YCLOUD_API_KEY=...                     # YCloud API key
+YCLOUD_WEBHOOK_SECRET=...              # HMAC webhook secret
+WHATSAPP_PHONE_NUMBER=5491112345678    # WhatsApp Business number (E.164)
 
-# AI
-OPENAI_API_KEY=sk-tu-openai-api-key
+# ── Telegram (Optional — set in Admin Panel too) ────────
+TELEGRAM_BOT_TOKEN=...                 # Bot token from @BotFather
+TELEGRAM_WEBHOOK_TOKEN=...             # Webhook security token
+TELEGRAM_ALLOWED_CHAT_IDS=...          # Comma-separated chat IDs
 
-# Telegram Bot
-TELEGRAM_BOT_TOKEN=tu-bot-token
-TELEGRAM_WEBHOOK_TOKEN=muzapp-telegram-secret
+# ── Meta Ads / Facebook (Optional) ──────────────────────
+META_APP_ID=...                        # Meta App ID
+META_APP_SECRET=...                    # Meta App Secret
+NEXT_PUBLIC_META_PIXEL_ID=...          # Pixel ID (client-side)
+FACEBOOK_CLIENT_ID=...                 # Facebook Login App ID
+FACEBOOK_CLIENT_SECRET=...             # Facebook Login Secret
 
-# Meta Ads
-META_APP_ID=tu-meta-app-id
-META_APP_SECRET=tu-meta-app-secret
-NEXT_PUBLIC_META_PIXEL_ID=tu-pixel-id
+# ── Media (Optional — needed for image uploads) ─────────
+CLOUDINARY_CLOUD_NAME=...              # Cloudinary cloud name
+CLOUDINARY_API_KEY=...                 # Cloudinary API key
+CLOUDINARY_API_SECRET=...              # Cloudinary API secret
 
-# Facebook Login
-FACEBOOK_CLIENT_ID=tu-facebook-app-id
-FACEBOOK_CLIENT_SECRET=tu-facebook-app-secret
+# ── Redis (Optional — falls back to in-memory) ──────────
+UPSTASH_REDIS_REST_URL=https://...     # Upstash Redis URL
+UPSTASH_REDIS_REST_TOKEN=...           # Upstash Redis token
 
-# Redis (Upstash — opcional)
-UPSTASH_REDIS_REST_URL=https://...
-UPSTASH_REDIS_REST_TOKEN=...
+# ── Notifications (Optional) ────────────────────────────
+TELEGRAM_LICHAS_CHAT_ID=...            # Specific chat for B2B order alerts
 ```
 
-> 📄 Ver `.env.example` para la lista completa con descripciones.
+> See `.env.example` for the complete list with descriptions.
 
 ---
 
-## 🌐 Deploy
+## 🚢 Quick Deploy
 
-### Render (recomendado)
+### Deploy to Render (Free Tier Compatible)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 ```yaml
-# render.yaml
+# render.yaml — One-click deploy config
 services:
   - type: web
     name: muzapp
@@ -360,50 +540,79 @@ services:
         value: "20"
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
+      - key: DATABASE_URL
+        sync: false  # Set in Render dashboard
+      - key: AUTH_SECRET
+        generateValue: true
 ```
 
-**Pasos:**
-1. Conectá tu repositorio de GitHub
-2. Configurá las variables de entorno en el dashboard de Render
-3. Configurá el webhook de YCloud apuntando a `https://tuapp.onrender.com/api/webhook/whatsapp`
-4. Configurá el webhook de Telegram apuntando a `https://tuapp.onrender.com/api/telegram/webhook/{token}`
+### Post-Deploy Steps
 
-### Base de Datos
+```
+1. Set environment variables in Render dashboard
+2. Set up YCloud webhook → https://yourapp.onrender.com/api/whatsapp/webhook
+3. Set up Telegram webhook via Admin Panel → Telegram Bot
+4. Upload menu images in Admin Panel → Agente IA
+5. Configure your products, hours, delivery zones
+6. Test with a WhatsApp message to your business number
+```
 
-Usá [Neon](https://neon.tech/) para PostgreSQL serverless. Creá un proyecto, obtené laconnection string y agregala como `DATABASE_URL`.
+### Database
 
-### Redis (Opcional)
+Create a free PostgreSQL database at [Neon](https://neon.tech/) and use the connection string as `DATABASE_URL`.
 
-Creá una base de datos en [Upstash](https://upstash.com/). Sin Redis configurado, el sistema funciona en modo fallback in-memory.
+### Redis (Optional)
 
----
-
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas. Este es un proyecto open source de **Fusa Labs**.
-
-1. Forkeá el repo
-2. Creá tu branch (`git checkout -b feat/feature-name`)
-3. Commit con [Conventional Commits](https://www.conventionalcommits.org/)
-4. Push a tu branch (`git push origin feat/feature-name`)
-5. Abrí un Pull Request
-
-### Convenciones
-
-- **Commits**: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`
-- **Branches**: `feat/`, `fix/`, `chore/`
-- **Código**: TypeScript estricto, server components por defecto
-- **UI**: shadcn/ui + Tailwind CSS + framer-motion
+Muzapp works **without Redis** using in-memory fallbacks. For production with multiple instances, add [Upstash](https://upstash.com/) Redis.
 
 ---
 
-## 📄 Licencia
+## 🤝 Contributing
+
+This is an open-source project built for real businesses. Contributions are welcome!
+
+### How to Contribute
+
+1. **Star the repo** ⭐ — helps others discover it
+2. **Fork it** — make it your own
+3. **Report issues** — bugs, feature requests, improvements
+4. **Submit PRs** — bug fixes, new features, docs
+
+### Development Conventions
+
+| Convention | Standard |
+|------------|----------|
+| **Commits** | [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `docs:`) |
+| **Branches** | `feat/`, `fix/`, `chore/` prefixes |
+| **Code** | Strict TypeScript, server components by default |
+| **UI** | shadcn/ui + Tailwind CSS + Framer Motion |
+| **Database** | Drizzle ORM with schema-first approach |
+| **SDD** | Spec-Driven Development — document before code |
+
+---
+
+## 📄 License
 
 MIT © [Fusa Labs](https://github.com/fusalabs)
+
+You are free to use, modify, and distribute this software for any purpose — personal, commercial, or otherwise. Attribution is appreciated but not required.
+
+---
+
+## 🌟 Support the Project
+
+If Muzapp helps your business or inspires your own project:
+
+- ⭐ **Star** the repo on GitHub
+- 🍴 **Fork** it and build your own version
+- 🐛 **Report** issues and suggest features
+- 📢 **Share** it with other food business owners
 
 ---
 
 <p align="center">
-  <sub>Hecho con ❤️ en Formosa, Argentina · </sub>
-  <a href="https://instagram.com/mrsmuzzarella"><sub>@mrsmuzzarella</sub></a>
+  <sub>Built with ❤️ in Formosa, Argentina · </sub>
+  <a href="https://github.com/fusalabs"><sub>Fusa Labs</sub></a>
+  <br>
+  <sub>Open source · MIT · Food business automation platform</sub>
 </p>

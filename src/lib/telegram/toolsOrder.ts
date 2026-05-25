@@ -25,9 +25,11 @@ export const createOrder = tool({
     }))
     .describe("Items del pedido"),
     deliveryFee: z.number().min(0).optional().describe("Costo de delivery (0 si no aplica)"),
+    paymentStatus: z.enum(["pending", "paid"]).optional().describe("Estado de pago: pending (pendiente), paid (pagado). Default: pending"),
+    paymentMethod: z.string().optional().describe("Método de pago: efectivo, alias, etc."),
     notes: z.string().optional().describe("Notas especiales"),
   }),
-  execute: async ({ phone, customerName, orderType, items, deliveryFee, notes }) => {
+  execute: async ({ phone, customerName, orderType, items, deliveryFee, paymentStatus, paymentMethod, notes }) => {
     // Buscar el lead por nombre si se proporcionó (siempre, incluso si hay phone)
     if (customerName) {
       const [lead] = await db
@@ -88,6 +90,8 @@ export const createOrder = tool({
         orderType,
         items,
         deliveryFee: delivery ? String(delivery) : "0",
+        paymentStatus: paymentStatus || "pending",
+        paymentMethod: paymentMethod || null,
         notes,
         status: "pending",
       })
@@ -384,6 +388,67 @@ export const confirmOrder = tool({
   },
 });
 
+// markAsPaid - Marcar pedido como pagado
+export const markAsPaid = tool({
+  description:
+    "Marca un pedido como pagado. Preguntas: 'marcá el pedido 5 como pagado', 'ya pagó el pedido 3', 'pasá a pagado el 7'",
+  inputSchema: z.object({
+    orderId: z.number().describe("ID del pedido"),
+  }),
+  execute: async ({ orderId }) => {
+    const [existing] = await db
+      .select({ id: orders.id, status: orders.status, paymentStatus: orders.paymentStatus })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!existing) {
+      return { success: false, message: "Pedido no encontrado" };
+    }
+
+    await db
+      .update(orders)
+      .set({ paymentStatus: "paid", updatedAt: new Date() })
+      .where(eq(orders.id, orderId));
+
+    return {
+      success: true,
+      message: `✅ Pedido #${orderId} marcado como pagado`,
+    };
+  },
+});
+
+// markPaymentMethod - Registrar método de pago de un pedido
+export const markPaymentMethod = tool({
+  description:
+    "Registra el método de pago de un pedido. Preguntas: 'pagó con alias', 'registrá que pagó en efectivo', 'método de pago del pedido 5'",
+  inputSchema: z.object({
+    orderId: z.number().describe("ID del pedido"),
+    method: z.string().describe("Método de pago: efectivo, alias, transferencia, etc."),
+  }),
+  execute: async ({ orderId, method }) => {
+    const [existing] = await db
+      .select({ id: orders.id })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!existing) {
+      return { success: false, message: "Pedido no encontrado" };
+    }
+
+    await db
+      .update(orders)
+      .set({ paymentMethod: method, updatedAt: new Date() })
+      .where(eq(orders.id, orderId));
+
+    return {
+      success: true,
+      message: `✅ Pedido #${orderId} — método de pago registrado: ${method}`,
+    };
+  },
+});
+
 // Export all manageOrder tools
 export const manageOrderTools = {
   createOrder,
@@ -393,4 +458,6 @@ export const manageOrderTools = {
   cancelOrder,
   calculateTotal,
   confirmOrder,
+  markAsPaid,
+  markPaymentMethod,
 };

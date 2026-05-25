@@ -777,6 +777,257 @@ export const getCustomerFullProfileTool = tool({
   },
 });
 
+// ─── getConversationContextTool - Contexto completo de conversación WhatsApp ───
+// Combina: items del pedido actual + direcciones + tipo de cliente + historial
+export const getConversationContextTool = tool({
+  description:
+    "Obtiene el contexto COMPLETO de una conversación de WhatsApp: items del pedido actual, direcciones guardadas, tipo de cliente (b2c/b2b), y últimos mensajes. PREGUNTAS: 'mostrame el pedido de Hector', 'qué contexto tiene la conversación 5', 'cómo viene el chat con Maria'",
+  inputSchema: z.object({
+    conversationId: z
+      .number()
+      .optional()
+      .describe("ID de la conversación en WhatsApp"),
+    customerPhone: z
+      .string()
+      .optional()
+      .describe("Teléfono del cliente para buscar su conversación"),
+  }),
+  execute: async ({ conversationId, customerPhone }) => {
+    let convId = conversationId;
+
+    // Resolver conversationId por phone si es necesario
+    if (!convId) {
+      if (!customerPhone)
+        return "Necesito un ID de conversación o un teléfono de cliente.";
+      const [conv] = await db
+        .select({ id: conversations.id })
+        .from(conversations)
+        .where(eq(conversations.customerPhone, customerPhone))
+        .orderBy(desc(conversations.lastMessageAt))
+        .limit(1);
+      if (!conv)
+        return `No encontré una conversación para el teléfono ${customerPhone}.`;
+      convId = conv.id;
+    }
+
+    const sections: string[] = [];
+    sections.push(`📋 CONTEXTO DE CONVERSACIÓN #${convId}`);
+
+    // 1. Datos de la conversación (nombre + teléfono)
+    const [conv] = await db
+      .select({
+        customerPhone: conversations.customerPhone,
+        customerName: conversations.customerName,
+      })
+      .from(conversations)
+      .where(eq(conversations.id, convId))
+      .limit(1);
+
+    if (!conv) return `No encontré la conversación #${convId}.`;
+
+    const phone = conv.customerPhone;
+    if (conv.customerName) sections.push(`👤 Cliente: ${conv.customerName}`);
+    if (phone) sections.push(`📱 Tel: ${phone}`);
+
+    // 2. Tipo de cliente (b2c/b2b)
+    if (phone) {
+      const [lead] = await db
+        .select({ type: leads.type, name: leads.name })
+        .from(leads)
+        .where(eq(leads.phone, phone))
+        .limit(1);
+      if (lead) {
+        sections.push(
+          `🏷️ Tipo: ${lead.type === "b2b" ? "BUSINESS (B2B)" : "CONSUMIDOR (B2C)"}`
+        );
+      }
+    }
+
+    // 3. Direcciones guardadas
+    if (phone) {
+      try {
+        const { getCustomerAddresses, formatAddressesForPrompt } = await import(
+          "@/lib/addresses"
+        );
+        const addrs = await getCustomerAddresses(phone);
+        const addrText = formatAddressesForPrompt(addrs);
+        if (addrText) sections.push(addrText);
+      } catch {}
+    }
+
+    // 4. Items del pedido actual (order context)
+    try {
+      const { getOrderContextSummary, formatOrderSummary } = await import(
+        "@/lib/order-context"
+      );
+      const ctxItems = await getOrderContextSummary(convId);
+      const ctxText = formatOrderSummary(ctxItems);
+      if (ctxText) sections.push(ctxText);
+    } catch {}
+
+    // 5. Últimos 10 mensajes
+    const recentMessages = await db
+      .select({
+        role: chatMessages.role,
+        content: chatMessages.content,
+        createdAt: chatMessages.createdAt,
+      })
+      .from(chatMessages)
+      .where(
+        and(
+          eq(chatMessages.conversationId, convId),
+          sql`${chatMessages.role} IN ('user', 'assistant')`
+        )
+      )
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(10);
+
+    if (recentMessages.length > 0) {
+      sections.push(`\n💬 ÚLTIMOS MENSAJES:`);
+      for (const m of recentMessages.reverse()) {
+        const role =
+          m.role === "user" ? "👤 Cliente" : "🤖 Karen";
+        const time = m.createdAt
+          ? m.createdAt.toLocaleTimeString("es-AR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "";
+        sections.push(`${time} ${role}: ${m.content?.slice(0, 150) || ""}`);
+      }
+    }
+
+    return (
+      sections.join("\n") ||
+      `No se encontró contexto para la conversación #${convId}.`
+    );
+  },
+});
+
+// ─── setHumanOverrideTool - Activar/desactivar control humano ─────────────────
+export const setHumanOverrideTool = tool({
+  description:
+    "ACTIVA o DESACTIVA el control humano sobre una conversación de WhatsApp. Cuando está activado, el AI de WhatsApp DEJA de responder y el admin toma control. Cuando se desactiva, el AI vuelve a responder. PREGUNTAS: 'tomá control del chat 5', 'desactivá override de la conversación 3', 'modo manual para Maria'",
+  inputSchema: z.object({
+    conversationId: z.number().describe("ID de la conversación"),
+    enabled: z
+      .boolean()
+      .describe(
+        "true = activar override (AI deja de responder), false = desactivar (AI vuelve a responder)"
+      ),
+  }),
+  execute: async ({ conversationId, enabled }) => {
+    const [existing] = await db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(eq(conversations.id, conversationId))
+      .limit(1);
+
+    if (!existing)
+      return `No encontré la conversación #${conversationId}.`;
+
+    await db
+      .update(conversations)
+      .set({
+        humanOverrideUntil: enabled
+          ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+          : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(conversations.id, conversationId));
+
+    return enabled
+      ? `✅ Control humano ACTIVADO para conversación #${conversationId}. El AI de WhatsApp no responderá automáticamente. Usá sendMessageAsOperator para mandar mensajes.`
+      : `✅ Control humano DESACTIVADO para conversación #${conversationId}. El AI de WhatsApp vuelve a responder normalmente.`;
+  },
+});
+
+// ─── sendMessageAsOperatorTool - Enviar mensaje como operador humano ──────────
+export const sendMessageAsOperatorTool = tool({
+  description:
+    "Envía un mensaje como operador humano a una conversación de WhatsApp. El mensaje se envía al cliente y queda registrado en el historial. USAR DESPUÉS de activar setHumanOverride para mantener el control, aunque también funciona sin override. PREGUNTAS: 'mandale un mensaje a Hector', 'decile que ya le llega', 'respondé al chat 5'",
+  inputSchema: z.object({
+    conversationId: z.number().describe("ID de la conversación"),
+    text: z.string().describe("Texto del mensaje a enviar al cliente"),
+  }),
+  execute: async ({ conversationId, text }) => {
+    // 1. Obtener datos de la conversación
+    const [conv] = await db
+      .select({
+        customerPhone: conversations.customerPhone,
+        customerName: conversations.customerName,
+      })
+      .from(conversations)
+      .where(eq(conversations.id, conversationId))
+      .limit(1);
+
+    if (!conv)
+      return `No encontré la conversación #${conversationId}.`;
+    if (!conv.customerPhone)
+      return `La conversación #${conversationId} no tiene teléfono de cliente.`;
+
+    // 2. Enviar el mensaje por WhatsApp
+    const { sendText } = await import("@/lib/ycloud");
+    const result = await sendText(conv.customerPhone, text);
+
+    if (!result.ok) {
+      return `Error al enviar mensaje: ${result.error}`;
+    }
+
+    // 3. Registrar en el historial de la conversación
+    const { insertMessage } = await import("@/lib/channels/router");
+    await insertMessage(conversationId, "assistant", text);
+
+    return `✅ Mensaje enviado a ${conv.customerName || conv.customerPhone}: "${text.slice(0, 100)}"`;
+  },
+});
+
+// ─── injectCustomerNoteTool - Agregar nota interna a un lead ─────────────────
+export const injectCustomerNoteTool = tool({
+  description:
+    "AGREGA una nota interna al perfil de un cliente (lead). La nota se ve cuando el agente de WhatsApp procese el próximo mensaje del cliente. Se concatena con las notas existentes con timestamp. PREGUNTAS: 'agregale una nota a Hector', 'dejale una nota a Maria', 'poné que prefiere pollo'",
+  inputSchema: z.object({
+    phone: z
+      .string()
+      .describe(
+        "Teléfono del cliente (con código de país, ej: +5491112345678)"
+      ),
+    note: z.string().describe("Texto de la nota a agregar"),
+  }),
+  execute: async ({ phone, note }) => {
+    const [lead] = await db
+      .select({ id: leads.id, notes: leads.notes })
+      .from(leads)
+      .where(eq(leads.phone, phone))
+      .limit(1);
+
+    if (!lead)
+      return `No encontré un lead con teléfono ${phone}.`;
+
+    const now = new Date();
+    const timestamp =
+      now.toLocaleDateString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+      }) +
+      " " +
+      now.toLocaleTimeString("es-AR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    const newNote = lead.notes
+      ? `${lead.notes}\n[Admin ${timestamp}] ${note}`
+      : `[Admin ${timestamp}] ${note}`;
+
+    await db
+      .update(leads)
+      .set({ notes: newNote })
+      .where(eq(leads.id, lead.id));
+
+    return `✅ Nota agregada al lead de ${phone}: "${note}"`;
+  },
+});
+
 export const managementTools = {
   getClients: getClientsTool,
   getClientDetail: getClientDetailTool,
@@ -792,4 +1043,8 @@ export const managementTools = {
   getConversationMessages: getConversationMessagesTool,
   getActivePromotions: getActivePromotionsTool,
   getCustomerFullProfile: getCustomerFullProfileTool,
+  getConversationContext: getConversationContextTool,
+  setHumanOverride: setHumanOverrideTool,
+  sendMessageAsOperator: sendMessageAsOperatorTool,
+  injectCustomerNote: injectCustomerNoteTool,
 };

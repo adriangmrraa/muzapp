@@ -16,6 +16,8 @@ export async function createManualOrder(
     address?: string | null;
     notes?: string | null;
     deliveryFee?: number;
+    paymentStatus?: string;
+    paymentMethod?: string;
   }
 ): Promise<{ success: boolean; orderId?: number; error?: string }> {
   const session = await auth();
@@ -60,6 +62,8 @@ export async function createManualOrder(
         items: data.items,
         notes: data.notes || null,
         deliveryFee: data.deliveryFee ? String(data.deliveryFee) : "0",
+        paymentStatus: data.paymentStatus || "pending",
+        paymentMethod: data.paymentMethod || null,
         status: "pending",
       })
       .returning({ id: orders.id });

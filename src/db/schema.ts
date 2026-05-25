@@ -240,6 +240,8 @@ export const orders = pgTable("orders", {
   tags: jsonb("tags").$type<string[]>().default([]),
   status: orderStatusEnum("status").notNull().default("pending"),
   deliveryFee: numeric("delivery_fee", { precision: 10, scale: 2 }).default("0"),
+  paymentStatus: text("payment_status").default("pending"),
+  paymentMethod: text("payment_method"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

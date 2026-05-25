@@ -66,9 +66,11 @@ export const createOrderTool = tool({
     customerPhone: z.string().describe("Teléfono del cliente"),
     address: z.string().optional().describe("Dirección de entrega (si es delivery)"),
     deliveryFee: z.number().min(0).optional().describe("Costo de delivery (0 si no aplica)"),
+    paymentStatus: z.enum(["pending", "paid"]).optional().describe("Estado de pago: pending (pendiente), paid (pagado)"),
+    paymentMethod: z.string().optional().describe("Método de pago: efectivo, alias, etc."),
     notes: z.string().optional().describe("Notas adicionales del pedido"),
   }),
-  execute: async ({ customerName, orderType, items, customerPhone, address, deliveryFee, notes }) => {
+  execute: async ({ customerName, orderType, items, customerPhone, address, deliveryFee, paymentStatus, paymentMethod, notes }) => {
     const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
     const delivery = deliveryFee || 0;
     const total = subtotal + delivery;
@@ -120,6 +122,8 @@ export const createOrderTool = tool({
       orderType,
       items: items,
       deliveryFee: delivery ? String(delivery) : "0",
+      paymentStatus: paymentStatus || "pending",
+      paymentMethod: paymentMethod || null,
       notes: notes || null,
       status: "pending",
     }).returning({ id: orders.id });

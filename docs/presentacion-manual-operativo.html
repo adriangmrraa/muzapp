@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mrs Muzzarella — Manual Operativo | Future IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-dark: #050505;
+      --bg-darker: #030303;
+      --bg-card: #0a0a0f;
+      --white: #FFFFFF;
+      --white-80: rgba(255,255,255,0.8);
+      --white-60: rgba(255,255,255,0.6);
+      --white-40: rgba(255,255,255,0.4);
+      --white-20: rgba(255,255,255,0.2);
+      --white-10: rgba(255,255,255,0.1);
+      --white-05: rgba(255,255,255,0.05);
+      --cyan: #00E5FF;
+      --cyan-dim: rgba(0,229,255,0.15);
+      --red: #E11D48;
+      --red-dim: rgba(225,29,72,0.15);
+      --green: #059669;
+      --green-dim: rgba(5,150,105,0.15);
+      --yellow: #FBBF24;
+      --yellow-dim: rgba(251,191,36,0.15);
+      --gold: #D4A017;
+      --gold-dim: rgba(212,160,23,0.15);
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg-dark);
+      color: var(--white);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ── Slide System ── */
+    .slide-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      overflow: hidden;
+    }
+
+    .slide-container.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .slide-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1300px;
+      padding: 50px 60px;
+    }
+
+    /* ── Gradient Orbs ── */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: orbFloat 18s infinite ease-in-out;
+    }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      25% { transform: translate(20px,-30px) scale(1.08); }
+      50% { transform: translate(-10px,20px) scale(0.95); }
+      75% { transform: translate(30px,10px) scale(1.05); }
+    }
+
+    /* ── Particle Canvas ── */
+    .particle-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: all;
+    }
+
+    /* ── Typography ── */
+    .eyebrow {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: var(--cyan);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 72px;
+      font-weight: 900;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+
+    h3 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--white-60);
+      line-height: 1.4;
+    }
+
+    .body-text {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--white-60);
+      line-height: 1.5;
+    }
+
+    .small-text {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--white-40);
+    }
+
+    /* ── Cards ── */
+    .card-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .card-grid-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .card-grid-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .card-grid-4 {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--white-10);
+      border-radius: 16px;
+      padding: 32px;
+      transition: border-color 0.3s, transform 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--cyan);
+      transform: translateY(-2px);
+    }
+
+    .card-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 16px;
+      color: var(--white-60);
+      line-height: 1.4;
+    }
+
+    .accent-cyan { border-color: var(--cyan-dim); }
+    .accent-cyan .card-title { color: var(--cyan); }
+    .accent-red { border-color: var(--red-dim); }
+    .accent-red .card-title { color: var(--red); }
+    .accent-green { border-color: var(--green-dim); }
+    .accent-green .card-title { color: var(--green); }
+    .accent-yellow { border-color: var(--yellow-dim); }
+    .accent-yellow .card-title { color: var(--yellow); }
+    .accent-gold { border-color: var(--gold-dim); }
+    .accent-gold .card-title { color: var(--gold); }
+
+    /* ── Navigation ── */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--white-10);
+      z-index: 200;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--red));
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .slide-counter {
+      position: fixed;
+      top: 18px;
+      right: 24px;
+      font-size: 14px;
+      color: var(--white-40);
+      font-family: 'Space Grotesk', monospace;
+      z-index: 150;
+    }
+
+    .nav {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      z-index: 150;
+      align-items: center;
+    }
+
+    .nav-btn {
+      background: var(--white-10);
+      color: var(--white);
+      border: 1px solid var(--white-20);
+      padding: 12px 28px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .nav-btn:hover {
+      background: var(--white-20);
+      border-color: var(--cyan);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: default;
+      border-color: var(--white-10);
+    }
+
+    .nav-btn:disabled:hover {
+      background: var(--white-10);
+    }
+
+    .nav-indicator {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--white-20);
+      transition: all 0.3s;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+
+    .nav-dot.active {
+      background: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan-dim);
+      width: 10px;
+      height: 10px;
+    }
+
+    .nav-dot:hover {
+      background: var(--white-40);
+    }
+
+    /* ── Status Flow ── */
+    .status-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 24px;
+      border-radius: 14px;
+      border: 2px solid var(--white-10);
+      background: var(--bg-card);
+      min-width: 120px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .status-node .status-icon { font-size: 32px; margin-bottom: 8px; }
+    .status-node .status-label { font-size: 16px; font-weight: 700; }
+    .status-node .status-desc { font-size: 12px; color: var(--white-40); margin-top: 4px; }
+
+    .status-node.pending { border-color: var(--yellow-dim); }
+    .status-node.pending .status-label { color: var(--yellow); }
+    .status-node.preparing { border-color: var(--cyan-dim); }
+    .status-node.preparing .status-label { color: var(--cyan); }
+    .status-node.ready { border-color: var(--green-dim); }
+    .status-node.ready .status-label { color: var(--green); }
+    .status-node.delivered { border-color: rgba(255,255,255,0.2); }
+    .status-node.delivered .status-label { color: var(--white-80); }
+    .status-node.cancelled { border-color: var(--red-dim); }
+    .status-node.cancelled .status-label { color: var(--red); }
+
+    .status-node.active {
+      transform: scale(1.08);
+      box-shadow: 0 0 30px var(--cyan-dim);
+    }
+
+    .status-arrow {
+      font-size: 24px;
+      color: var(--white-40);
+    }
+
+    /* ── Steps ── */
+    .step-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px 28px;
+      border-radius: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--white-10);
+      transition: all 0.3s;
+    }
+
+    .step.active {
+      border-color: var(--cyan);
+      box-shadow: 0 0 24px var(--cyan-dim);
+    }
+
+    .step-number {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--cyan);
+      min-width: 44px;
+      line-height: 1;
+    }
+
+    .step-content h4 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .step-content p {
+      font-size: 16px;
+      color: var(--white-60);
+      line-height: 1.4;
+    }
+
+    .step-btn {
+      background: var(--cyan);
+      color: var(--bg-dark);
+      border: none;
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      margin-top: 20px;
+      transition: all 0.2s;
+      align-self: flex-start;
+    }
+
+    .step-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px var(--cyan-dim);
+    }
+
+    /* ── Tags / Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-cyan { background: var(--cyan-dim); color: var(--cyan); }
+    .badge-red { background: var(--red-dim); color: var(--red); }
+    .badge-green { background: var(--green-dim); color: var(--green); }
+    .badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
+    .badge-gold { background: var(--gold-dim); color: var(--gold); }
+
+    /* ── Sub-world indicators ── */
+    .subworld-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--white-40);
+      margin-bottom: 12px;
+    }
+
+    .subworld-tag::before {
+      content: '⬡';
+      color: var(--cyan);
+    }
+
+    /* ── Split layout ── */
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .split-left {
+      padding-right: 20px;
+    }
+
+    .split-right {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ── Data pills ── */
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .pill {
+      background: var(--white-05);
+      border: 1px solid var(--white-10);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--white-80);
+      font-weight: 500;
+    }
+
+    .pill.cyan { border-color: var(--cyan-dim); color: var(--cyan); }
+    .pill.red { border-color: var(--red-dim); color: var(--red); }
+    .pill.green { border-color: var(--green-dim); color: var(--green); }
+    .pill.gold { border-color: var(--gold-dim); color: var(--gold); }
+
+    /* ── Footer ── */
+    .brand-footer {
+      position: fixed;
+      bottom: 80px;
+      right: 30px;
+      font-size: 12px;
+      color: var(--white-20);
+      z-index: 100;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── Role cards ── */
+    .role-card {
+      text-align: center;
+      padding: 28px 20px;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--white-10);
+      transition: all 0.3s;
+    }
+
+    .role-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .role-card .role-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .role-card .role-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .role-card .role-interface { font-size: 14px; color: var(--white-40); margin-bottom: 6px; }
+    .role-card .role-action { font-size: 14px; color: var(--green); font-weight: 500; }
+
+    /* ── Interface diagram ── */
+    .interface-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+
+    .interface-card {
+      text-align: center;
+      padding: 32px 24px;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--white-10);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .interface-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .interface-card:hover::before { opacity: 1; }
+    .interface-card.whatsapp::before { background: linear-gradient(90deg, var(--green), #25D366); }
+    .interface-card.web::before { background: linear-gradient(90deg, var(--gold), var(--yellow)); }
+    .interface-card.telegram-card::before { background: linear-gradient(90deg, var(--cyan), #0088cc); }
+
+    .interface-card .iface-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+    .interface-card .iface-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .interface-card .iface-desc { font-size: 14px; color: var(--white-60); line-height: 1.4; margin-bottom: 12px; }
+    .interface-card .iface-users { font-size: 13px; color: var(--cyan); font-weight: 500; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .slide-content { padding: 30px 24px; }
+      h1 { font-size: 42px; }
+      h2 { font-size: 32px; }
+      .subtitle { font-size: 18px; }
+      .card-grid-2, .card-grid-3, .card-grid-4 { grid-template-columns: 1fr; }
+      .split { grid-template-columns: 1fr; gap: 24px; }
+      .interface-grid { grid-template-columns: 1fr; }
+      .status-flow { flex-direction: column; }
+      .status-arrow { transform: rotate(90deg); }
+      .nav-btn { padding: 8px 16px; font-size: 13px; }
+    }
+
+    /* ── Utilities ── */
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+    .mt-32 { margin-top: 32px; }
+    .mb-8 { margin-bottom: 8px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-24 { margin-bottom: 24px; }
+    .gap-16 { gap: 16px; }
+    .gap-24 { gap: 24px; }
+    .flex { display: flex; }
+    .flex-center { display: flex; align-items: center; justify-content: center; }
+    .flex-wrap { flex-wrap: wrap; }
+    .text-center { text-align: center; }
+    .w-full { width: 100%; }
+
+    .highlight-cyan { color: var(--cyan); }
+    .highlight-red { color: var(--red); }
+    .highlight-green { color: var(--green); }
+    .highlight-gold { color: var(--gold); }
+    .highlight-yellow { color: var(--yellow); }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════ SLIDE 0: PORTADA ═══════════════ -->
+  <div class="slide-container active" id="slide-0">
+    <canvas class="particle-canvas" id="cover-particles"></canvas>
+    <div class="orb" style="width:550px;height:550px;background:radial-gradient(circle,rgba(212,160,23,0.12),transparent 70%);top:-10%;right:-5%;"></div>
+    <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,229,255,0.08),transparent 70%);bottom:-8%;left:-5%;"></div>
+    <div class="slide-content" style="position:relative;z-index:1;text-align:center;">
+      <div class="eyebrow animate-in">Future IA &amp; Automatizacion</div>
+      <h1 class="animate-in" style="font-size:88px;margin-bottom:8px;">
+        <span class="highlight-gold">Mrs</span> Muzzarella
+      </h1>
+      <div class="animate-in" style="font-size:28px;font-weight:500;color:var(--white-60);margin-bottom:8px;">
+        Manual Operativo
+      </div>
+      <div class="animate-in" style="font-size:18px;color:var(--white-40);margin-bottom:40px;">
+        Cómo usar la plataforma — dueños, cocina, delivery, administración
+      </div>
+      <div class="animate-in flex-center" style="gap:16px;">
+        <span class="badge badge-gold">Panel Web</span>
+        <span class="badge badge-cyan">Telegram</span>
+        <span class="badge badge-green">WhatsApp</span>
+      </div>
+      <div class="animate-in mt-32 small-text" style="max-width:500px;margin-left:auto;margin-right:auto;line-height:1.6;">
+        Tres interfaces. Un solo sistema. Coordinación en tiempo real para todo el equipo.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 1: ÍNDICE ═══════════════ -->
+  <div class="slide-container" id="slide-1">
+    <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,229,255,0.08),transparent 70%);top:5%;right:10%;"></div>
+    <div class="slide-content">
+      <div class="eyebrow animate-in">Navegación</div>
+      <h2 class="animate-in">Mapa de la Presentación</h2>
+      <div class="subtitle animate-in" style="margin-bottom:40px;">Seleccioná un submundo para explorar</div>
+      <div class="card-grid card-grid-2" style="gap:16px;">
+        <div class="card accent-cyan animate-in" onclick="goToSlide(2)" style="cursor:pointer;">
+          <span class="card-icon">🌐</span>
+          <div class="card-title">Las 3 Interfaces</div>
+          <div class="card-desc">WhatsApp · Panel Web · Telegram — quién usa cada una</div>
+          <div class="subworld-tag mt-8">Submundo: Plataforma</div>
+        </div>
+        <div class="card accent-yellow animate-in" onclick="goToSlide(3)" style="cursor:pointer;" data-delay="0.1">
+          <span class="card-icon">🔄</span>
+          <div class="card-title">Estados del Pedido</div>
+          <div class="card-desc">El flujo completo: Pending → Preparing → Ready → Delivered</div>
+          <div class="subworld-tag mt-8">Submundo: Operaciones</div>
+        </div>
+        <div class="card accent-red animate-in" onclick="goToSlide(5)" style="cursor:pointer;" data-delay="0.2">
+          <span class="card-icon">👨‍🍳</span>
+          <div class="card-title">Para Cocina</div>
+          <div class="card-desc">Qué mirar, qué hacer, cómo cambiar estados</div>
+          <div class="subworld-tag mt-8">Submundo: Cocina</div>
+        </div>
+        <div class="card accent-green animate-in" onclick="goToSlide(7)" style="cursor:pointer;" data-delay="0.3">
+          <span class="card-icon">🚚</span>
+          <div class="card-title">Para Delivery</div>
+          <div class="card-desc">Cómo llegan los pedidos, cómo confirmar llegada</div>
+          <div class="subworld-tag mt-8">Submundo: Delivery</div>
+        </div>
+        <div class="card accent-gold animate-in" onclick="goToSlide(9)" style="cursor:pointer;" data-delay="0.4">
+          <span class="card-icon">👑</span>
+          <div class="card-title">Para Dueño / Admin</div>
+          <div class="card-desc">Telegram bot + Panel Web — gestión completa</div>
+          <div class="subworld-tag mt-8">Submundo: Administración</div>
+        </div>
+        <div class="card accent-cyan animate-in" onclick="goToSlide(12)" style="cursor:pointer;" data-delay="0.5">
+          <span class="card-icon">📋</span>
+          <div class="card-title">Glosario + FAQ</div>
+          <div class="card-desc">Términos clave y preguntas frecuentes por rol</div>
+          <div class="subworld-tag mt-8">Submundo: Referencia</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 2: LAS 3 INTERFACES ═══════════════ -->
+  <div class="slide-container" id="slide-2">
+    <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,229,255,0.08),transparent 70%);top:-5%;left:20%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Plataforma</div>
+      <div class="eyebrow animate-in">Arquitectura</div>
+      <h2 class="animate-in">Las 3 Interfaces del Sistema</h2>
+      <div class="subtitle animate-in" style="margin-bottom:40px;">Cada rol usa la interfaz que necesita. Todo está conectado.</div>
+
+      <div class="interface-grid">
+        <div class="interface-card whatsapp animate-in">
+          <span class="iface-icon">💬</span>
+          <div class="iface-title">WhatsApp</div>
+          <div class="iface-desc">Los clientes hablan con Karen — el agente automático. Ella vende, toma pedidos, responde dudas.</div>
+          <div class="iface-users">Clientes ↔ Karen</div>
+        </div>
+        <div class="interface-card web animate-in" data-delay="0.15">
+          <span class="iface-icon">🖥️</span>
+          <div class="iface-title">Panel Web</div>
+          <div class="iface-desc">muzapp.onrender.com/admin<br>Cocina ve pedidos, admin configura todo, analytics, clientes.</div>
+          <div class="iface-users">Cocina + Admin</div>
+        </div>
+        <div class="interface-card telegram-card animate-in" data-delay="0.3">
+          <span class="iface-icon">✈️</span>
+          <div class="iface-title">Telegram Bot</div>
+          <div class="iface-desc">@MrsMuzzarellaBot — el dueño gestiona el negocio desde acá: productos, stats, delivery, override.</div>
+          <div class="iface-users">Dueño / Encargado</div>
+        </div>
+      </div>
+
+      <div class="flex-center mt-32 animate-in" style="gap:20px;">
+        <div class="pill cyan">✅ Coordinación en tiempo real</div>
+        <div class="pill green">✅ Sin papel</div>
+        <div class="pill gold">✅ Automatizado</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 3: ESTADOS DEL PEDIDO ═══════════════ -->
+  <div class="slide-container" id="slide-3">
+    <div class="orb" style="width:450px;height:450px;background:radial-gradient(circle,rgba(251,191,36,0.1),transparent 70%);top:-5%;right:-5%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Operaciones</div>
+      <div class="eyebrow animate-in">Flujo de Trabajo</div>
+      <h2 class="animate-in">Estados del Pedido</h2>
+      <div class="subtitle animate-in" style="margin-bottom:36px;">El corazón del sistema. Todos los roles se coordinan alrededor de esto.</div>
+
+      <div class="status-flow animate-in">
+        <div class="status-node pending" data-status="pending" onclick="highlightStatus('pending')">
+          <span class="status-icon">🟡</span>
+          <span class="status-label">PENDING</span>
+          <span class="status-desc">Pedido recibido</span>
+        </div>
+        <span class="status-arrow">→</span>
+        <div class="status-node preparing" data-status="preparing" onclick="highlightStatus('preparing')">
+          <span class="status-icon">🔵</span>
+          <span class="status-label">PREPARING</span>
+          <span class="status-desc">En cocina</span>
+        </div>
+        <span class="status-arrow">→</span>
+        <div class="status-node ready" data-status="ready" onclick="highlightStatus('ready')">
+          <span class="status-icon">🟢</span>
+          <span class="status-label">READY</span>
+          <span class="status-desc">Listo</span>
+        </div>
+        <span class="status-arrow">→</span>
+        <div class="status-node delivered" data-status="delivered" onclick="highlightStatus('delivered')">
+          <span class="status-icon">✅</span>
+          <span class="status-label">DELIVERED</span>
+          <span class="status-desc">Entregado</span>
+        </div>
+      </div>
+
+      <div class="flex-center mt-16 animate-in" style="gap:8px;">
+        <span class="status-arrow" style="font-size:16px;color:var(--white-40);">↕</span>
+        <div class="status-node cancelled" style="padding:10px 20px;min-width:auto;">
+          <span style="font-size:14px;font-weight:700;color:var(--red);">CANCELLED</span>
+          <span style="font-size:11px;color:var(--white-40);">(desde cualquier estado)</span>
+        </div>
+      </div>
+
+      <div id="status-detail" class="mt-24 animate-in" style="max-width:700px;margin-left:auto;margin-right:auto;text-align:center;">
+        <div style="font-size:16px;color:var(--white-40);">Hacé clic en cada estado para ver más detalles</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 4: ESTADOS — DETALLE ═══════════════ -->
+  <div class="slide-container" id="slide-4">
+    <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,229,255,0.08),transparent 70%);top:10%;left:-5%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Operaciones</div>
+      <div class="eyebrow animate-in">Detalle</div>
+      <h2 class="animate-in">¿Qué pasa en cada estado?</h2>
+
+      <div class="step-container" id="status-steps" style="max-width:800px;">
+        <div class="step active" style="opacity:1;">
+          <div class="step-number">🟡</div>
+          <div class="step-content">
+            <h4 style="color:var(--yellow);">Pending — Pendiente</h4>
+            <p>El pedido acaba de llegar. Aparece en el panel de cocina y en Telegram. El cliente ya recibió confirmación de Karen.</p>
+          </div>
+        </div>
+        <div class="step" style="opacity:0;">
+          <div class="step-number">🔵</div>
+          <div class="step-content">
+            <h4 style="color:var(--cyan);">Preparing — Preparando</h4>
+            <p>La cocina empezó a trabajar. Automáticamente se le manda WhatsApp al cliente: "tu pedido ya está en preparación".</p>
+          </div>
+        </div>
+        <div class="step" style="opacity:0;">
+          <div class="step-number">🟢</div>
+          <div class="step-content">
+            <h4 style="color:var(--green);">Ready — Listo</h4>
+            <p>La cocina terminó. El cliente recibe WhatsApp según el caso: "pasá a retirar" o "el delivery lo lleva".</p>
+          </div>
+        </div>
+        <div class="step" style="opacity:0;">
+          <div class="step-number">✅</div>
+          <div class="step-content">
+            <h4>Delivered — Entregado</h4>
+            <p>El cliente recibió el pedido. Se guarda la hora exacta. 30 minutos después, follow-up automático: "¿todo bien?"</p>
+          </div>
+        </div>
+        <div class="step" style="opacity:0;">
+          <div class="step-number">❌</div>
+          <div class="step-content">
+            <h4 style="color:var(--red);">Cancelled — Cancelado</h4>
+            <p>Se cancela el pedido. El cliente recibe WhatsApp: "tu pedido fue cancelado". Solo disponible desde pending en el panel web.</p>
+          </div>
+        </div>
+      </div>
+      <button class="step-btn" id="status-step-btn" onclick="nextStatusStep()">Siguiente estado →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 5: COCINA ═══════════════ -->
+  <div class="slide-container" id="slide-5">
+    <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(225,29,72,0.08),transparent 70%);top:-5%;right:10%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Cocina</div>
+      <div class="eyebrow animate-in">Rol</div>
+      <h2 class="animate-in">👨‍🍳 Para Cocina</h2>
+      <div class="subtitle animate-in" style="margin-bottom:32px;">Tu herramienta: el Panel Web → Pedidos / Cocina</div>
+
+      <div class="split">
+        <div class="split-left">
+          <div class="animate-in">
+            <div style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:14px;padding:24px;margin-bottom:16px;">
+              <div style="font-size:14px;color:var(--white-40);margin-bottom:4px;">Pedido #123</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:700;">Juan Pérez</span>
+                <span class="badge badge-yellow">Pendiente</span>
+              </div>
+              <div style="font-size:14px;color:var(--white-60);margin:12px 0;">
+                2x Génesis<br>1x Cheddar Fries<br>
+                <span style="color:var(--white-40);font-style:italic;">"Sin cebolla"</span>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <span style="background:var(--cyan-dim);color:var(--cyan);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">→ Preparando</span>
+                <span style="background:var(--white-10);color:var(--white-60);padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer;">🔔</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="split-right">
+          <div class="animate-in" data-delay="0.2">
+            <div class="step-container">
+              <div class="step active">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <h4>Agarrás un pedido</h4>
+                  <p>Cliqueá "→ Preparando" — el cliente recibe WhatsApp automático</p>
+                </div>
+              </div>
+              <div class="step active">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <h4>Terminás de preparar</h4>
+                  <p>Cliqueá "→ Listo" — el cliente recibe WhatsApp según delivery o retiro</p>
+                </div>
+              </div>
+              <div class="step active">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                  <h4>Entregás</h4>
+                  <p>Cliqueá "→ Entregado" — follow-up automático 30 min después</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pill-group animate-in mt-16 flex-center" style="justify-content:center;">
+        <div class="pill">🔔 Campana = reenviar WhatsApp al cliente</div>
+        <div class="pill red">✕ Cancelar = solo disponible en Pendiente</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 6: COCINA — FILTROS ═══════════════ -->
+  <div class="slide-container" id="slide-6">
+    <div class="orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(225,29,72,0.08),transparent 70%);bottom:-5%;left:10%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Cocina</div>
+      <div class="eyebrow animate-in">Tips</div>
+      <h2 class="animate-in">Cómo usar el Panel de Cocina</h2>
+      <div class="subtitle animate-in" style="margin-bottom:32px;">Filtros, búsqueda y buenas prácticas</div>
+
+      <div class="card-grid card-grid-2">
+        <div class="card accent-yellow animate-in">
+          <span class="card-icon">🔍</span>
+          <div class="card-title">Filtros por Estado</div>
+          <div class="card-desc">Usá los tabs de arriba: Todos / Pendiente / Preparando / Listo / Entregado / Cancelado. Así ves solo lo que necesitás.</div>
+        </div>
+        <div class="card accent-cyan animate-in" data-delay="0.15">
+          <span class="card-icon">🔎</span>
+          <div class="card-title">Buscador</div>
+          <div class="card-desc">Buscá por nombre de cliente, teléfono o notas del pedido. Útil cuando tenés muchos pedidos y buscás uno específico.</div>
+        </div>
+        <div class="card accent-green animate-in" data-delay="0.3">
+          <span class="card-icon">🍔🍞</span>
+          <div class="card-title">Filtro por Tipo</div>
+          <div class="card-desc">Separá hamburguesas de pan mayorista. Cada tipo tiene su ritmo de producción.</div>
+        </div>
+        <div class="card accent-gold animate-in" data-delay="0.45">
+          <span class="card-icon">📱</span>
+          <div class="card-title">WhatsApp Automático</div>
+          <div class="card-desc">Cada cambio de estado envía WhatsApp al cliente. No hace falta que nadie avise manualmente.</div>
+        </div>
+      </div>
+
+      <div class="animate-in mt-24 text-center" style="color:var(--white-40);font-size:16px;">
+        ⚡ Si un cliente viene a retirar y no está marcado como "Listo", igual entregale. Después avisale al encargado.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 7: DELIVERY ═══════════════ -->
+  <div class="slide-container" id="slide-7">
+    <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(5,150,105,0.1),transparent 70%);bottom:-5%;right:10%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Delivery</div>
+      <div class="eyebrow animate-in">Rol</div>
+      <h2 class="animate-in">🚚 Para Delivery</h2>
+      <div class="subtitle animate-in" style="margin-bottom:32px;">Tu herramienta: WhatsApp — te llegan los pedidos automáticamente</div>
+
+      <div class="split">
+        <div class="split-left">
+          <div class="animate-in" style="background:var(--bg-card);border:1px solid var(--green-dim);border-radius:16px;padding:28px;position:relative;">
+            <div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:8px;">MENSAJE QUE RECIBÍS</div>
+            <div style="font-size:15px;line-height:1.5;">
+              <div style="font-weight:700;">🚚 NUEVO PEDIDO #42</div>
+              <div style="color:var(--white-60);margin-top:8px;">
+                👤 Juan Pérez<br>
+                📱 +549370XXXXXXX<br>
+                📍 Av. Siempre Viva 123<br>
+                🗺️ maps.google.com/...
+              </div>
+              <div style="margin:10px 0;padding:10px 0;border-top:1px solid var(--white-10);border-bottom:1px solid var(--white-10);">
+                • 2x Génesis — $7.000<br>
+                • 1x Cheddar Fries — $1.200
+              </div>
+              <div style="font-weight:700;">💰 Total: $8.200</div>
+            </div>
+          </div>
+        </div>
+        <div class="split-right">
+          <div class="animate-in" data-delay="0.2">
+            <h3 style="font-size:22px;margin-bottom:16px;">Tu flujo:</h3>
+            <div class="step-container">
+              <div class="step active">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <h4>Recibís el pedido</h4>
+                  <p>Te llega un WhatsApp con dirección, items y link de Maps</p>
+                </div>
+              </div>
+              <div class="step active">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <h4>Buscás en cocina</h4>
+                  <p>Cuando esté "Listo", salís a entregar</p>
+                </div>
+              </div>
+              <div class="step active">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                  <h4>Llegaste al domicilio</h4>
+                  <p>Mandá cualquier texto al WhatsApp del local. El sistema avisa al cliente automáticamente</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-16 pill-group">
+              <div class="pill green">✅ Cualquier texto activa el aviso al cliente</div>
+              <div class="pill gold">🗺️ Usá el link de Maps directo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 8: DELIVERY — NOTAS ═══════════════ -->
+  <div class="slide-container" id="slide-8">
+    <div class="orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(5,150,105,0.08),transparent 70%);top:10%;right:-5%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Delivery</div>
+      <div class="eyebrow animate-in">Tips</div>
+      <h2 class="animate-in">Delivery — Buenas Prácticas</h2>
+
+      <div class="card-grid card-grid-2 mt-24">
+        <div class="card accent-green animate-in">
+          <span class="card-icon">💬</span>
+          <div class="card-title">Confirmar llegada</div>
+          <div class="card-desc">Apenas llegues al domicilio, mandá cualquier texto al número del local. Al instante el cliente recibe: "El delivery ya está afuera con tu pedido 🍔"</div>
+        </div>
+        <div class="card animate-in" data-delay="0.15">
+          <span class="card-icon">⛔</span>
+          <div class="card-title">No hables directo al cliente</div>
+          <div class="card-desc">No le mandes mensajes propios al cliente por WhatsApp. Todo se coordina a través del sistema.</div>
+        </div>
+        <div class="card accent-yellow animate-in" data-delay="0.3">
+          <span class="card-icon">❓</span>
+          <div class="card-title">Cliente no está</div>
+          <div class="card-desc">Contactá al encargado por otro medio. No uses el WhatsApp del delivery para escribirle al cliente.</div>
+        </div>
+        <div class="card accent-cyan animate-in" data-delay="0.45">
+          <span class="card-icon">📋</span>
+          <div class="card-title">Sin pedidos pendientes</div>
+          <div class="card-desc">Si mandás un texto y no hay pedidos, el sistema responde: "Gracias, no hay pedidos pendientes."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 9: DUEÑO ═══════════════ -->
+  <div class="slide-container" id="slide-9">
+    <div class="orb" style="width:450px;height:450px;background:radial-gradient(circle,rgba(212,160,23,0.1),transparent 70%);top:-5%;left:5%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Administración</div>
+      <div class="eyebrow animate-in">Rol</div>
+      <h2 class="animate-in">👑 Para Dueño / Administración</h2>
+      <div class="subtitle animate-in" style="margin-bottom:32px;">Tenés DOS herramientas. Usalas según lo que necesites hacer.</div>
+
+      <div class="card-grid card-grid-2">
+        <div class="card accent-cyan animate-in">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <span style="font-size:36px;">✈️</span>
+            <span class="badge badge-cyan">Principal</span>
+          </div>
+          <div class="card-title">Telegram Bot — @MrsMuzzarellaBot</div>
+          <div class="card-desc">
+            <strong>Para el día a día.</strong> Le hablás y él ejecuta. Cambiar estados, crear productos, ver stats, mandar WhatsApp, override de conversaciones.<br><br>
+            <span style="color:var(--cyan);">"cómo vamos?" — "creá hamburguesa de carne, hornela, 5000" — "tomá control del chat 5"</span>
+          </div>
+        </div>
+        <div class="card accent-gold animate-in" data-delay="0.2">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <span style="font-size:36px;">🖥️</span>
+            <span class="badge badge-gold">Gestión</span>
+          </div>
+          <div class="card-title">Panel Web — muzapp.onrender.com/admin</div>
+          <div class="card-desc">
+            <strong>Para configuración visual.</strong> Dashboard, productos, analytics, agente IA, conversaciones, leads, clientes. Todo configurable desde acá.<br><br>
+            <span style="color:var(--gold);">Horarios, promos, stock de pan, alias de pago, zonas de delivery</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 10: TELEGRAM TOOLS ═══════════════ -->
+  <div class="slide-container" id="slide-10">
+    <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,229,255,0.08),transparent 70%);bottom:-5%;right:5%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Administración</div>
+      <div class="eyebrow animate-in">Telegram Bot</div>
+      <h2 class="animate-in">Qué podés hacer desde Telegram</h2>
+      <div class="subtitle animate-in" style="margin-bottom:28px;">Comandos útiles para el día a día</div>
+
+      <div class="card-grid card-grid-2" style="gap:12px;">
+        <div class="animate-in" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px 22px;">
+          <div style="font-size:14px;font-weight:600;color:var(--cyan);margin-bottom:4px;">📊 Resumen</div>
+          <div style="font-size:14px;color:var(--white-60);">"cómo vamos?" — cocina, pedidos, stock, leads</div>
+        </div>
+        <div class="animate-in" data-delay="0.08" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px 22px;">
+          <div style="font-size:14px;font-weight:600;color:var(--gold);margin-bottom:4px;">📦 Pedidos</div>
+          <div style="font-size:14px;color:var(--white-60);">"pedidos pendientes", "el 5 está listo"</div>
+        </div>
+        <div class="animate-in" data-delay="0.16" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px 22px;">
+          <div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:4px;">👤 Clientes</div>
+          <div style="font-size:14px;color:var(--white-60);">"perfil de Juan", "contexto del chat 5"</div>
+        </div>
+        <div class="animate-in" data-delay="0.24" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px 22px;">
+          <div style="font-size:14px;font-weight:600;color:var(--red);margin-bottom:4px;">📱 WhatsApp</div>
+          <div style="font-size:14px;color:var(--white-60);">"mandale a Hector 'tu pedido salió'"</div>
+        </div>
+        <div class="animate-in" data-delay="0.32" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px 22px;">
+          <div style="font-size:14px;font-weight:600;color:var(--yellow);margin-bottom:4px;">⚙️ Config</div>
+          <div style="font-size:14px;color:var(--white-60);">"abrí la cocina", "stock pan 20 docenas"</div>
+        </div>
+        <div class="animate-in" data-delay="0.4" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px 22px;">
+          <div style="font-size:14px;font-weight:600;color:var(--cyan);margin-bottom:4px;">🎮 Control</div>
+          <div style="font-size:14px;color:var(--white-60);">"tomá control del chat 5", "desactivá override"</div>
+        </div>
+        <div class="animate-in" data-delay="0.48" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px 22px;">
+          <div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:4px;">📈 Analytics</div>
+          <div style="font-size:14px;color:var(--white-60);">"ventas de esta semana", "top productos"</div>
+        </div>
+        <div class="animate-in" data-delay="0.56" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px 22px;">
+          <div style="font-size:14px;font-weight:600;color:var(--gold);margin-bottom:4px;">🛒 Productos</div>
+          <div style="font-size:14px;color:var(--white-60);">"creá hamburguesa de carne, hornela, 5000"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 11: KAREN ═══════════════ -->
+  <div class="slide-container" id="slide-11">
+    <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,229,255,0.1),transparent 70%);top:5%;left:20%;"></div>
+    <div class="orb" style="width:250px;height:250px;background:radial-gradient(circle,rgba(212,160,23,0.08),transparent 70%);bottom:10%;right:10%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Ventas</div>
+      <div class="eyebrow animate-in">Agente Automático</div>
+      <h2 class="animate-in">🤖 Karen — Cómo vende</h2>
+      <div class="subtitle animate-in" style="margin-bottom:32px;">El agente de WhatsApp que atiende a los clientes</div>
+
+      <div class="step-container" id="karen-steps" style="max-width:750px;margin:0 auto;">
+        <div class="step active">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Escucha qué producto pide</h4>
+            <p>Ejecuta getProductPrice para confirmar precio y disponibilidad</p>
+          </div>
+        </div>
+        <div class="step" style="opacity:0;">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Pregunta cantidad</h4>
+            <p>Usa addOrderItem para ir registrando cada producto</p>
+          </div>
+        </div>
+        <div class="step" style="opacity:0;">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Pregunta delivery o retiro</h4>
+            <p>Si delivery → pide dirección + ubicación GPS</p>
+          </div>
+        </div>
+        <div class="step" style="opacity:0;">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Pregunta método de pago</h4>
+            <p>Da las opciones disponibles (alias MP, efectivo, etc.)</p>
+          </div>
+        </div>
+        <div class="step" style="opacity:0;">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <h4>Cuando el cliente confirma → CREA EL PEDIDO</h4>
+            <p>Ejecuta createOrder inmediatamente. Notifica a Telegram y al delivery si aplica.</p>
+          </div>
+        </div>
+      </div>
+      <button class="step-btn" id="karen-step-btn" onclick="nextKarenStep()" style="margin:20px auto 0;">Siguiente paso →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 12: GLOSARIO ═══════════════ -->
+  <div class="slide-container" id="slide-12">
+    <div class="orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(251,191,36,0.08),transparent 70%);top:10%;left:-5%;"></div>
+    <div class="slide-content">
+      <div class="subworld-tag animate-in">Submundo: Referencia</div>
+      <div class="eyebrow animate-in">Guía Rápida</div>
+      <h2 class="animate-in">Glosario</h2>
+      <div class="subtitle animate-in" style="margin-bottom:28px;">Términos clave del sistema</div>
+
+      <div class="card-grid card-grid-3" style="gap:12px;">
+        <div class="animate-in" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px;">
+          <div style="font-weight:700;color:var(--cyan);font-size:15px;">Karen</div>
+          <div style="font-size:13px;color:var(--white-60);margin-top:4px;">Agente automático que atiende WhatsApp</div>
+        </div>
+        <div class="animate-in" data-delay="0.08" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px;">
+          <div style="font-weight:700;color:var(--gold);font-size:15px;">Human Override</div>
+          <div style="font-size:13px;color:var(--white-60);margin-top:4px;">Control manual: un humano responde, Karen se pausa 24hs</div>
+        </div>
+        <div class="animate-in" data-delay="0.16" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px;">
+          <div style="font-weight:700;color:var(--green);font-size:15px;">Order Context</div>
+          <div style="font-size:13px;color:var(--white-60);margin-top:4px;">Memoria del pedido actual (TTL 30 min)</div>
+        </div>
+        <div class="animate-in" data-delay="0.24" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px;">
+          <div style="font-weight:700;color:var(--yellow);font-size:15px;">Follow-up</div>
+          <div style="font-size:13px;color:var(--white-60);margin-top:4px;">Mensaje automático 30 min después de entregado</div>
+        </div>
+        <div class="animate-in" data-delay="0.32" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px;">
+          <div style="font-weight:700;color:var(--red);font-size:15px;">Lead</div>
+          <div style="font-size:13px;color:var(--white-60);margin-top:4px;">Contacto que todavía no compró</div>
+        </div>
+        <div class="animate-in" data-delay="0.4" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px;">
+          <div style="font-weight:700;font-size:15px;">Cliente</div>
+          <div style="font-size:13px;color:var(--white-60);margin-top:4px;">Lead que ya hizo al menos un pedido</div>
+        </div>
+        <div class="animate-in" data-delay="0.48" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px;">
+          <div style="font-weight:700;color:var(--cyan);font-size:15px;">B2C</div>
+          <div style="font-size:13px;color:var(--white-60);margin-top:4px;">Consumidor final (hamburguesas)</div>
+        </div>
+        <div class="animate-in" data-delay="0.56" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px;">
+          <div style="font-weight:700;color:var(--gold);font-size:15px;">B2B</div>
+          <div style="font-size:13px;color:var(--white-60);margin-top:4px;">Business (pan al por mayor)</div>
+        </div>
+        <div class="animate-in" data-delay="0.64" style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:12px;padding:18px;">
+          <div style="font-weight:700;color:var(--white-80);font-size:15px;">Notify Delivery</div>
+          <div style="font-size:13px;color:var(--white-60);margin-top:4px;">Mensaje automático al delivery con dirección</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SLIDE 13: CIERRE ═══════════════ -->
+  <div class="slide-container" id="slide-13">
+    <canvas class="particle-canvas" id="closing-particles"></canvas>
+    <div class="orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(0,229,255,0.1),transparent 70%);top:-10%;left:50%;"></div>
+    <div class="slide-content" style="position:relative;z-index:1;text-align:center;">
+      <div class="eyebrow animate-in">Mrs Muzzarella</div>
+      <h2 class="animate-in">Listo. Ahora el equipo entiende el sistema.</h2>
+      <div class="subtitle animate-in" style="max-width:700px;margin:0 auto 32px;">
+        Tres interfaces. Estados claros. Automatización que coordina a todos.
+        <br><span style="color:var(--white-40);">Del papel a la plataforma. Sin esfuerzo.</span>
+      </div>
+      <div class="animate-in flex-center" style="gap:12px;flex-wrap:wrap;">
+        <span class="badge badge-cyan">@MrsMuzzarellaBot</span>
+        <span class="badge badge-gold">muzapp.onrender.com/admin</span>
+        <span class="badge badge-green">WhatsApp Business</span>
+      </div>
+      <div class="animate-in mt-32" style="font-size:14px;color:var(--white-20);">
+        Presentación interactiva · Future IA & Automatizacion · Mayo 2026
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ NAVEGACIÓN ═══════════════ -->
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="slide-counter" id="slide-counter">01 / 14</div>
+  <div class="brand-footer">FUTURE IA</div>
+  <div class="nav">
+    <button class="nav-btn" id="prev-btn">← Anterior</button>
+    <div class="nav-indicator" id="nav-indicator"></div>
+    <button class="nav-btn" id="next-btn">Siguiente →</button>
+  </div>
+
+  <script>
+    // ─── STATE ───
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide-container');
+    const totalSlides = slides.length;
+    const progressFill = document.getElementById('progress-fill');
+    const slideCounter = document.getElementById('slide-counter');
+
+    // ─── SLIDE INITIALIZERS ───
+    const slideInitializers = {};
+
+    // ─── NAVIGATION ───
+    function goToSlide(n) {
+      if (n < 0 || n >= totalSlides || n === currentSlide) return;
+
+      const outSlide = slides[currentSlide];
+      const inSlide = slides[n];
+
+      outSlide.classList.remove('active');
+      inSlide.classList.add('active');
+
+      currentSlide = n;
+      updateProgress();
+      animateSlideEntrance(inSlide);
+
+      // Call initializer
+      if (slideInitializers[n]) slideInitializers[n]();
+
+      updateNavDots();
+    }
+
+    function updateProgress() {
+      const pct = ((currentSlide + 1) / totalSlides) * 100;
+      progressFill.style.width = pct + '%';
+      slideCounter.textContent =
+        String(currentSlide + 1).padStart(2, '0') + ' / ' +
+        String(totalSlides).padStart(2, '0');
+    }
+
+    function animateSlideEntrance(slide) {
+      const elements = slide.querySelectorAll('.animate-in');
+      elements.forEach(function(el, i) {
+        const delay = parseFloat(el.dataset.delay) || i * 0.1;
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(24px)';
+        setTimeout(function() {
+          el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, delay * 1000);
+      });
+    }
+
+    // ─── NAV DOTS ───
+    function buildNavDots() {
+      const container = document.getElementById('nav-indicator');
+      for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = function() { goToSlide(i); };
+        container.appendChild(dot);
+      }
+    }
+
+    function updateNavDots() {
+      const dots = document.querySelectorAll('.nav-dot');
+      dots.forEach(function(d, i) {
+        d.classList.toggle('active', i === currentSlide);
+      });
+    }
+
+    // ─── KEYBOARD ───
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        goToSlide(currentSlide + 1);
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        goToSlide(currentSlide - 1);
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+      }
+    });
+
+    // ─── BUTTONS ───
+    document.getElementById('prev-btn').onclick = function() { goToSlide(currentSlide - 1); };
+    document.getElementById('next-btn').onclick = function() { goToSlide(currentSlide + 1); };
+
+    // ─── TOUCH ───
+    let touchStartX = 0;
+    document.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
+    document.addEventListener('touchend', function(e) {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) goToSlide(dx < 0 ? currentSlide + 1 : currentSlide - 1);
+    });
+
+    // ─── PARTICLE CANVAS ───
+    function initParticleCanvas(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      let mouseX = canvas.width / 2;
+      let mouseY = canvas.height / 2;
+
+      const particles = Array.from({ length: 60 }, function() {
+        return {
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          radius: Math.random() * 2 + 1,
+        };
+      });
+
+      canvas.addEventListener('mousemove', function(e) {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      let animId;
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach(function(p) {
+          const dx = mouseX - p.x;
+          const dy = mouseY - p.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 200) {
+            p.vx += dx * 0.00005;
+            p.vy += dy * 0.00005;
+          }
+
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0) p.x = canvas.width;
+          if (p.x > canvas.width) p.x = 0;
+          if (p.y < 0) p.y = canvas.height;
+          if (p.y > canvas.height) p.y = 0;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(212, 160, 23, 0.5)';
+          ctx.fill();
+        });
+
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 100) {
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.strokeStyle = 'rgba(212, 160, 23, ' + (0.15 * (1 - dist / 100)) + ')';
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+            }
+          }
+        }
+
+        animId = requestAnimationFrame(draw);
+      }
+
+      draw();
+
+      return function cleanup() {
+        if (animId) cancelAnimationFrame(animId);
+      };
+    }
+
+    // ─── STATUS HIGHLIGHT ───
+    function highlightStatus(status) {
+      const nodes = document.querySelectorAll('.status-node');
+      nodes.forEach(function(n) { n.classList.remove('active'); });
+      const target = document.querySelector('.status-node[data-status="' + status + '"]');
+      if (target) target.classList.add('active');
+
+      const detail = document.getElementById('status-detail');
+      const info = {
+        pending: { icon: '🟡', title: 'PENDING — Pendiente', desc: 'Pedido recién creado. Aparece en cocina y Telegram. Esperando a que la cocina empiece.' },
+        preparing: { icon: '🔵', title: 'PREPARING — Preparando', desc: 'La cocina está trabajando. El cliente ya fue notificado por WhatsApp automáticamente.' },
+        ready: { icon: '🟢', title: 'READY — Listo', desc: 'Producto terminado. El cliente recibe WhatsApp: si es delivery, sale; si es retiro, pasa a buscar.' },
+        delivered: { icon: '✅', title: 'DELIVERED — Entregado', desc: 'Pedido recibido por el cliente. En 30 min llega follow-up automático: "¿todo bien?"' },
+        cancelled: { icon: '❌', title: 'CANCELLED — Cancelado', desc: 'Pedido cancelado. Cliente ya fue notificado.' },
+      };
+      const data = info[status] || info.pending;
+      detail.innerHTML = '<div style="background:var(--bg-card);border:1px solid var(--white-10);border-radius:14px;padding:24px;max-width:500px;margin:0 auto;">'
+        + '<div style="font-size:28px;margin-bottom:8px;">' + data.icon + '</div>'
+        + '<div style="font-size:18px;font-weight:700;margin-bottom:8px;">' + data.title + '</div>'
+        + '<div style="font-size:15px;color:var(--white-60);">' + data.desc + '</div>'
+        + '</div>';
+    }
+
+    // ─── STATUS STEPS ───
+    let statusStepIndex = 0;
+
+    function nextStatusStep() {
+      const steps = document.querySelectorAll('#status-steps .step');
+      const btn = document.getElementById('status-step-btn');
+      statusStepIndex++;
+      if (statusStepIndex < steps.length) {
+        steps[statusStepIndex].style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        steps[statusStepIndex].style.opacity = '1';
+        steps[statusStepIndex].classList.add('active');
+        if (statusStepIndex === steps.length - 1) {
+          btn.textContent = '✅ Completado';
+          btn.style.display = 'none';
+        }
+      }
+    }
+
+    // ─── KAREN STEPS ───
+    let karenStepIndex = 0;
+
+    function nextKarenStep() {
+      const steps = document.querySelectorAll('#karen-steps .step');
+      const btn = document.getElementById('karen-step-btn');
+      karenStepIndex++;
+      if (karenStepIndex < steps.length) {
+        steps[karenStepIndex].style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        steps[karenStepIndex].style.opacity = '1';
+        steps[karenStepIndex].classList.add('active');
+        if (karenStepIndex === steps.length - 1) {
+          btn.textContent = '✅ ¡Pedido creado!';
+          btn.style.display = 'none';
+        }
+      }
+    }
+
+    // ─── RESIZE ───
+    window.addEventListener('resize', function() {
+      document.querySelectorAll('.particle-canvas').forEach(function(c) {
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+      });
+    });
+
+    // ─── REGISTER INITIALIZERS ───
+    slideInitializers[0] = function() { initParticleCanvas('cover-particles'); };
+    slideInitializers[13] = function() { initParticleCanvas('closing-particles'); };
+    slideInitializers[3] = function() {
+      document.getElementById('status-detail').innerHTML = ''
+        + '<div style="font-size:16px;color:var(--white-40);">Hacé clic en cada estado para ver más detalles</div>';
+    };
+    slideInitializers[4] = function() {
+      statusStepIndex = 0;
+      const steps = document.querySelectorAll('#status-steps .step');
+      steps.forEach(function(s, i) {
+        s.style.opacity = i === 0 ? '1' : '0';
+        s.classList.toggle('active', i === 0);
+      });
+      const btn = document.getElementById('status-step-btn');
+      btn.textContent = 'Siguiente estado →';
+      btn.style.display = 'block';
+    };
+    slideInitializers[11] = function() {
+      karenStepIndex = 0;
+      const steps = document.querySelectorAll('#karen-steps .step');
+      steps.forEach(function(s, i) {
+        s.style.opacity = i === 0 ? '1' : '0';
+        s.classList.toggle('active', i === 0);
+      });
+      const btn = document.getElementById('karen-step-btn');
+      btn.textContent = 'Siguiente paso →';
+      btn.style.display = 'block';
+    };
+
+    // ─── INIT ───
+    buildNavDots();
+    updateProgress();
+    animateSlideEntrance(slides[0]);
+    if (slideInitializers[0]) slideInitializers[0]();
+  </script>
+</body>
+</html>
