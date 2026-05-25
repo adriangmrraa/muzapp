@@ -27,7 +27,7 @@ export async function createManualOrder(
     let leadId: number | null = null;
     try {
       const [lead] = await db
-        .select({ id: leads.id })
+        .select({ id: leads.id, status: leads.status })
         .from(leads)
         .where(eq(leads.phone, data.customerPhone))
         .limit(1);
@@ -35,6 +35,13 @@ export async function createManualOrder(
         leadId = lead.id;
         if (data.address) {
           await db.update(leads).set({ address: data.address }).where(eq(leads.id, lead.id));
+        }
+        // Si era un lead sin pedidos, pasa a cliente
+        if (lead.status === "new" || lead.status === "contacted") {
+          await db.update(leads).set({ status: "converted" }).where(eq(leads.id, lead.id));
+        }
+        if (data.customerName) {
+          await db.update(leads).set({ name: data.customerName }).where(eq(leads.id, lead.id));
         }
       }
     } catch {}
