@@ -1,5 +1,6 @@
 import { fetchOrders, getOrderCounts } from "./actions";
 import { OrdersView } from "./orders-view";
+import { CreateOrderModalWrapper } from "./create-order-modal-wrapper";
 
 export const metadata = {
   title: "Pedidos / Cocina — Mrs Muzzarella Admin",
@@ -29,13 +30,16 @@ export default async function OrdersPage({ searchParams }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gold-gradient">
-          Pedidos / Cocina
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Pedidos registrados por el agente de WhatsApp
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gold-gradient">
+            Pedidos / Cocina
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Pedidos registrados por el agente de WhatsApp
+          </p>
+        </div>
+        <CreateOrderModalWrapper />
       </div>
 
       <OrdersView
