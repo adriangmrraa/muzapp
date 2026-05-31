@@ -135,12 +135,12 @@ export const createOrder = tool({
       const { notifyNewOrder } = await import("@/lib/telegram/notifier");
       notifyNewOrder({
         id: created.id,
-        customerName: customerName || phone,
+        customerName: customerName || cleanedPhone,
         orderType,
         items: resolvedItems,
         total,
         status: "pending",
-        phoneNumber: phone,
+        phoneNumber: cleanedPhone,
         notes: notes || null,
       });
     } catch {}
