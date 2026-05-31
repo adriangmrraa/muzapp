@@ -1,18 +1,25 @@
 import { db } from "@/db";
 import { products } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { normalizePhone, isValidPhone as normalizedIsValid } from "@/lib/phone-utils";
 
 type InputItem = { name: string; quantity: number; price?: number; unitPrice?: number };
 type ResolvedItem = { name: string; quantity: number; price: number; unitPrice: number };
 
 // ─── Validar teléfono Argentino ────────────────────────────────────────
-export function isValidPhone(phone: string): boolean {
-  const cleaned = phone.replace(/[+\s\-]/g, "");
-  return /^549\d{7,11}$/.test(cleaned);
+/**
+ * @deprecated Usar `normalizePhone()` de `@/lib/phone-utils` en nuevos desarrollos.
+ * Esta función se mantiene por retrocompatibilidad.
+ */
+export function cleanPhone(phone: string): string {
+  return normalizePhone(phone);
 }
 
-export function cleanPhone(phone: string): string {
-  return phone.replace(/[+\s\-]/g, "");
+/**
+ * @deprecated Usar `isValidPhone()` de `@/lib/phone-utils` en nuevos desarrollos.
+ */
+export function isValidPhone(phone: string): boolean {
+  return normalizedIsValid(phone);
 }
 
 /**

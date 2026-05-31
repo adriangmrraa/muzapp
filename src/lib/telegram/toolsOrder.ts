@@ -3,7 +3,8 @@ import { z } from "zod";
 import { db } from "@/db";
 import { orders, leads, products } from "@/db/schema";
 import { eq, or, ilike, asc, sql } from "drizzle-orm";
-import { resolveItems, isValidPhone, cleanPhone } from "@/lib/order-utils";
+import { resolveItems } from "@/lib/order-utils";
+import { normalizePhone, isValidPhone } from "@/lib/phone-utils";
 
 
 // ─── manageOrder: Herramientas de gestión de pedidos
@@ -36,7 +37,7 @@ export const createOrder = tool({
     const resolvedItems = await resolveItems(items);
 
     // Validar formato de teléfono
-    const cleanedPhone = cleanPhone(phone);
+    const cleanedPhone = normalizePhone(phone);
     if (!isValidPhone(cleanedPhone)) {
       return { success: false, message: `El teléfono "${phone}" no es válido. Usá un número real como 5493704868421.` };
     }
@@ -472,7 +473,7 @@ export const createDeliveredOrder = tool({
     const resolvedItems = await resolveItems(items);
 
     // Validar y limpiar teléfono
-    const cleanedPhone = cleanPhone(customerPhone);
+    const cleanedPhone = normalizePhone(customerPhone);
     if (!isValidPhone(cleanedPhone)) {
       return { success: false, message: `El teléfono "${customerPhone}" no parece válido. Los teléfonos de la zona empiezan con 549370 y tienen 10-12 dígitos.` };
     }

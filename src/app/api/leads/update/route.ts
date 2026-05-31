@@ -4,6 +4,7 @@ import { leads } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { normalizePhone } from "@/lib/phone-utils";
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -15,13 +16,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { id, name, phone, email, address, notes, type, tags } = body;
 
+    // Normalizar teléfono si se proporciona
+    const normalizedPhone = phone ? normalizePhone(phone) : undefined;
+
     // Buscar el lead por ID o por teléfono
     let leadId = id;
-    if (!leadId && phone) {
+    if (!leadId && normalizedPhone) {
       const [found] = await db
         .select({ id: leads.id })
         .from(leads)
-        .where(eq(leads.phone, phone))
+        .where(eq(leads.phone, normalizedPhone))
         .limit(1);
       if (found) leadId = found.id;
     }
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     const updates: Record<string, unknown> = {};
     if (name !== undefined) updates.name = name;
-    if (phone !== undefined) updates.phone = phone;
+    if (normalizedPhone !== undefined) updates.phone = normalizedPhone;
     if (email !== undefined) updates.email = email;
     if (address !== undefined) updates.address = address;
     if (notes !== undefined) updates.notes = notes;

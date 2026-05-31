@@ -178,7 +178,7 @@ export const chatMessages = pgTable("chat_messages", {
 export const leads = pgTable("leads", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }),
-  phone: varchar("phone", { length: 50 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull().unique(),
   email: varchar("email", { length: 255 }),
   address: text("address"),
   firstMessage: text("first_message"),

@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { leads } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { normalizePhone } from "@/lib/phone-utils";
 
 /**
  * Extract ref code from message text (format: ref:CODE123)
@@ -18,6 +19,8 @@ export async function captureLeadIfNew(
   name: string | null,
   firstMessage: string
 ): Promise<{ isNew: boolean; leadId?: number }> {
+  // Normalizar teléfono antes de cualquier operación
+  phone = normalizePhone(phone);
   // Check if lead already exists
   const existing = await db
     .select({ id: leads.id })

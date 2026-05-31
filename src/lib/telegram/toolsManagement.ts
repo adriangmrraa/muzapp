@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { leads, orders, agentConfig, conversations, chatMessages, products, users } from "@/db/schema";
 import { eq, desc, ilike, or, gte, lte, count, and, asc, sql } from "drizzle-orm";
+import { normalizePhone } from "@/lib/phone-utils";
 
 // ─── manageManagement: Tools de gestión interna ──────────────────────────────
 
@@ -48,6 +49,8 @@ export const getClientDetailTool = tool({
     query: z.string().describe("Teléfono o nombre del cliente"),
   }),
   execute: async ({ query }) => {
+    // Si el query parece un teléfono (contiene dígitos y +, espacios, guiones), normalizarlo
+    const phoneQuery = /^[+\d\s\-()]+$/.test(query) ? normalizePhone(query) : query;
     // Buscar por teléfono exacto primero, luego por nombre o alias parcial
     const [lead] = await db
       .select({
@@ -67,7 +70,7 @@ export const getClientDetailTool = tool({
       .from(leads)
       .where(
         or(
-          eq(leads.phone, query),
+          eq(leads.phone, phoneQuery),
           ilike(leads.name, `%${query}%`),
           ilike(leads.alias, `%${query}%`)
         )
@@ -136,6 +139,8 @@ export const searchClientTool = tool({
     query: z.string().describe("Nombre, teléfono o email a buscar"),
   }),
   execute: async ({ query }) => {
+    // Si el query parece un teléfono, también buscar con el formato normalizado
+    const phoneQuery = /^[+\d\s\-()]+$/.test(query) ? normalizePhone(query) : query;
     const rows = await db
       .select({
         id: leads.id,
@@ -149,7 +154,7 @@ export const searchClientTool = tool({
       .where(
         or(
           ilike(leads.name, `%${query}%`),
-          ilike(leads.phone, `%${query}%`),
+          ilike(leads.phone, `%${phoneQuery}%`),
           ilike(leads.email, `%${query}%`),
           ilike(leads.alias, `%${query}%`)
         )
@@ -711,6 +716,8 @@ export const getCustomerFullProfileTool = tool({
     query: z.string().describe("Nombre o teléfono del cliente a buscar"),
   }),
   execute: async ({ query }) => {
+    // Si el query parece un teléfono, normalizarlo para la búsqueda
+    const phoneQuery = /^[+\d\s\-()]+$/.test(query) ? normalizePhone(query) : query;
     // 1. Buscar el lead
     const [lead] = await db
       .select()
@@ -718,7 +725,7 @@ export const getCustomerFullProfileTool = tool({
       .where(
         or(
           ilike(leads.name, `%${query}%`),
-          ilike(leads.phone, `%${query}%`)
+          ilike(leads.phone, `%${phoneQuery}%`)
         )
       )
       .limit(1);
@@ -998,6 +1005,7 @@ export const injectCustomerNoteTool = tool({
     note: z.string().describe("Texto de la nota a agregar"),
   }),
   execute: async ({ phone, note }) => {
+    phone = normalizePhone(phone);
     const [lead] = await db
       .select({ id: leads.id, notes: leads.notes })
       .from(leads)

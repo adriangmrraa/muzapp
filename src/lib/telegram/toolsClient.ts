@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { orders, leads } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { normalizePhone } from "@/lib/phone-utils";
 
 // ─── manageClient: Herramientas de gestión de clientes ──────────────────────
 
@@ -14,6 +15,7 @@ export const getClientByPhone = tool({
     phone: z.string().describe("Número de teléfono a buscar"),
   }),
   execute: async ({ phone }) => {
+    phone = normalizePhone(phone);
     // Buscar en leads (tabla principal de clientes)
     const [lead] = await db
       .select({
@@ -56,6 +58,7 @@ export const createClient = tool({
     email: z.string().optional().describe("Email (opcional)"),
   }),
   execute: async ({ name, phone, email }) => {
+    phone = normalizePhone(phone);
     // Verificar si existe
     const [existing] = await db
       .select({ id: leads.id })
@@ -99,6 +102,9 @@ export const updateClient = tool({
     alias: z.string().optional().describe("Apodo o sobrenombre para buscarlo rápido en Telegram"),
   }),
   execute: async ({ phone, newPhone, name, email, notes, alias }) => {
+    phone = normalizePhone(phone);
+    if (newPhone) newPhone = normalizePhone(newPhone);
+
     const [existing] = await db
       .select({ id: leads.id })
       .from(leads)
@@ -137,6 +143,7 @@ export const getClientHistory = tool({
     limit: z.number().optional().describe("Límite (default 10)"),
   }),
   execute: async ({ phone, limit = 10 }) => {
+    phone = normalizePhone(phone);
     const rows = await db
       .select({
         id: orders.id,
@@ -190,6 +197,7 @@ export const suggestProducts = tool({
     phone: z.string().describe("Teléfono del cliente"),
   }),
   execute: async ({ phone }) => {
+    phone = normalizePhone(phone);
     // Obtener últimos 3 pedidos
     const rows = await db
       .select({
@@ -250,6 +258,7 @@ export const setClientAlias = tool({
     alias: z.string().describe("Apodo o sobrenombre. Ej: Flaco, Gordo, Negro, etc."),
   }),
   execute: async ({ phone, alias }) => {
+    phone = normalizePhone(phone);
     const [existing] = await db
       .select({ id: leads.id, name: leads.name })
       .from(leads)

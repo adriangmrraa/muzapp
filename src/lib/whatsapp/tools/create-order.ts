@@ -5,6 +5,7 @@ import { orders, leads, agentConfig, addresses } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 import { resolveItems } from "@/lib/order-utils";
+import { normalizePhone } from "@/lib/phone-utils";
 
 async function notifyDeliveryOrder(
   customerName: string,
@@ -72,6 +73,8 @@ export const createOrderTool = tool({
     notes: z.string().optional().describe("Notas adicionales del pedido"),
   }),
   execute: async ({ customerName, orderType, items, customerPhone, address, deliveryFee, paymentStatus, paymentMethod, notes }) => {
+    // Normalizar teléfono antes de cualquier operación
+    customerPhone = normalizePhone(customerPhone);
     // Resolver items contra productos reales de la DB
     const resolvedItems = await resolveItems(items);
     const subtotal = resolvedItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);

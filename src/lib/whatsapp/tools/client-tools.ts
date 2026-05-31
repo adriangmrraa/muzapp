@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { products, orders, leads } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { normalizePhone } from "@/lib/phone-utils";
 
 // checkProductAvailability - Verificar stock
 export const checkProductAvailabilityTool = tool({
@@ -46,6 +47,7 @@ export const suggestProductsTool = tool({
       return "Nuestros más pedidos: Classic Carne, Crispy Pollo, Especiale Italiano. ¿Querés que te recomiende algo en especial?";
     }
 
+    phone = normalizePhone(phone);
     const recentOrders = await db
       .select({ items: orders.items })
       .from(orders)
@@ -84,6 +86,7 @@ export const getClientHistoryTool = tool({
     phone: z.string().describe("Teléfono del cliente"),
   }),
   execute: async ({ phone }) => {
+    phone = normalizePhone(phone);
     // Buscar lead
     const leadRows = await db
       .select({

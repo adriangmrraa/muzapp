@@ -5,6 +5,7 @@ import { leads } from "@/db/schema";
 import { extractRefCode } from "@/lib/attribution";
 import { decodeRefCode } from "@/lib/attribution/ref-code";
 import { z } from "zod";
+import { normalizePhone } from "@/lib/phone-utils";
 
 // ─── POST /api/leads ──────────────────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+    data.phone = normalizePhone(data.phone);
     const refCode = data.firstMessage ? extractRefCode(data.firstMessage) : null;
 
     // Attribution resolution — fail-open: errors must never block lead creation

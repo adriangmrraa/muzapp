@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { conversations, chatMessages, leads, attachments, orders, agentConfig } from "@/db/schema";
 import { eq, and, lt } from "drizzle-orm";
+import { normalizePhone } from "@/lib/phone-utils";
 
 export type Channel = "whatsapp" | "telegram";
 
@@ -75,7 +76,7 @@ export async function findOrCreateConversation(
       whatsappId:
         channel === "whatsapp" ? externalUserId : `tg_${externalUserId}`,
       customerName: customerName || null,
-      customerPhone: customerPhone || externalUserId,
+      customerPhone: customerPhone ? normalizePhone(customerPhone) : externalUserId,
       channel,
       externalUserId,
       status: "active",
@@ -85,8 +86,9 @@ export async function findOrCreateConversation(
     .returning({ id: conversations.id });
 
   // Auto-link lead by phone number if a new conversation was created
-  if (customerPhone) {
-    await autoLinkLeadToConversation(customerPhone, conv.id);
+  const finalPhone = customerPhone ? normalizePhone(customerPhone) : externalUserId;
+  if (finalPhone) {
+    await autoLinkLeadToConversation(finalPhone, conv.id);
   }
 
   return { id: conv.id, isNew: true };

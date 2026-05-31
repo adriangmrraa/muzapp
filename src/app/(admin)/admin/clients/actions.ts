@@ -5,6 +5,7 @@ import { orders, leads } from "@/db/schema";
 import { desc, count, sql, and, or, ilike, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { normalizePhone } from "@/lib/phone-utils";
 
 const PAGE_SIZE = 30;
 
@@ -139,6 +140,20 @@ export async function updateClient(
   if (!session) return { success: false, error: "No autorizado" };
 
   try {
+    // Normalizar teléfono para la búsqueda
+    const normalizedPhone = normalizePhone(phone);
+
+    // Buscar el lead por teléfono normalizado para obtener su ID
+    const [lead] = await db
+      .select({ id: leads.id })
+      .from(leads)
+      .where(eq(leads.phone, normalizedPhone))
+      .limit(1);
+
+    if (!lead) {
+      return { success: false, error: "Cliente no encontrado" };
+    }
+
     const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.email !== undefined) updateData.email = data.email;
@@ -147,7 +162,8 @@ export async function updateClient(
     if (data.notes !== undefined) updateData.notes = data.notes;
     if (data.tags !== undefined) updateData.tags = data.tags;
 
-    await db.update(leads).set(updateData).where(eq(leads.phone, phone));
+    // Actualizar por ID (más seguro que por teléfono)
+    await db.update(leads).set(updateData).where(eq(leads.id, lead.id));
 
     // Revalidar TODAS las páginas
     revalidatePath("/admin/clients");
@@ -173,11 +189,13 @@ export async function deleteLead(
   if (!session) return { success: false, error: "No autorizado" };
 
   try {
+    // Normalizar teléfono
+    const normalizedPhone = normalizePhone(phone);
     // Buscar lead ID primero
     const [lead] = await db
       .select({ id: leads.id })
       .from(leads)
-      .where(eq(leads.phone, phone))
+      .where(eq(leads.phone, normalizedPhone))
       .limit(1);
 
     if (!lead) return { success: false, error: "Lead no encontrado" };

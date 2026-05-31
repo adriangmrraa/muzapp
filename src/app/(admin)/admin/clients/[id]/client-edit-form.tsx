@@ -42,7 +42,8 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
     try {
       const tags = tagsStr.split(",").map((t) => t.trim()).filter(Boolean);
 
-      await updateClient(phone, {
+      // Usar lead.phone (prop original) en vez de phone (state editable)
+      await updateClient(lead.phone, {
         name,
         email: email || undefined,
         address: address || undefined,
@@ -92,7 +93,7 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
                 </div>
                 <div>
                   <label className="text-[10px] text-neutral-500 uppercase font-semibold">Teléfono</label>
-                  <input value={phone} onChange={(e) => setPhone(e.target.value)} className={fieldClass} />
+                  <input value={phone} disabled className={fieldClass + " opacity-50 cursor-not-allowed"} />
                 </div>
               </div>
 

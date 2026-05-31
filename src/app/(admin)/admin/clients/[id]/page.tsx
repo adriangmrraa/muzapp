@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { orders, leads } from "@/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { calculateClientStats, formatCurrency } from "@/lib/client-utils";
+import { normalizePhone } from "@/lib/phone-utils";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Phone, MapPin, ShoppingBag, MessageSquare, Star, Tag, Plus, Edit } from "lucide-react";
@@ -43,7 +44,8 @@ function extractRepeatProducts(ordersList: typeof orders.$inferSelect[]): { name
 }
 
 export default async function ClientDetailPage({ params }: Props) {
-  const { id: phone } = await params;
+  const { id: rawPhone } = await params;
+  const phone = normalizePhone(rawPhone);
 
   const [lead] = await db.select().from(leads).where(eq(leads.phone, phone)).limit(1);
   const clientOrders = await db
