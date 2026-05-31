@@ -95,7 +95,7 @@ export const addToOrderTool = tool({
     const minutosPasados = (now - createdAt) / 60000;
 
     if (minutosPasados > 5) {
-      return `Pasaron más de 5 minutos desde que se creó el pedido #${orderId}, ya no puedo agregar más items. Si querés, puedo crear un pedido nuevo.`;
+      return `Pasaron más de 5 minutos desde que se creó el pedido #${orderId}. Derivo al equipo de Mrs Muzzarella para que lo evalúe y te confirme si se puede agregar.`;
     }
 
     if (order.status !== "pending") {

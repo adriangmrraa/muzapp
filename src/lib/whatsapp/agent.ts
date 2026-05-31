@@ -15,6 +15,7 @@ import {
   checkDeliveryTool,
   getDeliveryTimeTool,
   listAvailableProductsTool,
+  getWaitTimeTool,
   getOrderStatusTool,
   addToOrderTool,
   updateOrderTool,
@@ -179,6 +180,7 @@ export async function runWhatsAppAgent({
         checkDelivery: checkDeliveryTool,
         getDeliveryTime: getDeliveryTimeTool,
         listAvailableProducts: listAvailableProductsTool,
+        getWaitTime: getWaitTimeTool,
         // Grupo C: Pedidos (5)
         createOrder: createOrderTool,
         getOrderStatus: getOrderStatusTool,

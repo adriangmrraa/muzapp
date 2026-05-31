@@ -7,7 +7,7 @@ export { getProductDetailsTool, getProductPriceTool, searchProductsTool, createS
 // Grupo B: Disponibilidad y delivery (4)
 export { checkAvailabilityTool } from "./check-availability";
 export { checkProductAvailabilityTool } from "./client-tools";
-export { checkDeliveryTool, getDeliveryTimeTool, listAvailableProductsTool } from "./extended-tools";
+export { checkDeliveryTool, getDeliveryTimeTool, listAvailableProductsTool, getWaitTimeTool } from "./extended-tools";
 
 // Grupo C: Pedidos (5)
 export { createOrderTool } from "./create-order";

@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { products } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { products, orders as ordersTable } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 
 // --- CHECK DELIVERY TOOL ---
 // Verifica si hacemos delivery a una zona
@@ -58,6 +58,44 @@ export const getDeliveryTimeTool = tool({
     ) || "centro";
     
     return DELIVERY_ZONES[zonaEncontrada].tiempo;
+  },
+});
+
+// --- GET WAIT TIME ---
+// Calcula tiempo de demora basado en pedidos pendientes
+// Cada hamburguesa: 7 minutos. 1 delivery.
+export const getWaitTimeTool = tool({
+  description: "Calcula el tiempo de demora estimado segun la cantidad de pedidos pendientes. Cada hamburguesa tarda 7 min en hacerse. Hay 1 delivery.",
+  inputSchema: z.object({}),
+  execute: async () => {
+    const pendingOrders = await db
+      .select({ items: ordersTable.items })
+      .from(ordersTable)
+      .where(eq(ordersTable.status, "pending"))
+      .orderBy(desc(ordersTable.createdAt));
+
+    // Contar hamburguesas totales en pedidos pendientes
+    let totalBurgers = 0;
+    for (const o of pendingOrders) {
+      const items = o.items as { name?: string; quantity?: number }[] | null;
+      if (!items) continue;
+      for (const item of items) {
+        if (item.name && item.quantity) {
+          totalBurgers += item.quantity;
+        }
+      }
+    }
+
+    const minutosCoccion = totalBurgers * 7;
+    const minutosDelivery = 15; // tiempo fijo de delivery
+    const totalMinutos = minutosCoccion + minutosDelivery;
+
+    return {
+      pedidosPendientes: pendingOrders.length,
+      hamburguesasEnCola: totalBurgers,
+      minutosEstimado: totalMinutos,
+      mensaje: `Hay ${pendingOrders.length} pedido(s) antes. ${totalBurgers} hamburguesas en cola. A 7 min cada una, serían ${totalMinutos} min aproximadamente.`,
+    };
   },
 });
 
