@@ -29,7 +29,7 @@ import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { internalAgentTools } from "@/lib/telegram/tools";
-import { INTERNAL_AGENT_SYSTEM_PROMPT } from "@/lib/telegram/system-prompt";
+import { buildTelegramPrompt } from "@/lib/telegram/prompt-builder";
 
 export async function POST(
   request: NextRequest,
@@ -239,10 +239,12 @@ export async function POST(
         }
       }
 
+      // Build dynamic prompt with live business data
+      const systemPrompt = await buildTelegramPrompt();
       // Run the internal agent with full conversation history
       const result = await generateText({
         model: openai("gpt-5-mini"),
-        system: INTERNAL_AGENT_SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: aiMessages,
         tools: internalAgentTools,
         stopWhen: stepCountIs(15),
