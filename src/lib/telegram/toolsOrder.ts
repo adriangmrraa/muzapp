@@ -61,19 +61,27 @@ export const createOrder = tool({
     }
 
     // Si no se encontró por teléfono o el nombre no coincide, buscar por nombre
+    // Usa búsqueda semántica con pg_trgm (trigramas) para encontrar aunque el
+    // dueño escriba mal el nombre o tenga emojis/caracteres raros en DB
     if (!existingLead && customerName) {
-      // Limpiar el nombre de búsqueda: tildes, caracteres especiales, espacios múltiples
-      const searchName = customerName
-        .toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // sacar tildes
-        .replace(/[^a-z0-9\s]/g, "") // sacar caracteres no alfanuméricos
-        .trim();
+      // Intentar primero con pg_trgm (búsqueda semántica)
+      let nameMatches: { id: number; status: string | null; name: string | null; phone: string | null }[] = [];
       
-      const nameMatches = await db
-        .select({ id: leads.id, status: leads.status, name: leads.name, phone: leads.phone })
-        .from(leads)
-        .where(ilike(leads.name, `%${searchName}%`))
-        .limit(5);
+      try {
+        nameMatches = await db
+          .select({ id: leads.id, status: leads.status, name: leads.name, phone: leads.phone })
+          .from(leads)
+          .where(sql`similarity(${leads.name}, ${customerName}) > 0.2`)
+          .orderBy(sql`similarity(${leads.name}, ${customerName}) DESC`)
+          .limit(5);
+      } catch {
+        // Fallback a ilike si pg_trgm no está disponible
+        nameMatches = await db
+          .select({ id: leads.id, status: leads.status, name: leads.name, phone: leads.phone })
+          .from(leads)
+          .where(ilike(leads.name, `%${customerName}%`))
+          .limit(5);
+      }
 
       if (nameMatches.length === 0) {
         // No se encontró por nombre — pedir más datos
