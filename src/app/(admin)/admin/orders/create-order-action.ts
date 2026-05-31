@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 import { resolveItems } from "@/lib/order-utils";
+import { normalizePhone } from "@/lib/phone-utils";
 
 export async function createManualOrder(
   data: {
@@ -25,6 +26,7 @@ export async function createManualOrder(
   if (!session) return { success: false, error: "No autorizado" };
 
   try {
+    const phone = normalizePhone(data.customerPhone);
     const resolvedItems = await resolveItems(data.items);
     const subtotal = resolvedItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
     const delivery = data.deliveryFee || 0;
@@ -36,7 +38,7 @@ export async function createManualOrder(
       const [lead] = await db
         .select({ id: leads.id, status: leads.status })
         .from(leads)
-        .where(eq(leads.phone, data.customerPhone))
+        .where(eq(leads.phone, phone))
         .limit(1);
       if (lead) {
         leadId = lead.id;
@@ -57,7 +59,7 @@ export async function createManualOrder(
       .insert(orders)
       .values({
         leadId,
-        phoneNumber: data.customerPhone,
+        phoneNumber: phone,
         customerName: data.customerName,
         address: data.address || null,
         orderType: data.orderType,
@@ -78,7 +80,7 @@ export async function createManualOrder(
       items: resolvedItems,
       total,
       status: "pending",
-      phoneNumber: data.customerPhone,
+      phoneNumber: phone,
       notes: data.notes || null,
     }).catch(() => {});
 

@@ -17,6 +17,7 @@ import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
 import { db } from "@/db";
 import { agentConfig, conversations, leads, addresses } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { normalizePhone } from "@/lib/phone-utils";
 import { downloadYCloudMedia, saveMediaLocally } from "@/lib/media/downloader";
 import { transcribeAudio } from "@/lib/media/transcription";
 import { analyzeVideo } from "@/lib/media/video";
@@ -99,6 +100,9 @@ async function handleEcho(
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
+    // Normalizar teléfono para operaciones DB (findOrCreateConversation normaliza internamente)
+    const phone = normalizePhone(customerPhone);
+
     // 3. Extraer el contenido del mensaje
     const msgType = (msg.type as string) || "text";
     let displayText = "[Mensaje desde WhatsApp Business]";
@@ -118,6 +122,7 @@ async function handleEcho(
     );
 
     // 4. Buscar o crear conversación por el teléfono del customer
+    //    findOrCreateConversation normaliza customerPhone internamente
     const { id: conversationId } = await findOrCreateConversation(
       "whatsapp",
       customerPhone,
@@ -287,6 +292,11 @@ export async function POST(request: NextRequest) {
   const customerPhone = message.from as string;
   const customerName = (message.customerProfile?.name as string) || null;
 
+  // Normalizar teléfono para operaciones DB
+  // customerPhone (raw) se usa para enviar mensajes a YCloud
+  // phone (normalizado) se usa para buscar en DB
+  const phone = normalizePhone(customerPhone);
+
   try {
     // ─────────────────────────────────────────────────────────────────────────
     // 4. Load agent config — SIN filtro de enabled
@@ -389,7 +399,7 @@ export async function POST(request: NextRequest) {
         // Actualizar leads.address como dirección principal
         db.update(leads)
           .set({ address: addrToSave })
-          .where(eq(leads.phone, customerPhone))
+          .where(eq(leads.phone, phone))
           .then((r) => {
             if (r.rowCount && r.rowCount > 0)
               console.log(`[webhook:wa] Address saved to lead ${customerPhone}: ${addrToSave}`);
@@ -401,7 +411,7 @@ export async function POST(request: NextRequest) {
           ? `https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`
           : null;
         db.insert(addresses).values({
-          phone: customerPhone,
+          phone: phone,
           address: addrToSave,
           latitude: loc?.latitude ? String(loc.latitude) : null,
           longitude: loc?.longitude ? String(loc.longitude) : null,
@@ -605,7 +615,7 @@ export async function POST(request: NextRequest) {
       }
 
       // ── Inject direcciones guardadas del cliente ──────────────────────────
-      const customerAddresses = await getCustomerAddresses(customerPhone);
+      const customerAddresses = await getCustomerAddresses(phone);
       const addressesText = formatAddressesForPrompt(customerAddresses);
       if (addressesText) {
         aiMessages.unshift({ role: "user", content: addressesText });
@@ -618,7 +628,7 @@ export async function POST(request: NextRequest) {
         const [leadData] = await db
           .select({ type: leadsTable.type })
           .from(leadsTable)
-          .where(eq(leadsTable.phone, customerPhone))
+          .where(eq(leadsTable.phone, phone))
           .limit(1);
         if (leadData?.type) {
           const typeLabel = leadData.type === "b2b" ? "cliente BUSINESS (pan mayorista)" : "cliente CONSUMIDOR FINAL (hamburguesas)";
