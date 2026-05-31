@@ -101,15 +101,15 @@ function buildWhatsAppMessage(status: string, order: OrderRow): string | null {
   switch (status) {
     case "ready":
       if (isPan) {
-        return `YA ESTA TU PEDIDO DE PAN, RETIRALO EN NEUQUEN 1245.`;
+        return `🍞 Ya esta tu pedido de pan, retiralo por Neuquen 1245.`;
       }
       if (isDelivery) {
-        return `YA ESTA TU PEDIDO, EN BREVE EL DELIVERY LO ESTARA LLEVANDO A TU DOMICILIO.`;
+        return `🍔 Ya esta tu pedido, en breve el delivery te lo esta llevando.`;
       }
-      return `YA ESTA TU PEDIDO, RETIRALO EN NEUQUEN 1245.`;
+      return `🍔 Ya esta tu pedido, retiralo por Neuquen 1245.`;
 
     case "delivered":
-      return `GRACIAS POR ELEGIRNOS. SI NOS COMPARTIS EN TUS HISTORIAS PARTICIPAS POR HAMBURGUESAS TODAS LAS SEMANAS. NUESTRO ARROBA ES mrs_muzzarella.`;
+      return `🍔 Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro arroba es mrs_muzzarella.`;
 
     default:
       return null;
