@@ -95,29 +95,21 @@ export async function fetchOrders(params: {
 
 // ─── Mensajes profesionales segun estado, tipo y entrega ───────────────
 function buildWhatsAppMessage(status: string, order: OrderRow): string | null {
-  const name = order.customerName || "";
-  const greeting = name ? `Hola ${name}` : "Hola";
   const isDelivery = order.address && order.address.trim().length > 0;
   const isPan = order.orderType === "pan_mayorista";
 
   switch (status) {
-    case "preparing":
-      return `${greeting}, tu pedido ya está en preparación. Te aviso cuando esté listo.`;
-
     case "ready":
       if (isPan) {
-        return `${greeting}, tu pedido de pan ya está listo para retirar por Neuquen 1245.`;
+        return `YA ESTA TU PEDIDO DE PAN, RETIRALO EN NEUQUEN 1245.`;
       }
       if (isDelivery) {
-        return `${greeting}, tu pedido ya está listo. En breve el delivery lo va a estar llevando a tu domicilio.`;
+        return `YA ESTA TU PEDIDO, EN BREVE EL DELIVERY LO ESTARA LLEVANDO A TU DOMICILIO.`;
       }
-      return `${greeting}, tu pedido ya está listo. Pasá a buscarlo por Neuquen 1245.`;
+      return `YA ESTA TU PEDIDO, RETIRALO EN NEUQUEN 1245.`;
 
     case "delivered":
-      return `${greeting}! Espero que lo hayas disfrutado. Cualquier cosa, acá estoy.`;
-
-    case "cancelled":
-      return `${greeting}, tu pedido fue cancelado. Si necesitas algo más, no dudes en consultarnos.`;
+      return `GRACIAS POR ELEGIRNOS. SI NOS COMPARTIS EN TUS HISTORIAS PARTICIPAS POR HAMBURGUESAS TODAS LAS SEMANAS. NUESTRO ARROBA ES mrs_muzzarella.`;
 
     default:
       return null;
