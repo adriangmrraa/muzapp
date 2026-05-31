@@ -117,8 +117,8 @@ export const createOrder = tool({
     const [created] = await db
       .insert(orders)
       .values({
-        leadId,
-        phoneNumber: phone,
+        leadId: leadId ?? undefined,
+        phoneNumber: cleanedPhone,
         customerName,
         orderType,
         items: resolvedItems,
