@@ -33,7 +33,7 @@ function truncate(text: string | null, max: number): string {
 
 export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
   const displayName = conversation.customerName || conversation.customerPhone;
-  const initial = (conversation.customerName?.[0] || conversation.customerPhone.slice(-2)).toUpperCase();
+  const initial = (conversation.customerName?.[0] || conversation.customerPhone?.slice(-2) || "?").toUpperCase();
 
   return (
     <motion.button

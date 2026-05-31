@@ -69,7 +69,7 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const displayName = conversation.customerName || conversation.customerPhone;
-  const initial = (conversation.customerName?.[0] || conversation.customerPhone.slice(-2)).toUpperCase();
+  const initial = (conversation.customerName?.[0] || conversation.customerPhone?.slice(-2) || "?").toUpperCase();
 
   // Auto-scroll messages container to bottom (NUNCA scrollIntoView — scrollea la ventana)
   useEffect(() => {
