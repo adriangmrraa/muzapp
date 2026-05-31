@@ -90,7 +90,7 @@ export const createOrder = tool({
           phone: cleanedPhone,
           status: "converted",
         })
-        .returning({ id: leads.id });
+        .returning({ id: leads.id, status: leads.status, name: leads.name });
       existingLead = newLead;
     }
 
