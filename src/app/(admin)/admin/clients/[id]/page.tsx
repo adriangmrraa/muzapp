@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreateOrderModalWrapperClient } from "../create-order-modal-wrapper-client";
 import { ClientEditForm } from "./client-edit-form";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Ficha de Cliente — Mrs Muzzarella Admin" };
 
 interface Props {

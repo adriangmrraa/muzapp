@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { orders, leads } from "@/db/schema";
 import { desc, count, sql, and, or, ilike, eq } from "drizzle-orm";
 import { auth } from "@/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { normalizePhone } from "@/lib/phone-utils";
 
 const PAGE_SIZE = 30;
