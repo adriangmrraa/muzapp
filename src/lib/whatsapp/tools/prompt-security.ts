@@ -25,11 +25,14 @@ const INJECTION_PATTERNS_ENGLISH = [
   /bypass.*safeguards/i,
 ];
 
+// NOTA: NO incluimos patrones de backticks `` ` `` porque los clientes
+// los usan naturalmente en WhatsApp argentino (ej: "las `doble carne`").
+// Solo patrones EXPLICITOS de jailbreak.
 const INJECTION_PATTERNS_CODE = [
-  /```/,
-  /`[^`]+`/,
-  /respond as if/i,
-  /respond in the following format/i,
+  /ignora todo lo anterior/i,
+  /ignore all previous/i,
+  /eres un asistente nuevo/i,
+  /you are now a new ai/i,
 ];
 
 export interface InjectionResult {
@@ -39,10 +42,10 @@ export interface InjectionResult {
 }
 
 export function sanitizeInput(message: string): string {
-  // Remove code blocks and backticks
+  // Ya no removemos backticks (los clientes los usan naturalmente)
+  // Solo removemos caracteres de control obvios
   let sanitized = message
-    .replace(/```[\s\S]*?```/g, "[code removed]")
-    .replace(/`[^`]+`/g, "[code removed]")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "") // solo chars de control
     .trim();
   
   return sanitized;

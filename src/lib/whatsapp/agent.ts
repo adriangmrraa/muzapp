@@ -34,83 +34,16 @@ import {
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
-// smart-split unificado en response-sender.ts — ya no se usa acá
-
 interface RunAgentParams {
   conversationId: number;
   customerPhone: string;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
-  systemPrompt?: string;
-}
-
-// 🎯 FLUJOS EMOCIONALES (adaptados de ClinicForge F1-F9)
-// Detecta el tipo de situación emocional y retorna el handler apropiado
-
-type EmotionalTrigger = "F1_MALA_EXPERIENCIA" | "F3_URGENCIA" | "F5_PRECIO" | "F6_PERDIDA_DIENTES" | "F7_MIEDO" | null;
-
-function detectEmotionalTrigger(message: string): EmotionalTrigger {
-  const m = message.toLowerCase();
-  
-  // F1: Mala experiencia previa en otro lado
-  if (m.includes("otra parte") || m.includes("otro lado") || m.includes("otro restaurant") || 
-      m.includes("antes no me gusto") || m.includes("otra vez") && m.includes("mal")) {
-    return "F1_MALA_EXPERIENCIA";
-  }
-  
-  // F3: Urgencia / hambre
-  if (m.includes("tengo hambre") || m.includes("urgente") || m.includes("ya") || m.includes("ahora") ||
-      m.includes("para ahora") || m.includes("rápido")) {
-    return "F3_URGENCIA";
-  }
-  
-  // F5: Precio directo
-  if (m.includes("cuánto sale") || m.includes("cuánto cuesta") || m.includes("precio") || m.includes("cuánto")) {
-    return "F5_PRECIO";
-  }
-  
-  // F6: Pérdida de dientes / urgencia dental (gastronomy: comida)
-  if (m.includes("sin comer") || m.includes("no puedo comer") || m.includes("hambre")) {
-    return "F6_PERDIDA_DIENTES";
-  }
-  
-  // F7: Miedo / ansiedad
-  if (m.includes("no sé") || m.includes("duda") || m.includes("me da cosa") || m.includes("no entiendo")) {
-    return "F7_MIEDO";
-  }
-  
-  return null;
-}
-
-function getEmotionalResponse(trigger: EmotionalTrigger, customerName?: string): string | null {
-  const name = customerName || "chico/a";
-  
-  switch (trigger) {
-    case "F1_MALA_EXPERIENCIA":
-      return `Entiendo tu preocupación ${name}. En Mrs Muzzarella somos distintos — preparamos todo fresco, con ingredientes de calidad y sin conservantes. Dale una chance, probá alguna de nuestras burgers y me decís! 🍔`;
-    
-    case "F3_URGENCIA":
-      return `¡Te entiendo! La línea de pollo es la más rápida y están tope ricas.¿Querés que te tome el pedido ahora para que llegue lo antes posible? 🚀`;
-    
-    case "F5_PRECIO":
-      // El agente usará getMenu - esto es solo fallback
-      return null;
-    
-    case "F6_PERDIDA_DIENTES":
-      return `¡No te quedes sin comer! Nuestras burgers son completas y rendidoras. Te paso el menú para que elijas lo que más te llame la atención 🍔`;
-    
-    case "F7_MIEDO":
-      return `Tranqui ${name}, cualquier duda me preguntás y te asesoro. ¿Qué te llama la atención del menú?`;
-    
-    default:
-      return null;
-  }
 }
 
 export async function runWhatsAppAgent({
   conversationId,
   customerPhone,
   messages,
-  systemPrompt: customPrompt,
 }: RunAgentParams): Promise<string> {
   // 🛡️ PROMPT INJECTION DETECTION
   const lastUserMessage = messages[messages.length - 1]?.content || "";
@@ -121,21 +54,7 @@ export async function runWhatsAppAgent({
     return "No puedo procesar esa solicitud. ¿Querés hacer un pedido o ver el menú?";
   }
 
-  // 🎯 DETECTAR FLUJO EMOCIONAL E INYECTARLO EN EL CONTEXTO
-  const emotionalTrigger = detectEmotionalTrigger(lastUserMessage);
-  let emotionalContext = "";
-  
-  if (emotionalTrigger) {
-    const emotionalResponse = getEmotionalResponse(emotionalTrigger);
-    if (emotionalResponse) {
-      console.log("[agent] Emotional flow triggered:", emotionalTrigger);
-      emotionalContext = `\n\nCONTEXTO EMOCIONAL DETECTADO: El cliente muestra ${emotionalTrigger.replace(/_/g, " ").toLowerCase()}. Respondé con empatía primero y luego avanza al flujo normal.\nRespuesta emocional sugerida: "${emotionalResponse}"\n---`;
-    }
-  }
-
-  // 🔧 BUILD DYNAMIC PROMPT (V2 base + emotional context + user extras + menu + hours + context)
-  // El prompt V2 siempre va como base. Lo del admin UI se agrega como seccion extra.
-  // customPrompt del webhook ya NO se usa como override — buildSystemPrompt maneja todo.
+  // 🔧 BUILD DYNAMIC PROMPT (V6 + customer context)
   let system: string;
   let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null } } | undefined;
   
@@ -238,11 +157,6 @@ export async function runWhatsAppAgent({
     system = DEFAULT_SYSTEM_PROMPT;
   }
 
-  // Inyectar contexto emocional si se detectó
-  if (emotionalContext) {
-    system = system + emotionalContext;
-  }
-
   try {
     const result = await generateText({
       model: openai.chat("gpt-5-mini"),
@@ -297,87 +211,7 @@ export async function runWhatsAppAgent({
       toolChoice: "auto",
     });
 
-    let rawText = result.text || "";
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // DEAD-END RECOVERY (ClinicForge pattern)
-    // Detecta si el agente dijo "un momento", "voy a buscar", etc.
-    // sin haber ejecutado ninguna herramienta.
-    // ─────────────────────────────────────────────────────────────────────────
-    const stallPhrases = [
-      "un momento", "un instante", "dejame buscar", "voy a buscar",
-      "voy a verificar", "voy a consultar", "voy a agendar", "voy a proceder",
-      "ya verifico", "ya busco", "permití", "dame un segundo",
-      "dejame ver", "voy a fijarme", "dame un toque",
-    ];
-    const responseLower = rawText.toLowerCase();
-    const isStall = stallPhrases.some((phrase) => responseLower.includes(phrase));
-    const noToolsCalled = !result.toolCalls || result.toolCalls.length === 0;
-    const isShortResponse = rawText.length < 200;
-
-    if (isStall && noToolsCalled && isShortResponse) {
-      console.log("[agent] Dead-end detected — re-invoking with nudge");
-      console.log(`[agent] Stall text: "${rawText.slice(0, 100)}..."`);
-
-      // Append nudge as a system instruction in the messages
-      const nudgeMessages = [
-        ...messages,
-        {
-          role: "system" as const,
-          content: "[SISTEMA: Ejecutá la herramienta AHORA con los datos que ya tenés. No digas 'un momento' ni frases similares. Respondé directamente.]",
-        },
-      ];
-
-      const retryResult = await generateText({
-        model: openai.chat("gpt-5-mini"),
-        system,
-        messages: nudgeMessages,
-        providerOptions: {
-          openai: {
-            systemMessageMode: "developer",
-          } satisfies OpenAILanguageModelChatOptions,
-        },
-        tools: {
-          getMenu: getMenuTool,
-          getProductDetails: getProductDetailsTool,
-          getProductPrice: getProductPriceTool,
-          searchProducts: searchProductsTool,
-          checkAvailability: checkAvailabilityTool,
-          checkProductAvailability: checkProductAvailabilityTool,
-          checkDelivery: checkDeliveryTool,
-          getDeliveryTime: getDeliveryTimeTool,
-          listAvailableProducts: listAvailableProductsTool,
-          createOrder: createOrderTool,
-          getOrderStatus: getOrderStatusTool,
-          addToOrder: addToOrderTool,
-          updateOrder: updateOrderTool,
-          cancelOrder: cancelOrderTool,
-          suggestProducts: suggestProductsTool,
-          getClientHistory: getClientHistoryTool,
-          getBusinessHours: getBusinessHoursTool,
-          transferToHuman: createTransferToHumanTool(conversationId),
-          checkKitchenStatus: checkKitchenStatusTool,
-          checkPanStock: checkPanStockTool,
-          getPaymentAlias: getPaymentAliasTool,
-          sendProductImage: createSendProductImageTool(customerPhone),
-          sendSticker: createSendStickerTool(customerPhone),
-          sendMenuImage: createSendMenuImageTool(customerPhone),
-          sendImage: createSendImageTool(customerPhone),
-          sendDocument: createSendDocumentTool(customerPhone),
-          addOrderItem: createAddOrderItemTool(conversationId, customerPhone),
-          getOrderSummary: createGetOrderSummaryTool(conversationId),
-          confirmOrder: createConfirmOrderTool(conversationId, customerPhone),
-          getAddresses: createGetAddressesTool(customerPhone),
-        },
-        stopWhen: stepCountIs(10),
-        toolChoice: "auto",
-      });
-
-      rawText = retryResult.text || rawText;
-      console.log("[agent] Dead-end recovery — response after nudge");
-    }
-
-    // Limpiar markers internos que el LLM pueda haber incluido
+    const rawText = result.text || "";
     const finalText = rawText.replace(/\[INTERNAL_[^\]]*\]/g, "").trim();
     
     return finalText || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";

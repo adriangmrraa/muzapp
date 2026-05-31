@@ -22,8 +22,6 @@ import { downloadYCloudMedia, saveMediaLocally } from "@/lib/media/downloader";
 import { transcribeAudio } from "@/lib/media/transcription";
 import { analyzeVideo } from "@/lib/media/video";
 import { extractDocumentText } from "@/lib/media/document";
-import { getOrderContextSummary, formatOrderSummary } from "@/lib/order-context";
-import { getCustomerAddresses, formatAddressesForPrompt } from "@/lib/addresses";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 
@@ -159,26 +157,53 @@ async function handleEcho(
       }
     }
 
-    // 6. Setear humanOverrideUntil = NOW + 24h
-    //    (indica que un humano respondió desde WhatsApp Business App)
-    const overrideUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await db
-      .update(conversations)
-      .set({ humanOverrideUntil: overrideUntil, updatedAt: new Date() })
-      .where(eq(conversations.id, conversationId));
+    // 6. Determinar si este echo es del bot (AI) o de un humano
+    //    Buscamos el mensaje original por platformMessageId.
+    //    Si existe y era role="assistant" → es eco de nuestra propia respuesta → NO override.
+    //    Si NO existe o era role="human" → un humano respondió desde WhatsApp Business App → override 24h.
+    let isOwnEcho = false;
+    if (echoMsgId) {
+      try {
+        const { chatMessages: cmTable } = await import("@/db/schema");
+        const [original] = await db
+          .select({ role: cmTable.role })
+          .from(cmTable)
+          .where(eq(cmTable.platformMessageId, echoMsgId))
+          .limit(1);
+        // Si encontramos el mensaje original y era assistant → es eco propio
+        isOwnEcho = original?.role === "assistant";
+      } catch {
+        // Si falla la query, asumimos que NO es echo propio (más seguro para no perder override)
+        isOwnEcho = false;
+      }
+    }
 
-    console.log(`[webhook:echo] Human override set for conversation ${conversationId} until ${overrideUntil.toISOString()}`);
+    if (isOwnEcho) {
+      // Es eco de nuestra propia respuesta AI → solo dedup, NO setear override
+      console.log(`[webhook:echo] Own AI echo ${echoMsgId} — no human override needed`);
+    } else {
+      // Un humano respondió desde WhatsApp Business App → override 24h
+      const overrideUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await db
+        .update(conversations)
+        .set({ humanOverrideUntil: overrideUntil, updatedAt: new Date() })
+        .where(eq(conversations.id, conversationId));
+
+      console.log(`[webhook:echo] Human override set for conversation ${conversationId} until ${overrideUntil.toISOString()}`);
+    }
 
     // 7. Guardar el mensaje como assistant (para que se muestre en el chat)
-    await insertMessage(
-      conversationId,
-      "assistant",
-      displayText,
-      undefined,
-      echoMsgId
-    );
-
-    console.log(`[webhook:echo] Echo saved as assistant message in conversation ${conversationId}`);
+    //    Solo guardar si NO es echo propio (los echos propios ya tienen su mensaje guardado)
+    if (!isOwnEcho) {
+      await insertMessage(
+        conversationId,
+        "assistant",
+        displayText,
+        undefined,
+        echoMsgId
+      );
+      console.log(`[webhook:echo] Echo saved as assistant message in conversation ${conversationId}`);
+    }
 
   } catch (error) {
     console.error("[webhook:echo] Error processing echo:", error);
@@ -606,42 +631,15 @@ export async function POST(request: NextRequest) {
 
       console.log(`[webhook:wa] Running agent with ${aiMessages.length} history messages`);
 
-      // ── Inject order context (memoria del pedido actual) ──────────────────
-      const orderItems = await getOrderContextSummary(conversationId);
-      const orderSummaryText = formatOrderSummary(orderItems);
-      if (orderSummaryText) {
-        aiMessages.unshift({ role: "user", content: orderSummaryText });
-        console.log(`[webhook:wa] Injected order context: ${orderItems.length} items`);
-      }
-
-      // ── Inject direcciones guardadas del cliente ──────────────────────────
-      const customerAddresses = await getCustomerAddresses(phone);
-      const addressesText = formatAddressesForPrompt(customerAddresses);
-      if (addressesText) {
-        aiMessages.unshift({ role: "user", content: addressesText });
-        console.log(`[webhook:wa] Injected ${customerAddresses.length} saved addresses`);
-      }
-
-      // ── Inject tipo de cliente (b2c/b2b) ─────────────────────────────────
-      try {
-        const { leads: leadsTable } = await import("@/db/schema");
-        const [leadData] = await db
-          .select({ type: leadsTable.type })
-          .from(leadsTable)
-          .where(eq(leadsTable.phone, phone))
-          .limit(1);
-        if (leadData?.type) {
-          const typeLabel = leadData.type === "b2b" ? "cliente BUSINESS (pan mayorista)" : "cliente CONSUMIDOR FINAL (hamburguesas)";
-          aiMessages.unshift({ role: "user", content: `📋 Tipo de cliente: ${typeLabel}` });
-        }
-      } catch {} // non-fatal
+      // NOTA: el customer context (order history, address, notes, preferences)
+      // ya se carga DENTRO de runWhatsAppAgent() → buildSystemPrompt().
+      // NO inyectar nada como role:"user" — eso contamina la línea temporal.
 
       // Run agent with combined context
       const responseText = await runWhatsAppAgent({
         conversationId,
         customerPhone,
         messages: aiMessages,
-        systemPrompt,
       });
 
       console.log(`[webhook:wa] Agent response: ${responseText.slice(0, 100)}...`);

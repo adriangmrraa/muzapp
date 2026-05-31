@@ -36,5 +36,7 @@ export function formatAddressesForPrompt(addresses: CustomerAddress[]): string {
     return `  ${i + 1}. ${a.address}${label}${maps}`;
   });
 
-  return `\n📍 DIRECCIONES GUARDADAS DEL CLIENTE:\n${lines.join("\n")}\n⚠️ Si pide delivery, preguntale: "¿a cuál dirección te lo mandamos?" y mostrale las opciones.`;
+  // NOTA: la instrucción de comportamiento (qué hacer con estas direcciones)
+  // está en el system prompt, NO acá. Esta función solo devuelve DATA.
+  return `\n📍 DIRECCIONES GUARDADAS DEL CLIENTE:\n${lines.join("\n")}`;
 }

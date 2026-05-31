@@ -6,6 +6,10 @@ import { normalizePhone, isValidPhone as normalizedIsValid } from "@/lib/phone-u
 type InputItem = { name: string; quantity: number; price?: number; unitPrice?: number };
 type ResolvedItem = { name: string; quantity: number; price: number; unitPrice: number };
 
+// FIX CRITICAL: resolveItems() IGNORA item.price e item.unitPrice del LLM.
+// Solo usa precios reales de la DB. Si no hay match en DB, unitPrice = 0.
+// Ver: docs/aprendizaje-chats-dueno.md + sdd/rediseno-bot-ventas/
+
 // ─── Validar teléfono Argentino ────────────────────────────────────────
 /**
  * @deprecated Usar `normalizePhone()` de `@/lib/phone-utils` en nuevos desarrollos.
@@ -46,24 +50,24 @@ export async function resolveItems(items: InputItem[]): Promise<ResolvedItem[]> 
         return {
           name: match.name,
           quantity: item.quantity,
-          price: item.price ?? realPrice,
-          unitPrice: item.unitPrice ?? realPrice,
+          price: realPrice,       // ✅ SIEMPRE precio real de DB
+          unitPrice: realPrice,   // ✅ IGNORA item.unitPrice del LLM
         };
       }
 
       return {
         name: item.name,
         quantity: item.quantity,
-        price: item.price ?? 0,
-        unitPrice: item.unitPrice ?? 0,
+        price: 0,                 // Sin match → 0 (admin lo corrige)
+        unitPrice: 0,
       };
     });
   } catch {
     return items.map((item) => ({
       name: item.name,
       quantity: item.quantity,
-      price: item.price ?? 0,
-      unitPrice: item.unitPrice ?? 0,
+      price: 0,                   // DB caída → 0 (admin lo corrige)
+      unitPrice: 0,
     }));
   }
 }
