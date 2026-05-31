@@ -1060,6 +1060,7 @@ export const deleteLeadTool = tool({
 });
 
 export const managementTools = {
+  deleteLead: deleteLeadTool,
   getClients: getClientsTool,
   getClientDetail: getClientDetailTool,
   searchClient: searchClientTool,
