@@ -60,25 +60,29 @@ async function processBufferLoop(
     attempts++;
   }
 
+  console.log(`[buffer:process] Timer expired or max attempts reached for ${channel}:${userId} after ${attempts}s`);
+
   // Fetch all buffered messages
   const messages = await BufferManager.fetchAndClear(channel, userId);
 
   if (messages.length === 0) return;
 
-  console.log(
-    `[buffer:process] Start — ${messages.length} msgs for ${channel}:${userId} (depth=${depth})`
-  );
-
-  try {
-    await processCallback(messages);
-    console.log(`[buffer:process] Done for ${channel}:${userId} (depth=${depth})`);
-  } catch (err) {
-    console.error(
-      `[buffer:process] Callback error for ${channel}:${userId} (depth=${depth}):`,
-      err
+    console.log(
+      `[buffer:process] Start — ${messages.length} msgs for ${channel}:${userId} (depth=${depth})`
     );
-    // Don't re-throw — we still need to check for new messages and release the lock cleanly
-  }
+
+    try {
+      console.log(`[buffer:process] About to call processCallback for ${channel}:${userId}`);
+      await processCallback(messages);
+      console.log(`[buffer:process] Done for ${channel}:${userId} (depth=${depth})`);
+    } catch (err) {
+      console.error(
+        `[buffer:process] Callback error for ${channel}:${userId} (depth=${depth}):`,
+        err instanceof Error ? err.message : err,
+        err instanceof Error ? err.stack : ''
+      );
+      // Don't re-throw — we still need to check for new messages and release the lock cleanly
+    }
 
   // GRACEFUL INTERRUPTION: check if new messages arrived during processing
   const hasNew = await BufferManager.hasNewMessages(channel, userId);
