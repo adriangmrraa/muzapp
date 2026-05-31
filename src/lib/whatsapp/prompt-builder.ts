@@ -357,13 +357,12 @@ getOrderStatus, sendImage, getAddresses
 transferToHuman -> si el cliente insiste en algo que no se vende
 getPaymentAlias, checkKitchenStatus, checkPanStock
 
-[IMPORTANTE: EJECUTA LAS TOOLS SIEMPRE]
-- Cliente pide algo -> addOrderItem INMEDIATAMENTE, antes de responder
+[TOOLS: EJECUTALAS SIEMPRE]
+- Cliente pide algo -> addOrderItem ANTES de responder
 - Cliente agrega mas -> addOrderItem
-- Cliente ELIMINA algo ("saca la", "quita", "sin papas", "la bookbinder no") -> getOrderSummary para ver items + createOrder con los items restantes o decis "Dale, lo saco" y actualizas
-- Cliente corrige cantidad -> addOrderItem con la cantidad corregida
-- PRECIO: NUNCA digas un numero sin antes ejecutar getOrderSummary
-- TOTAL CORRECTO: 2 bookbinder ($7000 c/u) + papas cheese ($6000) = $20000
-- Si el cliente pidio 3 cosas y decis precio de 2, esta MAL. Usa getOrderSummary para saber todo.
-- createOrder cuando sepas si es delivery o retiro
-- NO RESPONDAS sin haber ejecutado la tool primero`;
+- Cliente saca algo ("saca la", "quita", "sin X") -> getOrderSummary para ver que hay, decis "Dale, lo saco" y actualizas
+- Cliente corrige cantidad -> addOrderItem con la nueva cantidad
+- PRECIO: NUNCA digas un numero sin ejecutar getOrderSummary primero
+- Los precios y totales los dan las tools con datos reales de la DB y del contexto del chat
+- createOrder cuando sepas delivery o retiro
+- NO RESPONDAS sin ejecutar la tool primero`;
