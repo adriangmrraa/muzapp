@@ -487,8 +487,15 @@ export async function POST(request: NextRequest) {
         // Transcribe audio — enriches both the attachment and the agent context
         if (msgType === "audio") {
           const transcription = await transcribeAudio(buffer, filename, mimeType);
-          attachment.transcription = transcription;
-          agentText = `[Audio]: ${transcription}`;
+          
+          if (transcription) {
+            // Transcripción exitosa — se la pasamos al agente
+            attachment.transcription = transcription;
+            agentText = `[Audio]: ${transcription}`;
+          } else {
+            // Transcripción fallida — mensaje limpio, sin fallback string
+            agentText = "[Audio (no se pudo transcribir)]";
+          }
 
           contentAttributes = [attachment];
           await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
@@ -522,7 +529,7 @@ export async function POST(request: NextRequest) {
         } else if (msgType === "video") {
           // Video → transcribe audio track + description
           const clip = await analyzeVideo(buffer, filename, mimeType, mediaObj.caption);
-          attachment.transcription = clip.transcription;
+          attachment.transcription = clip.transcription ?? undefined;
           contentAttributes = [attachment];
           agentText = clip.agentText;
           await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);

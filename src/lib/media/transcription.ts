@@ -6,7 +6,7 @@ export async function transcribeAudio(
   audioBuffer: Buffer,
   filename: string,
   mimeType?: string
-): Promise<string> {
+): Promise<string | null> {
   const MAX_ATTEMPTS = 2;
   const RETRY_DELAY = 2000;
 
@@ -58,6 +58,6 @@ export async function transcribeAudio(
     }
   }
 
-  console.warn("[transcription] All attempts failed, returning fallback");
-  return "[Audio sin transcripción]";
+  console.warn("[transcription] All attempts failed, returning null");
+  return null;
 }

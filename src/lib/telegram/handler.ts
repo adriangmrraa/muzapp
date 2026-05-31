@@ -48,8 +48,10 @@ export async function handleTelegramUpdate(
     const file = await downloadTelegramFile(config.botToken, voiceOrAudio.file_id);
     if (file) {
       const transcription = await transcribeAudio(file.buffer, file.filePath);
-      text = `[Audio]: ${transcription}`;
-      console.log(`[telegram-handler] Audio transcribed: ${transcription.slice(0, 100)}`);
+      text = transcription ? `[Audio]: ${transcription}` : "[Audio sin transcripción]";
+      if (transcription) {
+        console.log(`[telegram-handler] Audio transcribed: ${transcription.slice(0, 100)}`);
+      }
     } else {
       text = "[Audio sin transcripción]";
     }
