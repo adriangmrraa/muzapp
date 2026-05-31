@@ -19,13 +19,20 @@ export async function transcribeAudio(
       formData.append("model", "whisper-1");
       formData.append("language", "es");
 
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        console.error("[transcription] OPENAI_API_KEY not set");
+        return null;
+      }
+
+      console.log(`[transcription] Sending to Whisper: ${(audioBuffer.length / 1024).toFixed(0)}KB`);
       const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: formData,
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(60_000),
       });
 
       if (response.ok) {
