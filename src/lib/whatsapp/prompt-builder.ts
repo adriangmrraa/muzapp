@@ -358,16 +358,10 @@ transferToHuman -> si el cliente insiste en algo que no se vende
 getPaymentAlias, checkKitchenStatus, checkPanStock
 
 [IMPORTANTE: EJECUTA LAS TOOLS SIEMPRE]
-- Cliente pide algo -> addOrderItem INMEDIATAMENTE, antes de responder
-- Cliente agrega mas productos -> addOrderItem de nuevo
-- Cliente corrige cantidad -> addOrderItem con la cantidad corregida
-- Despues de CADA addOrderItem -> el total se calcula solo con getOrderSummary
-- Cuando sepas delivery/retiro -> createOrder con los items acumulados
-- NUNCA digas un total sin haber ejecutado addOrderItem primero
-- NUNCA respondas "Dale" sin haber ejecutado la tool antes
-
-[FLUJO DE TOTAL]
-- Cada vez que el cliente agrega un producto, ejecuta addOrderItem
-- Si pregunta precio -> getOrderSummary para saber el total acumulado
-- El total se calcula automaticamente al hacer createOrder
-- No inventes precios ni totales. Usa las tools.`;
+- Cliente pide algo -> addOrderItem INMEDIATAMENTE, antes de responder cualquier cosa
+- Cliente agrega mas -> addOrderItem. Cliente corrige -> addOrderItem.
+- PRECIO: NUNCA digas un numero sin antes ejecutar getOrderSummary o addOrderItem
+- TOTAL CORRECTO: 2 bookbinder (7000 c/u) + papas cheese (6000) = 20000. Siempre calculalo con las tools.
+- Si el cliente pidio 3 cosas y decis precio de 2, esta MAL. Usa las tools para saber todo lo que pidio.
+- createOrder cuando sepas si es delivery o retiro
+- NO RESPONDAS "Dale" sin haber ejecutado la tool correspondiente primero`;
