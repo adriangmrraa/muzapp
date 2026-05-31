@@ -39,24 +39,49 @@ export const createOrder = tool({
     let cleanedPhone = phone ? normalizePhone(phone) : "";
     let existingLead: { id: number; status: string | null; name: string | null } | undefined;
 
-    if (cleanedPhone) {
-      // Buscar por teléfono primero
-      [existingLead] = await db
+    if (cleanedPhone && customerName) {
+      // Buscar por teléfono, pero VERIFICAR que el nombre coincida
+      const [leadByPhone] = await db
         .select({ id: leads.id, status: leads.status, name: leads.name })
         .from(leads)
         .where(eq(leads.phone, cleanedPhone))
         .limit(1);
+
+      if (leadByPhone) {
+        // Si encontramos un lead por teléfono, verificar que el nombre sea similar
+        const nameMatch = leadByPhone.name?.toLowerCase().includes(customerName.toLowerCase())
+          || customerName.toLowerCase().includes(leadByPhone.name?.toLowerCase() || "");
+        if (nameMatch) {
+          existingLead = leadByPhone;
+        } else {
+          // El teléfono no coincide con el nombre — buscar por nombre mejor
+          cleanedPhone = "";
+        }
+      }
     }
 
-    // Si no se encontró por teléfono o no se pasó teléfono, buscar por nombre
+    // Si no se encontró por teléfono o el nombre no coincide, buscar por nombre
     if (!existingLead && customerName) {
+      // Limpiar el nombre de búsqueda: tildes, caracteres especiales, espacios múltiples
+      const searchName = customerName
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // sacar tildes
+        .replace(/[^a-z0-9\s]/g, "") // sacar caracteres no alfanuméricos
+        .trim();
+      
       const nameMatches = await db
         .select({ id: leads.id, status: leads.status, name: leads.name, phone: leads.phone })
         .from(leads)
-        .where(ilike(leads.name, `%${customerName}%`))
+        .where(ilike(leads.name, `%${searchName}%`))
         .limit(5);
 
-      if (nameMatches.length === 1) {
+      if (nameMatches.length === 0) {
+        // No se encontró por nombre — pedir más datos
+        return {
+          success: false,
+          message: `No encontré ningún cliente con el nombre "${customerName}". ¿Podés pasar el número de teléfono para crearlo?`,
+        };
+      } else if (nameMatches.length === 1) {
         // Un solo match → usarlo
         existingLead = nameMatches[0];
         cleanedPhone = nameMatches[0].phone ?? cleanedPhone;
