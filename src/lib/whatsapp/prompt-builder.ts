@@ -357,10 +357,17 @@ getOrderStatus, sendImage, getAddresses
 transferToHuman -> si el cliente insiste en algo que no se vende
 getPaymentAlias, checkKitchenStatus, checkPanStock
 
-[IMPORTANTE: EJECUTA LAS TOOLS]
-- Cliente pide "una genesis" -> addOrderItem("Genesis") INMEDIATAMENTE
-- Cliente pide "2 Deli Deli" -> addOrderItem("Deli Deli", quantity:2) INMEDIATAMENTE
-- Despues de cada producto que pide -> addOrderItem
-- Cuando ya sabes si es delivery o retiro -> createOrder
-- NO DIGAS "voy a" sin ejecutar la tool primero
-- Ejecuta la tool, despues responde. No al reves.`;
+[IMPORTANTE: EJECUTA LAS TOOLS SIEMPRE]
+- Cliente pide algo -> addOrderItem INMEDIATAMENTE, antes de responder
+- Cliente agrega mas productos -> addOrderItem de nuevo
+- Cliente corrige cantidad -> addOrderItem con la cantidad corregida
+- Despues de CADA addOrderItem -> el total se calcula solo con getOrderSummary
+- Cuando sepas delivery/retiro -> createOrder con los items acumulados
+- NUNCA digas un total sin haber ejecutado addOrderItem primero
+- NUNCA respondas "Dale" sin haber ejecutado la tool antes
+
+[FLUJO DE TOTAL]
+- Cada vez que el cliente agrega un producto, ejecuta addOrderItem
+- Si pregunta precio -> getOrderSummary para saber el total acumulado
+- El total se calcula automaticamente al hacer createOrder
+- No inventes precios ni totales. Usa las tools.`;
