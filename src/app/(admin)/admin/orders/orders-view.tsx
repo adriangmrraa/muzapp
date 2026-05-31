@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
-import { updateOrderStatus, notifyCustomer, deleteOrder, updateOrder, type OrderRow } from "./actions";
+import { updateOrderStatus, notifyCustomer, deleteOrder, updateOrder, markPaidAndDelivered, type OrderRow } from "./actions";
 import { OrderEditModal } from "./order-edit-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -172,6 +172,24 @@ function OrderCard({
               className="h-7 text-[11px] px-3 bg-white/[0.06] hover:bg-white/[0.1] text-white/70"
             >
               → {STATUSES[NEXT_STATUS[order.status]]?.label}
+            </Button>
+          )}
+          {/* Pagado + Entregado directo (sin mensaje) */}
+          {order.status !== "delivered" && order.status !== "cancelled" && (
+            <Button
+              type="button"
+              size="sm"
+              disabled={changing}
+              onClick={async (e) => {
+                e.stopPropagation();
+                setChanging(true);
+                await markPaidAndDelivered(order.id);
+                setChanging(false);
+              }}
+              className="h-7 text-[10px] px-2 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20"
+              title="Marcar como pagado + entregado (sin notificar)"
+            >
+              ✓ Pagado
             </Button>
           )}
           {(order.status === "pending" || order.status === "preparing") && (

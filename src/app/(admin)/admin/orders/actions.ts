@@ -110,9 +110,9 @@ function buildWhatsAppMessage(status: string, order: OrderRow): string | null {
 
     case "delivered":
       if (isPan) {
-        return `🍞 Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro arroba es mrs_muzzarella.`;
+        return `🍞 Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro IG es @mrs_muzzarella.`;
       }
-      return `🍔 Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro arroba es mrs_muzzarella.`;
+      return `🍔 Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro IG es @mrs_muzzarella.`;
 
     default:
       return null;
@@ -222,6 +222,33 @@ export async function getOrderCounts(): Promise<Record<string, number>> {
   counts["total"] = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return counts;
+}
+
+/**
+ * Marcar como pagado + entregado de una sola vez, sin notificar al cliente
+ */
+export async function markPaidAndDelivered(
+  orderId: number
+): Promise<{ success: boolean; message: string }> {
+  const session = await auth();
+  if (!session) return { success: false, message: "No autorizado" };
+
+  try {
+    await db
+      .update(orders)
+      .set({
+        paymentStatus: "paid",
+        status: "delivered",
+        deliveredAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, orderId));
+
+    revalidatePath("/admin/orders");
+    return { success: true, message: "Pagado y entregado" };
+  } catch (e) {
+    return { success: false, message: "Error al actualizar" };
+  }
 }
 
 /**
