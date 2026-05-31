@@ -109,6 +109,9 @@ function buildWhatsAppMessage(status: string, order: OrderRow): string | null {
       return `🍔 Ya esta tu pedido, retiralo por Neuquen 1245.`;
 
     case "delivered":
+      if (isPan) {
+        return `🍞 Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro arroba es mrs_muzzarella.`;
+      }
       return `🍔 Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro arroba es mrs_muzzarella.`;
 
     default:
