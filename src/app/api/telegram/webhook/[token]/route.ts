@@ -245,7 +245,7 @@ export async function POST(
         system: INTERNAL_AGENT_SYSTEM_PROMPT,
         messages: aiMessages,
         tools: internalAgentTools,
-        stopWhen: stepCountIs(10),
+        stopWhen: stepCountIs(15),
       });
 
       const reply = result.text || "Disculpá, no pude procesar eso.";

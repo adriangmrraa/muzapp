@@ -10,7 +10,7 @@ import { normalizePhone } from "@/lib/phone-utils";
 // getClientsTool - Listar últimos 20 clientes/leads
 export const getClientsTool = tool({
   description:
-    "Lista los últimos 20 clientes/leads registrados. Preguntas: 'mostrame los clientes', 'últimos leads', 'quiénes se registraron'",
+    "LISTA los últimos 20 clientes/leads registrados, con nombre, teléfono y estado. USAR cuando el admin pregunta: 'cuántos clientes tenemos', 'mostrame los clientes', 'quiénes se registraron', 'clientes'. Responde con el conteo total y los últimos.",
   inputSchema: z.object({}),
   execute: async () => {
     const rows = await db
@@ -44,7 +44,7 @@ export const getClientsTool = tool({
 // getClientDetailTool - Detalle completo por teléfono o nombre
 export const getClientDetailTool = tool({
   description:
-    "Detalle completo de un cliente por teléfono, nombre o alias. Preguntas: 'detalle de fulano', 'dame todo sobre el cliente 3411111111', 'quién es el Flaco?'",
+    "DETALLE COMPLETO de un cliente: datos del lead + últimos 3 pedidos. Busca por teléfono, nombre o alias. USAR cuando el admin pregunta: 'dame todo de X', 'detalle de X', 'quién es X', 'ficha de X'. Más completo que searchClient.",
   inputSchema: z.object({
     query: z.string().describe("Teléfono o nombre del cliente"),
   }),
@@ -134,7 +134,7 @@ export const getClientDetailTool = tool({
 // searchClientTool - Buscar clientes por nombre, teléfono, email o alias
 export const searchClientTool = tool({
   description:
-    "Busca clientes por nombre, teléfono, email o APODO. PREGUNTAS: 'buscá a García', 'hay algún cliente con email xxx', 'buscá el Flaco' (si tiene alias registrado)",
+    "BUSCAR clientes por nombre, teléfono, email o apodo. Devuelve hasta 10 coincidencias parciales. USAR CUANDO: el admin da un nombre y no sabés el teléfono. 'buscá a García', 'hay algún cliente con email xxx', 'buscá el Flaco'. Es el PRIMER PASO para encontrar un cliente.",
   inputSchema: z.object({
     query: z.string().describe("Nombre, teléfono o email a buscar"),
   }),
@@ -519,7 +519,7 @@ export const updateAgentConfigTool = tool({
 // con filtros inteligentes. El LLM decide qué tabla, columnas y filtros usar.
 export const queryDataTool = tool({
   description:
-    "Consulta CUALQUIER tabla de la base de datos con filtros inteligentes. Elegí la tabla, los filtros (columna:valor), el orden y límite. Tablas disponibles: conversations (chats de WhatsApp), leads (clientes), orders (pedidos), products (productos), agent_config (config del negocio), chat_messages (mensajes individuales), users (usuarios admin), attachments (archivos adjuntos).",
+    "META-TOOL: consultar CUALQUIER tabla de la base de datos. Sirve para TODO lo que no cubren las otras tools específicas: filtrar pedidos por fecha, buscar productos por precio, contar registros, etc. Tablas: conversations (chats), leads (clientes), orders (pedidos), products (productos), agent_config (config), chat_messages (mensajes), users (admins), attachments (archivos). USAR cuando: 'mostrame los pedidos de la semana', 'cuántos leads nuevos hoy', 'qué productos cuestan menos de 5000'.",
   inputSchema: z.object({
     table: z.enum(["conversations", "leads", "orders", "products", "agent_config", "chat_messages", "users", "attachments"])
       .describe("Nombre de la tabla a consultar"),

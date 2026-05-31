@@ -12,7 +12,7 @@ import { normalizePhone, isValidPhone } from "@/lib/phone-utils";
 // createOrder - Crear nuevo pedido
 export const createOrder = tool({
   description:
-    "Crea un nuevo pedido. Acepta teléfono o nombre del cliente (si ponés nombre busca automáticamente). Preguntas: 'nuevo pedido', 'arma mi pedido', 'agregale un pedido a flor'",
+    "CREAR un nuevo pedido. Busca el lead por teléfono primero, después por nombre. SI NO ENCUENTRA, CREA EL LEAD AUTOMÁTICAMENTE. NO necesita que el lead exista primero. PREGUNTAS: 'creá un pedido para Juan, 2 Genesis', 'nuevo pedido para María, 1 Deli Deli', 'cargá pedido para floricienta, 1 Toro Asado'. SIEMPRE intentá con esta tool primero cuando te pidan crear un pedido.",
   inputSchema: z.object({
     customerName: z.string().describe("Nombre del cliente. Si no se pasa el teléfono, se busca al lead por este nombre."),
     phone: z.string().optional().describe("Teléfono del cliente (OPCIONAL si ya existe un lead con ese nombre). Si no se pasa, se busca por nombre."),
@@ -159,7 +159,7 @@ export const createOrder = tool({
 // addItemToOrder - Agregar producto al pedido
 export const addItemToOrder = tool({
   description:
-    "Agrega un producto a un pedido existente. Preguntas: 'agrega una hamburguesa al pedido 5'",
+    "AGREGAR un producto a un pedido existente. Solo funciona si el pedido no está entregado o cancelado. PREGUNTAS: 'agregale una Génesis al pedido 5', 'poné otra Deli al pedido 3'",
   inputSchema: z.object({
     orderId: z.number().describe("ID del pedido"),
     item: z.object({
@@ -211,7 +211,7 @@ export const addItemToOrder = tool({
 // removeItemFromOrder - Quitar producto del pedido
 export const removeItemFromOrder = tool({
   description:
-    "Quita un producto de un pedido. Preguntas: 'quita la hamburguesa del pedido 5'",
+    "QUITAR un producto de un pedido existente. PREGUNTAS: 'sacale la Génesis al pedido 5', 'quitá una Deli del pedido 3'",
   inputSchema: z.object({
     orderId: z.number().describe("ID del pedido"),
     itemName: z.string().describe("Nombre del producto a quitar"),
@@ -259,7 +259,7 @@ export const removeItemFromOrder = tool({
 // updateOrderStatus - Actualizar estado del pedido
 export const updateOrderStatus = tool({
   description:
-    "Actualiza el estado de un pedido. Preguntas: 'el pedido 5 está listo', 'entregó el pedido 3'",
+    "CAMBIAR el estado de un pedido: pending → preparing → ready → delivered. PREGUNTAS: 'el pedido 5 está listo', 'marcá el pedido 3 como entregado', 'el pedido 7 ya está'",
   inputSchema: z.object({
     orderId: z.number().describe("ID del pedido"),
     status: z
@@ -492,7 +492,7 @@ export const markPaymentMethod = tool({
 // createDeliveredOrder - Cargar pedido ya entregado (backfill)
 export const createDeliveredOrder = tool({
   description:
-    "CARGA un pedido que YA FUE ENTREGADO (backfill). Para cuando el dueño se olvidó de cargar el pedido en el momento y quiere registrarlo después. Crea el lead si no existe. SIN notificaciones, SIN WhatsApp. PREGUNTAS: 'cargá un pedido de hoy que ya entregamos', 'subí un pedido viejo', 'registrá un pedido que ya se entregó'",
+    "CARGAR un pedido que YA FUE ENTREGADO (backfill). Para cuando el admin olvidó registrar un pedido en su momento. NO envía notificaciones. Crea el lead si no existe automáticamente. PREGUNTAS: 'cargá un pedido de ayer', 'subí un pedido viejo de Juan', 'registrá un pedido que ya entregamos el lunes'",
   inputSchema: z.object({
     customerName: z.string().describe("Nombre del cliente"),
     customerPhone: z.string().describe("Teléfono del cliente (con código de país)"),

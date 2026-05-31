@@ -10,7 +10,7 @@ import { normalizePhone } from "@/lib/phone-utils";
 // getClientByPhone - Buscar cliente por teléfono
 export const getClientByPhone = tool({
   description:
-    "Busca un cliente por su teléfono. Preguntas: 'quién es el cliente 3411111111', 'busca a fulano'",
+    "Buscar cliente por teléfono EXACTO. Cuando el admin ya tiene el número. Devuelve datos completos del lead. PREGUNTAS: 'quién es el 549370...', 'buscá este número 549370...' USAR SOLO si ya tenés el número exacto. Si no, usá searchClient.",
   inputSchema: z.object({
     phone: z.string().describe("Número de teléfono a buscar"),
   }),
@@ -51,7 +51,7 @@ export const getClientByPhone = tool({
 // createClient - Crear nuevo cliente
 export const createClient = tool({
   description:
-    "Crea un nuevo cliente. Preguntas: 'registra a fulano', 'agrega cliente'",
+    "CREAR un nuevo lead/cliente en el sistema. Se necesita nombre + teléfono. Si el teléfono ya existe, avisa. USAR cuando: el admin pide registrar a alguien nuevo, o cuando createOrder devuelve que no encontró al cliente. PREGUNTAS: 'registrá a Juan Pérez 549370...', 'agrega este cliente'",
   inputSchema: z.object({
     name: z.string().describe("Nombre del cliente"),
     phone: z.string().describe("Teléfono"),
@@ -92,7 +92,7 @@ export const createClient = tool({
 // updateClient - Actualizar datos del cliente
 export const updateClient = tool({
   description:
-    "Actualiza datos de un cliente (nombre, email, notas, alias, teléfono). Busca por teléfono actual. PREGUNTAS: 'cambia el email de fulano', 'actualiza cliente', 'cambiá el teléfono de Neriza a +54937052410'",
+    "ACTUALIZAR datos de un cliente existente: nombre, email, notas, alias. Busca al cliente por su teléfono actual. USAR cuando el admin dice 'cambiale el nombre a X por Y', 'actualizá los datos de X'. PREGUNTAS: 'cambiale el nombre a DSS Mat por Mat', 'actualizá el email de Juan'",
   inputSchema: z.object({
     phone: z.string().describe("Teléfono ACTUAL del cliente para identificarlo"),
     newPhone: z.string().optional().describe("Nuevo teléfono (si querés cambiarlo)"),
@@ -137,7 +137,7 @@ export const updateClient = tool({
 // getClientHistory - Ver historial de pedidos de un cliente
 export const getClientHistory = tool({
   description:
-    "Ver historial de pedidos de un cliente. Preguntas: 'qué pidió fulano', 'historial del cliente'",
+    "VER el historial de pedidos de un cliente. Muestra todos los pedidos ordenados del más reciente al más viejo. USAR cuando el admin pregunta: 'qué pidió fulano', 'historial de X', 'cuántas veces pidió X'. Necesita el teléfono del cliente.",
   inputSchema: z.object({
     phone: z.string().describe("Teléfono del cliente"),
     limit: z.number().optional().describe("Límite (default 10)"),
@@ -189,10 +189,10 @@ export const getClientHistory = tool({
   },
 });
 
-// suggestProducts - Sugerir productos based en historial
+// suggestProducts - Sugerir productos basados en el historial
 export const suggestProducts = tool({
   description:
-    "Sugiere productos basados en el historial del cliente. Preguntas: 'qué le gusta a fulano', 'qué le sugiero'",
+    "SUGERIR productos a un cliente según su historial de pedidos. Analiza los últimos 3 pedidos y devuelve los productos más repetidos. USAR cuando el admin pregunta: 'qué le gusta a fulano', 'qué le puedo ofrecer a X', 'sugerime algo para X'.",
   inputSchema: z.object({
     phone: z.string().describe("Teléfono del cliente"),
   }),
@@ -252,7 +252,7 @@ export const suggestProducts = tool({
 // setClientAlias - Asignar un apodo a un cliente
 export const setClientAlias = tool({
   description:
-    "Asigna un APODO o sobrenombre a un cliente para buscarlo rápido desde Telegram. El dueño conoce a sus clientes por apodos (Flaco, Gordo, Negro, etc.), esto permite que el bot los entienda. PREGUNTAS: 'decile que el Flaco es el 341...', 'poné el apodo Gordo a Pérez', 'el Flaco es el cliente 3411111111'",
+    "ASIGNAR un apodo/sobrenombre a un cliente. El dueño conoce a sus clientes por apodos (Flaco, Gordo, Negro). Esto permite buscarlos por apodo después. PREGUNTAS: 'el Flaco es el 549370...', 'poné el apodo Gordo a Pérez', 'decile que el Flaco es el cliente 549370...'",
   inputSchema: z.object({
     phone: z.string().describe("Teléfono del cliente (con código de país)"),
     alias: z.string().describe("Apodo o sobrenombre. Ej: Flaco, Gordo, Negro, etc."),
