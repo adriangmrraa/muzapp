@@ -221,8 +221,8 @@ export async function POST(
       // Concatenate all buffered messages
       const combinedText = bufferedMessages.map((m) => m.content).join("\n");
 
-      // Get conversation history for context (last 20 messages)
-      const history = await getConversationMessages(convId, 20);
+      // Get conversation history for context (last 6 messages)
+      const history = await getConversationMessages(convId, 6);
       const aiMessages = history
         .filter((m) => m.role === "user" || m.role === "assistant")
         .map((m) => ({
@@ -241,7 +241,7 @@ export async function POST(
 
       // Run the internal agent with full conversation history
       const result = await generateText({
-        model: openai("gpt-4o-mini"),
+        model: openai("gpt-5-mini"),
         system: INTERNAL_AGENT_SYSTEM_PROMPT,
         messages: aiMessages,
         tools: internalAgentTools,
