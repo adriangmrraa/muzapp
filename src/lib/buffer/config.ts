@@ -1,6 +1,6 @@
 export const BUFFER_CONFIG = {
   whatsapp: {
-    debounceMs: 10_000,  // 10s sliding window (reducido de 20s para mejor respuesta)
+    debounceMs: 3_000,  // 3s sliding window (evita timeout de Render)
     lockTtlMs: 300_000,  // 5 min lock safety
     maxBufferSize: 20,
   },
