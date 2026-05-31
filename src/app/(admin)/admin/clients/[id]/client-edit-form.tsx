@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Edit, X, Save } from "lucide-react";
+import { Edit, X, Save, RefreshCw } from "lucide-react";
 import { updateClient } from "../actions";
 
 interface LeadData {
@@ -54,8 +54,9 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
 
       if (result.success) {
         setOpen(false);
-        // Forzar recarga completa de datos del servidor
-        router.refresh();
+        // Forzar recarga completa desde el servidor para que todos los datos
+        // (incluyendo cards, dashboard, etc) se actualicen
+        window.location.reload();
       }
     } catch (err) {
       console.error(err);

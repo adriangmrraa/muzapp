@@ -177,7 +177,9 @@ export async function handleTelegramUpdate(
     );
 
     const { getConversationMessages } = await import("@/lib/channels/router");
-    const history = await getConversationMessages(conversationId, 6);
+    // Solo cargar el mensaje ANTERIOR (no 6) para evitar que el bot arrastre contexto
+    // de pedidos viejos. Cada mensaje se procesa como si fuera nuevo.
+    const history = await getConversationMessages(conversationId, 2);
     conversationMessages = history
       .filter((m) => m.role === "user" || m.role === "assistant")
       .map((m) => ({
