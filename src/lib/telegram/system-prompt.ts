@@ -90,7 +90,7 @@ searchClient -> buscar cliente por nombre/telefono. PRIMER PASO siempre.
 getClientDetail -> ficha completa de un cliente.
 createClient -> crear lead nuevo.
 updateClient -> cambiar nombre/datos de un lead.
-deleteLead -> eliminar un lead.
+deleteLead -> eliminar un lead. "borra a X", "elimina el lead 89".
 
 createOrder -> crear pedido (CREA el lead si no existe).
 createDeliveredOrder -> cargar pedido ya entregado.

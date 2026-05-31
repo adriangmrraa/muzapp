@@ -1039,6 +1039,26 @@ export const injectCustomerNoteTool = tool({
   },
 });
 
+// ─── deleteLeadTool - Eliminar un lead ─────────────────────────────────────
+export const deleteLeadTool = tool({
+  description:
+    "ELIMINAR un lead/cliente del sistema. Pregunta: 'borra a X', 'elimina el lead 89', 'saca a fulano'. Primero busca por nombre o ID, despues elimina. Pide confirmacion antes de eliminar: 'Confirmas eliminacion de X?'.",
+  inputSchema: z.object({
+    id: z.number().describe("ID del lead a eliminar"),
+  }),
+  execute: async ({ id }) => {
+    try {
+      const [lead] = await db.select({ id: leads.id, name: leads.name }).from(leads).where(eq(leads.id, id)).limit(1);
+      if (!lead) return `No encontre un lead con ID ${id}.`;
+      await db.delete(orders).where(eq(orders.leadId, id));
+      await db.delete(leads).where(eq(leads.id, id));
+      return `✅ Lead #${id} (${lead.name || "sin nombre"} eliminado.`;
+    } catch (e) {
+      return `Error al eliminar: ${e instanceof Error ? e.message : "desconocido"}`;
+    }
+  },
+});
+
 export const managementTools = {
   getClients: getClientsTool,
   getClientDetail: getClientDetailTool,

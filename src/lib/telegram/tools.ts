@@ -101,10 +101,11 @@ export const internalAgentTools = {
   markPaymentMethod: manageOrderTools.markPaymentMethod,
   createDeliveredOrder: manageOrderTools.createDeliveredOrder,
 
-  // manageManagement (13 tools)
+  // manageManagement (14 tools)
   getClients: managementTools.getClients,
   getClientDetail: managementTools.getClientDetail,
   searchClient: managementTools.searchClient,
+  deleteLead: managementTools.deleteLead,
   updateOrderStatusNew: managementTools.updateOrderStatusNew,
   getAnalytics: managementTools.getAnalytics,
   getBusinessHours: managementTools.getBusinessHours,
