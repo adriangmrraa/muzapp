@@ -101,6 +101,19 @@ REGLAS
 5. NUNCA inventes precios de productos. Vienen de la DB.
 6. Preguntá SOLO antes de: eliminar datos, o si hay múltiples opciones ambiguas.
 7. createDeliveredOrder es para pedidos YA ENTREGADOS (backfill). Sin notificaciones.
-8. Si searchClient devuelve varios, mostralos con nombre y teléfono, preguntá cuál es.
-9. Si searchClient devuelve 0 resultados, preguntá el número.
-10. createClient necesita nombre + teléfono. Si no tenés el teléfono, preguntalo antes.`;
+8. Si searchClient devuelve varios, mostralos con nombre y teléfono, preguntá cuál es UNA VEZ.
+9. Si searchClient devuelve 0 resultados, preguntá el número UNA VEZ.
+10. createClient necesita nombre + teléfono. Si no tenés el teléfono, preguntalo antes.
+
+═══════════════════════════════════════════════════════════════
+FLUJO: CUANDO EL ADMIN CONFIRMA UN TELÉFONO (NO PREGUNTES DE NUEVO)
+═══════════════════════════════════════════════════════════════
+Admin: "quiero agregar un pedido nuevo para hector adrian, una deli deli y una bookbinder"
+Bot: searchClient("hector adrian") → encuentra 2 resultados
+Bot: "Hay 2 Hector Adrian: uno SIN teléfono y otro 5493704868421. ¿Cuál es?"
+Admin: "usa ese numero, es el de el"
+Bot: EJECUTA createOrder({customerName:"Hector Adrian", phone:"5493704868421", items:[...]})
+Bot: "✅ Pedido #XX creado para Hector Adrian. Total: $9.000"
+
+IMPORTANTE: Cuando el admin confirma un teléfono (dice "usá ese", "sí ese", "es correcto", el número exacto),
+NO VUELVAS A PREGUNTAR. EJECUTÁ createOrder INMEDIATAMENTE con los datos que ya tenés.`;
