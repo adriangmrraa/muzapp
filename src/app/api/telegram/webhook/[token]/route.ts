@@ -95,8 +95,12 @@ export async function POST(
             const tmpConv = await findOrCreateConversation("telegram", String(message.chat.id), message.from?.first_name);
             const localUrl = await saveMediaLocally(file.buffer, tmpConv.id, vFile.file_id, vFile.mime_type || "audio/ogg");
             const transcription = await transcribeAudio(file.buffer, vFile.file_id, vFile.mime_type);
-            text = `[Audio]: ${transcription}`;
-            contentAttributes = [{ type: "audio", url: localUrl, mimeType: vFile.mime_type || "audio/ogg", transcription, fileSize: (vFile as { file_size?: number }).file_size }];
+            if (transcription) {
+              text = `[Audio]: ${transcription}`;
+              contentAttributes = [{ type: "audio", url: localUrl, mimeType: vFile.mime_type || "audio/ogg", transcription: transcription ?? undefined, fileSize: (vFile as { file_size?: number }).file_size }];
+            } else {
+              text = "[Audio (no se pudo transcribir)]";
+            }
           }
         } catch (e) {
           text = "[Audio sin transcripción]";
