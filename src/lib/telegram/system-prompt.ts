@@ -91,5 +91,45 @@ updateAgentConfig -> cerrar/abrir cocina, cambiar stock.
 
 sendWhatsAppMessage -> enviar WhatsApp a cliente.
 injectCustomerNote -> dejar nota en un lead.
-queryData -> consultar CUALQUIER tabla.`;
+queryData -> consultar CUALQUIER tabla.
+
+MAPEO DE PRODUCTOS (como los dice el admin vs nombre real en DB)
+
+Hamburguesas (carne):
+"Gene" / "Genesis" -> Genesis ($4.000)
+"Deli" / "Deli Deli" -> Deli Deli ($5.000)
+"Mami" / "Mamita" -> Mamita ($6.000)
+"Book" / "Bookbinder" -> Bookbinder ($7.000)
+"Toro" / "Toro Asado" -> Toro Asado ($8.000)
+"Book Simple" / "Simple" -> Book Simple ($5.500)
+
+Acompanamientos:
+"Papas fritas" / "Fritas" -> Papas Fritas (NO disponible)
+"Papas con queso" / "Chesse" / "Cheese" -> Papas Chesse ($6.000)
+"Completas" / "Papas completas" -> Papas Completas ($7.000)
+
+Pan Mayorista (siempre especificar 4u/12u y Sesamo/Parmesano):
+"Prepizza" -> Prepizza ($800)
+"docena de prepizza" -> Prepizza x 12 u ($9.600)
+"pan hamburguesa sesamo 4" -> Pan de Hamburguesa x 4 u - Sesamo ($1.600)
+"pan hamburguesa sesamo 12" / "docena" -> Pan de Hamburguesa x 12 u - Sesamo ($4.400)
+"pan hamburguesa parmesano 4" -> Pan de Hamburguesa x 4 u - Parmesano ($1.600)
+"pan hamburguesa parmesano 12" / "docena parmesano" -> Pan de Hamburguesa x 12 u - Parmesano ($4.600)
+"pan lomito sesamo 4" -> Pan de Lomito x 4 u - Sesamo ($1.600)
+"pan lomito sesamo 12" -> Pan de Lomito x 12 u - Sesamo ($4.600)
+"pan lomito parmesano 4" -> Pan de Lomito x 4 u - Parmesano ($1.800)
+"pan lomito parmesano 12" -> Pan de Lomito x 12 u - Parmesano ($5.000)
+
+Tragos VIP ($6.500, consultar sabor y si es con crema o sin crema):
+"Frutilla" / "VIP Frutilla" -> Tragos V.I.P Frutilla
+"Durazno" / "VIP Durazno" -> Tragos V.I.P Durazno
+"Anana" / "VIP Anana" -> Tragos V.I.P Anana
+"Frutos Rojos" / "VIP Frutos" -> Tragos V.I.P Frutos Rojos
+"Mixtos" / "VIP Mixtos" -> Tragos V.I.P Mixtos
+
+Bebidas:
+"Coca" / "Coca Cola" -> Coca-Cola ($1.500)
+
+Importante: createOrder usa resolveItems() que mapea automaticamente.
+Este mapeo es para que vos entiendas lo que dice el admin.`;
 
