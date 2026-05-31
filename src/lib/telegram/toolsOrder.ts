@@ -525,7 +525,7 @@ export const markPaymentMethod = tool({
 // createDeliveredOrder - Cargar pedido ya entregado (backfill)
 export const createDeliveredOrder = tool({
   description:
-    "CARGAR un pedido que YA FUE ENTREGADO (backfill). Para cuando el admin olvidó registrar un pedido en su momento. NO envía notificaciones. Crea el lead si no existe automáticamente. PREGUNTAS: 'cargá un pedido de ayer', 'subí un pedido viejo de Juan', 'registrá un pedido que ya entregamos el lunes'",
+    "CARGAR un pedido que YA FUE ENTREGADO (backfill). Para cuando el admin olvidó registrar un pedido. El método de pago NO es necesario para crear el pedido, se puede registrar después. Crea el lead si no existe. NO envía notificaciones. IMPORTANTE: Ejecutá esta tool apenas tengas nombre, teléfono y productos. No esperes a tener el método de pago. PREGUNTAS: 'cargá un pedido de ayer', 'subí un pedido viejo de Juan', 'registrá un pedido que ya entregamos el lunes'",
   inputSchema: z.object({
     customerName: z.string().describe("Nombre del cliente"),
     customerPhone: z.string().describe("Teléfono del cliente (con código de país)"),
