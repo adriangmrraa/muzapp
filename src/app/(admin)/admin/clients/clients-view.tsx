@@ -81,6 +81,7 @@ export function ClientsView({
   const [editName, setEditName] = useState("");
   const [editType, setEditType] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [localClients, setLocalClients] = useState(clients);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const navigate = useCallback(
@@ -121,12 +122,12 @@ export function ClientsView({
 
       {/* Stats */}
       <motion.div variants={fadeUpSmall} className="text-xs text-white/20">
-        Total: {clients.length > 0 ? clients.length : "..."} clientes
+        Total: {localClients.length > 0 ? localClients.length : "..."} clientes
       </motion.div>
 
       {/* Client Cards */}
       <motion.div variants={fadeUpSmall} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {clients.length === 0 ? (
+        {localClients.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-white/20">
             <span className="text-4xl mb-3 opacity-30">👥</span>
             <p className="text-sm">
@@ -136,7 +137,7 @@ export function ClientsView({
             </p>
           </div>
         ) : (
-          clients.map((client, i) => (
+          localClients.map((client, i) => (
             <Link key={client.phone} href={`/admin/clients/${encodeURIComponent(client.phone)}`} className="block">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -249,13 +250,23 @@ export function ClientsView({
               <button onClick={async () => {
                 setSavingEdit(true);
                 try {
-                  await updateClient(editClient.phone, {
+                  const result = await updateClient(editClient.phone, {
                     name: editName,
                     type: editType === "b2c" || editType === "b2b" ? editType : null,
                     notes: editNotes || undefined,
                   });
-                  setEditClient(null);
-                  router.refresh();
+
+                  if (result.success) {
+                    // Actualizar estado local INMEDIATAMENTE
+                    setLocalClients((prev) =>
+                      prev.map((c) =>
+                        c.phone === editClient.phone
+                          ? { ...c, name: editName, type: editType === "b2c" || editType === "b2b" ? editType : c.type }
+                          : c
+                      )
+                    );
+                    setEditClient(null);
+                  }
                 } catch (e) { console.error(e); }
                 setSavingEdit(false);
               }} disabled={savingEdit}

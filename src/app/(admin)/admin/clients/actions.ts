@@ -165,13 +165,15 @@ export async function updateClient(
     // Actualizar por ID (más seguro que por teléfono)
     await db.update(leads).set(updateData).where(eq(leads.id, lead.id));
 
-    // Revalidar TODAS las páginas
+    // Revalidar TODAS las páginas que muestran datos del cliente
     revalidatePath("/admin/clients");
     revalidatePath("/admin/clients/[id]", "page");
+    revalidatePath("/admin/clients/[id]");
     revalidatePath("/admin/leads");
     revalidatePath("/admin/orders");
     revalidatePath("/admin/conversations");
     revalidatePath("/admin");
+    revalidatePath("/admin/conversations/[id]", "page");
 
     return { success: true };
   } catch (e) {

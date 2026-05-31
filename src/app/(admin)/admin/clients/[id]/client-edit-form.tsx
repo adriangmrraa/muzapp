@@ -43,7 +43,7 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
       const tags = tagsStr.split(",").map((t) => t.trim()).filter(Boolean);
 
       // Usar lead.phone (prop original) en vez de phone (state editable)
-      await updateClient(lead.phone, {
+      const result = await updateClient(lead.phone, {
         name,
         email: email || undefined,
         address: address || undefined,
@@ -52,8 +52,11 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
         tags: tags.length > 0 ? tags : undefined,
       });
 
-      setOpen(false);
-      router.refresh();
+      if (result.success) {
+        setOpen(false);
+        // Forzar recarga completa de datos del servidor
+        router.refresh();
+      }
     } catch (err) {
       console.error(err);
     }
