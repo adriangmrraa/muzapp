@@ -94,7 +94,11 @@ export async function downloadYCloudMedia(
   );
 
   if (!metaResp.ok) {
-    throw new Error(`YCloud media metadata failed: ${metaResp.status}`);
+    const body = await metaResp.text().catch(() => "no body");
+    throw new Error(
+      `YCloud media metadata failed: ${metaResp.status} - ${body.slice(0, 200)}` +
+      (metaResp.status === 401 ? " — La API key de YCloud no tiene permiso para leer medios. En YCloud Dashboard > API Keys, habilita el permiso 'Media > Read'." : "")
+    );
   }
 
   const meta = (await metaResp.json()) as {
