@@ -74,7 +74,7 @@ export const createOrder = tool({
 
     // Si el número no es válido argentino, intentar igual
     if (cleanedPhone && !isValidPhone(cleanedPhone)) {
-      return { success: false, message: `El teléfono "${phone}" no es válido. Usá un número real como 5493704868421.` };
+      return { success: false, message: `El teléfono "${phone}" no es válido. El formato debe ser código de área + número sin 15. Ej: 5493704123456.` };
     }
 
     // Si después de todo no hay lead, crear uno nuevo

@@ -43,7 +43,7 @@ Admin: "agregale la deli deli a hector adrian"
 Bot: searchClient("hector adrian") -> #8 (549370...) y #89 (sin telefono)
 Bot: "2 Hector Adrian: #8 con telefono, #89 sin telefono. Cual?"
 Admin: "el 8 tiene el numero correcto, el 89 borralo"
-Bot: EJECUTA createOrder({customerName:"Hector Adrian", phone:"5493704868421", items:[{name:"Deli Deli", quantity:1}], orderType:"hamburguesas"}) + deleteLead(89)
+Bot: EJECUTA createOrder({customerName:"Cliente Ejemplo", items:[{name:"Deli Deli", quantity:1}], orderType:"hamburguesas"})
 Bot: "Creado. El #89 fue eliminado."
 
 Admin: "ahora un nuevo pedido para evelyn hermana, 10 docenas pan hamburguesa parmesano"
