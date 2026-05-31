@@ -62,7 +62,7 @@ export const getOrderStatusTool = tool({
 // ─── addToOrder ─────────────────────────────────────────────────────────────
 export const addToOrderTool = tool({
   description:
-    "Agrega items a un pedido pendiente existente. Solo funciona si el pedido está en estado 'pending'.",
+    "Agrega items a un pedido existente. Tiene 5 MINUTOS desde que se creó el pedido para agregar cosas. Después ya no se puede.",
   inputSchema: z.object({
     orderId: z.number().describe("ID del pedido"),
     newItems: z
@@ -79,12 +79,27 @@ export const addToOrderTool = tool({
     const rows = await db
       .select()
       .from(orders)
-      .where(and(eq(orders.id, orderId), eq(orders.status, "pending")))
+      .where(eq(orders.id, orderId))
       .limit(1);
 
     const order = rows[0];
     if (!order) {
-      return "No encontré un pedido pendiente con ese número. Solo puedo agregar items a pedidos que todavía no se están preparando.";
+      return "No encontré ese pedido.";
+    }
+
+    // Ventana de 5 minutos desde la creación del pedido
+    const now = Date.now();
+    const createdAt = order.createdAt instanceof Date 
+      ? order.createdAt.getTime() 
+      : new Date(order.createdAt).getTime();
+    const minutosPasados = (now - createdAt) / 60000;
+
+    if (minutosPasados > 5) {
+      return `Pasaron más de 5 minutos desde que se creó el pedido #${orderId}, ya no puedo agregar más items. Si querés, puedo crear un pedido nuevo.`;
+    }
+
+    if (order.status !== "pending") {
+      return "El pedido ya no está pendiente, no puedo agregar más items.";
     }
 
     const currentItems = (order.items as { name: string; quantity: number; unitPrice: number }[]) || [];
@@ -103,7 +118,7 @@ export const addToOrderTool = tool({
       .map((i) => `${i.quantity}x ${i.name}`)
       .join(", ");
 
-    return `✅ Agregado al pedido #${orderId}: ${added}\n💰 Nuevo total: $${total.toFixed(2)}`;
+    return `✅ Agregado al pedido #${orderId}: ${added}\n💰 Nuevo total: $${total.toFixed(2)}\n⏱ Tenés hasta 5 minutos desde la creación del pedido para agregar cosas.`;
   },
 });
 

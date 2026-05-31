@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { orders, leads, agentConfig, addresses } from "@/db/schema";
+import { orders, leads, agentConfig, addresses, orderContextItems } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 import { resolveItems } from "@/lib/order-utils";
@@ -134,6 +134,21 @@ export const createOrderTool = tool({
       status: "pending",
     }).returning({ id: orders.id });
 
+    // Limpiar orderContextItems de esta conversación (el carrito ya pasó a pedido)
+    try {
+      const [conv] = await db
+        .select({ conversationId: leads.conversationId })
+        .from(leads)
+        .where(eq(leads.phone, customerPhone))
+        .limit(1);
+      if (conv?.conversationId) {
+        await db.delete(orderContextItems)
+          .where(eq(orderContextItems.conversationId, conv.conversationId));
+      }
+    } catch {
+      // non-fatal
+    }
+
     notifyNewOrder({ id: order.id, customerName, orderType, items: resolvedItems, total, status: "pending", phoneNumber: customerPhone, notes });
 
     // Notificar al delivery con pedido + dirección
@@ -143,6 +158,6 @@ export const createOrderTool = tool({
 
     const typeLabel = orderType === "hamburguesas" ? "🍔 Hamburguesas" : "🍞 Pan Mayorista";
 
-    return `✅ Pedido #${order.id} registrado (${typeLabel}).\n👤 Cliente: ${customerName}\n💰 Total: $${total.toFixed(2)}\n⏱ Estimado: 30-40 minutos.\n¿Necesitás algo más?`;
+    return `✅ Pedido #${order.id} registrado (${typeLabel}).\n👤 Cliente: ${customerName}\n💰 Total: $${total.toFixed(2)}\n⏱ Estimado: 30-40 minutos.\nSi el cliente quiere agregar algo más, decile que tiene 5 minutos.`;
   },
 });
