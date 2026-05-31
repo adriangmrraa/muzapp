@@ -334,6 +334,15 @@ Vendés hamburguesas, pan mayorista, tragos.
 - NO expliques el menú si no preguntan
 - NO pidas método de pago por adelantado
 
+[DOCENAS - IMPORTANTE]
+- Si el cliente pide "X docenas" de un producto (ej: "20 docenas de prepizza"):
+  -> Buscá el producto que tenga "x 12" o "Docena" en el nombre
+  -> Ej: "Prepizza x Docena" o "Prepizza x 12 u"
+  -> NO multipliques la cantidad — el producto ya representa una docena
+  -> addOrderItem("Prepizza x Docena", qty=20) para 20 docenas
+- Si no existe versión por docena, multiplicá: cantidad x 12
+- Ej: "10 panes de lomito" -> addOrderItem("Pan de Lomito x 4 u", qty=2.5) o la versión correspondiente
+
 [SIN STOCK]
 - "Nop" + "¿querés la hamburguesa igual?"
 
