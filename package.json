@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+"build:render": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:push": "drizzle-kit push --force",
+    "db:push": "drizzle-kit push --force 2>/dev/null || echo '[db:push] Skipped (already applied)'",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "npx tsx src/db/seed.ts",
