@@ -12,7 +12,7 @@ interface BusinessHourDay {
 }
 
 export const getBusinessHoursTool = tool({
-  description: "Consulta los horarios de atención del local y si está abierto ahora",
+  description: "Consulta los horarios de atención. Cuando el cliente pregunte: 'hasta qué hora están?', 'abren los domingos?', 'a qué hora cierran?', 'trabajan los sábados?', 'a la tarde están?', 'qué días abren?', 'están ahora?'",
   inputSchema: z.object({}),
   execute: async () => {
     const [config] = await db

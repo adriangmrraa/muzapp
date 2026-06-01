@@ -63,7 +63,7 @@ ${found.description || "Sin descripción"}
 
 // getProductPrice - Ver precio de un producto
 export const getProductPriceTool = tool({
-  description: "Obtiene el precio de un producto específico",
+  description: "Obtiene el precio de un producto. Cuando el cliente pregunte: 'a cómo está la bookbinder?', 'cuánto vale la deli?', 'qué precio tiene la toro?', 'cuánto cuesta la genesis?'",
   inputSchema: z.object({
     name: z.string().describe("Nombre del producto"),
   }),

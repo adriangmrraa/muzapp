@@ -7,7 +7,7 @@ import { eq, and, desc } from "drizzle-orm";
 // ─── getOrderStatus ─────────────────────────────────────────────────────────
 export const getOrderStatusTool = tool({
   description:
-    "Consulta el estado de un pedido existente. Usar cuando el cliente pregunta por su pedido.",
+    "Consulta el estado de un pedido. Cuando el cliente pregunte: 'ya salió?', 'dónde está mi pedido?', 'cómo vamos?', 'ya?', 'cuánto falta?', 'mi pedido?', 'el delivery?', 'salió?'",
   inputSchema: z.object({
     orderId: z
       .number()
