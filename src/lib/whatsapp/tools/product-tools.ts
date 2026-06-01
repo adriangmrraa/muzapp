@@ -194,7 +194,17 @@ export const searchProductsTool = tool({
 
 // getActivePromos - Consultar promociones activas (OBLIGATORIO)
 export const getActivePromosTool = tool({
-  description: "OBLIGATORIO: Cuando el cliente pregunta por promos, descuentos, combos u ofertas, EJECUTA ESTA TOOL. No respondas sin ejecutarla. Incluso si ya lo preguntó antes, ejecutala de nuevo.",
+  description: `OBLIGATORIO — ejecutá esta tool cuando el cliente se refiera a promos, ofertas, combos, descuentos, especiales, paquetes, o "lo que tenga". También cuando mencionen precios que parezcan de una oferta, o digan cosas como:
+  • "qué ofertas tienen?"
+  • "hay algún descuento?"
+  • "cuál es la más barata?"
+  • "qué combos manejan?"
+  • "tienen algo especial?"
+  • "la de 10 mil", "la promo de 10", "la de 14"
+  • "la que subiste a IG", "la que está en la foto"
+  • "me conviene algo?"
+  • "qué me recomendás de lo que está en oferta?"
+  NO respondas sin ejecutar esta tool. Incluso si ya preguntó antes, ejecutala de nuevo.`,
   inputSchema: z.object({}),
   execute: async () => {
     const activePromos = await db
