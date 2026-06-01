@@ -290,10 +290,77 @@ async function handleSellerMessage(
   config: Record<string, unknown>
 ): Promise<NextResponse> {
   try {
-    // 1. Extraer texto del mensaje
+    const apiKey = process.env.YCLOUD_API_KEY || (config.ycloudApiKey as string) || "";
+    const from = process.env.WHATSAPP_PHONE_NUMBER || (config.phoneNumber as string) || "";
+
+    // 1. Extraer texto del mensaje (soporta: text, audio, image, document, video)
     let text = "";
+    let contentAttributes: MediaAttachment[] | undefined;
+
     if (msgType === "text") {
       text = (message.text as Record<string, unknown>)?.body as string || "";
+    } else if (msgType === "audio") {
+      const audio = message.audio as Record<string, unknown> | undefined;
+      const mediaId = audio?.id as string;
+      if (mediaId) {
+        try {
+          const { buffer } = await downloadYCloudMedia(mediaId, apiKey);
+          const transcription = await transcribeAudio(buffer, "audio.ogg");
+          text = transcription ? `[Audio del vendedor]: ${transcription}` : "[Audio sin transcripción]";
+        } catch {
+          text = "[Audio sin transcripción]";
+        }
+      } else {
+        text = "[Audio sin transcripción]";
+      }
+    } else if (msgType === "image") {
+      const image = message.image as Record<string, unknown> | undefined;
+      const mediaId = image?.id as string;
+      const caption = (message.caption as string) || "";
+      if (mediaId) {
+        try {
+          const { buffer } = await downloadYCloudMedia(mediaId, apiKey);
+          const { processImageWithVision } = await import("@/lib/media/vision");
+          const visionResult = await processImageWithVision(buffer, "image/jpeg", 0, 0, caption || undefined);
+          text = visionResult.agentText;
+          if (visionResult.backgroundPersist) visionResult.backgroundPersist();
+        } catch {
+          text = caption ? `[Imagen con caption]: ${caption}` : "[Imagen recibida]";
+        }
+      } else {
+        text = caption ? `[Imagen con caption]: ${caption}` : "[Imagen recibida]";
+      }
+    } else if (msgType === "document") {
+      const doc = message.document as Record<string, unknown> | undefined;
+      const mediaId = doc?.id as string;
+      const fileName = (doc?.filename as string) || "documento";
+      if (mediaId) {
+        try {
+          const { buffer } = await downloadYCloudMedia(mediaId, apiKey);
+          const docText = await extractDocumentText(buffer, fileName);
+          text = `[Documento: ${fileName}]: ${(docText || "").slice(0, 500)}`;
+        } catch {
+          text = `[Documento]: ${fileName}`;
+        }
+      } else {
+        text = `[Documento]: ${fileName}`;
+      }
+    } else if (msgType === "video") {
+      const video = message.video as Record<string, unknown> | undefined;
+      const mediaId = video?.id as string;
+      if (mediaId) {
+        try {
+          const { buffer } = await downloadYCloudMedia(mediaId, apiKey);
+          const videoResult = await analyzeVideo(buffer, "video.mp4");
+          text = videoResult.agentText || "[Video recibido]";
+        } catch {
+          text = "[Video recibido]";
+        }
+      } else {
+        text = "[Video recibido]";
+      }
+    } else {
+      text = "[Mensaje no soportado]";
     }
 
     if (!text) {
@@ -309,7 +376,7 @@ async function handleSellerMessage(
     );
 
     // 3. Persistir el mensaje del vendedor
-    await insertMessage(convId, "user", text);
+    await insertMessage(convId, "user", text, contentAttributes);
 
     // 4. Cargar historial para contexto (últimos 6 mensajes como Telegram)
     const history = await getConversationMessages(convId, 6);
@@ -336,11 +403,9 @@ async function handleSellerMessage(
     await insertMessage(convId, "assistant", reply);
 
     // 7. Enviar respuesta por WhatsApp
-    const apiKey = process.env.YCLOUD_API_KEY || (config.ycloudApiKey as string) || "";
-    const from = process.env.WHATSAPP_PHONE_NUMBER || (config.phoneNumber as string) || "";
     await sendWhatsAppMessage({ to: customerPhone, body: reply, apiKey, from });
 
-    console.log(`[seller-agent] Replied to seller ${customerPhone}: ${reply.slice(0, 80)}`);
+    console.log(`[seller-agent] Replied to seller ${customerPhone} (${msgType}): ${reply.slice(0, 80)}`);
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
     console.error("[seller-agent] Error:", error);
