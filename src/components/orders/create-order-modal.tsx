@@ -25,6 +25,14 @@ type ProductoDisponible = {
   category: string;
 };
 
+type PromoOption = {
+  id: number;
+  name: string;
+  description: string;
+  customPrice: string | null;
+  imageUrl: string | null;
+};
+
 type LeadOption = {
   name: string;
   phone: string;
@@ -41,6 +49,8 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
   const [notes, setNotes] = useState("");
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [products, setProducts] = useState<ProductoDisponible[]>([]);
+  const [promos, setPromos] = useState<PromoOption[]>([]);
+  const [selectedTab, setSelectedTab] = useState<"hamburguesas" | "pan_mayorista" | "promos">("hamburguesas");
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [leads, setLeads] = useState<LeadOption[]>([]);
@@ -59,6 +69,10 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
     fetch("/api/products?available=true")
       .then((r) => r.json())
       .then(setProducts)
+      .catch(() => {});
+    fetch("/api/promotions?active=true")
+      .then((r) => r.json())
+      .then(setPromos)
       .catch(() => {});
   }, []);
 
@@ -267,32 +281,67 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
                   </div>
                 </div>
 
-                {/* Tipo */}
+                {/* Tabs: Hamburguesas | Pan Mayorista | Promos */}
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Tipo</label>
+                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Productos / Promos</label>
                   <div className="flex gap-2 mt-1">
-                    <button onClick={() => setOrderType("hamburguesas")}
-                      className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${orderType === "hamburguesas" ? "bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30" : "bg-white/5 text-neutral-400 border border-white/10"}`}>
+                    <button onClick={() => { setSelectedTab("hamburguesas"); setOrderType("hamburguesas"); }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTab === "hamburguesas" ? "bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30" : "bg-white/5 text-neutral-400 border border-white/10"}`}>
                       🍔 Hamburguesas
                     </button>
-                    <button onClick={() => setOrderType("pan_mayorista")}
-                      className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${orderType === "pan_mayorista" ? "bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30" : "bg-white/5 text-neutral-400 border border-white/10"}`}>
+                    <button onClick={() => { setSelectedTab("pan_mayorista"); setOrderType("pan_mayorista"); }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTab === "pan_mayorista" ? "bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30" : "bg-white/5 text-neutral-400 border border-white/10"}`}>
                       🍞 Pan Mayorista
+                    </button>
+                    <button onClick={() => setSelectedTab("promos")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTab === "promos" ? "bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30" : "bg-white/5 text-neutral-400 border border-white/10"}`}>
+                      🔥 Promos
                     </button>
                   </div>
                 </div>
 
-                {/* Productos disponibles */}
+                {/* Contenido según tab */}
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Productos</label>
-                  <div className="flex flex-wrap gap-1.5 mt-1 max-h-32 overflow-y-auto">
-                    {products.filter(p => p.category !== "pan_mayorista" || orderType === "pan_mayorista").map((p) => (
-                      <button key={p.id} onClick={() => addItem(p.name, p.price)}
-                        className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[11px] text-neutral-300 hover:border-[#D4A017]/30 hover:bg-[#D4A017]/5 transition-colors">
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
+                  {selectedTab === "promos" ? (
+                    <div className="flex flex-col gap-2 mt-1 max-h-48 overflow-y-auto">
+                      {promos.length === 0 ? (
+                        <p className="text-xs text-neutral-600 italic mt-1">No hay promos activas</p>
+                      ) : (
+                        promos.map((promo) => (
+                          <button
+                            key={promo.id}
+                            onClick={() => addItem(promo.name, promo.customPrice)}
+                            className="flex items-start gap-3 w-full rounded-lg bg-white/[0.03] hover:bg-[#D4A017]/5 border border-white/10 hover:border-[#D4A017]/30 px-3 py-2.5 text-left transition-colors"
+                          >
+                            {promo.imageUrl && (
+                              <img src={promo.imageUrl} alt={promo.name}
+                                className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <span className="text-xs font-medium text-neutral-200 block">{promo.name}</span>
+                              {promo.description && (
+                                <span className="text-[10px] text-neutral-500 block mt-0.5 line-clamp-2">{promo.description}</span>
+                              )}
+                            </div>
+                            <span className="text-xs font-semibold text-[#D4A017] shrink-0">
+                              ${Number(promo.customPrice || 0).toLocaleString("es-AR")}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 mt-1 max-h-32 overflow-y-auto">
+                      {products
+                        .filter(p => selectedTab === "pan_mayorista" ? p.category === "pan_mayorista" : p.category !== "pan_mayorista")
+                        .map((p) => (
+                        <button key={p.id} onClick={() => addItem(p.name, p.price)}
+                          className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[11px] text-neutral-300 hover:border-[#D4A017]/30 hover:bg-[#D4A017]/5 transition-colors">
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Items */}
