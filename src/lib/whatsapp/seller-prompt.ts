@@ -213,30 +213,74 @@ orders: id, leadId, phoneNumber, customerName, items, status, deliveryFee, payme
 products: id, name, price, category, line, available
 agent_config: isCooking, hamburguesasSinStock, stockPanDocenas, aliasB2c, aliasB2b
 
-═══ HERRAMIENTAS ═══
-createOrder -> CREAR pedido (busca/crea el lead, teléfono OPCIONAL). USAR SIEMPRE.
+═══ HERRAMIENTAS (37 disponibles) ═══
+
+— Pedidos (10) —
+createOrder -> CREAR pedido (busca/crea el lead, teléfono OPCIONAL). LA MÁS IMPORTANTE.
 createDeliveredOrder -> cargar pedido YA ENTREGADO.
-addItemToOrder -> agregar item a pedido existente.
-updateOrderStatus -> cambiar estado.
+addItemToOrder -> agregar items a pedido existente.
+removeItemFromOrder -> sacar items de un pedido.
+updateOrderStatus -> cambiar estado del pedido.
 cancelOrder -> cancelar pedido.
 markAsPaid -> marcar como pagado.
-searchClient -> buscar cliente por nombre/teléfono. PRIMER PASO.
-getClientDetail -> ficha completa de un cliente.
-getClientHistory -> historial de pedidos.
-updateClient -> modificar lead.
-deleteLead -> eliminar lead.
-sendWhatsAppMessage -> enviar WhatsApp a cliente.
-getAllProducts -> listar productos.
-getPendingOrders -> pedidos pendientes.
+markPaymentMethod -> registrar método de pago.
+calculateTotal -> calcular total del pedido.
+confirmOrder -> confirmar pedido.
+
+— Consultar pedidos (6) —
+getOrderById -> buscar pedido por ID.
 getOrderStatus -> estado de un pedido.
-getActivePromotions -> promos activas.
+getOrderHistory -> historial de pedidos de un cliente.
+getPendingOrders -> pedidos pendientes.
+getTodaysOrders -> pedidos de hoy.
+searchOrdersByDate -> buscar pedidos por fecha.
+
+— Clientes (8) —
+searchClient -> buscar cliente por nombre/teléfono. PRIMER PASO.
+getClientByPhone -> buscar cliente por teléfono exacto.
+getClientDetail -> ficha completa del cliente.
+getClientHistory -> historial de pedidos del cliente.
+getCustomerFullProfile -> perfil completo (cliente + pedidos + conversaciones).
+createClient -> crear cliente nuevo.
+updateClient -> modificar datos del cliente.
+deleteLead -> eliminar lead/cliente.
+setClientAlias -> asignar alias a un cliente.
+suggestProducts -> sugerir productos según historial.
+injectCustomerNote -> dejar nota interna en un cliente.
+
+— Productos (8) —
+getAllProducts -> listar todos los productos.
+searchProducts -> buscar producto por nombre.
+getProductById -> detalle de un producto por ID.
+getProductsByCategory -> filtrar por categoría.
+getProductAvailability -> verificar disponibilidad.
+createProduct -> crear producto nuevo.
+updateProduct -> modificar producto.
+deleteProduct -> eliminar producto.
+
+— Gestión (11) —
+getClients -> listar clientes.
+getConversations -> listar conversaciones.
+getConversationContext -> contexto de una conversación.
 getBusinessSummary -> resumen del negocio.
-getAnalytics -> métricas del negocio.
-getSalesByDateRange -> ventas por fecha.
+getBusinessHours -> horarios de atención.
+updateBusinessHours -> cambiar horarios.
+updateAgentConfig -> cambiar configuración (cocina, stock).
+getActivePromotions -> promociones activas.
+setHumanOverride -> activar/desactivar atención humana.
+sendMessageAsOperator -> enviar mensaje como operador.
+queryData -> consultar cualquier tabla.
+
+— Analytics (4) —
+getAnalytics -> métricas generales.
+getSalesByDateRange -> ventas por rango de fechas.
 getTopProducts -> productos más vendidos.
 getTopClients -> mejores clientes.
 getAverageTicket -> ticket promedio.
-queryData -> consultar cualquier tabla.
+
+— WhatsApp (2) —
+sendWhatsAppMessage -> enviar WhatsApp a un cliente.
+batchSendWhatsApp -> enviar mismo WhatsApp a varios clientes.
 
 Importante: createOrder usa resolveItems() que mapea automáticamente los productos.
 Este mapeo de sinónimos es para que VOS entiendas lo que dice el vendedor.`;
