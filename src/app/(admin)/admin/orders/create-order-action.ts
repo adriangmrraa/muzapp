@@ -26,32 +26,47 @@ export async function createManualOrder(
   if (!session) return { success: false, error: "No autorizado" };
 
   try {
-    const phone = normalizePhone(data.customerPhone);
+    // Si no hay teléfono, generar un placeholder único para poder crear el lead igual
+    const hasPhone = data.customerPhone && data.customerPhone.trim().length > 0;
+    const phone = hasPhone ? normalizePhone(data.customerPhone) : `sin-telefono-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     const resolvedItems = await resolveItems(data.items);
     const subtotal = resolvedItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
     const delivery = data.deliveryFee || 0;
     const total = subtotal + delivery;
 
-    // Vincular con lead si existe
+    // Vincular con lead si existe, o crear uno nuevo si no hay teléfono
     let leadId: number | null = null;
     try {
-      const [lead] = await db
-        .select({ id: leads.id, status: leads.status })
-        .from(leads)
-        .where(eq(leads.phone, phone))
-        .limit(1);
-      if (lead) {
-        leadId = lead.id;
-        if (data.address) {
-          await db.update(leads).set({ address: data.address }).where(eq(leads.id, lead.id));
+      if (hasPhone) {
+        const [lead] = await db
+          .select({ id: leads.id, status: leads.status })
+          .from(leads)
+          .where(eq(leads.phone, phone))
+          .limit(1);
+        if (lead) {
+          leadId = lead.id;
+          if (data.address) {
+            await db.update(leads).set({ address: data.address }).where(eq(leads.id, lead.id));
+          }
+          if (lead.status === "new" || lead.status === "contacted") {
+            await db.update(leads).set({ status: "converted" }).where(eq(leads.id, lead.id));
+          }
+          if (data.customerName) {
+            await db.update(leads).set({ name: data.customerName }).where(eq(leads.id, lead.id));
+          }
         }
-        // Si era un lead sin pedidos, pasa a cliente
-        if (lead.status === "new" || lead.status === "contacted") {
-          await db.update(leads).set({ status: "converted" }).where(eq(leads.id, lead.id));
-        }
-        if (data.customerName) {
-          await db.update(leads).set({ name: data.customerName }).where(eq(leads.id, lead.id));
-        }
+      } else {
+        // Sin teléfono: crear lead con el nombre solamente y marcarlo como "sin teléfono"
+        const [newLead] = await db
+          .insert(leads)
+          .values({
+            phone,
+            name: data.customerName,
+            status: "new",
+            notes: "⚠️ Cliente sin teléfono — cargar número pendiente",
+          })
+          .returning({ id: leads.id });
+        leadId = newLead.id;
       }
     } catch {}
 

@@ -166,7 +166,7 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
   const total = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0) + deliveryFee;
 
   const handleSave = async () => {
-    if (!customerName || !customerPhone || items.length === 0) return;
+    if (!customerName || items.length === 0) return;
     setSaving(true);
     const result = await createManualOrder({
       customerName,
@@ -394,7 +394,7 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
 
             <div className="px-5 py-3 border-t border-white/5 flex justify-end gap-2">
               <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs text-neutral-400 hover:bg-white/5 transition-colors">Cancelar</button>
-              <button onClick={handleSave} disabled={saving || !customerName || !customerPhone || items.length === 0}
+              <button onClick={handleSave} disabled={saving || !customerName || items.length === 0}
                 className="px-5 py-2 rounded-lg text-xs font-semibold bg-[#D4A017] text-black hover:bg-[#F5A623] transition-colors disabled:opacity-40">
                 {saving ? "Creando..." : "Crear Pedido"}
               </button>
