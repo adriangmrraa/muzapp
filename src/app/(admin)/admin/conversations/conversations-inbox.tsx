@@ -23,9 +23,10 @@ const queryClient = new QueryClient({
 
 interface Props {
   initialConversations: ConversationSummary[];
+  sellerPhones: string[];
 }
 
-function ConversationsInboxInner({ initialConversations }: Props) {
+function ConversationsInboxInner({ initialConversations, sellerPhones }: Props) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [currentView, setCurrentView] = useState<"list" | "chat" | "context">("list");
   const [orderModal, setOrderModal] = useState<{ phone: string; name: string } | null>(null);
@@ -92,6 +93,7 @@ function ConversationsInboxInner({ initialConversations }: Props) {
           conversations={conversations}
           activeId={selectedId}
           onSelect={handleSelect}
+          sellerPhones={sellerPhones}
         />
       </div>
 

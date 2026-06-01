@@ -9,6 +9,7 @@ interface ConversationItemProps {
   conversation: ConversationSummary;
   isActive: boolean;
   onClick: (id: number) => void;
+  isSeller?: boolean;
 }
 
 function formatRelativeTime(dateStr: string | null): string {
@@ -31,8 +32,7 @@ function truncate(text: string | null, max: number): string {
   return text.length > max ? text.slice(0, max) + "..." : text;
 }
 
-export function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
-  const isSeller = conversation.channel === "whatsapp_seller";
+export function ConversationItem({ conversation, isActive, onClick, isSeller = false }: ConversationItemProps) {
   const displayName = conversation.customerName || conversation.customerPhone;
   const initial = (conversation.customerName?.[0] || conversation.customerPhone?.slice(-2) || "?").toUpperCase();
 

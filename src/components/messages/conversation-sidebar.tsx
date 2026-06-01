@@ -11,14 +11,15 @@ interface ConversationSidebarProps {
   conversations: ConversationSummary[];
   activeId: number | null;
   onSelect: (id: number) => void;
+  sellerPhones?: string[];
   className?: string;
 }
 
 const filters: { value: ConversationFilter; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "whatsapp", label: "WA" },
-  { value: "whatsapp_seller", label: "VEN" },
   { value: "telegram", label: "TG" },
+  { value: "sellers", label: "VEN" },
   { value: "active", label: "Activos" },
   { value: "closed", label: "Cerrados" },
 ];
@@ -27,6 +28,7 @@ export function ConversationSidebar({
   conversations,
   activeId,
   onSelect,
+  sellerPhones = [],
   className,
 }: ConversationSidebarProps) {
   const [search, setSearch] = useState("");
@@ -46,7 +48,7 @@ export function ConversationSidebar({
         (filter === "active" ? c.status === "active" : false) ||
         (filter === "closed" ? c.status === "closed" : false) ||
         (filter === "whatsapp" ? c.channel === "whatsapp" : false) ||
-        (filter === "whatsapp_seller" ? c.channel === "whatsapp_seller" : false) ||
+        (filter === "sellers" ? sellerPhones.includes(c.customerPhone) : false) ||
         (filter === "telegram" ? c.channel === "telegram" : false);
 
       return matchesSearch && matchesFilter;
@@ -113,6 +115,7 @@ export function ConversationSidebar({
                   conversation={conversation}
                   isActive={conversation.id === activeId}
                   onClick={onSelect}
+                  isSeller={sellerPhones.includes(conversation.customerPhone)}
                 />
               </motion.div>
             ))
