@@ -67,6 +67,12 @@ export const navItems = [
     disabled: false,
   },
   {
+    label: "Promociones",
+    href: "/admin/promos",
+    icon: MegaphoneIcon,
+    disabled: false,
+  },
+  {
     label: "Analytics",
     href: "/admin/analytics",
     icon: BarChart2Icon,

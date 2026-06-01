@@ -26,12 +26,14 @@ import {
   getPaymentAliasTool,
   createSendStickerTool,
   createSendMenuImageTool,
+  createSendPromoImageTool,
   createSendImageTool,
   createSendDocumentTool,
   createAddOrderItemTool,
   createGetOrderSummaryTool,
   createConfirmOrderTool,
   createGetAddressesTool,
+  getActivePromosTool,
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
@@ -208,6 +210,9 @@ export async function runWhatsAppAgent({
         getOrderSummary: createGetOrderSummaryTool(conversationId),
         confirmOrder: createConfirmOrderTool(conversationId, customerPhone),
         getAddresses: createGetAddressesTool(customerPhone),
+        // Grupo I: Promos (2)
+        getActivePromos: getActivePromosTool,
+        sendPromoImage: createSendPromoImageTool(customerPhone),
       },
       stopWhen: stepCountIs(10),
       toolChoice: "auto",

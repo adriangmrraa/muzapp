@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { products } from "@/db/schema";
-import { eq, and, like, or, sql } from "drizzle-orm";
+import { products, promotions } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { sendImage } from "@/lib/ycloud";
 import { PRODUCT_IMAGE_BY_NAME } from "@/lib/constants";
 
@@ -189,5 +189,28 @@ export const searchProductsTool = tool({
     return filtered
       .map((p) => `• ${p.name} - $${p.price}${p.description ? ` — ${p.description}` : ""}`)
       .join("\n");
+  },
+});
+
+// getActivePromos - Consultar promociones activas
+export const getActivePromosTool = tool({
+  description: "Obtiene la lista de promociones activas. Usar cuando el cliente pregunta por promos, descuentos, combos u ofertas.",
+  inputSchema: z.object({}),
+  execute: async () => {
+    const activePromos = await db
+      .select({ id: promotions.id, name: promotions.name, description: promotions.description, customPrice: promotions.customPrice, imageUrl: promotions.imageUrl })
+      .from(promotions)
+      .where(eq(promotions.active, true))
+      .orderBy(desc(promotions.createdAt));
+
+    if (activePromos.length === 0) {
+      return "No hay promociones activas en este momento.";
+    }
+
+    return activePromos.map((p) => {
+      const price = p.customPrice ? ` — $${Number(p.customPrice).toLocaleString("es-AR")}` : "";
+      const hasImg = p.imageUrl ? " 📸" : "";
+      return `• ${p.name}${price}${hasImg}${p.description ? `: ${p.description}` : ""}`;
+    }).join("\n");
   },
 });

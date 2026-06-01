@@ -75,6 +75,8 @@ export const products = pgTable("products", {
   available: boolean("available").notNull().default(true),
   comingSoon: boolean("coming_soon").notNull().default(false),
   sortOrder: integer("sort_order").notNull().default(0),
+  isPromo: boolean("is_promo").notNull().default(false),
+  promoPrice: numeric("promo_price", { precision: 10, scale: 2 }),
   variants: jsonb("variants").$type<{
     name: string;
     priceDelta: number;
@@ -293,6 +295,7 @@ export const promotions = pgTable("promotions", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  imageUrl: text("image_url"),
   items: jsonb("items").$type<{ productId: number; productName: string; quantity: number }[]>().default([]),
   customPrice: numeric("custom_price", { precision: 10, scale: 2 }),
   active: boolean("active").notNull().default(true),

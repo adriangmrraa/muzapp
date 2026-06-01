@@ -23,9 +23,12 @@ export { createTransferToHumanTool } from "./transfer-to-human";
 // Grupo F: Cocina + Stock + Alias (3)
 export { checkKitchenStatusTool, checkPanStockTool, getPaymentAliasTool } from "./kitchen-tools";
 
-// Grupo G: Multimedia (4) — factory functions, se crean con número del cliente
-export { createSendStickerTool, createSendMenuImageTool } from "./sticker-tools";
+// Grupo G: Multimedia (5) — factory functions, se crean con número del cliente
+export { createSendStickerTool, createSendMenuImageTool, createSendPromoImageTool } from "./sticker-tools";
 export { createSendImageTool, createSendDocumentTool } from "./send-media-tools";
+
+// Grupo I: Promos
+export { getActivePromosTool } from "./product-tools";
 
 // Grupo H: Order Context (memoria del pedido actual)
 export { createAddOrderItemTool, createGetOrderSummaryTool, createConfirmOrderTool, createGetAddressesTool } from "./order-context-tools";

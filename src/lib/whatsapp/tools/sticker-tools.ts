@@ -1,5 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { db } from "@/db";
+import { promotions } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { sendImage } from "@/lib/ycloud";
 import fs from "fs";
 import path from "path";
@@ -122,6 +125,49 @@ export function createSendMenuImageTool(customerPhone: string) {
       }
 
       return `Te mandé el menú 📸`;
+    },
+  });
+}
+
+// ─── sendPromoImage ─────────────────────────────────────────────────────────
+export function createSendPromoImageTool(customerPhone: string) {
+  return tool({
+    description:
+      "Envía la foto de una promoción al cliente por WhatsApp. Usar cuando pregunten por promos o descuentos. Busca la promo por ID.",
+    inputSchema: z.object({
+      promoId: z.number().describe("ID de la promoción"),
+    }),
+    execute: async ({ promoId }) => {
+      const [promo] = await db
+        .select()
+        .from(promotions)
+        .where(and(eq(promotions.id, promoId), eq(promotions.active, true)))
+        .limit(1);
+
+      if (!promo) {
+        return "No encontré esa promoción activa.";
+      }
+
+      const priceText = promo.customPrice
+        ? `$${Number(promo.customPrice).toLocaleString("es-AR")}`
+        : "";
+
+      if (promo.imageUrl) {
+        const baseUrl =
+          process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
+          "https://muzapp.onrender.com";
+        const absoluteUrl = promo.imageUrl.startsWith("http") ? promo.imageUrl : `${baseUrl}${promo.imageUrl}`;
+        const result = await sendImage(customerPhone, absoluteUrl, `${promo.name}${priceText ? ` — ${priceText}` : ""}`);
+        if (result.ok) return `Te mandé la promo ${promo.name} 📸`;
+        console.warn("[promoImage] Send failed:", result.error);
+      }
+
+      // Fallback: texto si no hay imagen
+      const itemsList = (promo.items as { productName: string; quantity: number }[] || [])
+        .map((i) => `• ${i.quantity}x ${i.productName}`)
+        .join("\n");
+
+      return `${promo.name}${priceText ? ` — ${priceText}` : ""}\n${promo.description ? `${promo.description}\n` : ""}${itemsList}`;
     },
   });
 }
