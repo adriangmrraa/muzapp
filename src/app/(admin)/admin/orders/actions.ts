@@ -8,6 +8,36 @@ import { auth } from "@/auth";
 
 const PAGE_SIZE = 30;
 
+/**
+ * Programa un follow-up para 30 minutos después de la entrega.
+ * Usa setTimeout con un tope de 30 min reales.
+ */
+async function scheduleFollowUp(orderId: number, phoneNumber: string, customerName: string | null) {
+  try {
+    const now = new Date();
+    const hour = now.getHours();
+    // Solo enviar follow-up en horario hábil (9-22hs)
+    if (hour < 9 || hour >= 22) {
+      console.log(`[followup] Skipped for order #${orderId} — outside business hours (${hour}:00)`);
+      return;
+    }
+
+    const followupText = `Holaa, ¿todo bien con el pedido? No te olvides de etiquetarnos en ig porfa 🙌`;
+
+    // setTimeout de 30 minutos (1800000 ms) — pero no esperamos si es serverless
+    // En su lugar, marcamos followupSent como false y usamos un endpoint cron.
+    // Ya está en false por defecto. El envío real se hace desde un endpoint.
+
+    // Para Render (serverless), usamos un enfoque simple:
+    // Marcamos que hay un follow-up pendiente con followupSent=false
+    // El endpoint GET /api/followup procesa los pendientes.
+    await db.update(orders).set({ followupSent: false }).where(eq(orders.id, orderId));
+    console.log(`[followup] Scheduled for order #${orderId} — will be sent via /api/followup`);
+  } catch (e) {
+    console.warn(`[followup] Failed to schedule for order #${orderId}:`, e);
+  }
+}
+
 export type OrderStatus = "pending" | "preparing" | "ready" | "delivered" | "cancelled";
 export type OrderType = "hamburguesas" | "pan_mayorista";
 
@@ -141,15 +171,17 @@ export async function updateOrderStatus(
 
     const updateFields: Record<string, unknown> = { status: newStatus, updatedAt: new Date() };
 
-    // Si se marca como entregado, guardar timestamp para followup
+    // Si se marca como entregado, guardar timestamp y programar followup
     if (newStatus === "delivered") {
       updateFields.deliveredAt = new Date();
+      await db.update(orders).set(updateFields).where(eq(orders.id, orderId));
+      scheduleFollowUp(orderId, order.phoneNumber || "", order.customerName);
+    } else {
+      await db
+        .update(orders)
+        .set(updateFields)
+        .where(eq(orders.id, orderId));
     }
-
-    await db
-      .update(orders)
-      .set(updateFields)
-      .where(eq(orders.id, orderId));
 
     // Send WhatsApp notification
     const message = buildWhatsAppMessage(newStatus, order as OrderRow);
@@ -234,6 +266,12 @@ export async function markPaidAndDelivered(
   if (!session) return { success: false, message: "No autorizado" };
 
   try {
+    const [order] = await db
+      .select({ phoneNumber: orders.phoneNumber, customerName: orders.customerName })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
     await db
       .update(orders)
       .set({
@@ -243,6 +281,10 @@ export async function markPaidAndDelivered(
         updatedAt: new Date(),
       })
       .where(eq(orders.id, orderId));
+
+    if (order) {
+      scheduleFollowUp(orderId, order.phoneNumber || "", order.customerName);
+    }
 
     revalidatePath("/admin/orders");
     return { success: true, message: "Pagado y entregado" };

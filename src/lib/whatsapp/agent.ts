@@ -24,6 +24,7 @@ import {
   checkKitchenStatusTool,
   checkPanStockTool,
   checkHamburguesasStockTool,
+  saveAddressTool,
   getPaymentAliasTool,
   createSendStickerTool,
   createSendMenuImageTool,
@@ -60,7 +61,7 @@ export async function runWhatsAppAgent({
 
   // 🔧 BUILD DYNAMIC PROMPT (V6 + customer context)
   let system: string;
-  let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null }; lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any } } | undefined;
+  let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null }; lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any }; currentHour?: number; previousContext?: string } | undefined;
   
   try {
     // Cargar contexto del cliente (nombre, historial de pedidos)
@@ -118,6 +119,28 @@ export async function runWhatsAppAgent({
         // El pedido activo es el último que está "pending"
         const pendingOrder = recentOrders.find(o => o.status === "pending");
         
+        // Hora actual para contexto temporal (SDD#4)
+        const currentHour = new Date().getHours();
+
+        // Último mensaje de la conversación anterior para memoria (SDD#10)
+        let previousContext: string | undefined;
+        try {
+          const { chatMessages } = await import("@/db/schema");
+          const lastMsg = await db
+            .select({ content: chatMessages.content, role: chatMessages.role })
+            .from(chatMessages)
+            .where(eq(chatMessages.conversationId, conversationId))
+            .orderBy(desc(chatMessages.createdAt))
+            .limit(2);
+          // El último mensaje del usuario (no del asistente) que NO sea de esta sesión instantánea
+          const lastUserMsg = lastMsg.reverse().find(m => m.role === "user");
+          if (lastUserMsg && lastUserMsg.content.length > 0 && lastUserMsg.content.length < 200) {
+            previousContext = lastUserMsg.content;
+          }
+        } catch {
+          // non-fatal
+        }
+
         customerContext = {
           name: conv.name || undefined,
           phone: conv.phone,
@@ -139,6 +162,8 @@ export async function runWhatsAppAgent({
             orderType: lastOrder.orderType,
             items: lastOrder.items,
           } : undefined,
+          currentHour,
+          previousContext,
         };
       }
     }
@@ -192,6 +217,7 @@ export async function runWhatsAppAgent({
         checkKitchenStatus: checkKitchenStatusTool,
         checkPanStock: checkPanStockTool,
         checkHamburguesasStock: checkHamburguesasStockTool,
+        saveAddress: saveAddressTool,
         getPaymentAlias: getPaymentAliasTool,
         // Grupo G: Multimedia + Stickers (5)
         sendProductImage: createSendProductImageTool(customerPhone),

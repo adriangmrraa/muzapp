@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
 import { agentConfig } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 // ─── checkKitchenStatus ─────────────────────────────────────────────────────
 // Consulta si la cocina está operativa (is_cooking)
@@ -65,6 +65,50 @@ export const checkPanStockTool = tool({
     } catch {
       return { docenasDisponibles: 0 };
     }
+  },
+});
+
+// ─── saveAddressTool ──────────────────────────────────────────────────────
+// Guarda una dirección en la DB cuando el cliente la manda
+export const saveAddressTool = tool({
+  description:
+    "GUARDA la dirección del cliente. Ejecutá SIEMPRE que el cliente escriba una dirección, ubicación, o diga 'mi dirección es'. Recibe phone, address, y opcionalmente mapsLink.",
+  inputSchema: z.object({
+    phone: z.string().describe("Teléfono del cliente (normalizado, sin +)"),
+    address: z.string().describe("Dirección escrita por el cliente"),
+    mapsLink: z.string().optional().describe("Link de Google Maps si el cliente compartió ubicación"),
+    label: z.string().optional().describe("Etiqueta opcional: 'Casa', 'Trabajo', etc."),
+  }),
+  execute: async ({ phone, address, mapsLink, label }) => {
+    const { addresses } = await import("@/db/schema");
+    const { normalizePhone } = await import("@/lib/phone-utils");
+    const cleanedPhone = normalizePhone(phone);
+
+    // Verificar si ya existe
+    const [existing] = await db
+      .select({ id: addresses.id })
+      .from(addresses)
+      .where(and(eq(addresses.phone, cleanedPhone), eq(addresses.address, address)))
+      .limit(1);
+
+    if (existing) {
+      // Actualizar lastUsedAt
+      await db
+        .update(addresses)
+        .set({ lastUsedAt: new Date(), mapsLink: mapsLink || null, label: label || null })
+        .where(eq(addresses.id, existing.id));
+      return `Dirección actualizada: ${address}`;
+    }
+
+    // Insertar nueva
+    await db.insert(addresses).values({
+      phone: cleanedPhone,
+      address,
+      mapsLink: mapsLink || null,
+      label: label || null,
+    });
+
+    return `Dirección guardada: ${address}`;
   },
 });
 
