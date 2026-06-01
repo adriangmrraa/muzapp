@@ -60,7 +60,7 @@ export async function runWhatsAppAgent({
 
   // 🔧 BUILD DYNAMIC PROMPT (V6 + customer context)
   let system: string;
-  let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null } } | undefined;
+  let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null }; lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any } } | undefined;
   
   try {
     // Cargar contexto del cliente (nombre, historial de pedidos)
@@ -105,33 +105,18 @@ export async function runWhatsAppAgent({
           .slice(0, 5)
           .map(([name]) => name);
 
-        // Órdenes anteriores (historial)
+        // ÚLTIMOS 2 pedidos (suficiente para contexto, no quemar tokens)
         const recentOrders = await db
-          .select({ items: orders.items, status: orders.status, id: orders.id, orderType: orders.orderType, address: orders.address })
+          .select({ items: orders.items, status: orders.status, id: orders.id, orderType: orders.orderType, address: orders.address, paymentStatus: orders.paymentStatus })
           .from(orders)
           .where(eq(orders.phoneNumber, conv.phone))
           .orderBy(desc(orders.createdAt))
-          .limit(3);
+          .limit(2);
         
-        // Buscar pedido RECIENTE (pending o preparing - no entregado ni cancelado)
-        // Incluye "preparing" porque el admin puede avanzar el estado desde el panel
-        const [pendingOrder] = await db
-          .select({
-            id: orders.id,
-            items: orders.items,
-            orderType: orders.orderType,
-            status: orders.status,
-            address: orders.address,
-            customerName: orders.customerName,
-            paymentStatus: orders.paymentStatus,
-          })
-          .from(orders)
-          .where(and(
-            eq(orders.phoneNumber, conv.phone),
-            eq(orders.status, "pending"),
-          ))
-          .orderBy(desc(orders.createdAt))
-          .limit(1);
+        // El último pedido (cualquier estado) es el primero de la lista
+        const lastOrder = recentOrders[0];
+        // El pedido activo es el último que está "pending"
+        const pendingOrder = recentOrders.find(o => o.status === "pending");
         
         customerContext = {
           name: conv.name || undefined,
@@ -146,6 +131,13 @@ export async function runWhatsAppAgent({
             orderType: pendingOrder.orderType,
             address: pendingOrder.address,
             paymentStatus: pendingOrder.paymentStatus,
+          } : undefined,
+          lastOrder: lastOrder ? {
+            id: lastOrder.id,
+            status: lastOrder.status,
+            paymentStatus: lastOrder.paymentStatus,
+            orderType: lastOrder.orderType,
+            items: lastOrder.items,
           } : undefined,
         };
       }

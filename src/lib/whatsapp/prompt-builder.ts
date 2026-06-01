@@ -236,6 +236,7 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
   preferences?: string[];
   orderHistory?: any[];
   pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null };
+  lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any };
 }): Promise<string> {
   const layer1 = await getCorePrompt();
   const layer2 = await getMenuData();
@@ -274,8 +275,20 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
     if (customerContext.pendingOrder) {
       const p = customerContext.pendingOrder;
       const items = Array.isArray(p.items) ? p.items.map((i: any) => `${i.quantity || 1}x ${i.name || "?"}`).join(", ") : "ver detalle";
-      context += `\n\n🟢 PEDIDO ACTUAL (PENDIENTE #${p.id}): ${items} | Tipo: ${p.orderType || "?"}${p.address ? ` | Direccion: ${p.address}` : ""}${p.paymentStatus ? ` | Pago: ${p.paymentStatus}` : ""}`;
-      context += `\nNota: El cliente tiene un pedido pendiente, PERO si pide algo nuevo o diferente, procesalo como un pedido nuevo. No ignores lo que te pide.`;
+      context += `\n\n🟢 PEDIDO ACTIVO (PENDIENTE #${p.id}): ${items} | Tipo: ${p.orderType || "?"}${p.address ? ` | Direccion: ${p.address}` : ""}${p.paymentStatus ? ` | Pago: ${p.paymentStatus}` : ""}`;
+      context += `\nNota: El cliente tiene un pedido ACTIVO (pending). Si pide algo nuevo, createOrder el actual primero.`;
+    } else if (customerContext.lastOrder) {
+      const lo = customerContext.lastOrder;
+      const items = Array.isArray(lo.items) ? lo.items.map((i: any) => `${i.quantity || 1}x ${i.name || "?"}`).join(", ") : "ver detalle";
+      const completado = lo.status === "delivered" && lo.paymentStatus === "paid";
+      context += `\n\n📦 ÚLTIMO PEDIDO (#${lo.id}): ${items} | Estado: ${lo.status || "?"} | Pago: ${lo.paymentStatus || "?"}`;
+      if (completado) {
+        context += `\n⚠️ Este pedido ya fue ENTREGADO y PAGADO. NO es un pedido activo. Tratá al cliente como si fuera nuevo.`;
+      } else {
+        context += `\n⚠️ Este pedido NO está activo (${lo.status}). No lo trates como pedido en curso.`;
+      }
+    } else {
+      context += `\n📭 El cliente NO tiene pedidos registrados. Empezá de cero.`;
     }
   }
   
