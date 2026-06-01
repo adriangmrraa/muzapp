@@ -30,7 +30,6 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   trainBotContext: "",
   whatsappSystemPrompt: "",
   whatsappInstrucciones: "",
-  whatsappPromociones: "",
   whatsappZonasDelivery: [],
   isCooking: true,
   stockPanDocenas: 0,
@@ -71,7 +70,6 @@ export default async function AgentPage() {
         trainBotContext: (row.trainBotContext as string) ?? "",
         whatsappSystemPrompt: (row.whatsappSystemPrompt as string) ?? "",
         whatsappInstrucciones: (row.whatsappInstrucciones as string) ?? "",
-        whatsappPromociones: (row.whatsappPromociones as string) ?? "",
         whatsappZonasDelivery: Array.isArray(row.whatsappZonasDelivery)
           ? (row.whatsappZonasDelivery as { zona: string; disponible: boolean; tiempo: string; costo: number }[])
           : [],

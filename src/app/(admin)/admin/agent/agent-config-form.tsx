@@ -61,7 +61,6 @@ export type AgentConfigFormData = {
   // ─── WhatsApp Agent Editor ──────────────────────────────────────────────
   whatsappSystemPrompt: string;
   whatsappInstrucciones: string;
-  whatsappPromociones: string;
   whatsappZonasDelivery: { zona: string; disponible: boolean; tiempo: string; costo: number }[];
   // ─── System Status ──────────────────────────────────────────────────────
   isCooking: boolean;
@@ -121,7 +120,6 @@ export default function AgentConfigForm({
   const [systemPrompt, setSystemPrompt] = useState(config.systemPrompt);
   const [whatsappSystemPrompt, setWhatsappSystemPrompt] = useState(config.whatsappSystemPrompt || "");
   const [whatsappInstrucciones, setWhatsappInstrucciones] = useState(config.whatsappInstrucciones || "");
-  const [whatsappPromociones, setWhatsappPromociones] = useState(config.whatsappPromociones || "");
   const [zonasDelivery, setZonasDelivery] = useState(config.whatsappZonasDelivery || [
     { zona: "centro", disponible: true, tiempo: "20-30 min", costo: 0 },
     { zona: "norte", disponible: true, tiempo: "25-35 min", costo: 0 },
@@ -636,20 +634,6 @@ export default function AgentConfigForm({
                   placeholder="Ej: Preguntá siempre si quieren papas antes de cerrar el pedido..."
                   value={whatsappInstrucciones}
                   onChange={(e) => setWhatsappInstrucciones(e.target.value)}
-                  className="resize-none"
-                />
-              </div>
-
-              {/* Promociones activas */}
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="whatsappPromociones">Promociones activas</Label>
-                <Textarea
-                  id="whatsappPromociones"
-                  name="whatsappPromociones"
-                  rows={2}
-                  placeholder="Ej: 2x1 en Genesis todos los martes | Combo Deli Deli + Papas $4.500"
-                  value={whatsappPromociones}
-                  onChange={(e) => setWhatsappPromociones(e.target.value)}
                   className="resize-none"
                 />
               </div>
