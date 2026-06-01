@@ -24,8 +24,7 @@ import { analyzeVideo } from "@/lib/media/video";
 import { extractDocumentText } from "@/lib/media/document";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
-import { internalAgentTools } from "@/lib/telegram/tools";
-import { buildSellerPrompt } from "@/lib/whatsapp/seller-prompt";
+import { buildSellerPrompt, internalSellerTools } from "@/lib/whatsapp/seller-prompt";
 import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 
@@ -651,7 +650,7 @@ export async function POST(request: NextRequest) {
           model: openai.chat("gpt-5-mini"),
           system: await buildSellerPrompt(),
           messages: aiMessages,
-          tools: internalAgentTools,
+          tools: internalSellerTools,
           stopWhen: stepCountIs(10),
         });
         const reply = result.text || "Disculpá, no pude procesar eso.";

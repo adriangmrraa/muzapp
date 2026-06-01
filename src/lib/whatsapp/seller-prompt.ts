@@ -1,6 +1,62 @@
 import { db } from "@/db";
 import { products, promotions, agentConfig } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { queryOrderTools } from "@/lib/telegram/toolsQuery";
+import { manageClientTools } from "@/lib/telegram/toolsClient";
+import { manageProductTools } from "@/lib/telegram/toolsProduct";
+import { manageOrderTools } from "@/lib/telegram/toolsOrder";
+import { managementTools } from "@/lib/telegram/toolsManagement";
+import { analyticsTools } from "@/lib/telegram/toolsAnalytics";
+import { whatsAppTools } from "@/lib/telegram/toolsWhatsApp";
+
+// ─── Tools para VENDEDORES (subset de las de Telegram, sin tools admin) ───
+export const internalSellerTools = {
+  // Pedidos: crear, agregar items, cambiar estado, cancelar
+  createOrder: manageOrderTools.createOrder,
+  createDeliveredOrder: manageOrderTools.createDeliveredOrder,
+  addItemToOrder: manageOrderTools.addItemToOrder,
+  updateOrderStatus: manageOrderTools.updateOrderStatus,
+  cancelOrder: manageOrderTools.cancelOrder,
+  markAsPaid: manageOrderTools.markAsPaid,
+  markPaymentMethod: manageOrderTools.markPaymentMethod,
+  calculateTotal: manageOrderTools.calculateTotal,
+
+  // Consultar pedidos
+  getOrderById: queryOrderTools.getOrderById,
+  getOrderStatus: queryOrderTools.getOrderStatus,
+  getOrderHistory: queryOrderTools.getOrderHistory,
+  getPendingOrders: queryOrderTools.getPendingOrders,
+  getTodaysOrders: queryOrderTools.getTodaysOrders,
+
+  // Clientes: buscar, ver detalle, actualizar datos básicos
+  searchClient: managementTools.searchClient,
+  getClientByPhone: manageClientTools.getClientByPhone,
+  getClientDetail: managementTools.getClientDetail,
+  getClientHistory: manageClientTools.getClientHistory,
+  getCustomerFullProfile: managementTools.getCustomerFullProfile,
+  updateClient: manageClientTools.updateClient,
+  injectCustomerNote: managementTools.injectCustomerNote,
+
+  // Productos: solo consulta (NO crear/modificar/eliminar)
+  getAllProducts: manageProductTools.getAllProducts,
+  searchProducts: manageProductTools.searchProducts,
+  getProductById: manageProductTools.getProductById,
+  getProductsByCategory: manageProductTools.getProductsByCategory,
+  getProductAvailability: manageProductTools.getProductAvailability,
+
+  // Analytics: solo consulta
+  getAnalytics: managementTools.getAnalytics,
+  getSalesByDateRange: analyticsTools.getSalesByDateRange,
+  getTopProducts: analyticsTools.getTopProducts,
+  getTopClients: analyticsTools.getTopClients,
+  getAverageTicket: analyticsTools.getAverageTicket,
+  getBusinessSummary: managementTools.getBusinessSummary,
+  getActivePromotions: managementTools.getActivePromotions,
+
+  // WhatsApp: notificar clientes
+  sendWhatsAppMessage: whatsAppTools.sendWhatsAppMessage,
+  batchSendWhatsApp: whatsAppTools.batchSendWhatsApp,
+};
 
 // ─── Capa 1: Menú de productos actualizado ──────────────────────────────
 async function getMenuData(): Promise<string> {
@@ -213,74 +269,34 @@ orders: id, leadId, phoneNumber, customerName, items, status, deliveryFee, payme
 products: id, name, price, category, line, available
 agent_config: isCooking, hamburguesasSinStock, stockPanDocenas, aliasB2c, aliasB2b
 
-═══ HERRAMIENTAS (37 disponibles) ═══
+═══ HERRAMIENTAS DEL VENDEDOR ═══
 
-— Pedidos (10) —
-createOrder -> CREAR pedido (busca/crea el lead, teléfono OPCIONAL). LA MÁS IMPORTANTE.
+— PEDIDOS (8) —
+createOrder -> CREAR pedido (busca/crea el lead, teléfono OPCIONAL). USAR SIEMPRE.
 createDeliveredOrder -> cargar pedido YA ENTREGADO.
 addItemToOrder -> agregar items a pedido existente.
-removeItemFromOrder -> sacar items de un pedido.
-updateOrderStatus -> cambiar estado del pedido.
+updateOrderStatus -> cambiar estado.
 cancelOrder -> cancelar pedido.
 markAsPaid -> marcar como pagado.
 markPaymentMethod -> registrar método de pago.
-calculateTotal -> calcular total del pedido.
-confirmOrder -> confirmar pedido.
+calculateTotal -> calcular total.
 
-— Consultar pedidos (6) —
-getOrderById -> buscar pedido por ID.
-getOrderStatus -> estado de un pedido.
-getOrderHistory -> historial de pedidos de un cliente.
-getPendingOrders -> pedidos pendientes.
-getTodaysOrders -> pedidos de hoy.
-searchOrdersByDate -> buscar pedidos por fecha.
+— CONSULTAR PEDIDOS (5) —
+getOrderById, getOrderStatus, getOrderHistory, getPendingOrders, getTodaysOrders
 
-— Clientes (8) —
-searchClient -> buscar cliente por nombre/teléfono. PRIMER PASO.
-getClientByPhone -> buscar cliente por teléfono exacto.
-getClientDetail -> ficha completa del cliente.
-getClientHistory -> historial de pedidos del cliente.
-getCustomerFullProfile -> perfil completo (cliente + pedidos + conversaciones).
-createClient -> crear cliente nuevo.
-updateClient -> modificar datos del cliente.
-deleteLead -> eliminar lead/cliente.
-setClientAlias -> asignar alias a un cliente.
-suggestProducts -> sugerir productos según historial.
-injectCustomerNote -> dejar nota interna en un cliente.
+— CLIENTES (5) —
+searchClient, getClientByPhone, getClientDetail, getClientHistory, getCustomerFullProfile
+updateClient, injectCustomerNote
 
-— Productos (8) —
-getAllProducts -> listar todos los productos.
-searchProducts -> buscar producto por nombre.
-getProductById -> detalle de un producto por ID.
-getProductsByCategory -> filtrar por categoría.
-getProductAvailability -> verificar disponibilidad.
-createProduct -> crear producto nuevo.
-updateProduct -> modificar producto.
-deleteProduct -> eliminar producto.
+— PRODUCTOS (5, SOLO CONSULTA) —
+getAllProducts, searchProducts, getProductById, getProductsByCategory, getProductAvailability
 
-— Gestión (11) —
-getClients -> listar clientes.
-getConversations -> listar conversaciones.
-getConversationContext -> contexto de una conversación.
-getBusinessSummary -> resumen del negocio.
-getBusinessHours -> horarios de atención.
-updateBusinessHours -> cambiar horarios.
-updateAgentConfig -> cambiar configuración (cocina, stock).
-getActivePromotions -> promociones activas.
-setHumanOverride -> activar/desactivar atención humana.
-sendMessageAsOperator -> enviar mensaje como operador.
-queryData -> consultar cualquier tabla.
+— ANALYTICS (7) —
+getAnalytics, getSalesByDateRange, getTopProducts, getTopClients, getAverageTicket
+getBusinessSummary, getActivePromotions
 
-— Analytics (4) —
-getAnalytics -> métricas generales.
-getSalesByDateRange -> ventas por rango de fechas.
-getTopProducts -> productos más vendidos.
-getTopClients -> mejores clientes.
-getAverageTicket -> ticket promedio.
-
-— WhatsApp (2) —
-sendWhatsAppMessage -> enviar WhatsApp a un cliente.
-batchSendWhatsApp -> enviar mismo WhatsApp a varios clientes.
+— WHATSAPP (2) —
+sendWhatsAppMessage, batchSendWhatsApp
 
 Importante: createOrder usa resolveItems() que mapea automáticamente los productos.
 Este mapeo de sinónimos es para que VOS entiendas lo que dice el vendedor.`;
