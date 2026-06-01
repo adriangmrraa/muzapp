@@ -64,6 +64,7 @@ export type AgentConfigFormData = {
   whatsappZonasDelivery: { zona: string; disponible: boolean; tiempo: string; costo: number }[];
   // ─── System Status ──────────────────────────────────────────────────────
   isCooking: boolean;
+  hamburguesasSinStock: boolean;
   stockPanDocenas: number;
   aliasB2c: string;
   aliasB2b: string;
@@ -127,6 +128,7 @@ export default function AgentConfigForm({
   ]);
   const [newZona, setNewZona] = useState({ zona: "", tiempo: "", costo: 0 });
   const [isCooking, setIsCooking] = useState(config.isCooking ?? true);
+  const [hamburguesasSinStock, setHamburguesasSinStock] = useState(config.hamburguesasSinStock ?? false);
   const [stockPanDocenas, setStockPanDocenas] = useState(config.stockPanDocenas ?? 0);
   const [aliasB2c, setAliasB2c] = useState(config.aliasB2c ?? "");
   const [aliasB2b, setAliasB2b] = useState(config.aliasB2b ?? "");
@@ -749,6 +751,27 @@ export default function AgentConfigForm({
                   />
                   <span className={clsx("text-sm font-medium", isCooking ? "text-green-400" : "text-red-400")}>
                     {isCooking ? "Cocinando" : "Cerrado"}
+                  </span>
+                </div>
+              </div>
+
+              {/* hamburguesasSinStock */}
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <Label htmlFor="hamburguesasSinStock">🍔 Hamburguesas sin stock</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Si está activado, el agente NO vende hamburguesas (B2C) pero sigue vendiendo pan mayorista (B2B) normalmente
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input type="hidden" name="hamburguesasSinStock" value={String(hamburguesasSinStock)} />
+                  <Switch
+                    id="hamburguesasSinStock"
+                    checked={hamburguesasSinStock}
+                    onCheckedChange={setHamburguesasSinStock}
+                  />
+                  <span className={clsx("text-sm font-medium", hamburguesasSinStock ? "text-red-400" : "text-green-400")}>
+                    {hamburguesasSinStock ? "Sin stock" : "Con stock"}
                   </span>
                 </div>
               </div>

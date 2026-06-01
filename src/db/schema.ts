@@ -121,6 +121,7 @@ export const agentConfig = pgTable("agent_config", {
   // ───────────────────────────────────────────────────────────────────────────
   // ─── Identidad anti-bot / System Status ───────────────────────────────────
   isCooking: boolean("is_cooking").notNull().default(true),
+  hamburguesasSinStock: boolean("hamburguesas_sin_stock").notNull().default(false),
   stockPanDocenas: integer("stock_pan_docenas").default(0),
   aliasB2c: varchar("alias_b2c", { length: 100 }),
   aliasB2b: varchar("alias_b2b", { length: 100 }),

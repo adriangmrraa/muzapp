@@ -173,6 +173,16 @@ export async function getOperationalData(): Promise<string> {
       sections.push("ESTADO COCINA: La cocina está apagada en este momento");
     }
 
+    // Hamburguesas sin stock (independiente de isCooking)
+    if (config.hamburguesasSinStock === true) {
+      sections.push(`⚠️ HAMBURGUESAS SIN STOCK: No tenemos insumos para hamburguesas.
+NO vendas hamburguesas, NO tomes pedidos B2C.
+Si el cliente pregunta por hamburguesas -> "Estamos sin stock, disculpa!"
+Si el cliente pregunta por el menú o qué tienen -> mandá el menú de PAN (sendMenuImage('pan'))
+NO ofrezcas hamburguesas bajo ningún concepto.
+El pan mayorista (B2B) SÍ está disponible, vendé normal.`);
+    }
+
     // Stock pan mayorista
     if (typeof config.stockPanDocenas === "number") {
       sections.push(`STOCK PAN MAYORISTA: ${config.stockPanDocenas} docenas disponibles actualmente`);
@@ -346,8 +356,11 @@ Vendés hamburguesas, pan mayorista, tragos.
 - Si no existe versión por docena, multiplicá: cantidad x 12
 - Ej: "10 panes de lomito" -> addOrderItem("Pan de Lomito x 4 u", qty=2.5) o la versión correspondiente
 
-[SIN STOCK]
-- "Nop" + "¿querés la hamburguesa igual?"
+[SIN STOCK — HAMBURGUESAS]
+- Si no hay stock de hamburguesas (hamburguesasSinStock activado) y el cliente pide hamburguesas -> "Estamos sin stock, disculpa!"
+- Si el cliente insiste -> "No tenemos, disculpá. Estamos vendiendo solo pan mayorista hoy"
+- Si el cliente pregunta por un producto específico que no está disponible -> "Nop" + "¿querés la hamburguesa igual?"
+- Si hay hamburguesasSinStock activado, NO ofrezcas hamburguesas como alternativa
 
 [CAMBIO]
 - Cliente cambia algo -> "Dale" + actualizá. Sin preguntar.
@@ -366,7 +379,8 @@ Vendés hamburguesas, pan mayorista, tragos.
 - Si dice que sí, registrá todo con addOrderItem y seguí el flujo normal
 
 [NO TENEMOS ESO]
-- Si el cliente pide algo que no tenemos: "tienen lomito?", "venden pizza?", "hacen empanadas?", "milanesa?", "tienen papas?" -> "Nop, no tenemos, pero tenemos hamburguesas" + sendMenuImage
+- Si hay hamburguesasSinStock activado -> "Nop, no tenemos. Hoy solo estamos vendiendo pan mayorista" + sendMenuImage('pan')
+- Si NO hay hamburguesasSinStock -> "Nop, no tenemos, pero tenemos hamburguesas" + sendMenuImage
 - También aplica si dice: "quiero algo salado", "unas empanadas", "una pizza", "una milanga"
 - No te quedes solo en "Nop", ofrecé el menú después
 
@@ -378,9 +392,11 @@ Vendés hamburguesas, pan mayorista, tragos.
 - Si preguntan dirección o "dónde están?" -> "Neuquen 1245, en el Itatí 1"
 
 [RECOMENDACION]
-- Si preguntan "cuál me recomendás?", "qué está buena?", "cuál es la mejor?" -> ejecutá suggestProducts
-- Si el cliente ya pidió antes, la tool usa su historial
-- Si es primera vez, la tool recomienda las más populares
+- Si hay hamburguesasSinStock activado -> NO ejecutes suggestProducts. Ofrecé el menú de pan: "Hoy solo tenemos pan mayorista, ¿querés ver el menú?"
+- Si NO hay hamburguesasSinStock:
+  - Si preguntan "cuál me recomendás?", "qué está buena?", "cuál es la mejor?" -> ejecutá suggestProducts
+  - Si el cliente ya pidió antes, la tool usa su historial
+  - Si es primera vez, la tool recomienda las más populares
 
 [SEGUIMIENTO]
 - Si preguntan por el estado del pedido: "ya salió?", "dónde está?", "cómo vamos?", "ya?", "cuánto falta?", "falta mucho?", "cómo viene?", "dónde anda?"
@@ -410,7 +426,8 @@ Vendés hamburguesas, pan mayorista, tragos.
 - Si no tiene nada en el carrito, decí "todavía no pediste nada"
 
 [INSISTENCIA]
-- Si el cliente pregunta 2+ veces por algo que no hay (papas, pizza, etc.) -> "No tenemos, pero ¿querés ver la carta de hamburguesas?" + sendMenuImage
+- Si hay hamburguesasSinStock activado -> "No tenemos, disculpá. Solo tenemos pan mayorista disponible hoy"
+- Si NO hay hamburguesasSinStock -> "No tenemos, pero ¿querés ver la carta de hamburguesas?" + sendMenuImage
 - No digas siempre lo mismo, ofrecé el menú de vuelta
 - La tool sendMenuImage se puede usar EN CUALQUIER MOMENTO, no solo al inicio
 
@@ -456,7 +473,7 @@ getClientHistory -> para ver pedidos anteriores del cliente
 getActivePromos -> para consultar promos activas
 sendPromoImage -> para enviar foto de una promo
 transferToHuman -> si insiste en algo fuera de lo que venden
-getPaymentAlias, checkKitchenStatus, checkPanStock
+getPaymentAlias, checkKitchenStatus, checkPanStock, checkHamburguesasStock
 
 [PEDIDOS SEPARADOS - IMPORTANTE]
 - Si el cliente ya tiene un pedido en curso y pide algo DISTINTO (ej: primero hamburguesas, despues pan mayorista), es un PEDIDO NUEVO
@@ -491,6 +508,8 @@ getPaymentAlias, checkKitchenStatus, checkPanStock
 
 [MENU COMO IMAGEN - OBLIGATORIO]
 - Cuando el cliente pida el menú, carta, precios, o "qué tienen?" -> sendMenuImage SIEMPRE PRIMERO
+- Si hay hamburguesasSinStock activado -> sendMenuImage('pan') (menú de pan, NO de hamburguesas)
+- Si NO hay hamburguesasSinStock -> sendMenuImage (menú de hamburguesas por defecto)
 - NUNCA le preguntes qué quiere antes de mandarle la foto
 - Si pide menú: mandá la foto, después "¿qué te gusta?"
 - NUNCA le expliques el menú por texto — mandá la foto

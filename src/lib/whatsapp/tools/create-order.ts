@@ -75,6 +75,23 @@ export const createOrderTool = tool({
   execute: async ({ customerName, orderType, items, customerPhone, address, deliveryFee, paymentStatus, paymentMethod, notes }) => {
     // Normalizar teléfono antes de cualquier operación
     customerPhone = normalizePhone(customerPhone);
+
+    // ─── Verificar si hay stock de hamburguesas ──────────────────────────
+    if (orderType === "hamburguesas") {
+      try {
+        const [cfg] = await db
+          .select({ sinStock: agentConfig.hamburguesasSinStock })
+          .from(agentConfig)
+          .where(eq(agentConfig.id, 1))
+          .limit(1);
+        if (cfg?.sinStock) {
+          return "Hoy no estamos vendiendo hamburguesas. Solo tenemos pan mayorista disponible. Disculpá las molestias.";
+        }
+      } catch {
+        // non-fatal — si falla la consulta, permitir el pedido
+      }
+    }
+
     // Resolver items contra productos reales de la DB
     const resolvedItems = await resolveItems(items);
     const subtotal = resolvedItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);

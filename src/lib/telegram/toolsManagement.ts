@@ -478,9 +478,10 @@ export const getConversationsTool = tool({
 // ─── updateAgentConfigTool ──────────────────────────────────────────────────
 export const updateAgentConfigTool = tool({
   description:
-    "ACTUALIZA cualquier configuración del negocio en tiempo real. Usar cuando el admin pida cambios en: cocina (isCooking), stock de pan (stockPanDocenas), alias de pago (aliasB2c/aliasB2b), tiempo de espera (tiempoEspera), o cualquier campo de configuración. Solo envía los campos que querés cambiar.",
+    "ACTUALIZA cualquier configuración del negocio en tiempo real. Usar cuando el admin pida cambios en: cocina (isCooking), hamburguesas sin stock (hamburguesasSinStock), stock de pan (stockPanDocenas), alias de pago (aliasB2c/aliasB2b), tiempo de espera (tiempoEspera), o cualquier campo de configuración. Solo envía los campos que querés cambiar.",
   inputSchema: z.object({
     isCooking: z.boolean().optional().describe("true = cocina abierta, false = cocina cerrada"),
+    hamburguesasSinStock: z.boolean().optional().describe("true = sin stock de hamburguesas, false = hay stock"),
     stockPanDocenas: z.number().int().min(0).optional().describe("Stock de pan en docenas"),
     aliasB2c: z.string().optional().describe("Alias de Mercado Pago para hamburguesas (B2C)"),
     aliasB2b: z.string().optional().describe("Alias de Mercado Pago para pan mayorista (B2B)"),
@@ -491,6 +492,7 @@ export const updateAgentConfigTool = tool({
     const changed: string[] = [];
 
     if (args.isCooking !== undefined) { updates.isCooking = args.isCooking; changed.push(`cocina: ${args.isCooking ? "abierta" : "cerrada"}`); }
+    if (args.hamburguesasSinStock !== undefined) { updates.hamburguesasSinStock = args.hamburguesasSinStock; changed.push(`hamburguesas sin stock: ${args.hamburguesasSinStock ? "si" : "no"}`); }
     if (args.stockPanDocenas !== undefined) { updates.stockPanDocenas = args.stockPanDocenas; changed.push(`stock pan: ${args.stockPanDocenas} doc`); }
     if (args.aliasB2c !== undefined) { updates.aliasB2c = args.aliasB2c; changed.push(`alias B2C: ${args.aliasB2c}`); }
     if (args.aliasB2b !== undefined) { updates.aliasB2b = args.aliasB2b; changed.push(`alias B2B: ${args.aliasB2b}`); }
@@ -618,6 +620,7 @@ export const getBusinessSummaryTool = tool({
       `📊 *RESUMEN DEL NEGOCIO*`,
       ``,
       `👨‍🍳 Cocina: ${config?.isCooking ? "✅ Abierta" : "❌ Cerrada"}`,
+      `🍔 Hamburguesas: ${config?.hamburguesasSinStock ? "❌ Sin stock" : "✅ Con stock"}`,
       `⏰ Horarios: ${config?.businessHours ? `${(config.businessHours as any).days || "?"} ${(config.businessHours as any).open || "?"}-${(config.businessHours as any).close || "?"}` : "No configurados"}`,
       `📦 Pedidos pendientes: ${pendingOrders?.count || 0}`,
       `📅 Pedidos hoy: ${todayOrders?.count || 0}`,

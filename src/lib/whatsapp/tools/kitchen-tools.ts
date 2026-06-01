@@ -26,6 +26,26 @@ export const checkKitchenStatusTool = tool({
   },
 });
 
+// ─── checkHamburguesasStock ────────────────────────────────────────────────
+// Consulta si hay stock de hamburguesas disponible
+export const checkHamburguesasStockTool = tool({
+  description:
+    "Verifica si hay stock de hamburguesas disponible para la venta. Si hamburguesasSinStock=true, NO se pueden vender hamburguesas.",
+  inputSchema: z.object({}),
+  execute: async () => {
+    try {
+      const rows = await db
+        .select({ sinStock: agentConfig.hamburguesasSinStock })
+        .from(agentConfig)
+        .where(eq(agentConfig.id, 1))
+        .limit(1);
+      return { hamburguesasSinStock: rows[0]?.sinStock ?? false };
+    } catch {
+      return { hamburguesasSinStock: false };
+    }
+  },
+});
+
 // ─── checkPanStock ──────────────────────────────────────────────────────────
 // Consulta stock de pan al por mayor en docenas
 export const checkPanStockTool = tool({

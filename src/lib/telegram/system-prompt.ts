@@ -69,7 +69,7 @@ orders (pedidos): id, leadId, phoneNumber, customerName, items, status, delivery
 products: id, name, price, category, line, available
   Operaciones: getAllProducts, createProduct, updateProduct, deleteProduct
 
-agent_config: isCooking, stockPanDocenas, aliasB2c, aliasB2b, tiempoEspera
+agent_config: isCooking, hamburguesasSinStock, stockPanDocenas, aliasB2c, aliasB2b, tiempoEspera
   Operaciones: getBusinessSummary, updateAgentConfig
 
 HERRAMIENTAS (que hace cada una)

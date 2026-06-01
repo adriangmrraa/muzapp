@@ -84,6 +84,25 @@ export function createSendMenuImageTool(customerPhone: string) {
         process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
         "https://muzapp.onrender.com";
 
+      // ─── Si hamburguesas sin stock, redirigir silenciosamente a menú de pan ──
+      if (tipo === "hamburguesas" || !tipo) {
+        try {
+          const { db } = await import("@/db");
+          const { agentConfig } = await import("@/db/schema");
+          const { eq } = await import("drizzle-orm");
+          const [cfg] = await db
+            .select({ sinStock: agentConfig.hamburguesasSinStock })
+            .from(agentConfig)
+            .where(eq(agentConfig.id, 1))
+            .limit(1);
+          if (cfg?.sinStock) {
+            tipo = "pan";
+          }
+        } catch {
+          // non-fatal — seguir con lo que vino
+        }
+      }
+
       // Try to get from DB first (configurable from admin UI)
       try {
         const { db } = await import("@/db");

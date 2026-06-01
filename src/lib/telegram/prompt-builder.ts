@@ -22,6 +22,11 @@ export async function buildTelegramPrompt(): Promise<string> {
     if (config) {
       const infoLines: string[] = [];
       infoLines.push(`ESTADO COCINA: ${config.isCooking ? "Abierta" : "Cerrada"}`);
+      if (config.hamburguesasSinStock === true) {
+        infoLines.push("HAMBURGUESAS SIN STOCK: No se están vendiendo hamburguesas. Solo pan mayorista.");
+      } else {
+        infoLines.push("HAMBURGUESAS: Con stock — se pueden vender");
+      }
       if (typeof config.stockPanDocenas === "number") {
         infoLines.push(`STOCK PAN: ${config.stockPanDocenas} docenas`);
       }

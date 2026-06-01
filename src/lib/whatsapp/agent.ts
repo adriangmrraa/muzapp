@@ -23,6 +23,7 @@ import {
   createSendProductImageTool,
   checkKitchenStatusTool,
   checkPanStockTool,
+  checkHamburguesasStockTool,
   getPaymentAliasTool,
   createSendStickerTool,
   createSendMenuImageTool,
@@ -195,9 +196,10 @@ export async function runWhatsAppAgent({
         // Grupo E: Operaciones (2)
         getBusinessHours: getBusinessHoursTool,
         transferToHuman: createTransferToHumanTool(conversationId),
-        // Grupo F: Cocina + Stock + Alias (3)
+        // Grupo F: Cocina + Stock + Hamburguesas + Alias (4)
         checkKitchenStatus: checkKitchenStatusTool,
         checkPanStock: checkPanStockTool,
+        checkHamburguesasStock: checkHamburguesasStockTool,
         getPaymentAlias: getPaymentAliasTool,
         // Grupo G: Multimedia + Stickers (5)
         sendProductImage: createSendProductImageTool(customerPhone),

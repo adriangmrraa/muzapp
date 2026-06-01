@@ -21,7 +21,7 @@ export { getBusinessHoursTool } from "./get-business-hours";
 export { createTransferToHumanTool } from "./transfer-to-human";
 
 // Grupo F: Cocina + Stock + Alias (3)
-export { checkKitchenStatusTool, checkPanStockTool, getPaymentAliasTool } from "./kitchen-tools";
+export { checkKitchenStatusTool, checkPanStockTool, checkHamburguesasStockTool, getPaymentAliasTool } from "./kitchen-tools";
 
 // Grupo G: Multimedia (5) — factory functions, se crean con número del cliente
 export { createSendStickerTool, createSendMenuImageTool, createSendPromoImageTool } from "./sticker-tools";

@@ -1,5 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { db } from "@/db";
+import { agentConfig } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { addOrderContextItem, getOrderContextSummary, confirmOrderContext, formatOrderSummary } from "@/lib/order-context";
 import { getCustomerAddresses, formatAddressesForPrompt } from "@/lib/addresses";
 
@@ -14,6 +17,24 @@ export function createAddOrderItemTool(conversationId: number, phone: string) {
       notes: z.string().optional().describe("Notas del cliente (ej: sin cebolla, punto jugoso)"),
     }),
     execute: async ({ productName, productPrice, quantity, variant, notes }) => {
+      // ─── Verificar si hay stock de hamburguesas ──────────────────────────
+      try {
+        const [cfg] = await db
+          .select({ sinStock: agentConfig.hamburguesasSinStock })
+          .from(agentConfig)
+          .where(eq(agentConfig.id, 1))
+          .limit(1);
+        if (cfg?.sinStock) {
+          const burgerKeywords = ["hamburguesa", "bookbinder", "genesis", "deli", "crispy", "classic", "especiale", "italiano", "torro", "smash", "cheddar", "bacon", "bbq"];
+          const isBurger = burgerKeywords.some(k => productName.toLowerCase().includes(k));
+          if (isBurger) {
+            return "No estamos vendiendo hamburguesas hoy. Solo tenemos pan mayorista. Disculpá.";
+          }
+        }
+      } catch {
+        // non-fatal
+      }
+
       await addOrderContextItem(conversationId, phone, productName, productPrice, quantity, variant, notes);
       const summary = await getOrderContextSummary(conversationId);
       return `✅ Agregado: ${quantity}x ${productName}${variant ? ` (${variant})` : ""}. Llevás ${summary.length} producto(s).`;

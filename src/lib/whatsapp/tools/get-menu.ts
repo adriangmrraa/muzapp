@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { products } from "@/db/schema";
+import { products, agentConfig } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export const getMenuTool = tool({
@@ -11,8 +11,38 @@ export const getMenuTool = tool({
       .describe("Categoría para filtrar. tragos_vip = Tragos V.I.P de 1 Litro. Si no se especifica, devuelve todo el menú"),
   }),
   execute: async ({ category }) => {
+    // ─── Si no hay stock de hamburguesas, ocultarlas del menú ──────────
+    if (!category || category === "hamburguesa") {
+      try {
+        const [cfg] = await db
+          .select({ sinStock: agentConfig.hamburguesasSinStock })
+          .from(agentConfig)
+          .where(eq(agentConfig.id, 1))
+          .limit(1);
+        if (cfg?.sinStock && category === "hamburguesa") {
+          return "Hoy no tenemos hamburguesas disponibles.";
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+
     const conditions = [eq(products.available, true)];
     if (category) conditions.push(eq(products.category, category));
+
+    // Si hamburguesas sin stock, excluir categoría hamburguesa del menú completo
+    try {
+      const [cfg] = await db
+        .select({ sinStock: agentConfig.hamburguesasSinStock })
+        .from(agentConfig)
+        .where(eq(agentConfig.id, 1))
+        .limit(1);
+      if (cfg?.sinStock && !category) {
+        conditions.push(eq(products.category, "pan_mayorista" as any));
+      }
+    } catch {
+      // non-fatal
+    }
 
     const items = await db
       .select({

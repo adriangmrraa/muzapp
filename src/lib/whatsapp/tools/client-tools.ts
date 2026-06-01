@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { products, orders, leads } from "@/db/schema";
+import { products, orders, leads, agentConfig } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { normalizePhone } from "@/lib/phone-utils";
 
@@ -43,6 +43,20 @@ export const suggestProductsTool = tool({
     phone: z.string().optional().describe("Teléfono del cliente (opcional)"),
   }),
   execute: async ({ phone }) => {
+    // ─── Verificar si hay stock de hamburguesas ──────────────────────────
+    try {
+      const [cfg] = await db
+        .select({ sinStock: agentConfig.hamburguesasSinStock })
+        .from(agentConfig)
+        .where(eq(agentConfig.id, 1))
+        .limit(1);
+      if (cfg?.sinStock) {
+        return "Hoy solo tenemos pan mayorista disponible. ¿Querés ver el menú de pan?";
+      }
+    } catch {
+      // non-fatal — seguir con sugerencia normal
+    }
+
     if (!phone) {
       return "Nuestros más pedidos: Classic Carne, Crispy Pollo, Especiale Italiano. ¿Querés que te recomiende algo en especial?";
     }
