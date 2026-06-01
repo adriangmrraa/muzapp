@@ -367,9 +367,9 @@ async function handleSellerMessage(
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
-    // 2. Crear/obtener conversación (usamos channel "whatsapp_seller" para identificarlas)
+    // 2. Crear/obtener conversación (channel whatsapp normal — la UI diferencia por sellerPhoneIds)
     const { id: convId } = await findOrCreateConversation(
-      "whatsapp_seller" as any,
+      "whatsapp",
       customerPhone,
       customerName ?? undefined,
       customerPhone
