@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { eq, and, gte, lte, desc, or, ilike, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { leads } from "@/db/schema";
 import { extractRefCode } from "@/lib/attribution";
@@ -109,6 +109,7 @@ export async function GET(req: NextRequest) {
       | null;
     const from = searchParams.get("from");
     const to = searchParams.get("to");
+    const search = searchParams.get("search");
 
     const conditions = [];
 
@@ -124,13 +125,22 @@ export async function GET(req: NextRequest) {
     if (to) {
       conditions.push(lte(leads.createdAt, new Date(to)));
     }
+    if (search) {
+      const cleaned = search.trim();
+      conditions.push(
+        or(
+          ilike(leads.phone, `%${cleaned}%`),
+          ilike(leads.name, `%${cleaned}%`),
+        )
+      );
+    }
 
     const rows = await db
       .select()
       .from(leads)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(leads.createdAt))
-      .limit(100);
+      .limit(200);
 
     return NextResponse.json(rows);
   } catch (err) {

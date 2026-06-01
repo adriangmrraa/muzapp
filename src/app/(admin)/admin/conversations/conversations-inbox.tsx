@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConversationSidebar } from "@/components/messages/conversation-sidebar";
 import { ChatPanel } from "@/components/messages/chat-panel";
 import { CustomerContextPanel } from "@/components/messages/customer-context-panel";
+import { CreateOrderModal } from "@/components/orders/create-order-modal";
 import { ChevronLeft } from "lucide-react";
 import {
   useConversations,
@@ -27,6 +28,7 @@ interface Props {
 function ConversationsInboxInner({ initialConversations }: Props) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [currentView, setCurrentView] = useState<"list" | "chat" | "context">("list");
+  const [orderModal, setOrderModal] = useState<{ phone: string; name: string } | null>(null);
 
   const { data: convData } = useConversations({ page: 1 });
   const { data: messages = [] } = useMessages(selectedId);
@@ -59,6 +61,10 @@ function ConversationsInboxInner({ initialConversations }: Props) {
     await toggleHumanOverride(selectedId, !isHumanOverride);
   }, [selectedId, isHumanOverride]);
 
+  const handleNewOrder = useCallback((phone: string, name: string) => {
+    setOrderModal({ phone, name });
+  }, []);
+
   const contextPanel = selectedId ? (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 xl:hidden">
@@ -70,7 +76,7 @@ function ConversationsInboxInner({ initialConversations }: Props) {
         </button>
         <span className="text-sm font-medium text-neutral-200">Perfil del Cliente</span>
       </div>
-      <CustomerContextPanel conversationId={selectedId} />
+      <CustomerContextPanel conversationId={selectedId} onNewOrder={handleNewOrder} />
     </div>
   ) : null;
 
@@ -129,6 +135,14 @@ function ConversationsInboxInner({ initialConversations }: Props) {
           {contextPanel}
         </div>
       )}
+
+      {/* Modal de Nuevo Pedido desde el chat */}
+      <CreateOrderModal
+        open={orderModal !== null}
+        onClose={() => setOrderModal(null)}
+        clientName={orderModal?.name ?? ""}
+        clientPhone={orderModal?.phone ?? ""}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, Trash2, ShoppingBag, Search, ChevronDown } from "lucide-react";
 import { createManualOrder } from "@/app/(admin)/admin/orders/create-order-action";
@@ -46,7 +46,9 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
   const [leads, setLeads] = useState<LeadOption[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [loadingLeads, setLoadingLeads] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
     setCustomerName(clientName || "");
@@ -60,23 +62,31 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
       .catch(() => {});
   }, []);
 
-  // Fetch leads when modal opens
+  // Buscar leads con search term (server-side, sin limite de 100)
+  const searchLeads = useCallback(async (term: string) => {
+    setLoadingLeads(true);
+    try {
+      const url = term ? `/api/leads?search=${encodeURIComponent(term)}` : "/api/leads?limit=50";
+      const res = await fetch(url);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.leads || []);
+      setLeads(list.map((l: any) => ({
+        name: l.name || "Sin nombre",
+        phone: l.phone || "",
+        status: l.status || "new",
+        hasOrders: (l.totalOrders || 0) > 0,
+      })));
+    } catch {
+      // silent
+    } finally {
+      setLoadingLeads(false);
+    }
+  }, []);
+
+  // Cargar leads al abrir
   useEffect(() => {
-    if (!open) return;
-    fetch("/api/leads")
-      .then((r) => r.json())
-      .then((data) => {
-        const list = Array.isArray(data) ? data : (data.leads || []);
-        const all = list.map((l: any) => ({
-          name: l.name || "Sin nombre",
-          phone: l.phone || "",
-          status: l.status || "new",
-          hasOrders: (l.totalOrders || 0) > 0,
-        }));
-        setLeads(all);
-      })
-      .catch(() => {});
-  }, [open]);
+    if (open) searchLeads("");
+  }, [open, searchLeads]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -100,11 +110,16 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
     }
   }, [open]);
 
-  const filteredLeads = leads.filter(
-    (l) =>
-      l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.phone.includes(searchTerm)
-  );
+  // Búsqueda con debounce (server-side)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      searchLeads(searchTerm);
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchTerm, searchLeads]);
+
+  const filteredLeads = leads;
 
   const selectClient = (lead: LeadOption) => {
     setCustomerName(lead.name);

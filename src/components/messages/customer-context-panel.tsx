@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 interface CustomerContextPanelProps {
   conversationId: number;
   className?: string;
+  onNewOrder?: (phone: string, name: string) => void;
 }
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
@@ -30,7 +31,7 @@ function formatDate(iso: string | undefined) {
   });
 }
 
-export function CustomerContextPanel({ conversationId, className }: CustomerContextPanelProps) {
+export function CustomerContextPanel({ conversationId, className, onNewOrder }: CustomerContextPanelProps) {
   const { data: profile, isLoading } = useCustomerProfile(conversationId);
   const { data: messages } = useMessages(conversationId);
   const [ordersOpen, setOrdersOpen] = useState(false);
@@ -138,13 +139,23 @@ export function CustomerContextPanel({ conversationId, className }: CustomerCont
       {/* ── Acciones Rápidas ────────────────────────────────────────────── */}
       <div className="px-4 py-3 border-b border-white/5 space-y-2">
         <p className="text-[10px] font-semibold text-neutral-500 tracking-wider mb-2.5">ACCIONES</p>
-        <a
-          href="/admin/orders"
-          className="flex items-center justify-center gap-2 w-full rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/5 px-4 py-2.5 text-xs font-medium text-neutral-200 transition-colors"
-        >
-          <ShoppingBag className="h-3.5 w-3.5" />
-          Crear pedido
-        </a>
+        {onNewOrder ? (
+          <button
+            onClick={() => onNewOrder(profile.phone, profile.name ?? "")}
+            className="flex items-center justify-center gap-2 w-full rounded-lg bg-[#D4A017]/10 hover:bg-[#D4A017]/20 border border-[#D4A017]/20 px-4 py-2.5 text-xs font-medium text-[#D4A017] transition-colors"
+          >
+            <ShoppingBag className="h-3.5 w-3.5" />
+            + Nuevo Pedido
+          </button>
+        ) : (
+          <a
+            href="/admin/orders"
+            className="flex items-center justify-center gap-2 w-full rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/5 px-4 py-2.5 text-xs font-medium text-neutral-200 transition-colors"
+          >
+            <ShoppingBag className="h-3.5 w-3.5" />
+            Ir a pedidos
+          </a>
+        )}
         <a
           href="/admin/orders"
           className="flex items-center justify-center gap-2 w-full rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/5 px-4 py-2.5 text-xs font-medium text-neutral-200 transition-colors"
