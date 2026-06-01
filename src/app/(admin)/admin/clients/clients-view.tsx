@@ -181,7 +181,7 @@ export function ClientsView({
                   <div className="flex flex-wrap gap-1">
                     {client.tags.map((tag) => (
                       <button key={tag} type="button" onClick={() => navigate({ search: tag, page: "" })} className="border-none bg-transparent p-0">
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 cursor-pointer hover:opacity-80 transition-opacity">{tag}</Badge>
+                        <Badge variant="secondary" className="text-[10px] px-2 sm:px-1.5 py-1 sm:py-0 cursor-pointer hover:opacity-80 transition-opacity">{tag}</Badge>
                       </button>
                     ))}
                   </div>
@@ -193,9 +193,9 @@ export function ClientsView({
                   </span>
                   <div className="flex items-center gap-1">
                     <Link href={`/admin/clients/${encodeURIComponent(client.phone)}`}
-                      className="text-[10px] text-white/30 hover:text-[#D4A017] transition-colors px-1.5 py-0.5">👤</Link>
+                      className="text-xs text-white/30 hover:text-[#D4A017] transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5">👤</Link>
                     <button onClick={(e) => { e.preventDefault(); setEditClient(client); setEditName(client.name || ""); setEditType(client.type || ""); setEditNotes(""); }}
-                      className="text-[10px] text-white/20 hover:text-amber-400 transition-colors px-1.5 py-0.5" title="Editar cliente">✏️</button>
+                      className="text-xs text-white/20 hover:text-amber-400 transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5" title="Editar cliente">✏️</button>
                   </div>
                 </div>
               </motion.div>
@@ -243,11 +243,11 @@ export function ClientsView({
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40 resize-none" />
               </div>
             </div>
-            <div className="px-5 py-3 border-t border-white/5 flex justify-end gap-2">
-              <button onClick={() => setEditClient(null)} className="px-4 py-2 rounded-lg text-xs text-neutral-400 hover:bg-white/5">
-                Cancelar
-              </button>
-              <button onClick={async () => {
+                <div className="px-5 py-3 border-t border-white/5 flex justify-end gap-2">
+                <button onClick={() => setEditClient(null)} className="px-5 py-2.5 sm:px-4 sm:py-2 rounded-lg text-xs text-neutral-400 hover:bg-white/5">
+                  Cancelar
+                </button>
+                <button onClick={async () => {
                 setSavingEdit(true);
                 try {
                   const result = await updateClient(editClient.phone, {
@@ -270,7 +270,7 @@ export function ClientsView({
                 } catch (e) { console.error(e); }
                 setSavingEdit(false);
               }} disabled={savingEdit}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-xs font-semibold bg-[#D4A017] text-black hover:bg-[#F5A623] disabled:opacity-40">
+                className="flex items-center gap-1.5 px-6 py-2.5 sm:px-5 sm:py-2 rounded-lg text-xs font-semibold bg-[#D4A017] text-black hover:bg-[#F5A623] disabled:opacity-40">
                 <Save className="h-3 w-3" />
                 {savingEdit ? "Guardando..." : "Guardar"}
               </button>

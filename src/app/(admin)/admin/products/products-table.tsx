@@ -1,19 +1,11 @@
 "use client";
 
-import { useState, useTransition, useActionState, useEffect } from "react";
+import { useState, useTransition, useActionState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { fadeUpSmall } from "@/lib/animation-variants";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,13 +55,17 @@ type Product = {
 
 interface ProductsTableProps {
   initialProducts: Product[];
+  currentPage: number;
+  totalPages: number;
+  currentCategory: string;
+  currentLine: string;
 }
 
 type ActionState = { error?: string; success?: boolean } | null;
 
 // ─── Display maps ─────────────────────────────────────────────────────────────
 
-const CATEGORY_LABEL: Record<Product["category"], string> = {
+const CATEGORY_LABEL: Record<string, string> = {
   hamburguesa: "Hamburguesa",
   acompanamiento: "Acompañamiento",
   pan_mayorista: "Pan Mayorista",
@@ -77,7 +73,7 @@ const CATEGORY_LABEL: Record<Product["category"], string> = {
   bebidas: "Bebidas",
 };
 
-const LINE_LABEL: Record<Product["line"], string> = {
+const LINE_LABEL: Record<string, string> = {
   pollo: "Pollo",
   carne: "Carne",
   clasica: "Clásica",
@@ -86,10 +82,7 @@ const LINE_LABEL: Record<Product["line"], string> = {
   bebidas: "Bebidas",
 };
 
-const CATEGORY_VARIANT: Record<
-  Product["category"],
-  "default" | "secondary" | "outline"
-> = {
+const CATEGORY_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
   hamburguesa: "default",
   acompanamiento: "secondary",
   pan_mayorista: "outline",
@@ -97,10 +90,7 @@ const CATEGORY_VARIANT: Record<
   bebidas: "secondary",
 };
 
-const LINE_VARIANT: Record<
-  Product["line"],
-  "default" | "secondary" | "outline"
-> = {
+const LINE_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
   pollo: "outline",
   carne: "secondary",
   clasica: "default",
@@ -130,7 +120,6 @@ function ProductForm({ product, onClose }: ProductFormProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show local preview immediately
     const localPreview = URL.createObjectURL(file);
     setImagePreview(localPreview);
     setUploading(true);
@@ -150,10 +139,9 @@ function ProductForm({ product, onClose }: ProductFormProps) {
       toast.success("Imagen subida");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al subir imagen");
-      setImagePreview(product?.imageUrl ?? ""); // revert preview
+      setImagePreview(product?.imageUrl ?? "");
     } finally {
       setUploading(false);
-      // Cleanup object URL after a delay
       setTimeout(() => URL.revokeObjectURL(localPreview), 5000);
     }
   }
@@ -186,51 +174,22 @@ function ProductForm({ product, onClose }: ProductFormProps) {
 
   return (
     <form action={dispatch} className="flex flex-col gap-5 py-4">
-      {/* Name */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="name">Nombre *</Label>
-        <Input
-          id="name"
-          name="name"
-          required
-          defaultValue={product?.name ?? ""}
-          placeholder="Ej: Hamburguesa Clásica"
-        />
+        <Input id="name" name="name" required defaultValue={product?.name ?? ""} placeholder="Ej: Hamburguesa Clásica" />
       </div>
-
-      {/* Description */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="description">Descripción</Label>
-        <Textarea
-          id="description"
-          name="description"
-          rows={3}
-          defaultValue={product?.description ?? ""}
-          placeholder="Descripción opcional del producto"
-        />
+        <Textarea id="description" name="description" rows={3} defaultValue={product?.description ?? ""} placeholder="Descripción opcional del producto" />
       </div>
-
-      {/* Price */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="price">Precio *</Label>
-        <Input
-          id="price"
-          name="price"
-          type="number"
-          step="0.01"
-          min="0"
-          required
-          defaultValue={product?.price ?? ""}
-          placeholder="0.00"
-        />
+        <Input id="price" name="price" type="number" step="0.01" min="0" required defaultValue={product?.price ?? ""} placeholder="0.00" />
       </div>
-
-      {/* Image upload */}
       <div className="flex flex-col gap-1.5">
         <Label>Imagen del producto</Label>
         <input type="hidden" name="imageUrl" value={imageUrlValue} />
         <div className="flex items-start gap-4">
-          {/* Preview */}
           <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
             {imagePreview ? (
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -240,149 +199,168 @@ function ProductForm({ product, onClose }: ProductFormProps) {
           </div>
           <div className="flex flex-col gap-2 flex-1">
             <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={uploading}
-                onClick={() => document.getElementById(`image-picker-${product?.id || "new"}`)?.click()}
-              >
+              <Button type="button" variant="outline" size="sm" disabled={uploading}
+                onClick={() => document.getElementById(`image-picker-${product?.id || "new"}`)?.click()}>
                 {uploading ? "Subiendo..." : "Subir foto"}
               </Button>
               {imageUrlValue && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                <Button type="button" variant="outline" size="sm"
                   onClick={() => { setImageUrlValue(""); setImagePreview(""); }}
-                  className="text-red-400 hover:text-red-300"
-                >
-                  Quitar
-                </Button>
+                  className="text-red-400 hover:text-red-300">Quitar</Button>
               )}
             </div>
-            <input
-              id={`image-picker-${product?.id || "new"}`}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="hidden"
-              onChange={handleImageSelect}
-            />
-            {imageUrlValue && (
-              <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">
-                {imageUrlValue}
-              </p>
-            )}
+            <input id={`image-picker-${product?.id || "new"}`} type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleImageSelect} />
           </div>
         </div>
       </div>
-
-      {/* Category */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="category">Categoría *</Label>
-        <select
-          id="category"
-          name="category"
-          required
-          defaultValue={product?.category ?? "hamburguesa"}
-          className={selectClass}
-        >
+        <select id="category" name="category" required defaultValue={product?.category ?? "hamburguesa"} className={selectClass}>
           <option value="hamburguesa">Hamburguesa</option>
           <option value="acompanamiento">Acompañamiento</option>
           <option value="pan_mayorista">Pan Mayorista</option>
         </select>
       </div>
-
-      {/* Line */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="line">Línea *</Label>
-        <select
-          id="line"
-          name="line"
-          required
-          defaultValue={product?.line ?? "clasica"}
-          className={selectClass}
-        >
+        <select id="line" name="line" required defaultValue={product?.line ?? "clasica"} className={selectClass}>
           <option value="pollo">Pollo</option>
           <option value="carne">Carne</option>
           <option value="clasica">Clásica</option>
           <option value="pan">Pan</option>
         </select>
       </div>
-
-      {/* Sort Order */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="sortOrder">Orden</Label>
-        <Input
-          id="sortOrder"
-          name="sortOrder"
-          type="number"
-          min="0"
-          defaultValue={product?.sortOrder ?? 0}
-        />
+        <Input id="sortOrder" name="sortOrder" type="number" min="0" defaultValue={product?.sortOrder ?? 0} />
       </div>
-
-      {/* Available switch */}
       <div className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-white/[0.02]">
         <div className="flex flex-col gap-0.5">
           <Label htmlFor="available" className="cursor-pointer">Disponible</Label>
-          <span className="text-xs text-muted-foreground">
-            El producto aparece como disponible para la venta
-          </span>
+          <span className="text-xs text-muted-foreground">El producto aparece como disponible para la venta</span>
         </div>
-        <Switch
-          id="available"
-          checked={available}
-          onCheckedChange={setAvailable}
-        />
+        <Switch id="available" checked={available} onCheckedChange={setAvailable} />
       </div>
-
-      {/* Coming soon switch */}
       <div className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-white/[0.02]">
         <div className="flex flex-col gap-0.5">
           <Label htmlFor="comingSoon" className="cursor-pointer">Próximamente</Label>
-          <span className="text-xs text-muted-foreground">
-            Muestra el producto como "próximamente disponible"
-          </span>
+          <span className="text-xs text-muted-foreground">Muestra el producto como "próximamente disponible"</span>
         </div>
-        <Switch
-          id="comingSoon"
-          checked={comingSoon}
-          onCheckedChange={setComingSoon}
-        />
+        <Switch id="comingSoon" checked={comingSoon} onCheckedChange={setComingSoon} />
       </div>
-
-      {/* Submit */}
-      <Button
-        type="submit"
-        disabled={isPending}
-        className="btn-gold mt-2 transition-opacity hover:opacity-90"
-      >
-        {isPending
-          ? isEdit
-            ? "Guardando..."
-            : "Creando..."
-          : isEdit
-            ? "Guardar cambios"
-            : "Crear producto"}
+      <Button type="submit" disabled={isPending} className="btn-gold mt-2 transition-opacity hover:opacity-90">
+        {isPending ? (isEdit ? "Guardando..." : "Creando...") : isEdit ? "Guardar cambios" : "Crear producto"}
       </Button>
     </form>
   );
 }
 
+// ─── Product Card ─────────────────────────────────────────────────────────────
+
+function ProductCard({
+  product,
+  availability,
+  onToggleAvailability,
+  onEdit,
+  onDelete,
+  isPending,
+}: {
+  product: Product;
+  availability: boolean;
+  onToggleAvailability: (id: number, next: boolean) => void;
+  onEdit: (p: Product) => void;
+  onDelete: (p: Product) => void;
+  isPending: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-white/[0.06] p-4 flex flex-col gap-3 bg-[#0a0a0a] transition-all duration-200 hover:border-white/20"
+    >
+      {/* Header: Name */}
+      <div className="flex flex-col gap-1 min-w-0">
+        <span className="text-sm font-medium text-white/90 truncate">{product.name}</span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant={CATEGORY_VARIANT[product.category]} className="text-[10px]">
+            {CATEGORY_LABEL[product.category]}
+          </Badge>
+          <Badge variant={LINE_VARIANT[product.line]} className="text-[10px]">
+            {LINE_LABEL[product.line]}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Price */}
+      <div className="text-base font-semibold text-[#D4A017]">
+        {product.price != null
+          ? `$ ${Number(product.price).toLocaleString("es-AR")}`
+          : "—"}
+      </div>
+
+      {/* Switches */}
+      <div className="flex flex-col gap-2 pt-1 border-t border-white/[0.04]">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-white/50">Disponible</span>
+          <Switch
+            checked={availability}
+            disabled={isPending}
+            onCheckedChange={(checked) => onToggleAvailability(product.id, checked)}
+            aria-label={`Disponibilidad de ${product.name}`}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-white/50">Próximamente</span>
+          <Switch
+            checked={product.comingSoon}
+            disabled
+            aria-label={`Próximamente ${product.name}`}
+          />
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 pt-1 border-t border-white/[0.04]">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onEdit(product)}
+          className="flex-1 h-8 sm:h-7 text-xs transition-colors hover:border-[#D4A017]/40 hover:text-[#D4A017]"
+        >
+          ✏️ Editar
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onDelete(product)}
+          className="flex-1 h-8 sm:h-7 text-xs transition-opacity hover:opacity-90"
+        >
+          🗑️ Eliminar
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ProductsTable({ initialProducts }: ProductsTableProps) {
+export default function ProductsTable({
+  initialProducts,
+  currentPage,
+  totalPages,
+  currentCategory,
+  currentLine,
+}: ProductsTableProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const [availability, setAvailability] = useState<Record<number, boolean>>(
-    () =>
-      Object.fromEntries(initialProducts.map((p) => [p.id, p.available]))
+    () => Object.fromEntries(initialProducts.map((p) => [p.id, p.available]))
   );
 
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [lineFilter, setLineFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>(currentCategory);
+  const [lineFilter, setLineFilter] = useState<string>(currentLine);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
@@ -395,15 +373,16 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
     setSelectedProduct(null);
   }
 
-  // ─── Filtered products ──────────────────────────────────────────────────────
-
-  const filtered = initialProducts.filter((p) => {
-    if (categoryFilter !== "all" && p.category !== categoryFilter) return false;
-    if (lineFilter !== "all" && p.line !== lineFilter) return false;
-    return true;
-  });
-
-  // ─── Handlers ───────────────────────────────────────────────────────────────
+  const navigate = useCallback(
+    (params: Record<string, string>) => {
+      const sp = new URLSearchParams();
+      if (params.category) sp.set("category", params.category);
+      if (params.line) sp.set("line", params.line);
+      if (params.page) sp.set("page", params.page);
+      router.push(`/admin/products?${sp.toString()}`);
+    },
+    [router]
+  );
 
   function handleToggleAvailability(id: number, next: boolean) {
     setAvailability((prev) => ({ ...prev, [id]: next }));
@@ -414,9 +393,7 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
         setAvailability((prev) => ({ ...prev, [id]: !next }));
         toast.error("Error al actualizar disponibilidad");
       } else {
-        toast.success(
-          next ? "Producto marcado como disponible" : "Producto marcado como no disponible"
-        );
+        toast.success(next ? "Producto disponible" : "Producto no disponible");
         router.refresh();
       }
     });
@@ -438,8 +415,6 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
     });
   }
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
-
   return (
     <div className="flex flex-col gap-4">
       {/* Top bar: filters + new product button */}
@@ -447,13 +422,16 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
         variants={fadeUpSmall}
         initial="hidden"
         animate="visible"
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
       >
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-[180px]"
+            onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              navigate({ category: e.target.value, line: lineFilter, page: "" });
+            }}
+            className="w-[160px] sm:w-[180px]"
           >
             <option value="all">Todas las categorías</option>
             <option value="hamburguesa">Hamburguesa</option>
@@ -463,8 +441,11 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
 
           <Select
             value={lineFilter}
-            onChange={(e) => setLineFilter(e.target.value)}
-            className="w-[160px]"
+            onChange={(e) => {
+              setLineFilter(e.target.value);
+              navigate({ category: categoryFilter, line: e.target.value, page: "" });
+            }}
+            className="w-[140px] sm:w-[160px]"
           >
             <option value="all">Todas las líneas</option>
             <option value="pollo">Pollo</option>
@@ -481,114 +462,66 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
         </motion.div>
       </motion.div>
 
-      {/* Table */}
+      {/* Product Cards Grid */}
       <motion.div
         variants={fadeUpSmall}
         initial="hidden"
         animate="visible"
         transition={{ delay: 0.08 }}
-        className="rounded-md border"
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>Línea</TableHead>
-              <TableHead>Precio</TableHead>
-              <TableHead className="text-center">Disponible</TableHead>
-              <TableHead className="text-center">Próximamente</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No hay productos que coincidan con los filtros.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((product) => (
-                <TableRow
-                  key={product.id}
-                  className="transition-colors hover:bg-white/[0.02]"
-                >
-                  {/* Name */}
-                  <TableCell className="font-medium">{product.name}</TableCell>
-
-                  {/* Category badge */}
-                  <TableCell>
-                    <Badge variant={CATEGORY_VARIANT[product.category]}>
-                      {CATEGORY_LABEL[product.category]}
-                    </Badge>
-                  </TableCell>
-
-                  {/* Line badge */}
-                  <TableCell>
-                    <Badge variant={LINE_VARIANT[product.line]}>
-                      {LINE_LABEL[product.line]}
-                    </Badge>
-                  </TableCell>
-
-                  {/* Price */}
-                  <TableCell>
-                    {product.price != null
-                      ? `$ ${Number(product.price).toLocaleString("es-AR")}`
-                      : "—"}
-                  </TableCell>
-
-                  {/* Available switch */}
-                  <TableCell className="text-center">
-                    <Switch
-                      checked={availability[product.id] ?? product.available}
-                      disabled={isPending}
-                      onCheckedChange={(checked) =>
-                        handleToggleAvailability(product.id, checked)
-                      }
-                      aria-label={`Disponibilidad de ${product.name}`}
-                    />
-                  </TableCell>
-
-                  {/* Coming soon switch (read-only — editing via Sheet) */}
-                  <TableCell className="text-center">
-                    <Switch
-                      checked={product.comingSoon}
-                      disabled
-                      aria-label={`Próximamente ${product.name}`}
-                    />
-                  </TableCell>
-
-                  {/* Actions */}
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="transition-colors hover:border-[#D4A017]/40 hover:text-[#D4A017]"
-                        onClick={() => setSelectedProduct(product)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="transition-opacity hover:opacity-90"
-                        onClick={() => setDeleteTarget(product)}
-                      >
-                        Eliminar
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        {initialProducts.length === 0 ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-20 text-white/20">
+            <span className="text-4xl mb-3 opacity-30">📦</span>
+            <p className="text-sm">
+              {currentCategory !== "all" || currentLine !== "all"
+                ? "No hay productos que coincidan con los filtros."
+                : "No hay productos. Creá el primero con el botón de arriba."}
+            </p>
+          </div>
+        ) : (
+          initialProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              availability={availability[product.id] ?? product.available}
+              onToggleAvailability={handleToggleAvailability}
+              onEdit={setSelectedProduct}
+              onDelete={setDeleteTarget}
+              isPending={isPending}
+            />
+          ))
+        )}
       </motion.div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <motion.div variants={fadeUpSmall} className="flex items-center justify-center gap-2 pt-2">
+          <Button
+            type="button"
+            size="sm"
+            disabled={currentPage <= 1}
+            onClick={() => navigate({ category: categoryFilter, line: lineFilter, page: String(currentPage - 1) })}
+            variant="outline"
+            className="h-8 text-xs border-white/[0.08]"
+          >
+            ← Anterior
+          </Button>
+          <span className="text-xs text-white/30">
+            {currentPage} / {totalPages}
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            disabled={currentPage >= totalPages}
+            onClick={() => navigate({ category: categoryFilter, line: lineFilter, page: String(currentPage + 1) })}
+            variant="outline"
+            className="h-8 text-xs border-white/[0.08]"
+          >
+            Siguiente →
+          </Button>
+        </motion.div>
+      )}
 
       {/* Create / Edit Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) handleCloseSheet(); }}>
@@ -603,37 +536,22 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
                 : `Modificá los datos de "${selectedProduct?.name}".`}
             </SheetDescription>
           </SheetHeader>
-
-          <ProductForm
-            key={isNewProductOpen ? "new" : String(selectedProduct?.id)}
-            product={sheetProduct}
-            onClose={handleCloseSheet}
-          />
+          <ProductForm key={isNewProductOpen ? "new" : String(selectedProduct?.id)} product={sheetProduct} onClose={handleCloseSheet} />
         </SheetContent>
       </Sheet>
 
       {/* Delete confirmation dialog */}
-      <AlertDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
-        }}
-      >
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás por eliminar{" "}
-              <span className="font-semibold">{deleteTarget?.name}</span>. Esta
-              acción no se puede deshacer.
+              Estás por eliminar <span className="font-semibold">{deleteTarget?.name}</span>. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -162,14 +162,14 @@ function OrderCard({
           </span>
         </div>
 
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {NEXT_STATUS[order.status] && (
             <Button
               type="button"
               size="sm"
               disabled={changing}
               onClick={(e) => { e.stopPropagation(); handleNext(); }}
-              className="h-7 text-[11px] px-3 bg-white/[0.06] hover:bg-white/[0.1] text-white/70"
+              className="h-8 sm:h-7 text-xs px-2.5 sm:px-3 bg-white/[0.06] hover:bg-white/[0.1] text-white/70"
             >
               → {STATUSES[NEXT_STATUS[order.status]]?.label}
             </Button>
@@ -186,7 +186,7 @@ function OrderCard({
                 await markPaidAndDelivered(order.id);
                 setChanging(false);
               }}
-              className="h-7 text-[10px] px-2 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20"
+              className="h-8 sm:h-7 text-xs px-2.5 sm:px-2 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20"
               title="Marcar como pagado + entregado (sin notificar)"
             >
               ✓ Pagado
@@ -204,7 +204,7 @@ function OrderCard({
                 setNotifying(false);
               }}
               variant="ghost"
-              className="h-7 text-[11px] px-2 text-white/30 hover:text-amber-400"
+              className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-white/30 hover:text-amber-400"
               title="Notificar al cliente"
             >
               🔔
@@ -217,7 +217,7 @@ function OrderCard({
               disabled={changing}
               onClick={(e) => { e.stopPropagation(); handleCancel(); }}
               variant="ghost"
-              className="h-7 text-[11px] px-2 text-red-400/50 hover:text-red-400"
+              className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-red-400/50 hover:text-red-400"
             >
               ✕
             </Button>
@@ -236,7 +236,7 @@ function OrderCard({
                   onDelete(order.id);
                   setDeleting(false);
                 }}
-                className="h-7 text-[10px] px-2 bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                className="h-8 sm:h-7 text-xs px-2.5 sm:px-2 bg-red-500/20 text-red-400 hover:bg-red-500/30"
               >
                 {deleting ? "..." : "Eliminar"}
               </Button>
@@ -245,7 +245,7 @@ function OrderCard({
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
                 variant="ghost"
-                className="h-7 text-[10px] px-2 text-white/30"
+                className="h-8 sm:h-7 text-xs px-2 text-white/30"
               >
                 ✕
               </Button>
@@ -256,7 +256,7 @@ function OrderCard({
               size="sm"
               onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
               variant="ghost"
-              className="h-7 text-[10px] px-1.5 text-white/20 hover:text-red-400"
+              className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-white/20 hover:text-red-400"
               title="Eliminar pedido"
             >
               🗑️
@@ -268,7 +268,7 @@ function OrderCard({
             size="sm"
             onClick={(e) => { e.stopPropagation(); setEditOpen(true); }}
             variant="ghost"
-            className="h-7 text-[10px] px-1.5 text-white/20 hover:text-amber-400"
+            className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-white/20 hover:text-amber-400"
             title="Editar pedido"
           >
             ✏️

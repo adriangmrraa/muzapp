@@ -4,8 +4,80 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { products } from "@/db/schema";
 import { productSchema } from "@/lib/validations/product";
-import { eq } from "drizzle-orm";
+import { eq, asc, sql } from "drizzle-orm";
 import { auth } from "@/auth";
+
+const PAGE_SIZE = 30;
+
+export type ProductsResponse = {
+  products: Array<{
+    id: number;
+    name: string;
+    description: string | null;
+    price: string | null;
+    imageUrl: string | null;
+    category: "hamburguesa" | "acompanamiento" | "pan_mayorista" | "tragos_vip" | "bebidas";
+    line: "pollo" | "carne" | "clasica" | "pan" | "tragos" | "bebidas";
+    available: boolean;
+    comingSoon: boolean;
+    sortOrder: number;
+  }>;
+  totalPages: number;
+  total: number;
+};
+
+export async function fetchProducts(params: {
+  page?: number;
+  category?: string;
+  line?: string;
+}): Promise<ProductsResponse> {
+  const session = await auth();
+  if (!session) {
+    return { products: [], totalPages: 0, total: 0 };
+  }
+
+  const page = Math.max(1, params.page ?? 1);
+  const offset = (page - 1) * PAGE_SIZE;
+
+  const conditions: ReturnType<typeof eq>[] = [];
+  if (params.category && params.category !== "all") {
+    conditions.push(eq(products.category, params.category as any));
+  }
+  if (params.line && params.line !== "all") {
+    conditions.push(eq(products.line, params.line as any));
+  }
+
+  const where = conditions.length > 0 ? conditions.reduce((a, b) => sql`${a} AND ${b}` as any) : undefined;
+
+  const total = conditions.length > 0
+    ? (await db.select({ count: sql<number>`count(*)` }).from(products).where(where as any))[0]?.count ?? 0
+    : (await db.select({ count: sql<number>`count(*)` }).from(products))[0]?.count ?? 0;
+
+  const items = await db
+    .select()
+    .from(products)
+    .where(where as any)
+    .orderBy(asc(products.sortOrder), asc(products.name))
+    .limit(PAGE_SIZE)
+    .offset(offset);
+
+  return {
+    products: items.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      imageUrl: p.imageUrl,
+      category: p.category as any,
+      line: p.line as any,
+      available: p.available,
+      comingSoon: p.comingSoon,
+      sortOrder: p.sortOrder,
+    })),
+    totalPages: Math.ceil(total / PAGE_SIZE),
+    total,
+  };
+}
 
 export async function createProduct(formData: FormData) {
   const session = await auth();

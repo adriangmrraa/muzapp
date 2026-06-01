@@ -1,17 +1,19 @@
-import { db } from "@/db";
-import { products } from "@/db/schema";
-import { asc } from "drizzle-orm";
+import { fetchProducts } from "./actions";
 import ProductsTable from "./products-table";
 
 export const metadata = {
   title: "Productos — Mrs Muzzarella Admin",
 };
 
-export default async function ProductsPage() {
-  const allProducts = await db
-    .select()
-    .from(products)
-    .orderBy(asc(products.sortOrder), asc(products.name));
+export default async function ProductsPage(props: {
+  searchParams?: Promise<{ page?: string; category?: string; line?: string }>;
+}) {
+  const sp = await props.searchParams;
+  const page = Number(sp?.page) || 1;
+  const category = sp?.category || "all";
+  const line = sp?.line || "all";
+
+  const { products, totalPages } = await fetchProducts({ page, category, line });
 
   return (
     <div className="flex flex-col gap-6">
@@ -23,7 +25,13 @@ export default async function ProductsPage() {
           Administrá el catálogo — precios, disponibilidad y orden de menú
         </p>
       </div>
-      <ProductsTable initialProducts={allProducts} />
+      <ProductsTable
+        initialProducts={products}
+        currentPage={page}
+        totalPages={totalPages}
+        currentCategory={category}
+        currentLine={line}
+      />
     </div>
   );
 }
