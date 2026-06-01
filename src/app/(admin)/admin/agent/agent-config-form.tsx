@@ -55,6 +55,7 @@ export type AgentConfigFormData = {
   ycloudApiKey: string;
   whatsappBotNumber: string;
   allowedPhoneIds: PhoneIdEntry[];
+  sellerPhoneIds: PhoneIdEntry[];
   autoReply24h: boolean;
   autoReply24hMessage: string;
   trainBotContext: string;
@@ -112,6 +113,9 @@ export default function AgentConfigForm({
   const [showApiKey, setShowApiKey] = useState(false);
   const [allowedPhoneIds, setAllowedPhoneIds] = useState<PhoneIdEntry[]>(
     config.allowedPhoneIds
+  );
+  const [sellerPhoneIds, setSellerPhoneIds] = useState<PhoneIdEntry[]>(
+    config.sellerPhoneIds
   );
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
@@ -461,8 +465,126 @@ export default function AgentConfigForm({
         </motion.div>
 
         {/* ═════════════════════════════════════════════════════════════════════
-           5. Horarios de atención
-           ═════════════════════════════════════════════════════════════════════ */}
+            4b. Vendedores (usan el sistema del bot de Telegram por WhatsApp)
+            ═════════════════════════════════════════════════════════════════════ */}
+        <motion.div variants={fadeUpSmall}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>🛒</span>
+                Vendedores
+              </CardTitle>
+              <CardDescription>
+                Vendedores que pueden cargar pedidos hablando con la IA por WhatsApp. Usan el mismo sistema que el bot de Telegram — pueden crear pedidos, buscar clientes, y gestionar todo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {/* Hidden input — serializa el array como JSON */}
+              <input
+                type="hidden"
+                name="sellerPhoneIds"
+                value={JSON.stringify(sellerPhoneIds)}
+              />
+
+              {/* Add row */}
+              <div className="flex items-end gap-2">
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <Label htmlFor="sellerNewName" className="text-xs">
+                    Nombre del vendedor
+                  </Label>
+                  <Input
+                    id="sellerNewName"
+                    placeholder="Ej: Carla Pérez"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" &&
+                      (e.preventDefault(), addPhoneId())
+                    }
+                  />
+                </div>
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <Label htmlFor="sellerNewPhone" className="text-xs">
+                    Teléfono
+                  </Label>
+                  <Input
+                    id="sellerNewPhone"
+                    placeholder="5493700000000"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" &&
+                      (e.preventDefault(), addPhoneId())
+                    }
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    const name = newName.trim();
+                    const phone = newPhone.trim();
+                    if (!name || !phone) {
+                      toast.error("Completá nombre y teléfono");
+                      return;
+                    }
+                    if (sellerPhoneIds.some((e) => e.phone === phone)) {
+                      toast.error("Ese teléfono ya está agregado");
+                      return;
+                    }
+                    setSellerPhoneIds((prev) => [...prev, { name, phone }]);
+                    setNewName("");
+                    setNewPhone("");
+                  }}
+                  className="shrink-0"
+                  aria-label="Agregar vendedor"
+                >
+                  <Plus size={18} />
+                </Button>
+              </div>
+
+              {/* Lista */}
+              {sellerPhoneIds.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No hay vendedores registrados. Agregá sus números para que puedan cargar pedidos por WhatsApp.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {sellerPhoneIds.map((entry) => (
+                    <div
+                      key={entry.phone}
+                      className="flex items-center justify-between rounded-md border border-[#D4A017]/20 bg-white/[0.02] px-3 py-2"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {entry.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {entry.phone}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSellerPhoneIds((prev) =>
+                          prev.filter((e) => e.phone !== entry.phone)
+                        )}
+                        className="text-muted-foreground hover:text-red-400 transition-colors"
+                        aria-label={`Eliminar ${entry.name}`}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ═════════════════════════════════════════════════════════════════════
+            5. Horarios de atención
+            ═════════════════════════════════════════════════════════════════════ */}
         <motion.div variants={fadeUpSmall}>
           <Card>
             <CardHeader>

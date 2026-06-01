@@ -48,6 +48,7 @@ const agentConfigSchema = z.object({
   ycloudApiKey: z.string().optional(),
   whatsappBotNumber: z.string().optional(),
   allowedPhoneIds: z.array(phoneIdSchema),
+  sellerPhoneIds: z.array(phoneIdSchema),
   autoReply24h: z.boolean(),
   autoReply24hMessage: z.string().optional(),
   trainBotContext: z.string().optional(),
@@ -109,6 +110,17 @@ export async function saveAgentConfig(
     allowedPhoneIds = [];
   }
 
+  // ─── Seller phone IDs (vendedores con acceso al sistema interno) ───────
+  let sellerPhoneIds: PhoneIdEntry[] = [];
+  try {
+    const raw = formData.get("sellerPhoneIds");
+    if (raw && typeof raw === "string") {
+      sellerPhoneIds = JSON.parse(raw);
+    }
+  } catch {
+    sellerPhoneIds = [];
+  }
+
   // ─── WhatsApp zonas delivery (JSON string from hidden input) ─────────────
   let whatsappZonasDelivery: unknown[] = [];
   try {
@@ -128,6 +140,7 @@ export async function saveAgentConfig(
     ycloudApiKey: formData.get("ycloudApiKey") || undefined,
     whatsappBotNumber: formData.get("whatsappBotNumber") || undefined,
     allowedPhoneIds,
+    sellerPhoneIds,
     autoReply24h: formData.get("autoReply24h") === "true",
     autoReply24hMessage: formData.get("autoReply24hMessage") || undefined,
     trainBotContext: formData.get("trainBotContext") || undefined,
@@ -167,6 +180,7 @@ export async function saveAgentConfig(
       ycloudApiKey: parsed.data.ycloudApiKey ?? null,
       whatsappBotNumber: parsed.data.whatsappBotNumber ?? null,
       allowedPhoneIds: parsed.data.allowedPhoneIds,
+      sellerPhoneIds: parsed.data.sellerPhoneIds,
       autoReply24h: parsed.data.autoReply24h,
       autoReply24hMessage: parsed.data.autoReply24hMessage ?? null,
       trainBotContext: parsed.data.trainBotContext ?? null,

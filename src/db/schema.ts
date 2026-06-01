@@ -96,6 +96,7 @@ export const agentConfig = pgTable("agent_config", {
   // ─── Nuevos campos Agente Interno ──────────────────────────────────────────
   whatsappBotNumber: varchar("whatsapp_bot_number", { length: 50 }),
   allowedPhoneIds: jsonb("allowed_phone_ids").$type<{ name: string; phone: string }[]>().default([]),
+  sellerPhoneIds: jsonb("seller_phone_ids").$type<{ name: string; phone: string }[]>().default([]),
   autoReply24h: boolean("auto_reply_24h").notNull().default(false),
   autoReply24hMessage: text("auto_reply_24h_message"),
   trainBotContext: text("train_bot_context"),

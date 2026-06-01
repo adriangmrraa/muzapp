@@ -25,6 +25,7 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   ycloudApiKey: "",
   whatsappBotNumber: "",
   allowedPhoneIds: [],
+  sellerPhoneIds: [],
   autoReply24h: false,
   autoReply24hMessage: "",
   trainBotContext: "",
@@ -65,6 +66,9 @@ export default async function AgentPage() {
         whatsappBotNumber: (row.whatsappBotNumber as string) ?? "",
         allowedPhoneIds: Array.isArray(row.allowedPhoneIds)
           ? (row.allowedPhoneIds as { name: string; phone: string }[])
+          : [],
+        sellerPhoneIds: Array.isArray(row.sellerPhoneIds)
+          ? (row.sellerPhoneIds as { name: string; phone: string }[])
           : [],
         autoReply24h: (row.autoReply24h as boolean) ?? false,
         autoReply24hMessage: (row.autoReply24hMessage as string) ?? "",

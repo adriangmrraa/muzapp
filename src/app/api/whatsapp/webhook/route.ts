@@ -24,6 +24,10 @@ import { analyzeVideo } from "@/lib/media/video";
 import { extractDocumentText } from "@/lib/media/document";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
+import { internalAgentTools } from "@/lib/telegram/tools";
+import { INTERNAL_AGENT_SYSTEM_PROMPT } from "@/lib/telegram/system-prompt";
+import { generateText, stepCountIs } from "ai";
+import { openai } from "@ai-sdk/openai";
 
 /**
  * GET — Webhook verification (YCloud sends a challenge token)
@@ -269,6 +273,82 @@ async function checkHumanOverride(conversationId: number): Promise<boolean> {
 }
 
 /**
+ * Maneja mensajes de VENDEDORES registrados.
+ * Usa el mismo sistema que el bot de Telegram (internalAgentTools + INTERNAL_AGENT_SYSTEM_PROMPT)
+ * pero respondiendo por WhatsApp en lugar de Telegram.
+ * 
+ * Los vendedores SIEMPRE hablan con la IA — no hay human override, no hay AI disabled.
+ */
+async function handleSellerMessage(
+  payload: Record<string, unknown>,
+  _conversationId: number,
+  customerPhone: string,
+  customerName: string | null,
+  messageId: string,
+  msgType: string,
+  message: Record<string, unknown>,
+  config: Record<string, unknown>
+): Promise<NextResponse> {
+  try {
+    // 1. Extraer texto del mensaje
+    let text = "";
+    if (msgType === "text") {
+      text = (message.text as Record<string, unknown>)?.body as string || "";
+    }
+
+    if (!text) {
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    // 2. Crear/obtener conversación (usamos channel "whatsapp" normal)
+    const { id: convId } = await findOrCreateConversation(
+      "whatsapp",
+      customerPhone,
+      customerName ?? undefined,
+      customerPhone
+    );
+
+    // 3. Persistir el mensaje del vendedor
+    await insertMessage(convId, "user", text);
+
+    // 4. Cargar historial para contexto (últimos 6 mensajes como Telegram)
+    const history = await getConversationMessages(convId, 6);
+    const aiMessages = history
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+    aiMessages.push({ role: "user" as const, content: text });
+
+    // 5. Ejecutar el mismo sistema que Telegram (prompt + tools)
+    const result = await generateText({
+      model: openai.chat("gpt-5-mini"),
+      system: INTERNAL_AGENT_SYSTEM_PROMPT,
+      messages: aiMessages,
+      tools: internalAgentTools,
+      stopWhen: stepCountIs(10),
+    });
+
+    const reply = result.text || "Disculpá, no pude procesar eso.";
+
+    // 6. Persistir respuesta
+    await insertMessage(convId, "assistant", reply);
+
+    // 7. Enviar respuesta por WhatsApp
+    const apiKey = process.env.YCLOUD_API_KEY || (config.ycloudApiKey as string) || "";
+    const from = process.env.WHATSAPP_PHONE_NUMBER || (config.phoneNumber as string) || "";
+    await sendWhatsAppMessage({ to: customerPhone, body: reply, apiKey, from });
+
+    console.log(`[seller-agent] Replied to seller ${customerPhone}: ${reply.slice(0, 80)}`);
+    return NextResponse.json({ ok: true }, { status: 200 });
+  } catch (error) {
+    console.error("[seller-agent] Error:", error);
+    return NextResponse.json({ ok: true }, { status: 200 });
+  }
+}
+
+/**
  * POST — Incoming WhatsApp messages from YCloud
  */
 export async function POST(request: NextRequest) {
@@ -347,26 +427,37 @@ export async function POST(request: NextRequest) {
       return handleDeliveryNotification(payload, config);
     }
 
-    // 4c. Check if customer phone is in allowed IDs list
-    const allowedIds = (config.allowedPhoneIds ?? []) as { name: string; phone: string }[];
-    if (allowedIds.length > 0 && !allowedIds.some((entry) => entry.phone === customerPhone)) {
-      console.log(`[webhook:wa] BLOCKED — phone ${customerPhone} not in allowedPhoneIds (${allowedIds.map(a => a.phone).join(",")})`);
-      return NextResponse.json({ ok: true }, { status: 200 });
-    }
-    console.log(`[webhook:wa] Message from ${customerPhone} (${customerName}) type=${msgType} id=${messageId}`);
-
-    // 4c. Auto-reply when outside 24h window
-    const autoReplyEnabled = config.autoReply24h === true;
-    const autoReplyMessage = config.autoReply24hMessage?.trim();
-    const isAiEnabled = config.enabled === true;
-
-    // 5. Find or create conversation
+    // 4c. Find or create conversation (necesario para todo, incluso vendedores)
     const { id: conversationId, isNew } = await findOrCreateConversation(
       "whatsapp",
       customerPhone,
       customerName ?? undefined,
       customerPhone
     );
+
+    // 4d. SELLER DETECTION: si el número es de un vendedor registrado,
+    //     usar el sistema del bot de Telegram (no Karen).
+    //     Los vendedores SIEMPRE hablan con la IA — sin human override, sin AI disabled.
+    const sellerIds = (config.sellerPhoneIds ?? []) as { name: string; phone: string }[];
+    const isSeller = sellerIds.some((entry) => entry.phone === customerPhone);
+    if (isSeller) {
+      console.log(`[webhook:wa] SELLER DETECTED — ${customerPhone}, redirecting to internal agent system`);
+      return handleSellerMessage(payload, conversationId, customerPhone, customerName, messageId, msgType, message, config);
+    }
+
+    // 4e. Check if customer phone is in allowed IDs list
+    const allowedIds = (config.allowedPhoneIds ?? []) as { name: string; phone: string }[];
+    if (allowedIds.length > 0 && !allowedIds.some((entry) => entry.phone === customerPhone)) {
+      console.log(`[webhook:wa] BLOCKED — phone ${customerPhone} not in allowedPhoneIds`);
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    console.log(`[webhook:wa] Message from ${customerPhone} (${customerName}) type=${msgType} id=${messageId}`);
+
+    // 4f. Auto-reply when outside 24h window
+    const autoReplyEnabled = config.autoReply24h === true;
+    const autoReplyMessage = config.autoReply24hMessage?.trim();
+    const isAiEnabled = config.enabled === true;
 
     // 6. Deduplication check
     if (await isMessageDuplicate(messageId)) {
