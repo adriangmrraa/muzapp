@@ -279,139 +279,7 @@ async function checkHumanOverride(conversationId: number): Promise<boolean> {
  * 
  * Los vendedores SIEMPRE hablan con la IA — no hay human override, no hay AI disabled.
  */
-async function handleSellerMessage(
-  payload: Record<string, unknown>,
-  _conversationId: number,
-  customerPhone: string,
-  customerName: string | null,
-  messageId: string,
-  msgType: string,
-  message: Record<string, unknown>,
-  config: Record<string, unknown>
-): Promise<NextResponse> {
-  try {
-    const apiKey = process.env.YCLOUD_API_KEY || (config.ycloudApiKey as string) || "";
-    const from = process.env.WHATSAPP_PHONE_NUMBER || (config.phoneNumber as string) || "";
 
-    // 1. Extraer texto del mensaje (soporta: text, audio, image, document, video)
-    let text = "";
-    let contentAttributes: MediaAttachment[] | undefined;
-
-    if (msgType === "text") {
-      text = (message.text as Record<string, unknown>)?.body as string || "";
-    } else if (msgType === "audio") {
-      const audio = message.audio as Record<string, unknown> | undefined;
-      const mediaId = audio?.id as string;
-      if (mediaId) {
-        try {
-          const { buffer } = await downloadYCloudMedia(mediaId, apiKey);
-          const transcription = await transcribeAudio(buffer, "audio.ogg");
-          text = transcription ? `[Audio del vendedor]: ${transcription}` : "[Audio sin transcripción]";
-        } catch {
-          text = "[Audio sin transcripción]";
-        }
-      } else {
-        text = "[Audio sin transcripción]";
-      }
-    } else if (msgType === "image") {
-      const image = message.image as Record<string, unknown> | undefined;
-      const mediaId = image?.id as string;
-      const caption = (message.caption as string) || "";
-      if (mediaId) {
-        try {
-          const { buffer } = await downloadYCloudMedia(mediaId, apiKey);
-          const { processImageWithVision } = await import("@/lib/media/vision");
-          const visionResult = await processImageWithVision(buffer, "image/jpeg", 0, 0, caption || undefined);
-          text = visionResult.agentText;
-          if (visionResult.backgroundPersist) visionResult.backgroundPersist();
-        } catch {
-          text = caption ? `[Imagen con caption]: ${caption}` : "[Imagen recibida]";
-        }
-      } else {
-        text = caption ? `[Imagen con caption]: ${caption}` : "[Imagen recibida]";
-      }
-    } else if (msgType === "document") {
-      const doc = message.document as Record<string, unknown> | undefined;
-      const mediaId = doc?.id as string;
-      const fileName = (doc?.filename as string) || "documento";
-      if (mediaId) {
-        try {
-          const { buffer } = await downloadYCloudMedia(mediaId, apiKey);
-          const docText = await extractDocumentText(buffer, fileName);
-          text = `[Documento: ${fileName}]: ${(docText || "").slice(0, 500)}`;
-        } catch {
-          text = `[Documento]: ${fileName}`;
-        }
-      } else {
-        text = `[Documento]: ${fileName}`;
-      }
-    } else if (msgType === "video") {
-      const video = message.video as Record<string, unknown> | undefined;
-      const mediaId = video?.id as string;
-      if (mediaId) {
-        try {
-          const { buffer } = await downloadYCloudMedia(mediaId, apiKey);
-          const videoResult = await analyzeVideo(buffer, "video.mp4");
-          text = videoResult.agentText || "[Video recibido]";
-        } catch {
-          text = "[Video recibido]";
-        }
-      } else {
-        text = "[Video recibido]";
-      }
-    } else {
-      text = "[Mensaje no soportado]";
-    }
-
-    if (!text) {
-      return NextResponse.json({ ok: true }, { status: 200 });
-    }
-
-    // 2. Crear/obtener conversación (channel whatsapp normal — la UI diferencia por sellerPhoneIds)
-    const { id: convId } = await findOrCreateConversation(
-      "whatsapp",
-      customerPhone,
-      customerName ?? undefined,
-      customerPhone
-    );
-
-    // 3. Persistir el mensaje del vendedor
-    await insertMessage(convId, "user", text, contentAttributes);
-
-    // 4. Cargar historial para contexto (últimos 6 mensajes como Telegram)
-    const history = await getConversationMessages(convId, 6);
-    const aiMessages = history
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      }));
-    aiMessages.push({ role: "user" as const, content: text });
-
-    // 5. Ejecutar el mismo sistema que Telegram (prompt + tools)
-    const result = await generateText({
-      model: openai.chat("gpt-5-mini"),
-      system: INTERNAL_AGENT_SYSTEM_PROMPT,
-      messages: aiMessages,
-      tools: internalAgentTools,
-      stopWhen: stepCountIs(10),
-    });
-
-    const reply = result.text || "Disculpá, no pude procesar eso.";
-
-    // 6. Persistir respuesta
-    await insertMessage(convId, "assistant", reply);
-
-    // 7. Enviar respuesta por WhatsApp
-    await sendWhatsAppMessage({ to: customerPhone, body: reply, apiKey, from });
-
-    console.log(`[seller-agent] Replied to seller ${customerPhone} (${msgType}): ${reply.slice(0, 80)}`);
-    return NextResponse.json({ ok: true }, { status: 200 });
-  } catch (error) {
-    console.error("[seller-agent] Error:", error);
-    return NextResponse.json({ ok: true }, { status: 200 });
-  }
-}
 
 /**
  * POST — Incoming WhatsApp messages from YCloud
@@ -502,15 +370,15 @@ export async function POST(request: NextRequest) {
       customerPhone
     );
 
-    // 4d. SELLER DETECTION: si el número es de un vendedor registrado,
-    //     usar el sistema del bot de Telegram (no Karen).
-    //     Los vendedores SIEMPRE hablan con la IA — sin human override, sin AI disabled.
-    //     Normalizamos ambos lados para asegurar match (el seller puede tener + o no)
+    // 4d. SELLER DETECTION: los vendedores usan el buffer como los clientes,
+    //     pero con un callback que ejecuta el sistema de Telegram en lugar de Karen.
+    //     El buffer acumula mensajes por ~11s y los procesa todos juntos.
     const sellerIds = (config.sellerPhoneIds ?? []) as { name: string; phone: string }[];
     const isSeller = sellerIds.some((entry) => normalizePhone(entry.phone) === customerPhoneClean);
     if (isSeller) {
-      console.log(`[webhook:wa] SELLER DETECTED — ${customerPhone}, redirecting to internal agent system`);
-      return handleSellerMessage(payload, conversationId, customerPhone, customerName, messageId, msgType, message, config);
+      console.log(`[webhook:wa] SELLER DETECTED — ${customerPhone}, will use seller buffer callback`);
+      // No hacemos return — el flujo sigue abajo y el mensaje se encola en el buffer
+      // pero con un flag para que el callback use el sistema de Telegram
     }
 
     // 4e. Check if customer phone is in allowed IDs list
@@ -764,10 +632,51 @@ export async function POST(request: NextRequest) {
 
     // Fire-and-forget: webhook returns 200 immediately, processing happens in background
     scheduleBufferProcessing("whatsapp", customerPhone, async (bufferedMessages) => {
-      console.log(`[webhook:wa] Buffer callback fired — ${bufferedMessages.length} msgs for ${customerPhone}`);
+      console.log(`[webhook:wa] Buffer callback fired — ${bufferedMessages.length} msgs for ${customerPhone}${isSeller ? " (SELLER)" : ""}`);
 
-      // ANTES de ejecutar AI, verificar AGAIN si hay human override
-      // (puede haber cambiado durante el debounce de 11s)
+      // VENDEDOR: usar sistema de Telegram, sin human override
+      if (isSeller) {
+        const combinedText = bufferedMessages.map((m) => m.content).join("\n");
+        const history = await getConversationMessages(conversationId, 10);
+        const aiMessages = history
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+        if (bufferedMessages.length > 1) {
+          const lastUserIdx = [...aiMessages].reverse().findIndex((m) => m.role === "user");
+          if (lastUserIdx !== -1) aiMessages[aiMessages.length - 1 - lastUserIdx] = { role: "user", content: combinedText };
+        }
+
+        const result = await generateText({
+          model: openai.chat("gpt-5-mini"),
+          system: INTERNAL_AGENT_SYSTEM_PROMPT,
+          messages: aiMessages,
+          tools: internalAgentTools,
+          stopWhen: stepCountIs(10),
+        });
+        const reply = result.text || "Disculpá, no pude procesar eso.";
+        await insertMessage(conversationId, "assistant", reply);
+        const r = await sendWhatsAppBubbles({ to: customerPhone, text: reply, apiKey, from: botNumber });
+        if (r?.id) {
+          try {
+            const { chatMessages } = await import("@/db/schema");
+            // Buscar el último mensaje del assistant para esta conversación y actualizar su wamid
+            const { desc: descOrder } = await import("drizzle-orm");
+            const [lastMsg] = await db
+              .select({ id: chatMessages.id })
+              .from(chatMessages)
+              .where(eq(chatMessages.conversationId, conversationId))
+              .orderBy(descOrder(chatMessages.createdAt))
+              .limit(1);
+            if (lastMsg) {
+              await db.update(chatMessages).set({ platformMessageId: r.id }).where(eq(chatMessages.id, lastMsg.id));
+            }
+          } catch {}
+        }
+        console.log(`[seller-agent] Replied to seller ${customerPhone}: ${reply.slice(0, 80)}`);
+        return;
+      }
+
+      // CLIENTE: verificar human override
       const stillOverridden = await checkHumanOverride(conversationId);
       if (stillOverridden) {
         console.log(`[webhook:wa] Human override activated during debounce for ${customerPhone} — aborting AI`);
@@ -827,7 +736,6 @@ export async function POST(request: NextRequest) {
       // ═══════════════════════════════════════════════════════════════════
       if (ycloudResult?.id) {
         try {
-          // Actualizar el mensaje con el wamid que devolvió YCloud
           const { chatMessages } = await import("@/db/schema");
           await db
             .update(chatMessages)
@@ -835,7 +743,6 @@ export async function POST(request: NextRequest) {
             .where(eq(chatMessages.id, msgId));
           console.log(`[webhook:wa] Updated chatMessage ${msgId} with wamid ${ycloudResult.id}`);
         } catch (updateErr) {
-          // Non-fatal
           console.warn("[webhook:wa] Failed to update wamid on chatMessage:", updateErr);
         }
       }
