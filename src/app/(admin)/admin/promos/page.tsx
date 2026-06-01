@@ -8,7 +8,7 @@ export default async function PromosPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <PromosTable promos={promos} onRefresh={async () => {}} />
+      <PromosTable promos={promos} />
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
+
+// El import de useRouter debe estar en el scope correcto
 import { motion } from "framer-motion";
 import { fadeUpSmall } from "@/lib/animation-variants";
 
@@ -118,7 +120,8 @@ function PromoForm({
   );
 }
 
-export function PromosTable({ promos, onRefresh }: { promos: PromoRow[]; onRefresh: () => void }) {
+export function PromosTable({ promos }: { promos: PromoRow[] }) {
+  const router = useRouter();
   const [editing, setEditing] = useState<PromoRow | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
@@ -126,7 +129,7 @@ export function PromosTable({ promos, onRefresh }: { promos: PromoRow[]; onRefre
   const handleDelete = async (id: number) => {
     await deletePromo(id);
     setDeleting(null);
-    onRefresh();
+    router.refresh();
   };
 
   return (
@@ -193,10 +196,10 @@ export function PromosTable({ promos, onRefresh }: { promos: PromoRow[]; onRefre
       )}
 
       {showCreate && (
-        <PromoForm onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); onRefresh(); }} />
+        <PromoForm onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); router.refresh(); }} />
       )}
       {editing && (
-        <PromoForm promo={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onRefresh(); }} />
+        <PromoForm promo={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); router.refresh(); }} />
       )}
     </div>
   );
