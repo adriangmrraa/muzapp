@@ -192,9 +192,9 @@ export const searchProductsTool = tool({
   },
 });
 
-// getActivePromos - Consultar promociones activas
+// getActivePromos - Consultar promociones activas (OBLIGATORIO)
 export const getActivePromosTool = tool({
-  description: "Obtiene la lista de promociones activas. Usar cuando el cliente pregunta por promos, descuentos, combos u ofertas.",
+  description: "OBLIGATORIO: Cuando el cliente pregunta por promos, descuentos, combos u ofertas, EJECUTA ESTA TOOL. No respondas sin ejecutarla. Incluso si ya lo preguntó antes, ejecutala de nuevo.",
   inputSchema: z.object({}),
   execute: async () => {
     const activePromos = await db
