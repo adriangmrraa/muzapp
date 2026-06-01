@@ -132,6 +132,10 @@ export async function saveAgentConfig(
     whatsappZonasDelivery = [];
   }
 
+  // Debug: log de los campos clave
+  console.log("[agent-config] sellerPhoneIds raw:", formData.get("sellerPhoneIds"));
+  console.log("[agent-config] allowedPhoneIds raw:", formData.get("allowedPhoneIds"));
+
   const raw = {
     systemPrompt: formData.get("systemPrompt") || "",
     phoneNumber: formData.get("phoneNumber"),
@@ -161,8 +165,11 @@ export async function saveAgentConfig(
 
   const parsed = agentConfigSchema.safeParse(raw);
   if (!parsed.success) {
-    const firstError = parsed.error.issues[0]?.message ?? "Datos inválidos";
-    return { success: false, message: firstError };
+    const firstIssue = parsed.error.issues[0];
+    const field = firstIssue?.path?.join(".") || "desconocido";
+    const msg = firstIssue?.message || "Datos inválidos";
+    console.error("[agent-config] Validation error:", JSON.stringify(parsed.error.issues));
+    return { success: false, message: `Error en "${field}": ${msg}` };
   }
 
   try {
