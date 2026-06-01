@@ -1,4 +1,4 @@
-export type Channel = "whatsapp" | "telegram";
+export type Channel = "whatsapp" | "telegram" | "whatsapp_seller";
 
 export type MessageRole = "user" | "assistant" | "system" | "human";
 
@@ -35,7 +35,7 @@ export interface ConversationSummary {
   humanOverrideUntil?: string | null;
 }
 
-export type ConversationFilter = "all" | "whatsapp" | "telegram" | "active" | "closed";
+export type ConversationFilter = "all" | "whatsapp" | "whatsapp_seller" | "telegram" | "active" | "closed";
 
 // ─── Customer Profile (para context panel) ───────────────────────────────
 

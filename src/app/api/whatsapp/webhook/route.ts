@@ -300,9 +300,9 @@ async function handleSellerMessage(
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
-    // 2. Crear/obtener conversación (usamos channel "whatsapp" normal)
+    // 2. Crear/obtener conversación (usamos channel "whatsapp_seller" para identificarlas)
     const { id: convId } = await findOrCreateConversation(
-      "whatsapp",
+      "whatsapp_seller" as any,
       customerPhone,
       customerName ?? undefined,
       customerPhone
@@ -422,8 +422,10 @@ export async function POST(request: NextRequest) {
 
     // 4b. DELIVERY DETECTION: si el mensaje es del número del delivery,
     //     tratar como notificación de delivery, no como mensaje de cliente.
-    const deliveryPhone = config.deliveryPhoneNumber?.trim();
-    if (deliveryPhone && customerPhone === deliveryPhone) {
+    const deliveryPhoneRaw = config.deliveryPhoneNumber?.trim();
+    const deliveryPhoneNormalized = deliveryPhoneRaw ? normalizePhone(deliveryPhoneRaw) : "";
+    const customerPhoneClean = normalizePhone(customerPhone);
+    if (deliveryPhoneNormalized && customerPhoneClean === deliveryPhoneNormalized) {
       return handleDeliveryNotification(payload, config);
     }
 
@@ -438,8 +440,9 @@ export async function POST(request: NextRequest) {
     // 4d. SELLER DETECTION: si el número es de un vendedor registrado,
     //     usar el sistema del bot de Telegram (no Karen).
     //     Los vendedores SIEMPRE hablan con la IA — sin human override, sin AI disabled.
+    //     Normalizamos ambos lados para asegurar match (el seller puede tener + o no)
     const sellerIds = (config.sellerPhoneIds ?? []) as { name: string; phone: string }[];
-    const isSeller = sellerIds.some((entry) => entry.phone === customerPhone);
+    const isSeller = sellerIds.some((entry) => normalizePhone(entry.phone) === customerPhoneClean);
     if (isSeller) {
       console.log(`[webhook:wa] SELLER DETECTED — ${customerPhone}, redirecting to internal agent system`);
       return handleSellerMessage(payload, conversationId, customerPhone, customerName, messageId, msgType, message, config);

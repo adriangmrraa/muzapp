@@ -17,6 +17,7 @@ interface ConversationSidebarProps {
 const filters: { value: ConversationFilter; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "whatsapp", label: "WA" },
+  { value: "whatsapp_seller", label: "VEN" },
   { value: "telegram", label: "TG" },
   { value: "active", label: "Activos" },
   { value: "closed", label: "Cerrados" },
@@ -45,6 +46,7 @@ export function ConversationSidebar({
         (filter === "active" ? c.status === "active" : false) ||
         (filter === "closed" ? c.status === "closed" : false) ||
         (filter === "whatsapp" ? c.channel === "whatsapp" : false) ||
+        (filter === "whatsapp_seller" ? c.channel === "whatsapp_seller" : false) ||
         (filter === "telegram" ? c.channel === "telegram" : false);
 
       return matchesSearch && matchesFilter;
