@@ -12,7 +12,7 @@ import { normalizePhone, isValidPhone } from "@/lib/phone-utils";
 // createOrder - Crear nuevo pedido
 export const createOrder = tool({
   description:
-    "CREAR un nuevo pedido. Busca el lead por teléfono primero, después por nombre. SI NO ENCUENTRA, CREA EL LEAD AUTOMÁTICAMENTE. NO necesita que el lead exista primero. PREGUNTAS: 'creá un pedido para Juan, 2 Genesis', 'nuevo pedido para María, 1 Deli Deli', 'cargá pedido para floricienta, 1 Toro Asado'. SIEMPRE intentá con esta tool primero cuando te pidan crear un pedido.",
+    "CREAR un nuevo pedido. Busca el lead por teléfono primero, después por nombre. SI NO ENCUENTRA, CREA EL LEAD AUTOMÁTICAMENTE. NO necesita que el lead exista primero. El teléfono es OPCIONAL — si no se pasa, se crea un lead sin teléfono (para casos de Instagram, Facebook, clientes del local sin número). PREGUNTAS: 'creá un pedido para Juan, 2 Genesis', 'nuevo pedido para María, 1 Deli Deli', 'cargá pedido para floricienta, 1 Toro Asado'. SIEMPRE intentá con esta tool primero cuando te pidan crear un pedido.",
   inputSchema: z.object({
     customerName: z.string().describe("Nombre del cliente. Si no se pasa el teléfono, se busca al lead por este nombre."),
     phone: z.string().optional().describe("Teléfono del cliente (OPCIONAL si ya existe un lead con ese nombre). Si no se pasa, se busca por nombre."),
@@ -105,26 +105,36 @@ export const createOrder = tool({
       }
     }
 
-    // Si el número no es válido argentino, intentar igual
-    if (cleanedPhone && !isValidPhone(cleanedPhone)) {
-      return { success: false, message: `El teléfono "${phone}" no es válido. El formato debe ser código de área + número sin 15. Ej: 5493704123456.` };
-    }
-
     // Si después de todo no hay lead, crear uno nuevo
     if (!existingLead) {
       if (!cleanedPhone) {
-        return { success: false, message: `No encontré ningún cliente con el nombre "${customerName}". ¿Me pasás su número de teléfono para crearlo?` };
+        // Sin teléfono: crear lead con placeholder (Instagram, Facebook, local)
+        cleanedPhone = `sin-telefono-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        const [newLead] = await db
+          .insert(leads)
+          .values({
+            name: customerName,
+            phone: cleanedPhone,
+            status: "new",
+            notes: "⚠️ Cliente sin teléfono — cargar número pendiente",
+          })
+          .returning({ id: leads.id, status: leads.status, name: leads.name });
+        existingLead = newLead;
+      } else if (!isValidPhone(cleanedPhone)) {
+        // Teléfono inválido
+        return { success: false, message: `El teléfono "${phone}" no es válido. El formato debe ser código de área + número sin 15. Ej: 5493704123456. Si no tenés el número, crealo sin teléfono.` };
+      } else {
+        // Crear lead automáticamente si hay teléfono válido y no existe
+        const [newLead] = await db
+          .insert(leads)
+          .values({
+            name: customerName,
+            phone: cleanedPhone,
+            status: "converted",
+          })
+          .returning({ id: leads.id, status: leads.status, name: leads.name });
+        existingLead = newLead;
       }
-      // Crear lead automáticamente si hay teléfono válido y no existe
-      const [newLead] = await db
-        .insert(leads)
-        .values({
-          name: customerName,
-          phone: cleanedPhone,
-          status: "converted",
-        })
-        .returning({ id: leads.id, status: leads.status, name: leads.name });
-      existingLead = newLead;
     }
 
     // Vincular con lead existente
@@ -525,7 +535,7 @@ export const markPaymentMethod = tool({
 // createDeliveredOrder - Cargar pedido ya entregado (backfill)
 export const createDeliveredOrder = tool({
   description:
-    "CARGAR un pedido que YA FUE ENTREGADO (backfill). Para cuando el admin olvidó registrar un pedido. El método de pago NO es necesario para crear el pedido, se puede registrar después. Crea el lead si no existe. NO envía notificaciones. IMPORTANTE: Ejecutá esta tool apenas tengas nombre, teléfono y productos. No esperes a tener el método de pago. PREGUNTAS: 'cargá un pedido de ayer', 'subí un pedido viejo de Juan', 'registrá un pedido que ya entregamos el lunes'",
+    "CARGAR un pedido que YA FUE ENTREGADO (backfill). Para cuando el admin olvidó registrar un pedido. El método de pago NO es necesario para crear el pedido, se puede registrar después. Crea el lead si no existe. El teléfono es OPCIONAL — si no se pasa, se crea un lead sin teléfono. NO envía notificaciones. IMPORTANTE: Ejecutá esta tool apenas tengas nombre y productos. PREGUNTAS: 'cargá un pedido de ayer', 'subí un pedido viejo de Juan', 'registrá un pedido que ya entregamos el lunes'",
   inputSchema: z.object({
     customerName: z.string().describe("Nombre del cliente"),
     customerPhone: z.string().describe("Teléfono del cliente (con código de país)"),
@@ -546,9 +556,9 @@ export const createDeliveredOrder = tool({
     const resolvedItems = await resolveItems(items);
 
     // Validar y limpiar teléfono
-    const cleanedPhone = normalizePhone(customerPhone);
-    if (!isValidPhone(cleanedPhone)) {
-      return { success: false, message: `El teléfono "${customerPhone}" no parece válido. Los teléfonos de la zona empiezan con 549370 y tienen 10-12 dígitos.` };
+    const cleanedPhone = customerPhone ? normalizePhone(customerPhone) : "";
+    if (cleanedPhone && !isValidPhone(cleanedPhone)) {
+      return { success: false, message: `El teléfono "${customerPhone}" no parece válido. Los teléfonos de la zona empiezan con 549370 y tienen 10-12 dígitos. Si no tenés el número, crealo sin teléfono.` };
     }
 
     // 1. Crear o actualizar lead
@@ -571,11 +581,13 @@ export const createDeliveredOrder = tool({
         await db.update(leads).set({ name: customerName }).where(eq(leads.id, existingLead.id));
       }
     } else {
-      // Crear lead nuevo
+      // Crear lead nuevo (con placeholder si no hay teléfono)
+      const finalPhone = cleanedPhone || `sin-telefono-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
       const [newLead] = await db.insert(leads).values({
         name: customerName,
-        phone: cleanedPhone,
-        status: "converted",
+        phone: finalPhone,
+        status: cleanedPhone ? "converted" : "new",
+        notes: cleanedPhone ? null : "⚠️ Cliente sin teléfono — cargar número pendiente",
       }).returning({ id: leads.id });
       leadId = newLead.id;
     }

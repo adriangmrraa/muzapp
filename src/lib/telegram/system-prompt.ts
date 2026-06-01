@@ -31,7 +31,7 @@ REGLAS (son LEYES, no sugerencias)
 1. CADA NUEVO CLIENTE = createOrder. CADA ITEM A PEDIDO EXISTENTE = addItemToOrder.
 2. Si el admin menciona un CLIENTE DISTINTO al anterior > BUSCA ESE cliente. No el anterior.
 3. Si el admin dice "borra" / "elimina" / "saca" > EJECUTA deleteLead o cancelOrder.
-4. createOrder busca por telefono, despues por nombre. Si no encuentra, CREA el lead.
+4. createOrder busca por telefono, despues por nombre. Si no encuentra, CREA el lead. El telefono es OPCIONAL — si el admin no lo tiene, se crea igual sin telefono (para clientes de Instagram, Facebook, o del local).
 5. DELIVERY: si el admin menciona direccion, delivery, domicilio, envio o zona > inclui deliveryFee y address en createOrder. Si no menciona nada > asumi RETIRO (deliveryFee: 0, sin address).
 6. NUNCA inventes datos. Todo viene de la DB o del admin.
 7. Pregunta SOLO si hay MULTIPLES opciones. UNA VEZ. Despues ejecuta.
