@@ -634,16 +634,17 @@ export async function POST(request: NextRequest) {
     scheduleBufferProcessing("whatsapp", customerPhone, async (bufferedMessages) => {
       console.log(`[webhook:wa] Buffer callback fired — ${bufferedMessages.length} msgs for ${customerPhone}${isSeller ? " (SELLER)" : ""}`);
 
-      // VENDEDOR: usar sistema de Telegram, sin human override
+      // VENDEDOR: solo los últimos 4 mensajes para contexto mínimo
+      // (evita que historial viejo contamine la conversación actual)
       if (isSeller) {
         const combinedText = bufferedMessages.map((m) => m.content).join("\n");
-        const history = await getConversationMessages(conversationId, 10);
+        const history = await getConversationMessages(conversationId, 4);
         const aiMessages = history
           .filter((m) => m.role === "user" || m.role === "assistant")
           .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
-        if (bufferedMessages.length > 1) {
-          const lastUserIdx = [...aiMessages].reverse().findIndex((m) => m.role === "user");
-          if (lastUserIdx !== -1) aiMessages[aiMessages.length - 1 - lastUserIdx] = { role: "user", content: combinedText };
+        // Si hay mensajes acumulados en el buffer, usarlos como un solo mensaje
+        if (bufferedMessages.length > 0) {
+          aiMessages.push({ role: "user" as const, content: combinedText });
         }
 
         const result = await generateText({
