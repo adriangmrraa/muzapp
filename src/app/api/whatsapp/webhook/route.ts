@@ -25,7 +25,7 @@ import { extractDocumentText } from "@/lib/media/document";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 import { internalAgentTools } from "@/lib/telegram/tools";
-import { SELLER_SYSTEM_PROMPT } from "@/lib/whatsapp/seller-prompt";
+import { buildSellerPrompt } from "@/lib/whatsapp/seller-prompt";
 import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 
@@ -648,7 +648,7 @@ export async function POST(request: NextRequest) {
 
         const result = await generateText({
           model: openai.chat("gpt-5-mini"),
-          system: SELLER_SYSTEM_PROMPT,
+          system: await buildSellerPrompt(),
           messages: aiMessages,
           tools: internalAgentTools,
           stopWhen: stepCountIs(10),
