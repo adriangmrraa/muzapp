@@ -2,7 +2,7 @@ const YCLOUD_API_URL =
   "https://api.ycloud.com/v2/whatsapp/messages/sendDirectly";
 
 export type SendTextResult =
-  | { ok: true }
+  | { ok: true; wamid?: string }
   | { ok: false; error: string };
 
 async function sleep(ms: number) {
@@ -45,6 +45,15 @@ export async function sendText(
       clearTimeout(timeoutId);
 
       if (response.ok) {
+        // Capturar wamid de la respuesta de YCloud para persistirlo como platformMessageId
+        try {
+          const responseData = await response.clone().json() as { id?: string };
+          if (responseData?.id) {
+            return { ok: true, wamid: responseData.id };
+          }
+        } catch {
+          // Si no se puede parsear el JSON, devolver ok sin wamid (no crítico)
+        }
         return { ok: true };
       }
 

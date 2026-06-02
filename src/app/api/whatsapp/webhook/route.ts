@@ -88,7 +88,12 @@ async function handleEcho(
     }
 
     if (!msg) {
-      console.warn("[webhook:echo] Could not extract message from echo payload");
+      console.warn("[webhook:echo] Could not extract message from echo payload", {
+        type: event.type,
+        keys: Object.keys(event).filter(k => !["type", "id", "createTime", "sendTime", "apiVersion"].includes(k)),
+        hasTo: !!event.to,
+        hasFrom: !!event.from,
+      });
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
@@ -163,9 +168,10 @@ async function handleEcho(
 
     // 6. Determinar si este echo es del bot (AI) o de un humano
     //    Buscamos el mensaje original por platformMessageId.
-    //    Si existe y era role="assistant" → es eco de nuestra propia respuesta → NO override.
+    //    Si existe y era role="assistant" o role="system" → es eco de nuestra propia respuesta → NO override.
     //    Si NO existe o era role="human" → un humano respondió desde WhatsApp Business App → override 24h.
     let isOwnEcho = false;
+    let foundRole: string | undefined;
     if (echoMsgId) {
       try {
         const { chatMessages: cmTable } = await import("@/db/schema");
@@ -174,12 +180,18 @@ async function handleEcho(
           .from(cmTable)
           .where(eq(cmTable.platformMessageId, echoMsgId))
           .limit(1);
-        // Si encontramos el mensaje original y era assistant → es eco propio
-        isOwnEcho = original?.role === "assistant";
+        foundRole = original?.role;
+        // Si encontramos el mensaje original y era assistant o system → es eco propio
+        // (system = status messages automáticos como "Ya esta tu pedido")
+        isOwnEcho = original?.role === "assistant" || original?.role === "system";
       } catch {
         // Si falla la query, asumimos que NO es echo propio (más seguro para no perder override)
         isOwnEcho = false;
       }
+    }
+
+    if (echoMsgId && !foundRole) {
+      console.log(`[webhook:echo] Echo ${echoMsgId} — no original message found by platformMessageId, treating as human echo`);
     }
 
     if (isOwnEcho) {
@@ -641,8 +653,11 @@ export async function POST(request: NextRequest) {
         const combinedText = bufferedMessages.map((m) => m.content).join("\n");
         const history = await getConversationMessages(conversationId, 4);
         const aiMessages = history
-          .filter((m) => m.role === "user" || m.role === "assistant")
-          .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+          .filter((m) => m.role === "user" || m.role === "assistant" || m.role === "system")
+          .map((m) => ({
+            role: (m.role === "system" ? "system" : m.role) as "user" | "assistant" | "system",
+            content: m.content,
+          }));
         // Si hay mensajes acumulados en el buffer, usarlos como un solo mensaje
         if (bufferedMessages.length > 0) {
           aiMessages.push({ role: "user" as const, content: combinedText });
@@ -685,17 +700,31 @@ export async function POST(request: NextRequest) {
         return;
       }
 
+      // Verificar si el humano respondió en los últimos 60s (echo que llegó durante buffer)
+      const { checkRecentHumanActivity } = await import("@/lib/channels/router");
+      const recentHuman = await checkRecentHumanActivity(conversationId, 60);
+      if (recentHuman) {
+        console.log(`[webhook:wa] Human activity detected in last 60s for ${customerPhone} — aborting AI to avoid conflict`);
+        return;
+      }
+
       // Concatenate all buffered messages into a single context for the agent
       const combinedText = bufferedMessages.map((m) => m.content).join("\n");
 
       // Get fresh conversation history for AI context (last 20 messages)
       const history = await getConversationMessages(conversationId, 20);
       const aiMessages = history
-        .filter((m) => m.role === "user" || m.role === "assistant" || m.role === "human")
-        .map((m) => ({
-          role: (m.role === "human" ? "assistant" : m.role) as "user" | "assistant",
-          content: m.content,
-        }));
+        .filter((m) => m.role === "user" || m.role === "assistant" || m.role === "human" || m.role === "system")
+        .map((m) => {
+          // Mapear roles para OpenAI: system se mantiene como system, human → assistant
+          if (m.role === "system") {
+            return { role: "system" as const, content: m.content };
+          }
+          return {
+            role: (m.role === "human" ? "assistant" : m.role) as "user" | "assistant",
+            content: m.content,
+          };
+        });
 
       // If the buffer had multiple messages, add the combined view as the last user turn
       if (bufferedMessages.length > 1) {

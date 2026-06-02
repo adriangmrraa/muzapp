@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { conversations, chatMessages, leads, attachments, orders, agentConfig } from "@/db/schema";
-import { eq, and, lt } from "drizzle-orm";
+import { eq, and, lt, desc } from "drizzle-orm";
 import { normalizePhone } from "@/lib/phone-utils";
 
 export type Channel = "whatsapp" | "telegram";
@@ -236,6 +236,34 @@ export async function getConversationMessages(
     .orderBy(chatMessages.createdAt)
     .limit(limit)
     .offset(offset);
+}
+
+// Check if a human sent messages recently (last 60s)
+// Used by the buffer callback to abort AI processing when human is active
+export async function checkRecentHumanActivity(
+  conversationId: number,
+  withinSeconds = 60
+): Promise<boolean> {
+  const cutoff = new Date(Date.now() - withinSeconds * 1000);
+  const recent = await db
+    .select({ id: chatMessages.id, createdAt: chatMessages.createdAt })
+    .from(chatMessages)
+    .where(
+      and(
+        eq(chatMessages.conversationId, conversationId),
+        eq(chatMessages.role, "human"),
+      )
+    )
+    .orderBy(desc(chatMessages.createdAt))
+    .limit(1);
+
+  if (recent.length === 0) return false;
+
+  const msgTime = recent[0].createdAt instanceof Date
+    ? recent[0].createdAt.getTime()
+    : new Date(recent[0].createdAt).getTime();
+
+  return msgTime > cutoff.getTime();
 }
 
 // Send outbound message via the correct channel

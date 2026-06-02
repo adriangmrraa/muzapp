@@ -42,7 +42,7 @@ import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
 interface RunAgentParams {
   conversationId: number;
   customerPhone: string;
-  messages: Array<{ role: "user" | "assistant"; content: string }>;
+  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
 }
 
 export interface PendingMedia {

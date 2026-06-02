@@ -127,22 +127,23 @@ export async function fetchOrders(params: {
 function buildWhatsAppMessage(status: string, order: OrderRow): string | null {
   const isDelivery = order.address && order.address.trim().length > 0;
   const isPan = order.orderType === "pan_mayorista";
+  const orderTag = `Pedido #${order.id}`;
 
   switch (status) {
     case "ready":
       if (isPan) {
-        return `🍞 Ya esta tu pedido de pan, retiralo por Neuquen 1245.`;
+        return `🍞 ${orderTag} — Ya esta tu pedido de pan, retiralo por Neuquen 1245.`;
       }
       if (isDelivery) {
-        return `🍔 Ya esta tu pedido, en breve el delivery te lo esta llevando.`;
+        return `🍔 ${orderTag} — Ya esta tu pedido, en breve el delivery te lo esta llevando.`;
       }
-      return `🍔 Ya esta tu pedido, retiralo por Neuquen 1245.`;
+      return `🍔 ${orderTag} — Ya esta tu pedido, retiralo por Neuquen 1245.`;
 
     case "delivered":
       if (isPan) {
-        return `🍞 Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro IG es @mrs_muzzarella.`;
+        return `🍞 ${orderTag} — Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro IG es @mrs_muzzarella.`;
       }
-      return `🍔 Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro IG es @mrs_muzzarella.`;
+      return `🍔 ${orderTag} — Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro IG es @mrs_muzzarella.`;
 
     default:
       return null;
@@ -188,10 +189,11 @@ export async function updateOrderStatus(
     if (message && order.phoneNumber) {
       try {
         const { sendText } = await import("@/lib/ycloud");
-        await sendText(order.phoneNumber, message);
+        const result = await sendText(order.phoneNumber, message);
         console.log(`[orders] WhatsApp sent to ${order.phoneNumber} for order #${orderId}: ${newStatus}`);
 
         // Save the outgoing message in chat_messages so AI has context
+        // Se guarda como "system" (no "assistant") para que el AI sepa que es notificación automática
         const { insertMessage } = await import("@/lib/channels/router");
         const phone = order.phoneNumber.startsWith("+") ? order.phoneNumber : `+${order.phoneNumber}`;
         const conv = await db
@@ -200,8 +202,8 @@ export async function updateOrderStatus(
           .where(eq(conversations.whatsappId, phone))
           .limit(1);
         if (conv[0]) {
-          await insertMessage(conv[0].id, "assistant", message);
-          console.log(`[orders] Status message saved to conversation #${conv[0].id}`);
+          await insertMessage(conv[0].id, "system", message, undefined, result.ok ? result.wamid : undefined);
+          console.log(`[orders] Status message saved to conversation #${conv[0].id} (role=system, wamid=${result.ok ? result.wamid : "none"})`);
         }
       } catch (e) {
         console.warn(`[orders] Failed to send WhatsApp for order #${orderId}:`, e);
@@ -241,7 +243,7 @@ export async function notifyCustomer(
     const result = await sendText(order.phoneNumber, msg);
     if (!result.ok) return { success: false, message: `Error al enviar: ${result.error}` };
 
-    // Save notification in conversation history so AI has context
+    // Save notification in conversation history so AI has context (role "system")
     const { insertMessage } = await import("@/lib/channels/router");
     const phone = order.phoneNumber.startsWith("+") ? order.phoneNumber : `+${order.phoneNumber}`;
     const conv = await db
@@ -250,7 +252,7 @@ export async function notifyCustomer(
       .where(eq(conversations.whatsappId, phone))
       .limit(1);
     if (conv[0]) {
-      await insertMessage(conv[0].id, "assistant", msg);
+      await insertMessage(conv[0].id, "system", msg, undefined, result.wamid);
     }
 
     return { success: true, message: "Notificación enviada" };

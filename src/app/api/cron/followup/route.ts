@@ -72,7 +72,7 @@ export async function GET(request: Request) {
           processed++;
           console.log(`[followup] Sent for order #${order.id} to ${order.phoneNumber}`);
 
-          // Save follow-up in conversation history so AI has context
+          // Save follow-up in conversation history so AI has context (role "system")
           const { insertMessage } = await import("@/lib/channels/router");
           const phone = order.phoneNumber.startsWith("+") ? order.phoneNumber : `+${order.phoneNumber}`;
           const conv = await db
@@ -81,8 +81,8 @@ export async function GET(request: Request) {
             .where(eq(conversations.whatsappId, phone))
             .limit(1);
           if (conv[0]) {
-            await insertMessage(conv[0].id, "assistant", followupText);
-            console.log(`[followup] Follow-up saved to conversation #${conv[0].id}`);
+            await insertMessage(conv[0].id, "system", followupText, undefined, result.wamid);
+            console.log(`[followup] Follow-up saved to conversation #${conv[0].id} (role=system, wamid=${result.wamid})`);
           }
         }
       } catch (e) {
