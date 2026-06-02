@@ -26,10 +26,22 @@ export const getBusinessHoursTool = tool({
     const now = new Date();
     const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     const todayName = days[now.getDay()];
-    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
     const today = hours.find(h => h.day === todayName);
-    const isOpenNow = today?.open && currentTime >= today.openTime && currentTime <= today.closeTime;
+    // Soporte para horarios que cruzan medianoche (ej: 06:00 a 04:00)
+    let isOpenNow = false;
+    if (today?.open) {
+      const nowHour = now.getHours();
+      const openHour = parseInt(today.openTime.split(":")[0], 10);
+      const closeHour = parseInt(today.closeTime.split(":")[0], 10);
+      if (closeHour < openHour) {
+        // Cruza medianoche: abierto si hora >= apertura O hora < cierre
+        isOpenNow = nowHour >= openHour || nowHour < closeHour;
+      } else {
+        // Horario normal
+        isOpenNow = nowHour >= openHour && nowHour < closeHour;
+      }
+    }
 
     const schedule = hours
       .filter(h => h.open)

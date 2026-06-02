@@ -223,11 +223,52 @@ El pan mayorista (B2B) SÍ está disponible, vendé normal.`);
       // fallback silencioso
     }
 
-    // Delivery activo/inactivo
+    // Delivery activo/inactivo (con soporte para horarios que cruzan medianoche)
     const isDeliveryActive = config.deliveryEnabled !== false;
     const deliveryHour = config.deliveryStartHour?.trim() || "14:00";
     if (isDeliveryActive) {
-      sections.push(`ESTADO DELIVERY: Activo. El delivery arranca a las ${deliveryHour}hs. Antes de esa hora NO hay delivery — se gestiona con Uber.`);
+      const deliveryStartNum = parseInt(deliveryHour.split(":")[0] || "14", 10);
+      const now = new Date();
+      const currentHour = now.getHours();
+
+      // Obtener closeTime de business_hours para detectar si cruza medianoche
+      const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      const todayName = days[now.getDay()];
+      let businessHoursData: any[] | null = null;
+      try {
+        businessHoursData = config.businessHours as any[] | null;
+      } catch {
+        // ignorar
+      }
+
+      let closeHourNum = 4; // fallback default
+      let openHourNum = 6;
+      if (businessHoursData) {
+        const today = businessHoursData.find((h: any) => h.day === todayName);
+        if (today) {
+          closeHourNum = parseInt(String(today.closeTime).split(":")[0], 10);
+          openHourNum = parseInt(String(today.openTime).split(":")[0], 10);
+        }
+      }
+
+      // Cruza medianoche? (ej: abre 06:00, cierra 04:00)
+      const crossesMidnight = closeHourNum < openHourNum;
+
+      // Delivery activo si: hora >= inicio, O (cruza medianoche y hora < cierre)
+      const deliveryNow = currentHour >= deliveryStartNum ||
+        (crossesMidnight && currentHour < closeHourNum);
+
+      if (crossesMidnight) {
+        sections.push(
+          `ESTADO DELIVERY: Activo. Horario delivery: ${deliveryHour} a ${String(closeHourNum).padStart(2, "0")}:00 (del día siguiente).\n` +
+          `Delivery ${deliveryNow ? "ACTIVO ahora" : "NO activo ahora — se gestiona con Uber"}.`
+        );
+      } else {
+        sections.push(
+          `ESTADO DELIVERY: Activo. El delivery arranca a las ${deliveryHour}hs.\n` +
+          `Delivery ${deliveryNow ? "ACTIVO ahora" : "NO activo ahora — se gestiona con Uber"}.`
+        );
+      }
     } else {
       sections.push(`ESTADO DELIVERY: Inactivo. Todos los pedidos se gestionan con Uber.`);
     }
