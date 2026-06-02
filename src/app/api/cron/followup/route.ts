@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { orders } from "@/db/schema";
+import { orders, conversations } from "@/db/schema";
 import { eq, and, lte } from "drizzle-orm";
 
 /**
@@ -71,6 +71,19 @@ export async function GET(request: Request) {
             .where(eq(orders.id, order.id));
           processed++;
           console.log(`[followup] Sent for order #${order.id} to ${order.phoneNumber}`);
+
+          // Save follow-up in conversation history so AI has context
+          const { insertMessage } = await import("@/lib/channels/router");
+          const phone = order.phoneNumber.startsWith("+") ? order.phoneNumber : `+${order.phoneNumber}`;
+          const conv = await db
+            .select({ id: conversations.id })
+            .from(conversations)
+            .where(eq(conversations.whatsappId, phone))
+            .limit(1);
+          if (conv[0]) {
+            await insertMessage(conv[0].id, "assistant", followupText);
+            console.log(`[followup] Follow-up saved to conversation #${conv[0].id}`);
+          }
         }
       } catch (e) {
         console.warn(`[followup] Failed for order #${order.id}:`, e);

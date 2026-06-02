@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { orders, orderStatusEnum } from "@/db/schema";
+import { orders, orderStatusEnum, conversations } from "@/db/schema";
 import { eq, desc, and, count, ilike, or } from "drizzle-orm";
 import { auth } from "@/auth";
 
@@ -183,13 +183,26 @@ export async function updateOrderStatus(
         .where(eq(orders.id, orderId));
     }
 
-    // Send WhatsApp notification
+    // Send WhatsApp notification + save to conversation history
     const message = buildWhatsAppMessage(newStatus, order as OrderRow);
     if (message && order.phoneNumber) {
       try {
         const { sendText } = await import("@/lib/ycloud");
         await sendText(order.phoneNumber, message);
         console.log(`[orders] WhatsApp sent to ${order.phoneNumber} for order #${orderId}: ${newStatus}`);
+
+        // Save the outgoing message in chat_messages so AI has context
+        const { insertMessage } = await import("@/lib/channels/router");
+        const phone = order.phoneNumber.startsWith("+") ? order.phoneNumber : `+${order.phoneNumber}`;
+        const conv = await db
+          .select({ id: conversations.id })
+          .from(conversations)
+          .where(eq(conversations.whatsappId, phone))
+          .limit(1);
+        if (conv[0]) {
+          await insertMessage(conv[0].id, "assistant", message);
+          console.log(`[orders] Status message saved to conversation #${conv[0].id}`);
+        }
       } catch (e) {
         console.warn(`[orders] Failed to send WhatsApp for order #${orderId}:`, e);
       }
@@ -227,6 +240,18 @@ export async function notifyCustomer(
     const { sendText } = await import("@/lib/ycloud");
     const result = await sendText(order.phoneNumber, msg);
     if (!result.ok) return { success: false, message: `Error al enviar: ${result.error}` };
+
+    // Save notification in conversation history so AI has context
+    const { insertMessage } = await import("@/lib/channels/router");
+    const phone = order.phoneNumber.startsWith("+") ? order.phoneNumber : `+${order.phoneNumber}`;
+    const conv = await db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(eq(conversations.whatsappId, phone))
+      .limit(1);
+    if (conv[0]) {
+      await insertMessage(conv[0].id, "assistant", msg);
+    }
 
     return { success: true, message: "Notificación enviada" };
   } catch (e) {
