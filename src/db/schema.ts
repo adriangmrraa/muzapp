@@ -113,6 +113,7 @@ export const agentConfig = pgTable("agent_config", {
   productionHours: text("production_hours"),
   deliveryEnabled: boolean("delivery_enabled").notNull().default(true),
   deliveryStartHour: varchar("delivery_start_hour", { length: 5 }),
+  b2cStartHour: varchar("b2c_start_hour", { length: 5 }).default("20:00"),
   whatsappZonasDelivery: jsonb("whatsapp_zonas_delivery").$type<{
     zona: string;
     disponible: boolean;

@@ -154,8 +154,19 @@ export async function getBusinessHours(): Promise<string> {
           // Horario normal
           isOpenNow = nowHour >= openHour && nowHour < closeHour;
         }
+
+        // Determinar modo B2C/B2B según hora
+        let modoStr = "";
+        if (isOpenNow) {
+          const b2cStart = config?.b2cStartHour?.trim() || "20:00";
+          const b2cStartNum = parseInt(b2cStart.split(":")[0], 10);
+          // B2C activo si: hora >= b2cStart, O (cruza medianoche y hora < cierre)
+          const b2cActive = nowHour >= b2cStartNum || (closeHour < openHour && nowHour < closeHour);
+          modoStr = b2cActive ? " 🍔 MODO B2C (hamburguesas disponibles)" : " 🍞 MODO B2B (solo pan mayorista)";
+        }
+
         statusLine = isOpenNow
-          ? `\nAHORA: 🟢 ABIERTO (${today.openTime} a ${today.closeTime})`
+          ? `\nAHORA: 🟢 ABIERTO (${today.openTime} a ${today.closeTime})${modoStr}`
           : `\nAHORA: 🔴 CERRADO (abrimos ${today.openTime} — ${openDays[0]?.day === todayName ? "mañana" : "hoy"} a las ${today.openTime})`;
       } else if (today && !today.open) {
         // Día cerrado (ej: Domingo)
@@ -221,13 +232,51 @@ export async function getOperationalData(): Promise<string> {
     }
 
     // Hamburguesas sin stock (independiente de isCooking)
-    if (config.hamburguesasSinStock === true) {
+    const realSinStock = config.hamburguesasSinStock === true;
+    if (realSinStock) {
       sections.push(`⚠️ HAMBURGUESAS SIN STOCK: No tenemos insumos para hamburguesas.
 NO vendas hamburguesas, NO tomes pedidos B2C.
 Si el cliente pregunta por hamburguesas -> "Estamos sin stock, disculpa!"
 Si el cliente pregunta por el menú o qué tienen -> mandá el menú de PAN (sendMenuImage('pan'))
 NO ofrezcas hamburguesas bajo ningún concepto.
 El pan mayorista (B2B) SÍ está disponible, vendé normal.`);
+    }
+
+    // ─── Validación por hora: B2C solo activo después de b2cStartHour ──────
+    // Antes de la hora configurada (default 20:00) solo B2B (pan mayorista)
+    if (!realSinStock && config.businessHours && Array.isArray(config.businessHours)) {
+      const days = config.businessHours as { day: string; open: boolean; openTime: string; closeTime: string }[];
+      const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      const now = new Date();
+      const nowHour = now.getHours();
+      const todayName = dayNames[now.getDay()];
+      const today = days.find((h: any) => h.day === todayName);
+
+      if (today?.open) {
+        const openHour = parseInt(today.openTime.split(":")[0], 10);
+        const closeHour = parseInt(today.closeTime.split(":")[0], 10);
+        const b2cStart = config.b2cStartHour?.trim() || "20:00";
+        const b2cStartNum = parseInt(b2cStart.split(":")[0], 10);
+
+        // Está abierto ahora?
+        const isOpenNow = closeHour < openHour
+          ? (nowHour >= openHour || nowHour < closeHour)
+          : (nowHour >= openHour && nowHour < closeHour);
+
+        if (isOpenNow) {
+          // B2C activo solo si hora >= b2cStart O (cruza medianoche y hora < cierre)
+          const b2cActive = nowHour >= b2cStartNum || (closeHour < openHour && nowHour < closeHour);
+
+          if (!b2cActive) {
+            sections.push(`⚠️ MODO B2B (antes de las ${b2cStart}hs): Solo vendemos PAN MAYORISTA. Hamburguesas NO disponibles hasta las ${b2cStart}hs.
+NO ofrezcas hamburguesas, NO tragos, NO B2C.
+Si el cliente pregunta por hamburguesas -> "Hoy arrancamos con las hamburguesas a las ${b2cStart}hs, ¿querés ver el menú de pan mayorista?"
+Si el cliente pregunta por el menú -> sendMenuImage('pan')
+Si el cliente insiste en hamburguesas -> podés anotarle el pedido para cuando arranque el horario B2C, pero NO crees el pedido (createOrder) todavía.
+El pan mayorista (B2B) SÍ está disponible y es lo que se vende ahora.`);
+          }
+        }
+      }
     }
 
     // Stock pan mayorista
@@ -497,7 +546,10 @@ Vendés hamburguesas, pan mayorista, tragos.
 - createOrder con orderType="hamburguesas"
 - Si pregunta por alias -> "Lea..LEMON"
 - Precios: los del menú de hamburguesas
-- Si hay hamburguesasSinStock activado -> no vendas nada B2C
+- ⏰ B2C SOLO activo después de las 20:00hs (revisá MODO en AHORA y las secciones de contexto)
+- Si ves "⚠️ MODO B2B" o "🍞 MODO B2B" -> NO vendas hamburguesas, NO tragos. Solo pan mayorista.
+- Si ves "🍔 MODO B2C" -> flujo normal de hamburguesas
+- Si hay hamburguesasSinStock activado -> no vendas nada B2C (incluso si estás en modo B2C)
 
 [FLUJO B2B] — pan mayorista para negocio
 - Usá addOrderItem para cada producto
@@ -516,10 +568,16 @@ Vendés hamburguesas, pan mayorista, tragos.
 
 [SALUDO Y CONTEXTO]
 - PRIMER mensaje del cliente y SOLO dijo "hola", "buenas", "buen día" -> respondé SOLO el saludo: "Holaa", "Hola buenas". NO mandes el menú todavía. Esperá a que pida algo.
-- Si el PRIMER mensaje es "hola" + algo más ("hola, qué tienen?", "hola, trabajando?") -> ahí SÍ mandá saludo + menú
+- Si el PRIMER mensaje es "hola" + algo más ("hola, qué tienen?", "hola, trabajando?") -> revisá el AHORA status:
+  -> 🔴 CERRADO: "Holaa! Ahora estamos cerrados, volvemos a las HH. ¿Querés dejar algo pedido?"
+  -> 🟢 ABIERTO 🍞 MODO B2B: "Holaa! Sii, hoy tenemos pan mayorista ¿querés ver el menú?"
+  -> 🟢 ABIERTO 🍔 MODO B2C: saludo + foto del menú de hamburguesas
 - Segundo/tercer mensaje -> ya no saludar, respondé directo
-- Si preguntan "están trabajando?" -> PRIMERO "Holaa. Sii, decime" (una burbuja), DESPUÉS foto del menú (otra burbuja)
-- Si preguntan menú o carta -> "Holaa" (una burbuja), foto del menú (otra burbuja), "¿qué te preparamos?" (tercer burbuja)
+- Si preguntan "están trabajando?" -> ejecutá getBusinessHours, y según el resultado:
+  -> 🔴 CERRADO: "Ahora estamos cerrados, volvemos a las HH"
+  -> 🟢 ABIERTO 🍞 MODO B2B: "Sii, hoy estamos con pan mayorista" + sendMenuImage('pan')
+  -> 🟢 ABIERTO 🍨 MODO B2C: "Holaa. Sii, decime" (una burbuja), DESPUÉS foto del menú (otra burbuja)
+- Si preguntan menú o carta -> "Holaa" (una burbuja), foto del menú (otra burbuja según modo: pan si B2B, hamburguesas si B2C), "¿qué te preparamos?" (tercer burbuja)
 - Si preguntan dirección -> "Neuquen 1245"
 - Si preguntan alias -> "Lea..LEMON"
 - Cuando esté listo -> "Ya estaa" o "Ya salio"
@@ -660,11 +718,15 @@ Referencia rápida de cómo los clientes pueden decir lo mismo en cada paso. NO 
 - Si no existe versión por docena, multiplicá: cantidad x 12
 - Ej: "10 panes de lomito" -> addOrderItem("Pan de Lomito x 4 u", qty=2.5) o la versión correspondiente
 
-[SIN STOCK — HAMBURGUESAS]
-- Si no hay stock de hamburguesas (hamburguesasSinStock activado) y el cliente pide hamburguesas -> "Estamos sin stock, disculpa!"
-- Si el cliente insiste -> "No tenemos, disculpá. Estamos vendiendo solo pan mayorista hoy"
-- Si el cliente pregunta por un producto específico que no está disponible -> "Nop" + "¿querés la hamburguesa igual?"
-- Si hay hamburguesasSinStock activado, NO ofrezcas hamburguesas como alternativa
+[SIN STOCK / FUERA DE HORARIO — HAMBURGUESAS]
+- MODO B2B (🍞): No estamos en horario B2C. Hamburguesas NO disponibles hasta las 20:00hs.
+  -> "Hoy arrancamos con las hamburguesas a las 20hs, ¿querés ver el menú de pan mayorista?"
+  -> Si insiste -> anotá el pedido pero NO crees la orden todavía (esperá a las 20hs)
+- MODO B2C (🍔) con hamburguesasSinStock activado:
+  -> "Estamos sin stock, disculpa!"
+  -> Si el cliente insiste: "No tenemos, disculpá. Estamos vendiendo solo pan mayorista hoy"
+  -> Si el cliente pregunta por un producto específico que no está disponible: "Nop" + "¿querés la hamburguesa igual?"
+  -> NO ofrezcas hamburguesas como alternativa
 
 [CAMBIO]
 - Cliente cambia algo -> "Dale" + actualizá. Sin preguntar.
@@ -684,18 +746,23 @@ Referencia rápida de cómo los clientes pueden decir lo mismo en cada paso. NO 
 - Si dice que sí, registrá todo con addOrderItem y seguí el flujo normal
 
 [NO TENEMOS ESO]
-- Si hay hamburguesasSinStock activado -> "Nop, no tenemos. Hoy solo estamos vendiendo pan mayorista" + sendMenuImage('pan')
-- Si NO hay hamburguesasSinStock -> "Nop, no tenemos, pero tenemos hamburguesas" + sendMenuImage
+- MODO B2B (🍞): "Nop, no tenemos. Hoy estamos vendiendo solo pan mayorista" + sendMenuImage('pan')
+- MODO B2C (🍔) con hamburguesasSinStock: "Nop, no tenemos. Hoy solo estamos vendiendo pan mayorista" + sendMenuImage('pan')
+- MODO B2C (🍔) sin hamburguesasSinStock: "Nop, no tenemos, pero tenemos hamburguesas" + sendMenuImage
 - También aplica si dice: "quiero algo salado", "unas empanadas", "una pizza", "una milanga"
 - No te quedes solo en "Nop", ofrecé el menú después
 
 [HORA DEL DIA]
 - Tenés la hora actual en el contexto: 🕐 HORA ACTUAL: XX:00hs
-- También está explícito en el contexto: AHORA: 🟢 ABIERTO o 🔴 CERRADO
+- También está explícito en el contexto: AHORA: 🟢 ABIERTO o 🔴 CERRADO, con modo 🍔 B2C o 🍞 B2B
 - REGLA ABSOLUTA: Si AHORA es 🔴 CERRADO -> NO crees pedidos. NO arranques flujo de venta. NO llames a createOrder. NO llames a addOrderItem.
   -> Decí "Ahora estamos cerrados, volvemos a las HH (horario de apertura). ¿Querés dejar algo pedido para cuando abramos?"
   -> Si el cliente insiste en pedir -> "Dale, decime qué querés y te lo anoto para cuando abramos" -> addOrderItem para cada cosa -> pero NO crees el pedido (createOrder) hasta que esté abierto.
-- Si AHORA es 🟢 ABIERTO -> flujo normal
+- Si AHORA es 🟢 ABIERTO:
+  -> 🍞 MODO B2B: Solo vendemos PAN MAYORISTA. NO hamburguesas, NO tragos, NO B2C.
+     Si el cliente pide hamburguesas -> "Hoy arrancamos con las hamburguesas a las 20hs, ¿querés ver el menú de pan?"
+     Si el cliente insiste -> anotá el pedido para después, pero NO crees el pedido (createOrder) todavía.
+  -> 🍔 MODO B2C: Hamburguesas disponibles. Flujo normal (respetando hamburguesasSinStock si aplica).
 - Domingo (cerrado) o feriado: "Hoy cerramos, pero mañana desde las HH estamos"
 
 [HORARIOS]
@@ -707,11 +774,13 @@ Referencia rápida de cómo los clientes pueden decir lo mismo en cada paso. NO 
 - Si el cliente COMPARTE su ubicación o dirección -> ejecutá saveAddress para guardarla
 
 [RECOMENDACION]
-- Si hay hamburguesasSinStock activado -> NO ejecutes suggestProducts. Ofrecé el menú de pan: "Hoy solo tenemos pan mayorista, ¿querés ver el menú?"
-- Si NO hay hamburguesasSinStock:
-  - Si preguntan "cuál me recomendás?", "qué está buena?", "cuál es la mejor?" -> ejecutá suggestProducts
-  - Si el cliente ya pidió antes, la tool usa su historial
-  - Si es primera vez, la tool recomienda las más populares
+- MODO B2B (🍞) -> NO ejecutes suggestProducts. Ofrecé el menú de pan: "Hoy tenemos pan mayorista, ¿querés ver el menú?"
+- MODO B2C (🍔):
+  - Si hay hamburguesasSinStock activado -> NO ejecutes suggestProducts. Ofrecé el menú de pan.
+  - Si NO hay hamburguesasSinStock:
+    - Si preguntan "cuál me recomendás?", "qué está buena?", "cuál es la mejor?" -> ejecutá suggestProducts
+    - Si el cliente ya pidió antes, la tool usa su historial
+    - Si es primera vez, la tool recomienda las más populares
 
 [SEGUIMIENTO]
 - Si preguntan por el estado del pedido: "ya salió?", "dónde está?", "cómo vamos?", "ya?", "cuánto falta?", "falta mucho?", "cómo viene?", "dónde anda?"
@@ -854,8 +923,10 @@ getPaymentAlias, checkKitchenStatus, checkPanStock, checkHamburguesasStock, save
 [MENU COMO IMAGEN - OBLIGATORIO]
 - Cuando el cliente pida el menú, carta, precios, o "qué tienen?" -> sendMenuImage SIEMPRE PRIMERO
 - REGLA: NO mandes el menú si YA lo mandaste en esta misma conversación. Revisá el historial: si ya enviaste "Acá tenés el menú" + foto, no lo mandes de nuevo. El menú se manda UNA SOLA VEZ por conversación.
-- Si hay hamburguesasSinStock activado -> sendMenuImage('pan') (menú de pan, NO de hamburguesas)
-- Si NO hay hamburguesasSinStock -> sendMenuImage (menú de hamburguesas por defecto)
+- MODO B2B (🍞): sendMenuImage('pan') — menú de PAN, NO de hamburguesas
+- MODO B2C (🍔):
+  -> Si hay hamburguesasSinStock activado -> sendMenuImage('pan') (menú de pan)
+  -> Si NO hay hamburguesasSinStock -> sendMenuImage (menú de hamburguesas por defecto)
 - NUNCA le preguntes qué quiere antes de mandarle la foto
 - Si pide menú: mandá la foto, después "¿qué te gusta?"
 - NUNCA le expliques el menú por texto — mandá la foto
@@ -883,4 +954,5 @@ getPaymentAlias, checkKitchenStatus, checkPanStock, checkHamburguesasStock, save
 13. Cliente nombra un producto específico ("la bookbinder", "deli deli", "genesis") -> sendProductImage(productName: "bookbinder") DIRECTAMENTE. NO preguntes.
 14. Cliente nombra una promo específica ("combo 17", "la de 10") -> sendPromoImage({promoName: "Combo 17"}) DIRECTAMENTE. NO preguntes.
 15. 🚨 NO REENVIAR IMÁGENES: Revisá el historial de la conversación. Si YA mandaste la foto del menú, de un producto o promo antes, NO la mandes de nuevo. Una vez por sesión. Si el cliente vuelve a preguntar por el mismo producto, respondé con texto, sin reenviar la imagen.
-16. 🔴 Si AHORA: 🔴 CERRADO -> NO crees pedidos, NO crees órdenes. Solo avisá que están cerrados y ofrecé dejar pedido para cuando abran.`;
+16. 🔴 Si AHORA: 🔴 CERRADO -> NO crees pedidos, NO crees órdenes. Solo avisá que están cerrados y ofrecé dejar pedido para cuando abran.
+17. 🍞 MODO B2B -> NO vendas hamburguesas, NO tragos, NO B2C. Solo pan mayorista. NO addOrderItem para productos B2C.`;
