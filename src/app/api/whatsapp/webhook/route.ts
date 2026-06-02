@@ -196,17 +196,17 @@ async function handleEcho(
       console.log(`[webhook:echo] Human override set for conversation ${conversationId} until ${overrideUntil.toISOString()}`);
     }
 
-    // 7. Guardar el mensaje como assistant (para que se muestre en el chat)
+    // 7. Guardar el mensaje como human para diferenciar del AI
     //    Solo guardar si NO es echo propio (los echos propios ya tienen su mensaje guardado)
     if (!isOwnEcho) {
       await insertMessage(
         conversationId,
-        "assistant",
+        "human",
         displayText,
         undefined,
         echoMsgId
       );
-      console.log(`[webhook:echo] Echo saved as assistant message in conversation ${conversationId}`);
+      console.log(`[webhook:echo] Echo saved as human message in conversation ${conversationId}`);
     }
 
   } catch (error) {
@@ -691,9 +691,9 @@ export async function POST(request: NextRequest) {
       // Get fresh conversation history for AI context (last 20 messages)
       const history = await getConversationMessages(conversationId, 20);
       const aiMessages = history
-        .filter((m) => m.role === "user" || m.role === "assistant")
+        .filter((m) => m.role === "user" || m.role === "assistant" || m.role === "human")
         .map((m) => ({
-          role: m.role as "user" | "assistant",
+          role: (m.role === "human" ? "assistant" : m.role) as "user" | "assistant",
           content: m.content,
         }));
 
