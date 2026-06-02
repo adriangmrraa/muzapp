@@ -283,7 +283,7 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
   currentCart?: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[];
   currentHour?: number;
   previousContext?: string;
-}, antiLoopDirective?: string): Promise<string> {
+}, antiLoopDirective?: string, nonCommercialDirective?: string): Promise<string> {
   const layer1 = await getCorePrompt();
   const layer2 = await getMenuData();
   const layer3 = await getBusinessHours();
@@ -381,6 +381,7 @@ ${layer3b ? `\n${layer3b}` : ""}
 ${layer4 ? `\n${layer4}` : ""}
 ${context ? `\n${context}` : ""}
 ${antiLoopDirective ? `\n${antiLoopDirective}` : ""}
+${nonCommercialDirective ? `\n${nonCommercialDirective}` : ""}
 ---
 Recordá usar SIEMPRE las herramientas para obtener información actualizada.`;
 
@@ -492,6 +493,26 @@ Vendés hamburguesas, pan mayorista, tragos.
 - Si es cantidad irreal pero el cliente insiste -> "No, fuera de joda, decime cuántas querés posta"
 - Si el producto no existe -> "Jaja no tenemos eso amigo, ¿querés una hamburguesa?"
 - Si la cantidad es NORMAL (1-10 hamburguesas) -> procesá normal
+
+[NO COMERCIAL]
+- Detectá si el mensaje del cliente NO es sobre el negocio:
+  • Saludo de amigo: "Que onda cumpa", "Todo bien?", "Como andas"
+  • Joda / exageración (ya cubierto en [HUMOR Y EXAGERACIONES])
+  • Charla casual: "Fortín yunka", "En la lucha", "De una"
+  • Solo emojis 😂🔥❤️
+- Si detectás mensaje NO comercial:
+  -> PRIMER mensaje no-comercial: "Holaa ¿todo bien?" — sin menú, sin venta, sin preguntar qué quiere
+  -> SEGUNDO mensaje no-comercial consecutivo: "Ahí te paso con Leandro, yo estoy para cosas del negocio" + transferToHuman
+- Si es AMBIGUO ("Holaa", "Buenas") -> tratá como comercial normal. Solo si los próximos mensajes son no-comerciales, transferí.
+- REGLA DE ORO: Si no estás segura de si el cliente quiere comprar, NO arranques flujo de venta.
+
+[UNIDADES]
+- Algunos productos vienen en paquetes: "Pan de Lomito x 4 u", "Pan para Sanguche x Docena"
+- "x 4 u" NO significa que sean 4 unidades del mismo producto. Es UN SOLO producto que contiene 4 panes.
+- Si el cliente pide "1 pan de lomito" -> addOrderItem("Pan de Lomito x 4 u", qty=1)
+- Si el cliente pide "20 docenas de prepizza" -> addOrderItem("Prepizza x Docena", qty=20)
+- NO multipliques la cantidad. El producto "Pan de Lomito x 4 u" con qty=1 ya son 4 panes.
+- Si no encontrás un producto exacto, usá searchProductsTool con el nombre parcial
 
 [NO HACÉS]
 - NO uses "che"

@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type MessageType = "order" | "greeting" | "menu" | "info" | "complaint" | "other";
+export type MessageType = "order" | "greeting" | "menu" | "info" | "complaint" | "non_commercial" | "other";
 
 export type ConversationMetadata = {
   repromptCount: number;
@@ -42,6 +42,19 @@ export function classifyMessageType(text: string): MessageType {
   // Keywords de información
   const infoKeywords = ["precio", "cuesta", "vale", "horario", "ubica", "dirección", "donde", "dónde", "abierto", "cierran"];
   if (infoKeywords.some((k) => lower.includes(k))) return "info";
+
+  // Detección de mensaje NO comercial (amigo, joda, charla casual)
+  const nonCommercialKeywords = [
+    "cumpa", "vro", "q pendejo", "todo bien?", "todo bien",
+    "que onda", "que ondaa", "ke onda", "ké onda",
+    "amigo", "como andas", "cómo andas", "todo tranqui",
+    "en la lucha", "de una de una", "fortín", "yunka",
+  ];
+  if (nonCommercialKeywords.some((k) => lower.includes(k))) return "non_commercial";
+
+  // Mensaje de SOLO emojis (sin texto)
+  const emojiOnlyRegex = /^[\p{Emoji}\s]+$/u;
+  if (lower.replace(/\s/g, "").length < 3 && emojiOnlyRegex.test(text.trim())) return "non_commercial";
 
   return "other";
 }

@@ -22,6 +22,7 @@ export const getProductDetailsTool = tool({
         category: products.category,
         line: products.line,
         available: products.available,
+        stock: products.stock,
         imageUrl: products.imageUrl,
       })
       .from(products)
@@ -38,6 +39,10 @@ export const getProductDetailsTool = tool({
 
     if (!found.available) {
       return `${found.name} no está disponible actualmente. ¿Querés ver qué otras opciones tenemos?`;
+    }
+
+    if (found.stock !== null && found.stock === 0) {
+      return `${found.name} está agotado por ahora. ¿Querés ver qué otras opciones tenemos?`;
     }
 
     const categoryLabel: Record<string, string> = {
@@ -69,7 +74,7 @@ export const getProductPriceTool = tool({
   }),
   execute: async ({ name }) => {
     const items = await db
-      .select({ name: products.name, price: products.price, available: products.available })
+      .select({ name: products.name, price: products.price, available: products.available, stock: products.stock })
       .from(products)
       .where(eq(products.available, true));
 
@@ -78,6 +83,10 @@ export const getProductPriceTool = tool({
 
     if (!found) {
       return "No encontré ese producto en el menú.";
+    }
+
+    if (found.stock !== null && found.stock === 0) {
+      return `${found.name} está agotado por ahora. ¿Querés ver otras opciones?`;
     }
 
     return `💰 ${found.name}: $${found.price}`;
@@ -158,11 +167,11 @@ export function createSendProductImageTool(customerPhone: string) {
   });
 }
 
-// searchProducts - Buscar productos
+// searchProducts - Buscar productos por nombre (matching parcial)
 export const searchProductsTool = tool({
-  description: "Busca productos por nombre o descripción",
+  description: "Busca productos por nombre. Usá esta tool cuando el cliente pida un producto por nombre parcial, ej: 'pancitos chips', 'pan de lomito', 'prepizza'. Busca coincidencias parciales en el nombre y devuelve hasta 5 resultados.",
   inputSchema: z.object({
-    query: z.string().describe("Término de búsqueda"),
+    query: z.string().describe("Término de búsqueda (puede ser parcial)"),
   }),
   execute: async ({ query }) => {
     const items = await db
@@ -171,23 +180,39 @@ export const searchProductsTool = tool({
         description: products.description,
         price: products.price,
         available: products.available,
+        stock: products.stock,
       })
       .from(products)
       .where(eq(products.available, true));
 
-    const normalizedQuery = query.toLowerCase();
-    const filtered = items.filter(
-      (p) =>
-        p.name?.toLowerCase().includes(normalizedQuery) ||
-        p.description?.toLowerCase().includes(normalizedQuery)
-    );
+    const normalizedQuery = query.toLowerCase().trim();
+    const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
+
+    const filtered = items.filter((p) => {
+      const name = p.name?.toLowerCase() || "";
+      const desc = p.description?.toLowerCase() || "";
+
+      // Match exacto del query completo
+      if (name.includes(normalizedQuery) || desc.includes(normalizedQuery)) return true;
+
+      // Match por palabras individuales (al menos 1 palabra coincide)
+      if (queryWords.length > 1) {
+        return queryWords.some(
+          (word) => name.includes(word) || desc.includes(word)
+        );
+      }
+
+      return false;
+    });
 
     if (filtered.length === 0) {
       return `No encontré productos que coincidan con "${query}". ¿Querés ver el menú completo?`;
     }
 
-    return filtered
-      .map((p) => `• ${p.name} - $${p.price}${p.description ? ` — ${p.description}` : ""}`)
+    const results = filtered.slice(0, 5);
+
+    return results
+      .map((p) => `• ${p.name} - $${p.price}${p.description ? ` — ${p.description}` : ""}${p.stock !== null ? ` (stock: ${p.stock})` : ""}`)
       .join("\n");
   },
 });

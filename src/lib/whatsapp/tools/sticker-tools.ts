@@ -84,7 +84,7 @@ export function createSendMenuImageTool(customerPhone: string) {
         process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
         "https://muzapp.onrender.com";
 
-      // ─── Si hamburguesas sin stock, redirigir silenciosamente a menú de pan ──
+      // ─── Si hamburguesas sin stock, avisar explícitamente ──
       if (tipo === "hamburguesas" || !tipo) {
         try {
           const { db } = await import("@/db");
@@ -96,6 +96,9 @@ export function createSendMenuImageTool(customerPhone: string) {
             .where(eq(agentConfig.id, 1))
             .limit(1);
           if (cfg?.sinStock) {
+            if (tipo === "hamburguesas") {
+              return "Hoy solo tenemos pan mayorista, ¿querés ver el menú de pan?";
+            }
             tipo = "pan";
           }
         } catch {

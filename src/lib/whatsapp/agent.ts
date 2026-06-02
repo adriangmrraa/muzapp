@@ -69,6 +69,35 @@ export async function runWhatsAppAgent({
     // non-fatal
   }
 
+  // 🚫 DETECCIÓN NO-COMERCIAL: detectar si el cliente no está interesado en comprar
+  let nonCommercialDirective = "";
+  try {
+    const { classifyMessageType } = await import("./anti-loop");
+    const currentType = classifyMessageType(lastUserMessage);
+    
+    if (currentType === "non_commercial") {
+      // Buscar el mensaje ANTERIOR del usuario en el array messages
+      const prevUserMessage = messages
+        .slice(0, -1) // todo excepto el actual
+        .reverse()
+        .find((m) => m.role === "user");
+      
+      const wasPrevNonCommercial = prevUserMessage
+        ? classifyMessageType(prevUserMessage.content) === "non_commercial"
+        : false;
+
+      if (wasPrevNonCommercial) {
+        // 2+ mensajes no-comerciales consecutivos → transferir a humano
+        nonCommercialDirective = "🚫 NO COMERCIAL: El cliente NO está haciendo un pedido ni consulta del negocio. Respondé: 'Ahí te paso con Leandro, yo estoy para cosas del negocio' y ejecutá transferToHuman.";
+      } else {
+        // Primer mensaje no-comercial → responder amable sin vender
+        nonCommercialDirective = "🚫 NO COMERCIAL: Este mensaje no parece ser sobre el negocio. Respondé amable 'Holaa ¿todo bien?' SIN ofrecer menú, SIN arrancar flujo de venta, SIN preguntar qué quiere.";
+      }
+    }
+  } catch {
+    // non-fatal
+  }
+
   // 🔧 BUILD DYNAMIC PROMPT (V6 + customer context)
   let system: string;
   let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null }; lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any }; currentCart?: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[]; currentHour?: number; previousContext?: string } | undefined;
@@ -211,7 +240,7 @@ export async function runWhatsAppAgent({
   }
   
   try {
-    system = await buildSystemPrompt(conversationId, customerContext, antiLoopDirective);
+    system = await buildSystemPrompt(conversationId, customerContext, antiLoopDirective, nonCommercialDirective);
   } catch (err) {
     console.warn("[agent] buildSystemPrompt failed, using fallback", err);
     system = DEFAULT_SYSTEM_PROMPT;
