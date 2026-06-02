@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { products } from "@/db/schema";
+import { products, promotions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { normalizePhone, isValidPhone as normalizedIsValid } from "@/lib/phone-utils";
 
@@ -28,8 +28,9 @@ export function isValidPhone(phone: string): boolean {
 
 /**
  * Resuelve items contra productos reales de la DB.
- * Busca el nombre más parecido en la DB y devuelve el nombre + precio REAL.
- * Si no encuentra match, devuelve el item original con price y unitPrice normalizados.
+ * Busca primero en PRODUCTOS, y si no encuentra, busca en PROMOCIONES.
+ * Devuelve el nombre + precio REAL de la DB.
+ * Si no encuentra match en ninguna tabla, devuelve unitPrice = 0.
  */
 export async function resolveItems(items: InputItem[]): Promise<ResolvedItem[]> {
   try {
@@ -38,23 +39,47 @@ export async function resolveItems(items: InputItem[]): Promise<ResolvedItem[]> 
       .from(products)
       .where(eq(products.available, true));
 
+    const dbPromotions = await db
+      .select({ name: promotions.name, customPrice: promotions.customPrice })
+      .from(promotions)
+      .where(eq(promotions.active, true));
+
     return items.map((item) => {
       const input = item.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-      const match = dbProducts.find((p) => {
+      
+      // 1. Buscar en productos
+      const productMatch = dbProducts.find((p) => {
         const pName = p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         return pName === input || pName.includes(input) || input.includes(pName);
       });
 
-      if (match) {
-        const realPrice = Number(match.price);
+      if (productMatch) {
+        const realPrice = Number(productMatch.price);
         return {
-          name: match.name,
+          name: productMatch.name,
           quantity: item.quantity,
           price: realPrice,       // ✅ SIEMPRE precio real de DB
           unitPrice: realPrice,   // ✅ IGNORA item.unitPrice del LLM
         };
       }
 
+      // 2. Si no hay match en productos, buscar en promociones
+      const promoMatch = dbPromotions.find((p) => {
+        const pName = p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        return pName === input || pName.includes(input) || input.includes(pName);
+      });
+
+      if (promoMatch) {
+        const promoPrice = Number(promoMatch.customPrice);
+        return {
+          name: promoMatch.name,
+          quantity: item.quantity,
+          price: promoPrice,      // Precio real de la promo
+          unitPrice: promoPrice,  // Se multiplica por quantity para el total
+        };
+      }
+
+      // 3. Sin match en ninguna tabla
       return {
         name: item.name,
         quantity: item.quantity,
