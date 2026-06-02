@@ -85,7 +85,7 @@ async function handleFlush(phone: string, combinedText: string): Promise<void> {
     }
 
     // Use the NEW V2 agent (14 tools, emotional flows, dynamic prompt)
-    const responseText = await runWhatsAppAgent({
+    const { text: responseText, pendingMedia } = await runWhatsAppAgent({
       conversationId,
       customerPhone: phone,
       messages: aiMessages,
@@ -96,6 +96,14 @@ async function handleFlush(phone: string, combinedText: string): Promise<void> {
     const from = process.env.WHATSAPP_PHONE_NUMBER || "";
     if (apiKey && from) {
       await sendWhatsAppBubbles({ to: phone, text: responseText, apiKey, from });
+      // Media pending (imágenes) se envían después del texto
+      for (const media of pendingMedia) {
+        await new Promise((r) => setTimeout(r, 2000));
+        if (media.type === "image" || media.type === "sticker") {
+          const { sendImage } = await import("@/lib/ycloud");
+          await sendImage(phone, media.url, media.caption);
+        }
+      }
     }
 
     // Save updated conversation (history + user msg + assistant response)

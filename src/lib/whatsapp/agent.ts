@@ -45,18 +45,25 @@ interface RunAgentParams {
   messages: Array<{ role: "user" | "assistant"; content: string }>;
 }
 
+export interface PendingMedia {
+  type: "image" | "document" | "sticker";
+  url: string;
+  caption: string;
+  dbContent: string;
+}
+
 export async function runWhatsAppAgent({
   conversationId,
   customerPhone,
   messages,
-}: RunAgentParams): Promise<string> {
+}: RunAgentParams): Promise<{ text: string; pendingMedia: PendingMedia[] }> {
   // 🛡️ PROMPT INJECTION DETECTION
   const lastUserMessage = messages[messages.length - 1]?.content || "";
   const injectionCheck = detectInjection(lastUserMessage);
   
   if (injectionCheck.detected) {
     console.warn("[agent] Prompt injection detected:", injectionCheck.pattern);
-    return "No puedo procesar esa solicitud. ¿Querés hacer un pedido o ver el menú?";
+    return { text: "No puedo procesar esa solicitud. ¿Querés hacer un pedido o ver el menú?", pendingMedia: [] };
   }
 
   // 🔄 ANTI-LOOP: detectar si estamos en un ciclo de repetición
@@ -288,11 +295,11 @@ export async function runWhatsAppAgent({
         saveAddress: saveAddressTool,
         getPaymentAlias: getPaymentAliasTool,
         // Grupo G: Multimedia + Stickers (5)
-        sendProductImage: createSendProductImageTool(customerPhone),
-        sendSticker: createSendStickerTool(customerPhone),
-        sendMenuImage: createSendMenuImageTool(customerPhone),
-        sendImage: createSendImageTool(customerPhone),
-        sendDocument: createSendDocumentTool(customerPhone),
+        sendProductImage: createSendProductImageTool(conversationId, customerPhone),
+        sendSticker: createSendStickerTool(conversationId, customerPhone),
+        sendMenuImage: createSendMenuImageTool(conversationId, customerPhone),
+        sendImage: createSendImageTool(conversationId, customerPhone),
+        sendDocument: createSendDocumentTool(conversationId, customerPhone),
         // Grupo H: Order Context (memoria del pedido)
         addOrderItem: createAddOrderItemTool(conversationId, customerPhone),
         getOrderSummary: createGetOrderSummaryTool(conversationId),
@@ -300,7 +307,7 @@ export async function runWhatsAppAgent({
         getAddresses: createGetAddressesTool(customerPhone),
         // Grupo I: Promos (2)
         getActivePromos: getActivePromosTool,
-        sendPromoImage: createSendPromoImageTool(customerPhone),
+        sendPromoImage: createSendPromoImageTool(conversationId, customerPhone),
       },
       stopWhen: stepCountIs(10),
       toolChoice: "auto",
@@ -308,10 +315,33 @@ export async function runWhatsAppAgent({
 
     const rawText = result.text || "";
     const finalText = rawText.replace(/\[INTERNAL_[^\]]*\]/g, "").trim();
+
+    // 🔍 Extraer media pendiente de los tool results
+    // Los tools multimedia devuelven JSON con { _media: true, ... } en vez de enviar directo
+    const pendingMedia: PendingMedia[] = [];
+    const mediaToolNames = ["sendMenuImage", "sendProductImage", "sendImage", "sendSticker", "sendDocument", "sendPromoImage"];
     
-    return finalText || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
+    for (const tr of result.toolResults || []) {
+      if (mediaToolNames.includes(tr.toolName)) {
+        try {
+          const parsed = typeof tr.output === "string" ? JSON.parse(tr.output) : null;
+          if (parsed?._media) {
+            pendingMedia.push({
+              type: parsed.type || "image",
+              url: parsed.url,
+              caption: parsed.caption || "",
+              dbContent: parsed.dbContent || "",
+            });
+          }
+        } catch {
+          // Si no es JSON (tool falló o devolvió texto normal), ignorar
+        }
+      }
+    }
+    
+    return { text: finalText || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?", pendingMedia };
   } catch (error) {
     console.error("[agent] Error running WhatsApp agent:", error);
-    return "Disculpá, tuve un problema técnico. Escribí 'hablar con humano' si querés que te atienda Leandro personalmente.";
+    return { text: "Disculpá, tuve un problema técnico. Escribí 'hablar con humano' si querés que te atienda Leandro personalmente.", pendingMedia: [] };
   }
 }

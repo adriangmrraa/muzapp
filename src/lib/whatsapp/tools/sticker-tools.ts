@@ -3,7 +3,6 @@ import { z } from "zod";
 import { db } from "@/db";
 import { promotions } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { sendImage } from "@/lib/ycloud";
 import fs from "fs";
 import path from "path";
 
@@ -31,8 +30,13 @@ function stickerExists(name: StickerName): boolean {
   }
 }
 
+function getBaseUrl(): string {
+  return process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
+    "https://muzapp.onrender.com";
+}
+
 // ─── sendSticker ────────────────────────────────────────────────────────────
-export function createSendStickerTool(customerPhone: string) {
+export function createSendStickerTool(_conversationId: number, _customerPhone: string) {
   return tool({
     description:
       "Envía un sticker de confirmación al cliente. Usar después de confirmar pedido, pago recibido, o cuando el cliente confirma algo. Stickers: flama (🔥 épico), ok (👍 confirmación), dale (✅ aprobación), corazon (❤️ feedback/agradecimiento).",
@@ -42,23 +46,26 @@ export function createSendStickerTool(customerPhone: string) {
         .describe("Sticker: flama (confirmación épica), ok (okey), dale (dale nomás), corazon (❤️ feedback/agradecimiento)"),
     }),
     execute: async ({ sticker }) => {
-      const info = STICKER_MAP[sticker as StickerName];
+      const name = sticker as StickerName;
+      const info = STICKER_MAP[name];
       if (!info) return "No tengo ese sticker.";
 
-      // Si la imagen existe, enviarla
-      if (stickerExists(sticker as StickerName)) {
-        const baseUrl =
-          process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
-          "https://muzapp.onrender.com";
-        const imageUrl = `${baseUrl}/assets/images/stickers/${info.file}`;
-
-        const result = await sendImage(customerPhone, imageUrl, info.emoji);
-        if (!result.ok) {
-          console.warn("[sticker] Send failed, using emoji fallback:", result.error);
-          // Fallback: solo emoji
-          return `Sticker no disponible, pero vale lo mismo ${info.emoji}`;
-        }
-        return `Sticker enviado ${info.emoji}`;
+      // Si la imagen existe, devolver data para que el webhook la envíe en orden
+      if (stickerExists(name)) {
+        const imageUrl = `${getBaseUrl()}/assets/images/stickers/${info.file}`;
+        const labelMap: Record<string, string> = {
+          flama: "🔥 confirmación épica",
+          ok: "👍 confirmación",
+          dale: "✅ aprobación",
+          corazon: "❤️ agradecimiento",
+        };
+        return JSON.stringify({
+          _media: true,
+          type: "sticker",
+          url: imageUrl,
+          caption: info.emoji,
+          dbContent: `[Sticker: ${labelMap[name] || name}]`,
+        });
       }
 
       // Fallback: emoji nomas
@@ -68,7 +75,7 @@ export function createSendStickerTool(customerPhone: string) {
 }
 
 // ─── sendMenuImage ──────────────────────────────────────────────────────────
-export function createSendMenuImageTool(customerPhone: string) {
+export function createSendMenuImageTool(_conversationId: number, _customerPhone: string) {
   return tool({
     description:
       "Envía la foto del menú al cliente. Usar cuando piden 'menu', 'carta', 'que tienen'. El agente no necesita especificar tipo, se detecta automáticamente del contexto.",
@@ -80,12 +87,11 @@ export function createSendMenuImageTool(customerPhone: string) {
         .describe("Tipo: hamburguesas (menu completo) o pan (solo panaderia)"),
     }),
     execute: async ({ tipo }) => {
-      const baseUrl =
-        process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
-        "https://muzapp.onrender.com";
+      const baseUrl = getBaseUrl();
 
       // ─── Si hamburguesas sin stock, avisar explícitamente ──
-      if (tipo === "hamburguesas" || !tipo) {
+      let resolvedTipo = tipo || "hamburguesas";
+      if (resolvedTipo === "hamburguesas") {
         try {
           const { db } = await import("@/db");
           const { agentConfig } = await import("@/db/schema");
@@ -99,14 +105,17 @@ export function createSendMenuImageTool(customerPhone: string) {
             if (tipo === "hamburguesas") {
               return "Hoy solo tenemos pan mayorista, ¿querés ver el menú de pan?";
             }
-            tipo = "pan";
+            resolvedTipo = "pan";
           }
         } catch {
-          // non-fatal — seguir con lo que vino
+          // non-fatal
         }
       }
 
-      // Try to get from DB first (configurable from admin UI)
+      // Obtener URL del menú (DB primero, fallback estático)
+      let imageUrl = "";
+      const caption = "Acá tenés el menú";
+
       try {
         const { db } = await import("@/db");
         const { agentConfig } = await import("@/db/schema");
@@ -122,37 +131,35 @@ export function createSendMenuImageTool(customerPhone: string) {
           .limit(1);
 
         const config = rows[0];
-        const dbUrl = tipo === "hamburguesas" ? config?.hamb : config?.pan;
+        const dbUrl = resolvedTipo === "hamburguesas" ? config?.hamb : config?.pan;
 
         if (dbUrl) {
-          const absoluteUrl = dbUrl.startsWith("http") ? dbUrl : `${baseUrl}${dbUrl}`;
-          const result = await sendImage(customerPhone, absoluteUrl, "Acá tenés el menú");
-          if (result.ok) return `Te mandé el menú 📸`;
-          console.warn("[menuImage] DB URL failed, trying fallback:", result.error);
+          imageUrl = dbUrl.startsWith("http") ? dbUrl : `${baseUrl}${dbUrl}`;
         }
       } catch (err) {
         console.warn("[menuImage] DB query failed, using fallback:", err);
       }
 
       // Fallback: archivos estáticos
-      const filename = tipo === "hamburguesas" ? "menu-pizzas.jpeg" : "menu-pan.jpeg";
-      const imageUrl = `${baseUrl}/assets/images/${filename}`;
-
-      const caption = "Acá tenés el menú";
-      const result = await sendImage(customerPhone, imageUrl, caption);
-
-      if (!result.ok) {
-        console.error("[menuImage] Error:", result.error);
-        return "No pude mandar la foto, dejamé te digo lo que tenemos.";
+      if (!imageUrl) {
+        const filename = resolvedTipo === "hamburguesas" ? "menu-pizzas.jpeg" : "menu-pan.jpeg";
+        imageUrl = `${baseUrl}/assets/images/${filename}`;
       }
 
-      return `Te mandé el menú 📸`;
+      const menuLabel = resolvedTipo === "pan" ? "pan mayorista" : "hamburguesas";
+      return JSON.stringify({
+        _media: true,
+        type: "image",
+        url: imageUrl,
+        caption,
+        dbContent: `Menú de ${menuLabel} 📸`,
+      });
     },
   });
 }
 
 // ─── sendPromoImage ─────────────────────────────────────────────────────────
-export function createSendPromoImageTool(customerPhone: string) {
+export function createSendPromoImageTool(_conversationId: number, _customerPhone: string) {
   return tool({
     description:
       "Envía la foto de una PROMOCIÓN al cliente por WhatsApp. Busca por ID (promoId) o por nombre (promoName, ej: 'Combo 17'). Es OBLIGATORIO ejecutar esta tool cuando el cliente pide ver o pregunta por una promo específica. NO digas 'tiene foto' o 'te mando foto' sin ejecutar la tool. Ejecutala directamente.",
@@ -188,13 +195,17 @@ export function createSendPromoImageTool(customerPhone: string) {
         : "";
 
       if (promo.imageUrl) {
-        const baseUrl =
-          process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
-          "https://muzapp.onrender.com";
+        const baseUrl = getBaseUrl();
         const absoluteUrl = promo.imageUrl.startsWith("http") ? promo.imageUrl : `${baseUrl}${promo.imageUrl}`;
-        const result = await sendImage(customerPhone, absoluteUrl, `${promo.name}${priceText ? ` — ${priceText}` : ""}`);
-        if (result.ok) return `Te mandé la promo ${promo.name} 📸`;
-        console.warn("[promoImage] Send failed:", result.error);
+        const caption = `${promo.name}${priceText ? ` — ${priceText}` : ""}`;
+
+        return JSON.stringify({
+          _media: true,
+          type: "image",
+          url: absoluteUrl,
+          caption,
+          dbContent: `Promo: ${promo.name}${priceText ? ` — ${priceText}` : ""} 📸`,
+        });
       }
 
       // Fallback: texto si no hay imagen

@@ -3,7 +3,6 @@ import { z } from "zod";
 import { db } from "@/db";
 import { products, promotions } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { sendImage } from "@/lib/ycloud";
 import { PRODUCT_IMAGE_BY_NAME } from "@/lib/constants";
 
 // getProductDetails - Ver detalles de un producto
@@ -94,7 +93,7 @@ export const getProductPriceTool = tool({
 });
 
 // createSendProductImageTool - Enviar foto de un producto por WhatsApp
-export function createSendProductImageTool(customerPhone: string) {
+export function createSendProductImageTool(_conversationId: number, _customerPhone: string) {
   return tool({
     description: "Envía la foto de un PRODUCTO al cliente por WhatsApp. Podés buscar por ID o por nombre (productName, ej: 'bookbinder', 'deli deli'). OBLIGATORIO: cuando el cliente pide ver un producto o pregunta cómo se ve, ejecutá esta tool. NO digas 'tengo foto' sin enviarla.",
     inputSchema: z.object({
@@ -134,7 +133,6 @@ export function createSendProductImageTool(customerPhone: string) {
         return "No encontré ese producto.";
       }
 
-      // Fallback: imageUrl de DB → static assets por nombre
       const baseUrl =
         process.env.RENDER_EXTERNAL_URL?.replace(/\/$/, "") ||
         "https://muzapp.onrender.com";
@@ -148,21 +146,19 @@ export function createSendProductImageTool(customerPhone: string) {
         // Buscar en assets estáticos por nombre
         const staticPath = PRODUCT_IMAGE_BY_NAME[product.name.toLowerCase()];
         if (!staticPath) {
-          // También buscar en bread images
           return "Este producto no tiene foto.";
         }
         fullImageUrl = `${baseUrl}${staticPath}`;
       }
 
       const caption = `${product.name} - $${product.price}`;
-      const result = await sendImage(customerPhone, fullImageUrl, caption);
-
-      if (!result.ok) {
-        console.error("[sendProductImage] YCloud error:", result.error);
-        return "No pude enviar la foto en este momento. Intentá de nuevo o pedime que te describa el producto.";
-      }
-
-      return `Te envié la foto de ${product.name} 📸`;
+      return JSON.stringify({
+        _media: true,
+        type: "image",
+        url: fullImageUrl,
+        caption,
+        dbContent: `📸 ${product.name}`,
+      });
     },
   });
 }

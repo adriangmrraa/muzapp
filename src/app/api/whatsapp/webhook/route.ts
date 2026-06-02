@@ -13,7 +13,8 @@ import {
   type MediaAttachment,
 } from "@/lib/channels/router";
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
-import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
+import { runWhatsAppAgent, type PendingMedia } from "@/lib/whatsapp/agent";
+import { sendImage } from "@/lib/ycloud";
 import { db } from "@/db";
 import { agentConfig, conversations, leads, addresses } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -712,18 +713,22 @@ export async function POST(request: NextRequest) {
       // NO inyectar nada como role:"user" — eso contamina la línea temporal.
 
       // Run agent with combined context
-      const responseText = await runWhatsAppAgent({
+      const { text: responseText, pendingMedia } = await runWhatsAppAgent({
         conversationId,
         customerPhone,
         messages: aiMessages,
       });
 
-      console.log(`[webhook:wa] Agent response: ${responseText.slice(0, 100)}...`);
+      console.log(`[webhook:wa] Agent response: ${responseText.slice(0, 100)}... (${pendingMedia.length} media pending)`);
 
-      // Persist assistant response
+      // ═══════════════════════════════════════════════════════════════════
+      // ORDEN CORRECTO: primero texto, DESPUÉS media
+      // ═══════════════════════════════════════════════════════════════════
+
+      // 1a. Guardar texto en DB
       const msgId = await insertMessage(conversationId, "assistant", responseText);
 
-      // Send response via YCloud (split into bubbles for natural UX)
+      // 1b. Enviar texto (split into bubbles for natural UX)
       const ycloudResult = await sendWhatsAppBubbles({
         to: customerPhone,
         text: responseText,
@@ -731,10 +736,7 @@ export async function POST(request: NextRequest) {
         from: botNumber,
       });
 
-      // ═══════════════════════════════════════════════════════════════════
-      // CLINICFORGE PATTERN: Guardar el wamid (YCloud message ID) en el
-      // registro de chatMessage para que el echo handler pueda deduplicar
-      // ═══════════════════════════════════════════════════════════════════
+      // 1c. Guardar wamid en el texto de la DB
       if (ycloudResult?.id) {
         try {
           const { chatMessages } = await import("@/db/schema");
@@ -745,6 +747,29 @@ export async function POST(request: NextRequest) {
           console.log(`[webhook:wa] Updated chatMessage ${msgId} with wamid ${ycloudResult.id}`);
         } catch (updateErr) {
           console.warn("[webhook:wa] Failed to update wamid on chatMessage:", updateErr);
+        }
+      }
+
+      // 2. DESPUÉS del texto, enviar media pendiente en orden
+      if (pendingMedia.length > 0) {
+        console.log(`[webhook:wa] Sending ${pendingMedia.length} pending media after text...`);
+        for (const media of pendingMedia) {
+          // Delay entre mensajes para que se sienta natural
+          await new Promise((r) => setTimeout(r, 2000));
+
+          if (media.type === "image" || media.type === "sticker") {
+            const imgResult = await sendImage(customerPhone, media.url, media.caption);
+            if (imgResult.ok) {
+              // Guardar en DB con contenido descriptivo para contexto del AI
+              await insertMessage(conversationId, "assistant", media.dbContent);
+            } else {
+              console.warn(`[webhook:wa] Failed to send media ${media.url.slice(0, 50)}:`, imgResult.error);
+            }
+          } else if (media.type === "document") {
+            // Para documentos usaríamos sendDocument, pero por ahora skip
+            console.warn("[webhook:wa] Document sending not implemented in response flow yet");
+            await insertMessage(conversationId, "assistant", media.dbContent);
+          }
         }
       }
 
