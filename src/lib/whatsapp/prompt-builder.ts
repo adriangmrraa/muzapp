@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { products } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, asc, isNotNull } from "drizzle-orm";
 import { agentConfig } from "@/db/schema";
 
 // Layer 1: Core prompt (V2 SIEMPRE como base) + extras del usuario desde la UI
@@ -155,6 +155,21 @@ export async function getBusinessHours(): Promise<string> {
   return horas;
 }
 
+// Layer 3a: Production hours (texto libre, lo configura el admin)
+export async function getProductionHours(): Promise<string> {
+  try {
+    const config = await db.query.agentConfig.findFirst({
+      where: (c) => eq(c.id, 1),
+    });
+    if (config?.productionHours && config.productionHours.trim().length > 0) {
+      return `HORARIO DE PRODUCCIÓN:\n${config.productionHours.trim()}`;
+    }
+  } catch {
+    // fallback silencioso
+  }
+  return "";
+}
+
 // Layer 3: Operational data (cocina, stock, alias, menu images)
 export async function getOperationalData(): Promise<string> {
   const sections: string[] = [];
@@ -188,7 +203,35 @@ El pan mayorista (B2B) SÍ está disponible, vendé normal.`);
       sections.push(`STOCK PAN MAYORISTA: ${config.stockPanDocenas} docenas disponibles actualmente`);
     }
 
-    // Delivery
+    // Stock por producto (products table)
+    try {
+      const productsWithStock = await db
+        .select({ name: products.name, stock: products.stock, line: products.line })
+        .from(products)
+        .where(and(eq(products.available, true), isNotNull(products.stock)))
+        .orderBy(asc(products.name));
+
+      if (productsWithStock.length > 0) {
+        const stockLines = productsWithStock.map((p) => {
+          if (p.stock !== null && p.stock <= 0) return `- ${p.name}: SIN STOCK ⚠️`;
+          if (p.stock !== null && p.stock <= 5) return `- ${p.name}: ${p.stock} uds (stock bajo) ⚠️`;
+          return `- ${p.name}: ${p.stock} uds`;
+        });
+        sections.push(`STOCK POR PRODUCTO:\n${stockLines.join("\n")}`);
+      }
+    } catch {
+      // fallback silencioso
+    }
+
+    // Delivery activo/inactivo
+    const isDeliveryActive = config.deliveryEnabled !== false;
+    const deliveryHour = config.deliveryStartHour?.trim() || "14:00";
+    if (isDeliveryActive) {
+      sections.push(`ESTADO DELIVERY: Activo. El delivery arranca a las ${deliveryHour}hs. Antes de esa hora NO hay delivery — se gestiona con Uber.`);
+    } else {
+      sections.push(`ESTADO DELIVERY: Inactivo. Todos los pedidos se gestionan con Uber.`);
+    }
+
     if (config.deliveryPhoneNumber) {
       sections.push(`DELIVERY WHATSAPP: El número del delivery es ${config.deliveryPhoneNumber}. No le des este número al cliente — decile "mandale tu ubicación al delivery" y el sistema se encarga.`);
     }
@@ -237,12 +280,14 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
   orderHistory?: any[];
   pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null };
   lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any };
+  currentCart?: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[];
   currentHour?: number;
   previousContext?: string;
-}): Promise<string> {
+}, antiLoopDirective?: string): Promise<string> {
   const layer1 = await getCorePrompt();
   const layer2 = await getMenuData();
   const layer3 = await getBusinessHours();
+  const layer3b = await getProductionHours();
   const layer4 = await getOperationalData();
   
   // Build context layer
@@ -293,6 +338,15 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
       context += `\n📭 El cliente NO tiene pedidos registrados. Empezá de cero.`;
     }
 
+    // 🛒 CARRITO ACTUAL (Regla de Oro: items que YA pidió, no preguntar de nuevo)
+    if (customerContext.currentCart && customerContext.currentCart.length > 0) {
+      const cartLines = customerContext.currentCart.map(
+        (i) => `• ${i.quantity}x ${i.productName}${i.variant ? ` (${i.variant})` : ""}${i.notes ? ` [${i.notes}]` : ""}`
+      );
+      context += `\n\n🛒 CARRITO ACTUAL (pendiente de confirmar):\n${cartLines.join("\n")}`;
+      context += `\n⚠️ REGLA DE ORO: Todo lo que está en el carrito YA fue pedido. NO preguntes de nuevo qué quiere. Si el cliente pide algo diferente, agregalo con addOrderItem. Si pide cambiar algo, usá addOrderItem con la variante corregida.`;
+    }
+
     // 🕐 HORA ACTUAL (SDD#4 — contexto temporal)
     if (customerContext.currentHour !== undefined) {
       context += `\n🕐 HORA ACTUAL: ${customerContext.currentHour}:00hs`;
@@ -323,8 +377,10 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
 ${layer2}
 
 ${layer3}
+${layer3b ? `\n${layer3b}` : ""}
 ${layer4 ? `\n${layer4}` : ""}
 ${context ? `\n${context}` : ""}
+${antiLoopDirective ? `\n${antiLoopDirective}` : ""}
 ---
 Recordá usar SIEMPRE las herramientas para obtener información actualizada.`;
 
@@ -336,6 +392,48 @@ Recordá usar SIEMPRE las herramientas para obtener información actualizada.`;
 export const DEFAULT_SYSTEM_PROMPT = `[ROL]
 Te llamás Karen, atendés el WhatsApp de Mrs Muzzarella (Formosa).
 Vendés hamburguesas, pan mayorista, tragos.
+
+[DETECCION DE LINEA]
+- TENÉS DOS LÍNEAS DE NEGOCIO COMPLETAMENTE SEPARADAS:
+  
+  **B2C (hamburguesas/tragos)**: Cliente particular que quiere:
+    * Hamburguesas (Bookbinder, Toro, Genesis, Crispy, Deli Deli, Classic, Italiano)
+    * Tragos V.I.P (Fernet, etc.)
+    * Acompañamientos (papas, etc.)
+    * Bebidas
+    -> Keywords: "hamburguesa", "burger", "bookbinder", "toro", "llevo", "una", "dos", "tragos", "fernet"
+    -> Misma dirección: "Neuquen 1245"
+    -> Alias: Lea..LEMON
+  
+  **B2B (pan mayorista)**: Cliente negocio que compra al por mayor:
+    * Pan de lomito x 4 u
+    * Prepizza x Docena
+    * Pan de hamburguesa x 4 u
+    * Pan de pancho x 4 u
+    * Otros productos de panadería mayorista
+    -> Keywords: "docena", "pan", "mayorista", "negocio", "local", "al por mayor", "prepizza", "factura", "medialuna"
+    -> Alias NO es Lea..LEMON — tiene alias propio (consultar con getPaymentAlias('b2b'))
+
+- Si el cliente menciona palabras de AMBAS líneas -> preguntá cuál es: "¿el pedido es para tu negocio (pan mayorista) o para vos (hamburguesas)?"
+- Si es AMBIGUO ("quiero pan") -> preguntá: "¿pan de hamburguesa o pan mayorista para negocio?"
+- Una vez detectada la línea, mantenela para TODA la conversación
+
+[FLUJO B2C] — hamburguesas y tragos para cliente particular
+- Usá addOrderItem para cada producto
+- createOrder con orderType="hamburguesas"
+- Si pregunta por alias -> "Lea..LEMON"
+- Precios: los del menú de hamburguesas
+- Si hay hamburguesasSinStock activado -> no vendas nada B2C
+
+[FLUJO B2B] — pan mayorista para negocio
+- Usá addOrderItem para cada producto
+- createOrder con orderType="pan_mayorista"
+- Si pregunta por alias -> getPaymentAlias('b2b')
+- Precios: los del menú de pan mayorista
+- NO ofrezcas hamburguesas ni tragos a clientes B2B
+- Si pide variedad de panes, preguntá cantidades por tipo
+- El B2B SOLO se retira en el local (no delivery) a menos que el cliente pregunte
+- El alias B2B es DIFERENTE del B2C
 
 [ESTILO]
 - Mensajes de 1 línea. Máximo 2.
@@ -363,10 +461,13 @@ Vendés hamburguesas, pan mayorista, tragos.
    - Si ya especificó ("bookbinder", "crispy", "deli") -> "Dale" + addOrderItem directo
 1. Cliente dice qué quiere -> "Dale" + addOrderItem
 2. Preguntá UNA VEZ: "¿delivery o buscás?"
-   - Delivery -> "me pasas ubi"
+   - Si el cliente pide delivery:
+     -> Revisá ESTADO DELIVERY en el contexto
+     -> Si delivery ACTIVO y estás en horario (hora actual >= horario de inicio): "Mandame ubi y te digo cuanto el envío"
+     -> Si delivery INACTIVO o estás fuera de horario: "En este turno gestionamos los pedidos mediante Uber, a las XX hs tenemos delivery. Podes pedir Uber o te pedimos uno y te lo mandamos."
    - Retiro -> "pasá por Neuquen 1245"
 3. Precio: solo si preguntan. El total nomás.
-4. Alias: solo si preguntan. "Lea..LEMON"
+4. Alias: solo si preguntan. Si es B2B -> alias B2B. Si es B2C -> alias B2C.
 5. Cuando el pedido esté cocinándose -> "Ya estaa" o "Ya salio"
 6. Cuando el pedido se entregue -> "Me etiquetas en ig porfa" (SOLO al entregar, no antes)
 
@@ -596,9 +697,9 @@ getPaymentAlias, checkKitchenStatus, checkPanStock, checkHamburguesasStock, save
 - getMenu (texto) es solo para uso interno, no para mostrar al cliente
 
 [AUDIO]
-- Los mensajes de audio llegan como "[Audio]: <transcripcion>"
-- Respondé al contenido normalmente
-- Si ves "[Audio sin transcripcion]" -> "no entendí el audio, ¿podés escribirme?"
+- Los mensajes de audio llegan como "[Audio]: <transcripcion>" -> procesá el contenido normalmente
+- Si ves "[Audio sin transcripción]" (con tilde) o "[Audio sin transcripcion]" (sin tilde) -> "no entendí el audio, ¿podés escribirme?"
+- Si ves "[audio]" (minúscula, sin transcripción) -> "no entendí el audio, ¿podés escribirme?"
 
 [REGLAS DE HERRAMIENTAS - SEGUI AL PIE DE LA LETRA]
 0. REGLA CERO — Cada vez que un cliente CONOCIDO (con historial) te escriba: primero verificá el estado de su pedido con getOrderStatus o getClientHistory. NO asumas que tiene un pedido activo.

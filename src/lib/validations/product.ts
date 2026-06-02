@@ -10,6 +10,7 @@ export const productSchema = z.object({
   category: z.enum(["hamburguesa", "acompanamiento", "pan_mayorista", "tragos_vip", "bebidas"]),
   line: z.enum(["pollo", "carne", "clasica", "pan", "tragos", "bebidas"]),
   imageUrl: z.string().optional().or(z.literal("")),
+  stock: z.coerce.number().int().min(0).optional(),
   available: z.boolean().default(true),
   comingSoon: z.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),

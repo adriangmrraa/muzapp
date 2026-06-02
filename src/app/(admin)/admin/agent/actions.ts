@@ -65,6 +65,9 @@ const agentConfigSchema = z.object({
   menuImageUrlHamburguesas: z.string().optional(),
   menuImageUrlPan: z.string().optional(),
   deliveryPhoneNumber: z.string().optional(),
+  deliveryEnabled: z.boolean().optional().default(true),
+  deliveryStartHour: z.string().optional(),
+  productionHours: z.string().optional(),
 });
 
 // ─── Actions ────────────────────────────────────────────────────────────────────
@@ -161,6 +164,9 @@ export async function saveAgentConfig(
     menuImageUrlHamburguesas: formData.get("menuImageUrlHamburguesas") || undefined,
     menuImageUrlPan: formData.get("menuImageUrlPan") || undefined,
     deliveryPhoneNumber: formData.get("deliveryPhoneNumber") || undefined,
+    deliveryEnabled: formData.get("deliveryEnabled") === "true",
+    deliveryStartHour: formData.get("deliveryStartHour") || undefined,
+    productionHours: formData.get("productionHours") || undefined,
   };
 
   const parsed = agentConfigSchema.safeParse(raw);
@@ -204,6 +210,9 @@ export async function saveAgentConfig(
       menuImageUrlHamburguesas: parsed.data.menuImageUrlHamburguesas ?? null,
       menuImageUrlPan: parsed.data.menuImageUrlPan ?? null,
       deliveryPhoneNumber: parsed.data.deliveryPhoneNumber ?? null,
+      deliveryEnabled: parsed.data.deliveryEnabled ?? true,
+      deliveryStartHour: parsed.data.deliveryStartHour ?? null,
+      productionHours: parsed.data.productionHours ?? null,
       updatedAt: new Date(),
     };
 

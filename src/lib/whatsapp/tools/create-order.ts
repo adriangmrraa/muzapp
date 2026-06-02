@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
 import { orders, leads, agentConfig, addresses, orderContextItems } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, gt, asc } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 import { resolveItems } from "@/lib/order-utils";
 import { normalizePhone } from "@/lib/phone-utils";
@@ -55,8 +55,9 @@ async function notifyDeliveryOrder(
   }
 }
 
-export const createOrderTool = tool({
-  description: "Crea un pedido una vez que el cliente confirmó los items. SIEMPRE confirmar con el cliente antes de usar esta herramienta. Preguntá el nombre al cliente si no lo sabés.",
+export function createCreateOrderTool(conversationId: number) {
+  return tool({
+  description: "Crea un pedido una vez que el cliente confirmó los items. AUTO-LEE el carrito de la conversación. SIEMPRE confirmar con el cliente antes de usar esta herramienta. Preguntá el nombre al cliente si no lo sabés.",
   inputSchema: z.object({
     customerName: z.string().describe("Nombre del cliente (preguntalo si no lo sabés)"),
     orderType: z.enum(["hamburguesas", "pan_mayorista"]).describe("Tipo: hamburguesas (rotisería nocturna) o pan_mayorista (al por mayor)"),
@@ -64,7 +65,7 @@ export const createOrderTool = tool({
       name: z.string(),
       quantity: z.number().int().positive(),
       unitPrice: z.number().positive(),
-    })).describe("Lista de items del pedido con cantidad y precio unitario"),
+    })).optional().describe("Items del pedido (Opcional — el tool auto- Lee del carrito si no se pasan)"),
     customerPhone: z.string().describe("Teléfono del cliente"),
     address: z.string().optional().describe("Dirección de entrega (si es delivery)"),
     deliveryFee: z.number().min(0).optional().describe("Costo de delivery (0 si no aplica)"),
@@ -72,7 +73,7 @@ export const createOrderTool = tool({
     paymentMethod: z.string().optional().describe("Método de pago: efectivo, alias, etc."),
     notes: z.string().optional().describe("Notas adicionales del pedido"),
   }),
-  execute: async ({ customerName, orderType, items, customerPhone, address, deliveryFee, paymentStatus, paymentMethod, notes }) => {
+  execute: async ({ customerName, orderType, items: explicitItems, customerPhone, address, deliveryFee, paymentStatus, paymentMethod, notes }) => {
     // Normalizar teléfono antes de cualquier operación
     customerPhone = normalizePhone(customerPhone);
 
@@ -90,6 +91,39 @@ export const createOrderTool = tool({
       } catch {
         // non-fatal — si falla la consulta, permitir el pedido
       }
+    }
+
+    // ─── AUTO-LEER CARRITO desde orderContextItems si no se pasaron items explícitos ──
+    let items = explicitItems;
+    if (!items || items.length === 0) {
+      try {
+        const cartItems = await db
+          .select()
+          .from(orderContextItems)
+          .where(
+            and(
+              eq(orderContextItems.conversationId, conversationId),
+              eq(orderContextItems.status, "active"),
+              gt(orderContextItems.expiresAt, new Date()),
+            )
+          )
+          .orderBy(asc(orderContextItems.createdAt));
+        if (cartItems.length > 0) {
+          items = cartItems.map((ci) => ({
+            name: ci.productName,
+            quantity: ci.quantity,
+            unitPrice: Number(ci.productPrice || 0),
+          }));
+          console.log(`[createOrder] Auto-read ${items.length} items from carrito (conversation ${conversationId})`);
+        }
+      } catch (err) {
+        console.warn("[createOrder] Failed to auto-read carrito:", err);
+      }
+    }
+
+    // Si después de todo no hay items, error
+    if (!items || items.length === 0) {
+      return "No hay items en el carrito y no se pasaron items explícitos. Usá addOrderItem primero para agregar productos al pedido.";
     }
 
     // Resolver items contra productos reales de la DB
@@ -153,15 +187,8 @@ export const createOrderTool = tool({
 
     // Limpiar orderContextItems de esta conversación (el carrito ya pasó a pedido)
     try {
-      const [conv] = await db
-        .select({ conversationId: leads.conversationId })
-        .from(leads)
-        .where(eq(leads.phone, customerPhone))
-        .limit(1);
-      if (conv?.conversationId) {
-        await db.delete(orderContextItems)
-          .where(eq(orderContextItems.conversationId, conv.conversationId));
-      }
+      await db.delete(orderContextItems)
+        .where(eq(orderContextItems.conversationId, conversationId));
     } catch {
       // non-fatal
     }
@@ -178,3 +205,4 @@ export const createOrderTool = tool({
     return `✅ Pedido #${order.id} registrado (${typeLabel}).\n👤 Cliente: ${customerName}\n💰 Total: $${total.toFixed(2)}\n⏱ Estimado: 30-40 minutos.\nSi el cliente quiere agregar algo más, decile que tiene 5 minutos.`;
   },
 });
+}

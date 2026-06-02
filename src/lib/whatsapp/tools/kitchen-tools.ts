@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { agentConfig } from "@/db/schema";
+import { agentConfig, products } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 // ─── checkKitchenStatus ─────────────────────────────────────────────────────
@@ -64,6 +64,60 @@ export const checkPanStockTool = tool({
       return { docenasDisponibles: stock };
     } catch {
       return { docenasDisponibles: 0 };
+    }
+  },
+});
+
+// ─── checkProductStockTool ────────────────────────────────────────────────
+// Consulta stock de un producto específico (stock por producto en DB)
+export const checkProductStockTool = tool({
+  description:
+    "Consulta si un producto específico tiene stock disponible. Usá esto cuando el cliente pida un producto en particular para verificar si hay stock. Si stock es null significa stock ilimitado.",
+  inputSchema: z.object({
+    productId: z.number().optional().describe("ID del producto a consultar"),
+    productName: z.string().optional().describe("Nombre del producto a consultar (búsqueda por nombre)"),
+  }),
+  execute: async ({ productId, productName }) => {
+    try {
+      const conditions = [eq(products.available, true)];
+      if (productId) {
+        conditions.push(eq(products.id, productId));
+      } else if (productName) {
+        // coincidencia parcial por nombre
+        const matching = await db
+          .select({ id: products.id })
+          .from(products)
+          .where(productName ? eq(products.name, productName) : undefined as any)
+          .limit(1);
+        if (matching.length > 0) {
+          conditions.push(eq(products.id, matching[0].id));
+        } else {
+          return { disponible: true, mensaje: "No se encontró el producto exacto, asumimos disponible." };
+        }
+      } else {
+        return { disponible: true, mensaje: "Sin referencia de producto, asumimos disponible." };
+      }
+
+      const rows = await db
+        .select({ name: products.name, stock: products.stock })
+        .from(products)
+        .where(and(...conditions))
+        .limit(1);
+
+      if (rows.length === 0) {
+        return { disponible: false, mensaje: "Producto no encontrado o no disponible." };
+      }
+
+      const p = rows[0];
+      if (p.stock === null) {
+        return { disponible: true, stock: null, mensaje: `${p.name} tiene stock ilimitado.` };
+      }
+      if (p.stock <= 0) {
+        return { disponible: false, stock: 0, mensaje: `${p.name} no tiene stock en este momento.` };
+      }
+      return { disponible: true, stock: p.stock, mensaje: `${p.name} tiene ${p.stock} unidades disponibles.` };
+    } catch {
+      return { disponible: true, mensaje: "Error al consultar stock, asumimos disponible." };
     }
   },
 });

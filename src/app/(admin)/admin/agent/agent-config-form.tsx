@@ -75,6 +75,10 @@ export type AgentConfigFormData = {
   menuImageUrlPan: string;
   // ─── Delivery ──────────────────────────────────────────────────────────
   deliveryPhoneNumber: string;
+  deliveryEnabled: boolean;
+  deliveryStartHour: string;
+  // ─── Production ────────────────────────────────────────────────────────
+  productionHours: string;
 };
 
 const initialState: AgentConfigState = {
@@ -140,6 +144,9 @@ export default function AgentConfigForm({
   const [menuImagePan, setMenuImagePan] = useState(config.menuImageUrlPan ?? "");
   const [uploadingMenuHamb, setUploadingMenuHamb] = useState(false);
   const [uploadingMenuPan, setUploadingMenuPan] = useState(false);
+  const [deliveryEnabled, setDeliveryEnabled] = useState(config.deliveryEnabled ?? true);
+  const [deliveryStartHour, setDeliveryStartHour] = useState(config.deliveryStartHour ?? "14:00");
+  const [productionHours, setProductionHours] = useState(config.productionHours ?? "");
 
   // ─── Toast notifications ────────────────────────────────────────────────────
 
@@ -961,6 +968,23 @@ export default function AgentConfigForm({
                   El agente usa este tiempo al confirmar pedidos. Ej: "En 30-40 min lo tenes amigo"
                 </p>
               </div>
+
+              {/* Horario de producción */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="productionHours">Horario de producción</Label>
+                <Textarea
+                  id="productionHours"
+                  name="productionHours"
+                  rows={3}
+                  placeholder="Ej: El pan y productos mayoristas están disponibles a partir de las 14hs. A la mañana la producción está en marcha pero los productos todavía no están listos para retirar."
+                  value={productionHours}
+                  onChange={(e) => setProductionHours(e.target.value)}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  El agente usa este texto + la hora actual para saber cuándo los productos están disponibles. Ej: Cliente pregunta "¿A qué hora tienen pan?" → el agente responde según esto.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -1077,12 +1101,55 @@ export default function AgentConfigForm({
             <CardHeader>
               <CardTitle>Delivery</CardTitle>
               <CardDescription>
-                Número de WhatsApp del repartidor. Karen le reenvía la ubicación del cliente
-                y cuando el delivery avisa que llegó, Karen le manda un WhatsApp al cliente
-                avisándole que ya está afuera.
+                Configuración del servicio de delivery. Cuando está activo y en horario, el agente
+                ofrece delivery propio con costo. Cuando está inactivo o fuera de horario, el agente
+                gestiona con Uber.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
+              {/* Switch delivery activo */}
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <Label htmlFor="deliveryEnabled">Delivery activo</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Si está desactivado, el agente deriva todos los pedidos a Uber
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input type="hidden" name="deliveryEnabled" value={String(deliveryEnabled)} />
+                  <Switch
+                    id="deliveryEnabled"
+                    checked={deliveryEnabled}
+                    onCheckedChange={setDeliveryEnabled}
+                  />
+                  <span className={clsx("text-sm font-medium", deliveryEnabled ? "text-green-400" : "text-red-400")}>
+                    {deliveryEnabled ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Horario de inicio del delivery */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="deliveryStartHour">Horario de inicio del delivery</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="deliveryStartHour"
+                    name="deliveryStartHour"
+                    value={deliveryStartHour}
+                    onChange={(e) => setDeliveryStartHour(e.target.value)}
+                    placeholder="14:00"
+                    className="w-24 font-mono"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    hs — desde esta hora hasta el cierre hay delivery
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Antes de esta hora, el agente dice: "En este turno gestionamos los pedidos mediante Uber"
+                </p>
+              </div>
+
+              {/* Número del delivery */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="deliveryPhoneNumber">
                   Número de WhatsApp del delivery

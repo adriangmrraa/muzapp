@@ -1,45 +1,52 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { products, orders as ordersTable } from "@/db/schema";
+import { agentConfig, products, orders as ordersTable } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+
+// --- HELPERS ---
+// Lee las zonas de delivery desde la DB (configurables desde UI)
+async function getDeliveryZonesFromDB(): Promise<{ zona: string; disponible: boolean; tiempo: string; costo: number }[]> {
+  try {
+    const config = await db.query.agentConfig.findFirst({
+      where: (c) => eq(c.id, 1),
+      columns: { whatsappZonasDelivery: true },
+    });
+    const zonas = config?.whatsappZonasDelivery as { zona: string; disponible: boolean; tiempo: string; costo: number }[] | null;
+    if (zonas && zonas.length > 0) return zonas;
+  } catch {
+    // fallback silencioso
+  }
+  return [
+    { zona: "centro", disponible: true, tiempo: "20-30 min", costo: 0 },
+    { zona: "norte", disponible: true, tiempo: "25-35 min", costo: 0 },
+    { zona: "sur", disponible: true, tiempo: "30-40 min", costo: 0 },
+  ];
+}
 
 // --- CHECK DELIVERY TOOL ---
 // Verifica si hacemos delivery a una zona
 
-const DELIVERY_ZONES: Record<string, { disponible: boolean; tiempo: string; costo: number }> = {
-  centro: { disponible: true, tiempo: "20-30 min", costo: 0 },
-  norte: { disponible: true, tiempo: "25-35 min", costo: 0 },
-  sur: { disponible: true, tiempo: "30-40 min", costo: 0 },
-  este: { disponible: true, tiempo: "25-35 min", costo: 0 },
-  oeste: { disponible: true, tiempo: "35-45 min", costo: 0 },
-};
-
-const zonaKeys = Object.keys(DELIVERY_ZONES) as (keyof typeof DELIVERY_ZONES)[];
-
 export const checkDeliveryTool = tool({
-  description: "Verifica si hacemos delivery a una zona特定地域へのデリバリー 가능 여부を確認",
+  description: "Verifica si hacemos delivery a una zona. Usá esto cuando el cliente pregunte si llegamos a cierta zona o barrio.",
   inputSchema: z.object({
     zona: z.string().optional().describe("Zona o barrio (ej: centro, norte, sur)"),
     direccion: z.string().optional().describe("Dirección exacta"),
   }),
   execute: async ({ zona, direccion }) => {
-    // Si no specify zona, asuminos centro
+    const deliveryZones = await getDeliveryZonesFromDB();
     const zonaNormalizada = (zona || "centro").toLowerCase();
     
-    // Buscar coincidencia parcial
-    const zonaEncontrada = zonaKeys.find(z => 
-      zonaNormalizada.includes(z) || z.includes(zonaNormalizada)
-    ) || "centro";
+    const zonaEncontrada = deliveryZones.find(z => 
+      zonaNormalizada.includes(z.zona.toLowerCase()) || z.zona.toLowerCase().includes(zonaNormalizada)
+    );
     
-    const info = DELIVERY_ZONES[zonaEncontrada];
+    if (zonaEncontrada && zonaEncontrada.disponible) {
+      return `✅ Sí, delivery a ${zonaEncontrada.zona}!
+🕐 Tiempo: ${zonaEncontrada.tiempo}
+${zonaEncontrada.costo === 0 ? "💰 Sin costo adicional" : `$${zonaEncontrada.costo}`}`;}
     
-    if (info.disponible) {
-      return `✅ Sí, delivery a ${zonaEncontrada.charAt(0).toUpperCase() + zonaEncontrada.slice(1)}!
-🕐 Tiempo: ${info.tiempo}
-${info.costo === 0 ? "💰 Sin costo adicional" : `$${info.costo}`}`;}
-    
-    return `⚠️ Por el momento no llegamos a esa zona.Estamos en Formosa centro y zonas aledañas. ¿Querés pasar a buscar por el local?`;
+    return `⚠️ Por el momento no llegamos a esa zona. Estamos en Formosa centro y zonas aledañas. ¿Querés pasar a buscar por el local?`;
   },
 });
 
@@ -52,12 +59,13 @@ export const getDeliveryTimeTool = tool({
     zona: z.string().optional(),
   }),
   execute: async ({ zona }) => {
+    const deliveryZones = await getDeliveryZonesFromDB();
     const zonaNormalizada = (zona || "centro").toLowerCase();
-    const zonaEncontrada = zonaKeys.find(z => 
-      zonaNormalizada.includes(z) || z.includes(zonaNormalizada)
-    ) || "centro";
+    const zonaEncontrada = deliveryZones.find(z => 
+      zonaNormalizada.includes(z.zona.toLowerCase()) || z.zona.toLowerCase().includes(zonaNormalizada)
+    );
     
-    return DELIVERY_ZONES[zonaEncontrada].tiempo;
+    return zonaEncontrada?.tiempo || "30-40 min";
   },
 });
 

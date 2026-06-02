@@ -18,6 +18,7 @@ export type ProductsResponse = {
     imageUrl: string | null;
     category: "hamburguesa" | "acompanamiento" | "pan_mayorista" | "tragos_vip" | "bebidas";
     line: "pollo" | "carne" | "clasica" | "pan" | "tragos" | "bebidas";
+    stock: number | null;
     available: boolean;
     comingSoon: boolean;
     sortOrder: number;
@@ -70,6 +71,7 @@ export async function fetchProducts(params: {
       imageUrl: p.imageUrl,
       category: p.category as any,
       line: p.line as any,
+      stock: p.stock,
       available: p.available,
       comingSoon: p.comingSoon,
       sortOrder: p.sortOrder,
@@ -92,6 +94,7 @@ export async function createProduct(formData: FormData) {
     category: formData.get("category"),
     line: formData.get("line"),
     imageUrl: formData.get("imageUrl") || undefined,
+    stock: formData.get("stock") ? Number(formData.get("stock")) : undefined,
     available: formData.get("available") === "true",
     comingSoon: formData.get("comingSoon") === "true",
     sortOrder: formData.get("sortOrder") ? Number(formData.get("sortOrder")) : 0,
@@ -128,6 +131,7 @@ export async function updateProduct(id: number, formData: FormData) {
     category: formData.get("category"),
     line: formData.get("line"),
     imageUrl: formData.get("imageUrl") || undefined,
+    stock: formData.get("stock") ? Number(formData.get("stock")) : undefined,
     available: formData.get("available") === "true",
     comingSoon: formData.get("comingSoon") === "true",
     sortOrder: formData.get("sortOrder") ? Number(formData.get("sortOrder")) : 0,

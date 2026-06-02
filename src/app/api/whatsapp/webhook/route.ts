@@ -520,7 +520,7 @@ export async function POST(request: NextRequest) {
             agentText = `[Audio]: ${transcription}`;
           } else {
             // Transcripción fallida — mensaje limpio, sin fallback string
-            agentText = "[Audio (no se pudo transcribir)]";
+            agentText = "[Audio sin transcripción]";
           }
 
           contentAttributes = [attachment];
@@ -580,7 +580,8 @@ export async function POST(request: NextRequest) {
       } catch (mediaError) {
         // Media processing failed — still run the agent with a degraded context
         console.error("[webhook] Media processing error:", mediaError);
-        agentText = `[${msgType}]`;
+        const fallbackMsg = msgType === "audio" ? "[Audio sin transcripción]" : `[${msgType}]`;
+        agentText = fallbackMsg;
         await insertMessage(conversationId, "user", agentText, undefined, messageId);
       }
     }

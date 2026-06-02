@@ -3,7 +3,6 @@ import { openai, type OpenAILanguageModelChatOptions } from "@ai-sdk/openai";
 import {
   getMenuTool,
   checkAvailabilityTool,
-  createOrderTool,
   getBusinessHoursTool,
   createTransferToHumanTool,
   getProductDetailsTool,
@@ -32,6 +31,7 @@ import {
   createSendImageTool,
   createSendDocumentTool,
   createAddOrderItemTool,
+  createCreateOrderTool,
   createGetOrderSummaryTool,
   createConfirmOrderTool,
   createGetAddressesTool,
@@ -59,9 +59,19 @@ export async function runWhatsAppAgent({
     return "No puedo procesar esa solicitud. ¿Querés hacer un pedido o ver el menú?";
   }
 
+  // 🔄 ANTI-LOOP: detectar si estamos en un ciclo de repetición
+  let antiLoopDirective = "";
+  try {
+    const { analyzeConversationState } = await import("./anti-loop");
+    const state = await analyzeConversationState(conversationId, lastUserMessage, []);
+    antiLoopDirective = state.directive;
+  } catch {
+    // non-fatal
+  }
+
   // 🔧 BUILD DYNAMIC PROMPT (V6 + customer context)
   let system: string;
-  let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null }; lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any }; currentHour?: number; previousContext?: string } | undefined;
+  let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null }; lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any }; currentCart?: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[]; currentHour?: number; previousContext?: string } | undefined;
   
   try {
     // Cargar contexto del cliente (nombre, historial de pedidos)
@@ -141,6 +151,34 @@ export async function runWhatsAppAgent({
           // non-fatal
         }
 
+        // 🛒 CARRITO ACTUAL (Regla de Oro: el agente SIEMPRE ve lo que ya pidió)
+        let currentCart: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[] | undefined;
+        try {
+          const { orderContextItems } = await import("@/db/schema");
+          const { and, eq, gt } = await import("drizzle-orm");
+          const cartItems = await db
+            .select()
+            .from(orderContextItems)
+            .where(
+              and(
+                eq(orderContextItems.conversationId, conversationId),
+                eq(orderContextItems.status, "active"),
+                gt(orderContextItems.expiresAt, new Date()),
+              )
+            )
+            .orderBy(orderContextItems.createdAt);
+          if (cartItems.length > 0) {
+            currentCart = cartItems.map(i => ({
+              productName: i.productName,
+              quantity: i.quantity,
+              variant: i.variant,
+              notes: i.notes,
+            }));
+          }
+        } catch {
+          // non-fatal
+        }
+
         customerContext = {
           name: conv.name || undefined,
           phone: conv.phone,
@@ -162,6 +200,7 @@ export async function runWhatsAppAgent({
             orderType: lastOrder.orderType,
             items: lastOrder.items,
           } : undefined,
+          currentCart,
           currentHour,
           previousContext,
         };
@@ -172,7 +211,7 @@ export async function runWhatsAppAgent({
   }
   
   try {
-    system = await buildSystemPrompt(conversationId, customerContext);
+    system = await buildSystemPrompt(conversationId, customerContext, antiLoopDirective);
   } catch (err) {
     console.warn("[agent] buildSystemPrompt failed, using fallback", err);
     system = DEFAULT_SYSTEM_PROMPT;
@@ -202,7 +241,7 @@ export async function runWhatsAppAgent({
         listAvailableProducts: listAvailableProductsTool,
         getWaitTime: getWaitTimeTool,
         // Grupo C: Pedidos (5)
-        createOrder: createOrderTool,
+        createOrder: createCreateOrderTool(conversationId),
         getOrderStatus: getOrderStatusTool,
         addToOrder: addToOrderTool,
         updateOrder: updateOrderTool,

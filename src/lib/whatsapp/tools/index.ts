@@ -10,7 +10,7 @@ export { checkProductAvailabilityTool } from "./client-tools";
 export { checkDeliveryTool, getDeliveryTimeTool, listAvailableProductsTool, getWaitTimeTool } from "./extended-tools";
 
 // Grupo C: Pedidos (5)
-export { createOrderTool } from "./create-order";
+export { createCreateOrderTool } from "./create-order";
 export { getOrderStatusTool, addToOrderTool, updateOrderTool, cancelOrderTool } from "./order-management-tools";
 
 // Grupo D: Cliente y venta consultiva (3)
@@ -21,7 +21,7 @@ export { getBusinessHoursTool } from "./get-business-hours";
 export { createTransferToHumanTool } from "./transfer-to-human";
 
 // Grupo F: Cocina + Stock + Alias (3)
-export { checkKitchenStatusTool, checkPanStockTool, checkHamburguesasStockTool, getPaymentAliasTool, saveAddressTool } from "./kitchen-tools";
+export { checkKitchenStatusTool, checkPanStockTool, checkHamburguesasStockTool, checkProductStockTool, getPaymentAliasTool, saveAddressTool } from "./kitchen-tools";
 
 // Grupo G: Multimedia (5) — factory functions, se crean con número del cliente
 export { createSendStickerTool, createSendMenuImageTool, createSendPromoImageTool } from "./sticker-tools";

@@ -1,0 +1,455 @@
+CHAT 1 - Detalles: Este chat grafica muy bien como se pierde el bot de whatsapp en una situacion facil digamos, y el bot repite las codsas, es como que no entiende nada. Hace audit profundo en este ejemplo porque hay muchos asi digamos.
+
+
+CHAT 1 COMPLETO:
+
+
+
+11:28 a. m.
+Hola Lea
+
+11:29 a. m.
+Bot
+Holaa, ¿todo bien? Decime
+
+11:29 a. m.
+Bot
+Jajaja dale, ¿qué querés pedir hoy?
+
+11:29 a. m.
+Eh?
+
+11:40 a. m.
+Bot
+Te pregunté qué querés pedir, ¿querés que te mande el menú?
+
+11:40 a. m.
+Mándame si
+
+11:45 a. m.
+Bot
+Holaa — ¿qué te preparamos?
+
+11:46 a. m.
+Jajaja
+
+11:47 a. m.
+Bot
+Holaa ¿qué te preparamos?
+
+11:48 a. m.
+Q pendejo jajaja
+
+11:51 a. m.
+Bot
+¿qué te preparamos?
+
+11:51 a. m.
+Bot
+Holaaa
+
+02:18 p. m.
+
+----------AQUI INTERRUMPE EL EMPLEADO DEL NEGOCIO:
+
+Bot
+Estabas hablando con el chat bot
+
+02:19 p. m.
+Bot
+Jajajajaj
+
+02:19 p. m.
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------------------
+
+CHAT 2 - Detalles: En este chat el problema es que no tenemos cargado el producto ese de los pancitos de pernil digamos, entonces por eso no podia adivinar la ia, ya lo agregamos y deberia solcuionarse creo, igual revisa este chat en busca de otra falla.
+
+CHAT 2 COMPLETO: 
+
+Hola buenas te consulto pancitos chips no tendrían disponible hoy?
+
+02:15 p. m.
+Bot
+Holaa, Sii, tenemos 35 docenas de pancitos chips disponibles, ¿querés que te reserve?
+
+02:15 p. m.
+Que precio esta la docente?
+
+02:16 p. m.
+Docena
+
+02:16 p. m.
+Perdon jajaja
+
+02:16 p. m.
+Bot
+¿A cuál docena te referís: Pan de Lomito x12 Parmesano, Pan de Lomito x12 Sesamo, Pan de Hamburguesa x12 Sesamo o Pan de Hamburguesa x12 Parmesano?
+
+02:16 p. m.
+Bot
+Dale, ¿cuál docena querés: Pan de Lomito x12 Parmesano, Pan de Lomito x12 Sesamo, Pan de Hamburguesa x12 Sesamo o Pan de Hamburguesa x12 Parmesano?
+
+02:17 p. m.
+Yo queria pancitos chips como para hacer sandwichitos
+
+02:17 p. m.
+Bot
+Dale, ¿los querés Pan de Lomito x12 Parmesano o x12 Sesamo?
+
+02:17 p. m.
+
+--------AQUI INTERRUMPE EL EMPLEADO- APRENDE DE ESTOS MENSAJES YAPLICA LO APRENDIDO SOBRE COMO INTERACTUAR DIGAMOS:
+
+Bot
+[image]
+
+02:18 p. m.
+Esos los pancitos de pernil por 50 puede ser?
+
+02:18 p. m.
+Bot
+Dalee
+
+02:20 p. m.
+Bot
+Para cuando necesitas
+
+02:20 p. m.
+Hoy a la tarde tendrías disponible?
+
+02:20 p. m.
+Bot
+Para las 20 masomenos
+
+02:20 p. m.
+Bot
+Si
+
+02:20 p. m.
+Necesitaría antes puede ser?
+
+02:21 p. m.
+Bot
+No me dan mos horarios
+
+02:23 p. m.
+Ahh bueno bueno y el de hamburguesa no tenes disponible?
+
+02:24 p. m.
+Bot
+Para las 20 masomenos salen los panes
+
+02:31 p. m.
+Bot
+Muy posiblemente antes
+
+02:31 p. m.
+Bot
+Pero tendrían que enfriar por eso
+
+02:31 p. m.
+Dale sii pasa que tenia que llevar para compartir en clases y entro a las 19
+
+02:31 p. m.
+Gracias igual!!
+
+02:40 p. m.
+Bot
+[Mensaje desde WhatsApp Business]
+
+02:41 p. m.
+
+
+--------------------------------------------------------------------------------------------------------
+
+CHAT 3 - Detalles: En este chat de nuevo pregfunta por los pancitos, deberia encontra rle producto cuando lo carguemos, pero igual revisa rle chat y detecta errrores.
+
+CHAT 3 COMPLETO:
+
+Hola lindo!
+
+12:44 p. m.
+Bot
+4400
+
+12:44 p. m.
+Bot
+Holaa de nuevo! ¿Todo bien?
+
+12:44 p. m.
+Me podes preparar para el viernes al mediodía 2 docenas por fis…
+
+12:46 p. m.
+Bot
+Sii, el viernes estamos de 06:00 a 04:00. ¿Querés dejar pedido 2 docenas para el mediodía?
+
+12:46 p. m.
+Si por favor, tipo 13 paso a retirar
+
+12:47 p. m.
+En su casa o en el local del frente?
+
+12:47 p. m.
+Bot
+Perfecto, hay 35 docenas disponibles, ¿te lo reservo para el viernes al mediodía?
+
+12:48 p. m.
+Bot
+Dale, te lo reservo para el viernes al mediodía; ¿retiro o delivery?
+
+12:48 p. m.
+Si quiero 2 docenas para el viernes al mediodía
+
+12:49 p. m.
+Paso a retirar
+
+12:49 p. m.
+Bot
+Dale, pasame tu nombre y lo dejo para el viernes al mediodía, retiro por Neuquen 1245.
+
+12:49 p. m.
+Jimena Leguizamon
+
+12:51 p. m.
+Bot
+Dale, lo dejo para el viernes al mediodía — ¿retiro o delivery?
+
+12:52 p. m.
+Retiro
+
+12:54 p. m.
+Bot
+Sii, el viernes estamos de 06:00 a 04:00; ¿querés dejar pedido 2 docenas para el mediodía?
+
+12:55 p. m.
+Si
+
+12:58 p. m.
+Bot
+Dale, ¿te lo reservo para el viernes al mediodía? Confirmame si querés Pan de Hamburguesa x 12 u (Sésamo) o Parmesano y si lo venís a buscar o lo querés delivery.
+
+-------------AQUI INTERRUMPE EL EMPLEADO - 
+
+12:59 p. m.
+Bot
+Holaaa
+
+02:18 p. m.
+Bot
+Dale dale
+
+03:02 p. m.
+Bot
+Gracias jime
+
+03:02 p. m.
+Holis
+
+04:56 p. m.
+Está entonces el pedido? Xq se hizo medio largo jaja
+
+04:56 p. m.
+Bot
+[Mensaje desde WhatsApp Business]
+
+05:05 p. m.
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CHAT 4 - Detalles: Aca sigue sin entender audios, solcionalo.
+
+CHAT 4 COMPLETO : 
+
+AUDIO
+Hola lea te encargo 20 prepi a para mañana porfa
+
+05:31 p. m.
+Bot
+No entendí el audio, ¿podés escribirlo por favor?
+
+05:32 p. m.
+
+--------------------------------AQUI INTERRUMPIO EL EMPLEADO 
+Bot
+Holaa buenas,  dale señor
+
+05:33 p. m.
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CHAT 5 - Detalles: En este chat la ia se desenvolvio bastante bien, falto confirmar el pedido digamos, porque no lo creo, cuando respondio dale, te espero manana al medio dia en neuquen  145 , ya deberia haber creado el pedido, osea que no ejecuto la tool porque no hay ningun pedido de denise
+
+
+
+CHAT COMPLETO:
+
+Muy buenas tardes ..para mañana necesito 10 prepizas
+
+05:46 p. m.
+Porfavor🙏
+
+05:46 p. m.
+Bot
+Dale, te espero mañana al mediodía en Neuquen 1245
+
+05:46 p. m.
+Bot
+De nada, te esperamos mañana al mediodía, pasá por Neuquen 1245
+
+05:47 p. m.
+
+------------------------------------------------AQUI INTERRUMPIO EL EMPLEADO
+Bot
+[Mensaje desde WhatsApp Business]
+
+05:47 p. m.
+Bot
+Dale
+
+05:47 p. m.
+Sin falta don 🥳🥳🥳🥳
+
+05:51 p. m.
+Bot
+[Mensaje desde WhatsApp Business]
+
+06:55 p. m.
+Bot
+Muchas gracias
+
+06:55 p. m.
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CHAT 6 - Detalles: eSTE ES EL CHAT CON UN AMIGO Y DE ESTA Y MUCHAS OTRAS FORMAS PUEDEN REFERIRSE AL DUENO DEL NEGOCIO, DEL CUAL ERA ANTES EL NUMERO DEL DUENO AHORA ES EL NUMERO DLE NEGOCIO, ENTONCES ESTAS CONFUSIONES HABRAN, A VECES RESPONDE EL DUENO PORQUE ES EL MISMO EL QUE ESTA COCINANDO, ENTIENDES? ENTONCES ES ALGO QUE EL SYSTEM PROMPT DEBE PREVENIR E INTERACTUAR CON UNA RESPUESTA EN BASE A COMO HABLa el dueno DESPUES D EINTERRUMPIR QUE TE LO MARCO AQUI ABAJO, y luego de mandar uno o dos mensajes si se habla sobre cualquier cosa que no sea referida al negocio, se debe mandar: Ahi te paso con Leandro, yo estoy para cosas del negocio. Si en el primer mensaje se detecta que es algun amigo o alguien cercano que no tiene nada que ver con comida lo que se habla, el contexto digo lo que manda el user que sea , se debe responder: Holaa como estas.   Y si en el primer mensaje no se sabe o es ambiguo, tenes que responder lo que te dije antes de: Ahi te paso con Leandro, yo estoy para cosas del negocio.
+
+CHAT COMPLETO: 
+Que ondaaa cumpa
+
+05:49 p. m.
+Bot
+No encontré ningún pedido, me pasás el número de pedido o decime qué compraste?
+
+05:49 p. m.
+
+----------------------------------------------------------AQUI INTERRUMPIO EL DUENO:	
+Bot
+Holaa amigo como estas?
+
+06:55 p. m.
+Tb amigo vos que onda
+
+07:31 p. m.
+Bot
+[audio]
+
+07:44 p. m.
+Todo tranqui vro en la lucha
+
+07:45 p. m.
+No tenes esa shit ?
+
+07:45 p. m.
+Por 10
+
+08:13 p. m.
+Bot
+[audio]
+
+08:18 p. m.
+De una de una
+
+08:31 p. m.
+Bot
+[video]
+
+09:02 p. m.
+Bot
+[audio]
+
+09:02 p. m.
+Fortín yunka casi salta amigo
+
+09:03 p. m.
+En el de honda
+
+09:03 p. m.
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CHAT 7 - Detalles: Fijate que aqui dio unos horarios que creo que s einvento, pero me gustaria que el horario disponible desde que hora digamos en el dia , quiero agregar un valor en un text area nuevo en la pagina de agentes ia, en la seccion de negocio, un text area alli que sea injectado al system prompt del agente de ia en que horario va a haber produccion, que produccion seria todo lo que sea 
+
+CHAT 7 COMPELTO:
+
+Hola buenas
+
+05:01 p. m.
+A qué hora tendrán Pan de lomito?
+
+05:01 p. m.
+Bot
+Holaa, a partir de las 6:00 tenemos Pan de lomito y hoy quedan 35 docenas disponibles.
+
+05:01 p. m.
+Bot
+Holaa buenas, si pero para las 20hs masomenos
+
+05:05 p. m.
+Me diste 2 horarios
+
+05:08 p. m.
+😅😅
+
+05:08 p. m.
+Las 18 o las 20?
+
+05:08 p. m.
+Bot
+Las 20 hs
+
+05:18 p. m.
+
+-----------------------AQUI INTERRUMPE EL DUENO
+
+Bot
+Disculpe, el char bot contesto
+
+05:18 p. m.
+Hola ya tienem el pan de lomito?
+
+09:06 p. m.
+Bot
+En 20 tengo el pedido
+
+09:07 p. m.
+Me avisas xfis
+
+09:08 p. m.
+Tengo pedido
+
+09:08 p. m.
+Bot
+Siii
+
+09:19 p. m.
+Bot
+Hllaa ya estaa
+
+09:29 p. m.
+Voy gracias
+
+09:31 p. m.
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

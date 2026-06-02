@@ -74,6 +74,7 @@ export const products = pgTable("products", {
   line: productLineEnum("line").notNull(),
   available: boolean("available").notNull().default(true),
   comingSoon: boolean("coming_soon").notNull().default(false),
+  stock: integer("stock"),
   sortOrder: integer("sort_order").notNull().default(0),
   isPromo: boolean("is_promo").notNull().default(false),
   promoPrice: numeric("promo_price", { precision: 10, scale: 2 }),
@@ -109,6 +110,9 @@ export const agentConfig = pgTable("agent_config", {
   whatsappSystemPrompt: text("whatsapp_system_prompt"),
   whatsappInstructions: text("whatsapp_instructions"),
   whatsappPromociones: text("whatsapp_promociones"),
+  productionHours: text("production_hours"),
+  deliveryEnabled: boolean("delivery_enabled").notNull().default(true),
+  deliveryStartHour: varchar("delivery_start_hour", { length: 5 }),
   whatsappZonasDelivery: jsonb("whatsapp_zonas_delivery").$type<{
     zona: string;
     disponible: boolean;
@@ -157,6 +161,12 @@ export const conversations = pgTable("conversations", {
   lastMessagePreview: varchar("last_message_preview", { length: 255 }),
   humanOverrideUntil: timestamp("human_override_until", { withTimezone: true }),
   externalUserId: varchar("external_user_id", { length: 255 }),
+  conversationMetadata: jsonb("conversation_metadata").$type<{
+    repromptCount: number;
+    lastUserMessageType: "order" | "greeting" | "menu" | "info" | "complaint" | "other";
+    lastSuggestedProducts: string[];
+    lastTools: string[];
+  }>().default({ repromptCount: 0, lastUserMessageType: "other", lastSuggestedProducts: [], lastTools: [] }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

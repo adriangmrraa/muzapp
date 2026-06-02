@@ -111,7 +111,7 @@ export const BufferManager = {
 
     const key = memKey(channel, userId);
     const entry = inMemoryStore.get(key);
-    if (!entry) return true;
+    if (!entry) return true; // No entry = timer expirado (ej: reinicio del servidor)
 
     const config = BUFFER_CONFIG[channel];
     const elapsed = Date.now() - entry.timer;

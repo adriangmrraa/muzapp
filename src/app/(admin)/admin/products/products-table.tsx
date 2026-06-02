@@ -48,6 +48,7 @@ type Product = {
   imageUrl: string | null;
   category: "hamburguesa" | "acompanamiento" | "pan_mayorista" | "tragos_vip" | "bebidas";
   line: "pollo" | "carne" | "clasica" | "pan" | "tragos" | "bebidas";
+  stock: number | null;
   available: boolean;
   comingSoon: boolean;
   sortOrder: number;
@@ -235,6 +236,13 @@ function ProductForm({ product, onClose }: ProductFormProps) {
         <Label htmlFor="sortOrder">Orden</Label>
         <Input id="sortOrder" name="sortOrder" type="number" min="0" defaultValue={product?.sortOrder ?? 0} />
       </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="stock">Stock disponible</Label>
+        <Input id="stock" name="stock" type="number" min="0" step="1" defaultValue={product?.stock ?? ""} placeholder="0 = no hay stock, vacío = ilimitado" />
+        <p className="text-xs text-muted-foreground">
+          Si el producto tiene stock limitado, poné cuántos quedan. Si está vacío, el agente asume que hay disponible.
+        </p>
+      </div>
       <div className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-white/[0.02]">
         <div className="flex flex-col gap-0.5">
           <Label htmlFor="available" className="cursor-pointer">Disponible</Label>
@@ -292,11 +300,24 @@ function ProductCard({
         </div>
       </div>
 
-      {/* Price */}
-      <div className="text-base font-semibold text-[#D4A017]">
-        {product.price != null
-          ? `$ ${Number(product.price).toLocaleString("es-AR")}`
-          : "—"}
+      {/* Price + Stock */}
+      <div className="flex items-center justify-between">
+        <div className="text-base font-semibold text-[#D4A017]">
+          {product.price != null
+            ? `$ ${Number(product.price).toLocaleString("es-AR")}`
+            : "—"}
+        </div>
+        <div className="flex items-center gap-1 text-xs">
+          {product.stock != null ? (
+            product.stock > 0 ? (
+              <span className="text-green-400/80">Stock: {product.stock}</span>
+            ) : (
+              <span className="text-red-400/80">Sin stock</span>
+            )
+          ) : (
+            <span className="text-white/30">Stock ilimitado</span>
+          )}
+        </div>
       </div>
 
       {/* Switches */}

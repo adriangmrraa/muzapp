@@ -82,6 +82,6 @@ export async function transcribeAudio(
     }
   }
 
-  console.warn("[transcription] All attempts failed, returning null");
+  console.warn(`[transcription] All attempts failed, returning null. MimeType: ${mimeType || "unknown"}, fileSize: ${(audioBuffer.length / 1024).toFixed(0)}KB`);
   return null;
 }

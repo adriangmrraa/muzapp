@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
 import { products, orders, leads, agentConfig } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { normalizePhone } from "@/lib/phone-utils";
 
 // checkProductAvailability - Verificar stock
@@ -38,38 +38,59 @@ export const checkProductAvailabilityTool = tool({
 
 // suggestProducts - Sugerir según historial
 export const suggestProductsTool = tool({
-  description: "Sugiere productos basados en el historial de pedidos del cliente",
+  description: "Sugiere productos basados en el historial de pedidos del cliente. Si es B2C (hamburguesas) pasá linea='b2c'. Si es B2B (pan mayorista) pasá linea='b2b'.",
   inputSchema: z.object({
     phone: z.string().optional().describe("Teléfono del cliente (opcional)"),
+    linea: z.enum(["b2c", "b2b"]).optional().describe("Línea de negocio: b2c = hamburguesas/tragos, b2b = pan mayorista"),
   }),
-  execute: async ({ phone }) => {
+  execute: async ({ phone, linea }) => {
     // ─── Verificar si hay stock de hamburguesas ──────────────────────────
-    try {
-      const [cfg] = await db
-        .select({ sinStock: agentConfig.hamburguesasSinStock })
-        .from(agentConfig)
-        .where(eq(agentConfig.id, 1))
-        .limit(1);
-      if (cfg?.sinStock) {
-        return "Hoy solo tenemos pan mayorista disponible. ¿Querés ver el menú de pan?";
+    if (!linea || linea === "b2c") {
+      try {
+        const [cfg] = await db
+          .select({ sinStock: agentConfig.hamburguesasSinStock })
+          .from(agentConfig)
+          .where(eq(agentConfig.id, 1))
+          .limit(1);
+        if (cfg?.sinStock) {
+          if (linea === "b2c") {
+            return "Hoy no tenemos hamburguesas. Solo estamos vendiendo pan mayorista. ¿Querés ver el menú de pan?";
+          }
+          // si no hay línea especificada, ofrecer ambas
+        }
+      } catch {
+        // non-fatal
       }
-    } catch {
-      // non-fatal — seguir con sugerencia normal
     }
 
     if (!phone) {
+      if (linea === "b2b") {
+        return "Tenemos pan de lomito x4, prepizza x docena, pan de hamburguesa x4, pan de pancho x4. ¿Cuál te interesa y qué cantidad?";
+      }
       return "Nuestros más pedidos: Classic Carne, Crispy Pollo, Especiale Italiano. ¿Querés que te recomiende algo en especial?";
     }
 
     phone = normalizePhone(phone);
+
+    // Si hay línea, filtrar pedidos por orderType
+    const conditions = [eq(orders.phoneNumber, phone)];
+    if (linea === "b2b") {
+      conditions.push(eq(orders.orderType, "pan_mayorista"));
+    } else if (linea === "b2c") {
+      conditions.push(eq(orders.orderType, "hamburguesas"));
+    }
+
     const recentOrders = await db
-      .select({ items: orders.items })
+      .select({ items: orders.items, orderType: orders.orderType })
       .from(orders)
-      .where(eq(orders.phoneNumber, phone))
+      .where(and(...conditions))
       .orderBy(desc(orders.createdAt))
       .limit(5);
 
     if (recentOrders.length === 0) {
+      if (linea === "b2b") {
+        return "No tenés pedidos de pan mayorista registrados. ¿Querés ver el menú de pan? Tenemos pan de lomito, prepizza, pan de hamburguesa y pan de pancho.";
+      }
       return "Aún no tenés pedidos registrados. ¿Querés ver el menú?";
     }
 
@@ -88,7 +109,8 @@ export const suggestProductsTool = tool({
       .slice(0, 3)
       .map(([name]) => name);
 
-    return `Basado en tus pedidos anteriores: ${topProducts.join(", ")}. ¿Querés pedir algo de eso?`;
+    const lineLabel = linea === "b2b" ? "pan mayorista" : "hamburguesas";
+    return `Basado en tus pedidos anteriores de ${lineLabel}: ${topProducts.join(", ")}. ¿Querés pedir algo de eso?`;
   },
 });
 

@@ -41,6 +41,9 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   menuImageUrlHamburguesas: "",
   menuImageUrlPan: "",
   deliveryPhoneNumber: "",
+  deliveryEnabled: true,
+  deliveryStartHour: "14:00",
+  productionHours: "",
 };
 
 export default async function AgentPage() {
@@ -87,6 +90,9 @@ export default async function AgentPage() {
         menuImageUrlHamburguesas: (row.menuImageUrlHamburguesas as string) ?? "",
         menuImageUrlPan: (row.menuImageUrlPan as string) ?? "",
         deliveryPhoneNumber: (row.deliveryPhoneNumber as string) ?? "",
+        deliveryEnabled: (row.deliveryEnabled as boolean) ?? true,
+        deliveryStartHour: (row.deliveryStartHour as string) ?? "14:00",
+        productionHours: (row.productionHours as string) ?? "",
       }
     : DEFAULT_CONFIG;
 
