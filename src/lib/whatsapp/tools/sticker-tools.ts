@@ -155,16 +155,29 @@ export function createSendMenuImageTool(customerPhone: string) {
 export function createSendPromoImageTool(customerPhone: string) {
   return tool({
     description:
-      "Envía la foto de una promoción al cliente por WhatsApp. Usar cuando pregunten por promos o descuentos. Busca la promo por ID.",
+      "Envía la foto de una PROMOCIÓN al cliente por WhatsApp. Busca por ID (promoId) o por nombre (promoName, ej: 'Combo 17'). Es OBLIGATORIO ejecutar esta tool cuando el cliente pide ver o pregunta por una promo específica. NO digas 'tiene foto' o 'te mando foto' sin ejecutar la tool. Ejecutala directamente.",
     inputSchema: z.object({
-      promoId: z.number().describe("ID de la promoción"),
+      promoId: z.number().optional().describe("ID de la promoción (alternativa al nombre)"),
+      promoName: z.string().optional().describe("Nombre de la promo para buscar (alternativa al ID). Ej: 'Combo 17', 'Combo 10'"),
     }),
-    execute: async ({ promoId }) => {
-      const [promo] = await db
-        .select()
-        .from(promotions)
-        .where(and(eq(promotions.id, promoId), eq(promotions.active, true)))
-        .limit(1);
+    execute: async ({ promoId, promoName }) => {
+      let promo;
+
+      if (promoId) {
+        [promo] = await db
+          .select()
+          .from(promotions)
+          .where(and(eq(promotions.id, promoId), eq(promotions.active, true)))
+          .limit(1);
+      } else if (promoName) {
+        const all = await db
+          .select()
+          .from(promotions)
+          .where(eq(promotions.active, true))
+          .orderBy(promotions.id);
+        const q = promoName.toLowerCase();
+        promo = all.find((p) => p.name?.toLowerCase().includes(q));
+      }
 
       if (!promo) {
         return "No encontré esa promoción activa.";

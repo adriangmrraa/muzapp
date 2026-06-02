@@ -96,7 +96,7 @@ export const getProductPriceTool = tool({
 // createSendProductImageTool - Enviar foto de un producto por WhatsApp
 export function createSendProductImageTool(customerPhone: string) {
   return tool({
-    description: "Envía la foto de un producto al cliente por WhatsApp. Podés buscar por ID o por nombre.",
+    description: "Envía la foto de un PRODUCTO al cliente por WhatsApp. Podés buscar por ID o por nombre (productName, ej: 'bookbinder', 'deli deli'). OBLIGATORIO: cuando el cliente pide ver un producto o pregunta cómo se ve, ejecutá esta tool. NO digas 'tengo foto' sin enviarla.",
     inputSchema: z.object({
       productId: z.number().optional().describe("ID del producto (alternativa al nombre)"),
       productName: z.string().optional().describe("Nombre del producto para buscar (alternativa al ID). Ej: 'genesis', 'bookbinder', 'deli deli'"),
@@ -245,7 +245,7 @@ export const getActivePromosTool = tool({
     return activePromos.map((p) => {
       const price = p.customPrice ? ` — $${Number(p.customPrice).toLocaleString("es-AR")}` : "";
       const hasImg = p.imageUrl ? " 📸" : "";
-      return `• ${p.name}${price}${hasImg}${p.description ? `: ${p.description}` : ""}`;
+      return `• [ID:${p.id}] ${p.name}${price}${hasImg}${p.description ? `: ${p.description}` : ""}`;
     }).join("\n");
   },
 });
