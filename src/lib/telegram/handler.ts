@@ -77,7 +77,7 @@ export async function handleTelegramUpdate(
           caption: message.caption,
         };
 
-        const msgId = await insertMessage(conversationId, "user", "[Imagen recibida]", [attachment]);
+        const { id: msgId } = await insertMessage(conversationId, "user", "[Imagen recibida]", [attachment]);
 
         // Get attachment ID
         const { db } = await import("@/db");
@@ -129,7 +129,7 @@ export async function handleTelegramUpdate(
           caption: message.caption,
         };
 
-        const msgId = await insertMessage(
+        const { id: msgId } = await insertMessage(
           conversationId, "user",
           isImage ? "[Imagen recibida]" : `[Documento]: ${doc.file_name || "archivo"}`,
           [attachment]

@@ -1,4 +1,4 @@
-import { BufferManager, type BufferedMessage } from "./manager";
+import { BufferManager, type BufferedMessage, getLastProcessedContent, setLastProcessedContent } from "./manager";
 import { BUFFER_CONFIG, type Channel } from "./config";
 
 // Sleep utility
@@ -87,8 +87,29 @@ async function processBufferLoop(
   // GRACEFUL INTERRUPTION: check if new messages arrived during processing
   const hasNew = await BufferManager.hasNewMessages(channel, userId);
   if (hasNew) {
+    // Compute content hash of what was just processed to compare later
+    const processedHash = messages.map((m) => m.content).join("|").slice(0, 200);
+
+    // Fetch new messages and check if they're content-duplicates
+    const newMsgs = await BufferManager.fetchAndClear(channel, userId);
+    const newHash = newMsgs.map((m) => m.content).join("|").slice(0, 200);
+
+    if (newHash === processedHash || newHash === getLastProcessedContent(channel, userId)) {
+      console.log(
+        `[buffer:interrupt] Content-duplicate detected for ${channel}:${userId}, skipping re-process (depth=${depth})`
+      );
+      setLastProcessedContent(channel, userId, newHash);
+      return; // Don't re-process — content is identical to what was just handled
+    }
+
+    // Put messages back and re-process (different content)
+    for (const msg of newMsgs) {
+      await BufferManager.enqueue(channel, userId, msg);
+    }
+
+    setLastProcessedContent(channel, userId, newHash);
     console.log(
-      `[buffer:interrupt] New messages during processing for ${channel}:${userId}, re-processing (depth=${depth + 1})`
+      `[buffer:interrupt] New (different) messages during processing for ${channel}:${userId}, re-processing (depth=${depth + 1})`
     );
     await processBufferLoop(channel, userId, processCallback, depth + 1);
   }

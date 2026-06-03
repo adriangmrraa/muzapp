@@ -121,26 +121,55 @@ async function autoLinkLeadToConversation(
   }
 }
 
+export interface InsertMessageResult {
+  id: number;
+  /** true if this platformMessageId already existed (duplicate webhook) */
+  wasDuplicate: boolean;
+}
+
 // Insert a message into chat_messages table
+// Handles unique constraint violation on platformMessageId gracefully
+// (race condition from duplicate YCloud webhook calls)
 export async function insertMessage(
   conversationId: number,
   role: "user" | "assistant" | "system" | "human",
   content: string,
   contentAttributes?: MediaAttachment[],
   platformMessageId?: string
-): Promise<number> {
+): Promise<InsertMessageResult> {
   const preview = content.slice(0, 250);
 
-  const [msg] = await db
-    .insert(chatMessages)
-    .values({
-      conversationId,
-      role,
-      content,
-      contentAttributes: contentAttributes || [],
-      platformMessageId: platformMessageId || null,
-    })
-    .returning({ id: chatMessages.id });
+  let msg: { id: number };
+  let wasDuplicate = false;
+
+  try {
+    [msg] = await db
+      .insert(chatMessages)
+      .values({
+        conversationId,
+        role,
+        content,
+        contentAttributes: contentAttributes || [],
+        platformMessageId: platformMessageId || null,
+      })
+      .returning({ id: chatMessages.id });
+  } catch (err: any) {
+    // P0001 / 23505 = unique_violation on platform_message_id
+    // If this is a duplicate platformMessageId, return the existing message ID
+    if (platformMessageId && err?.code === "23505") {
+      const [existing] = await db
+        .select({ id: chatMessages.id })
+        .from(chatMessages)
+        .where(eq(chatMessages.platformMessageId, platformMessageId))
+        .limit(1);
+      if (existing) {
+        console.log(`[router] Duplicate platformMessageId ${platformMessageId} — returning existing msg ${existing.id}`);
+        return { id: existing.id, wasDuplicate: true };
+      }
+    }
+    // If it's NOT a duplicate on platformMessageId, re-throw
+    throw err;
+  }
 
   // Update conversation last message
   await db
@@ -159,7 +188,7 @@ export async function insertMessage(
     );
   }
 
-  return msg.id;
+  return { id: msg.id, wasDuplicate: false };
 }
 
 async function autoAttachToLead(

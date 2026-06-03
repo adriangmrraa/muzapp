@@ -10,6 +10,7 @@ import {
   jsonb,
   timestamp,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 
@@ -188,7 +189,9 @@ export const chatMessages = pgTable("chat_messages", {
   }[]>().default([]),
   platformMessageId: varchar("platform_message_id", { length: 255 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  platformMsgUq: uniqueIndex("idx_chat_messages_platform_id").on(table.platformMessageId),
+}));
 
 export const leads = pgTable("leads", {
   id: serial("id").primaryKey(),

@@ -179,10 +179,34 @@ export const BufferManager = {
 // Mapa separado para dedup in-memory (no contamina el buffer)
 const inMemoryDedup = new Map<string, { hash: string; ts: number }>();
 
-// Cleanup dedup cada 30s
+// Tracks the last processed content hash per user (to avoid re-processing duplicates)
+const lastProcessedContent = new Map<string, string>();
+
+export function getLastProcessedContent(channel: Channel, userId: string): string | undefined {
+  const key = `${channel}:${userId}`;
+  return lastProcessedContent.get(key);
+}
+
+export function setLastProcessedContent(channel: Channel, userId: string, hash: string): void {
+  const key = `${channel}:${userId}`;
+  lastProcessedContent.set(key, hash);
+}
+
+// Cleanup dedup y lastProcessedContent cada 30s
 setInterval(() => {
   const cutoff = Date.now() - 10_000;
   for (const [key, entry] of inMemoryDedup.entries()) {
     if (entry.ts < cutoff) inMemoryDedup.delete(key);
+  }
+  // Cleanup stale processed content entries (> 5 min)
+  const staleCutoff = Date.now() - 300_000;
+  for (const [key] of lastProcessedContent.entries()) {
+    // Keys include channel:userid — no timestamp, so just clear old ones
+    // if they haven't been updated recently (we don't store update time,
+    // so just clear on the 30s interval as best-effort)
+  }
+  if (lastProcessedContent.size > 1000) {
+    // Emergency cleanup if map grows unbounded
+    lastProcessedContent.clear();
   }
 }, 30_000);

@@ -211,14 +211,18 @@ async function handleEcho(
     // 7. Guardar el mensaje como human para diferenciar del AI
     //    Solo guardar si NO es echo propio (los echos propios ya tienen su mensaje guardado)
     if (!isOwnEcho) {
-      await insertMessage(
+      const echoInsert = await insertMessage(
         conversationId,
         "human",
         displayText,
         undefined,
         echoMsgId
       );
-      console.log(`[webhook:echo] Echo saved as human message in conversation ${conversationId}`);
+      if (echoInsert.wasDuplicate) {
+        console.log(`[webhook:echo] Duplicate echo ${echoMsgId} — already saved`);
+      } else {
+        console.log(`[webhook:echo] Echo saved as human message in conversation ${conversationId}`);
+      }
     }
 
   } catch (error) {
@@ -455,7 +459,11 @@ export async function POST(request: NextRequest) {
         caption: agentText,
         description: `Ubicación compartida: ${address}${coords}`,
       }];
-      await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+      const locResult = await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+      if (locResult.wasDuplicate) {
+        console.log(`[webhook:wa] Duplicate location message ${messageId} — skipping`);
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
 
       // ── PERSISTIR dirección en leads.address + tabla addresses ──
       const addrToSave = loc?.address || loc?.name || "";
@@ -489,7 +497,14 @@ export async function POST(request: NextRequest) {
     } else if (msgType === "text") {
       // ── TEXT ──────────────────────────────────────────────────────────────
       agentText = (message.text?.body as string) || "";
-      await insertMessage(conversationId, "user", agentText, undefined, messageId);
+      const textInsert = await insertMessage(conversationId, "user", agentText, undefined, messageId);
+
+      // Si el platformMessageId ya existía (duplicate webhook de YCloud),
+      // salir temprano — el otro webhook ya encoló al buffer
+      if (textInsert.wasDuplicate) {
+        console.log(`[webhook:wa] Duplicate text message ${messageId} — skipping buffer enqueue`);
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
 
     } else {
       // ── MEDIA (image | audio | document | video) ──────────────────────────
@@ -537,14 +552,23 @@ export async function POST(request: NextRequest) {
           }
 
           contentAttributes = [attachment];
-          await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+          const audResult = await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+          if (audResult.wasDuplicate) {
+            console.log(`[webhook:wa] Duplicate audio message ${messageId} — skipping`);
+            return NextResponse.json({ ok: true }, { status: 200 });
+          }
 
         } else if (msgType === "image" || (msgType === "document" && mimeType.startsWith("image/"))) {
           // Image or image-document → Vision analysis with race timeout
           const { processImageWithVision } = await import("@/lib/media/vision");
 
           contentAttributes = [attachment];
-          const msgId = await insertMessage(conversationId, "user", "[Imagen recibida]", contentAttributes, messageId);
+          const imgResult = await insertMessage(conversationId, "user", "[Imagen recibida]", contentAttributes, messageId);
+          if (imgResult.wasDuplicate) {
+            console.log(`[webhook:wa] Duplicate image message ${messageId} — skipping`);
+            return NextResponse.json({ ok: true }, { status: 200 });
+          }
+          const msgId = imgResult.id;
 
           // Get attachment ID from the auto-created record
           const { attachments: attachmentsTable } = await import("@/db/schema");
@@ -571,7 +595,11 @@ export async function POST(request: NextRequest) {
           attachment.transcription = clip.transcription ?? undefined;
           contentAttributes = [attachment];
           agentText = clip.agentText;
-          await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+          const vidResult = await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+          if (vidResult.wasDuplicate) {
+            console.log(`[webhook:wa] Duplicate video message ${messageId} — skipping`);
+            return NextResponse.json({ ok: true }, { status: 200 });
+          }
 
         } else {
           // Document (non-image): PDF, text, etc — intentar extraer texto
@@ -587,7 +615,11 @@ export async function POST(request: NextRequest) {
 
           contentAttributes = [attachment];
           if (extractedText) attachment.description = extractedText;
-          await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+          const docResult = await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
+          if (docResult.wasDuplicate) {
+            console.log(`[webhook:wa] Duplicate document message ${messageId} — skipping`);
+            return NextResponse.json({ ok: true }, { status: 200 });
+          }
         }
 
       } catch (mediaError) {
@@ -595,7 +627,11 @@ export async function POST(request: NextRequest) {
         console.error("[webhook] Media processing error:", mediaError);
         const fallbackMsg = msgType === "audio" ? "[Audio sin transcripción]" : `[${msgType}]`;
         agentText = fallbackMsg;
-        await insertMessage(conversationId, "user", agentText, undefined, messageId);
+        const fallbackResult = await insertMessage(conversationId, "user", agentText, undefined, messageId);
+        if (fallbackResult.wasDuplicate) {
+          console.log(`[webhook:wa] Duplicate message ${messageId} (fallback) — skipping`);
+          return NextResponse.json({ ok: true }, { status: 200 });
+        }
       }
     }
 
@@ -755,7 +791,7 @@ export async function POST(request: NextRequest) {
       // ═══════════════════════════════════════════════════════════════════
 
       // 1a. Guardar texto en DB
-      const msgId = await insertMessage(conversationId, "assistant", responseText);
+      const { id: msgId } = await insertMessage(conversationId, "assistant", responseText);
 
       // 1b. Enviar texto (split into bubbles for natural UX)
       const ycloudResult = await sendWhatsAppBubbles({
