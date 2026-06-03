@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { leads, orders, agentConfig, conversations, chatMessages, products, users } from "@/db/schema";
 import { eq, desc, ilike, or, gte, lte, count, and, asc, sql } from "drizzle-orm";
 import { normalizePhone } from "@/lib/phone-utils";
+import { getArgentinaDayIndex } from "@/lib/argentina-time";
 
 // ─── manageManagement: Tools de gestión interna ──────────────────────────────
 
@@ -343,12 +344,14 @@ export const getBusinessHoursTool = tool({
       isEnabled = true;
     }
 
-    const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const { getArgentinaMinutes } = await import("@/lib/argentina-time");
+    const currentMinutes = getArgentinaMinutes();
     const parseTime = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m ?? 0); };
     const openM = parseTime(openTime);
     const closeM = parseTime(closeTime);
     const isOpen = isEnabled && currentMinutes >= openM && currentMinutes < closeM;
+
+    const timeStr = new Date().toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour: "2-digit", minute: "2-digit" });
 
     return [
       `🕐 Horarios de atención:`,
@@ -357,8 +360,8 @@ export const getBusinessHoursTool = tool({
       `• Cierre: ${closeTime}`,
       ``,
       isOpen
-        ? `✅ Ahora estamos ABIERTOS (${now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })})`
-        : `❌ Ahora estamos CERRADOS (${now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })})`,
+        ? `✅ Ahora estamos ABIERTOS (${timeStr})`
+        : `❌ Ahora estamos CERRADOS (${timeStr})`,
     ].join("\n");
   },
 });
@@ -389,7 +392,7 @@ function parseDays(daysStr: string): string[] {
   }
   // "hoy" → día actual
   if (s.includes("hoy")) {
-    const todayIdx = new Date().getDay(); // 0=domingo
+    const todayIdx = getArgentinaDayIndex(); // 0=domingo
     return [ALL_DAYS[todayIdx === 0 ? 6 : todayIdx - 1]]; // ajustar a array empezando lunes
   }
   // fallback: todos

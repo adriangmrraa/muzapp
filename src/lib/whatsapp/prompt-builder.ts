@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { products } from "@/db/schema";
 import { eq, and, asc, isNotNull } from "drizzle-orm";
 import { agentConfig } from "@/db/schema";
+import { getArgentinaMinutes, getArgentinaDayIndex, getArgentinaHour, getArgentinaDayName } from "@/lib/argentina-time";
 
 // Layer 1: Core prompt (V2 SIEMPRE como base) + extras del usuario desde la UI
 export async function getCorePrompt(): Promise<string> {
@@ -135,15 +136,13 @@ export async function getBusinessHours(): Promise<string> {
       // Helper: convierte "HH:MM" a minutos desde medianoche
       const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
 
-      // Calcular si está abierto AHORA
-      const now = new Date();
-      const nowMin = now.getHours() * 60 + now.getMinutes();
+      // Calcular si está abierto AHORA (usando hora Argentina, no UTC del servidor)
+      const nowMin = getArgentinaMinutes();
 
       const openDays = days.filter(d => d.open);
       const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-      const todayName = dayNames[now.getDay()];
+      const todayName = dayNames[getArgentinaDayIndex()];
       const today = days.find((h) => h.day === todayName);
-      const nowHour = now.getHours();
 
       // ─── PASO 1: Verificar si la madrugada está cubierta por el turno del día anterior ───
       // Esto va PRIMERO porque aplica incluso si el día actual está "cerrado".
@@ -154,7 +153,7 @@ export async function getBusinessHours(): Promise<string> {
       let activeOpenTime = today?.openTime;
       let activeCloseTime = today?.closeTime;
 
-      const yesterdayIndex = (now.getDay() - 1 + 7) % 7;
+      const yesterdayIndex = (getArgentinaDayIndex() - 1 + 7) % 7;
       const yesterdayName = dayNames[yesterdayIndex];
       const yesterday = days.find((h) => h.day === yesterdayName);
       if (yesterday?.open) {
@@ -293,9 +292,8 @@ El pan mayorista (B2B) SÍ está disponible, vendé normal.`);
     if (!realSinStock && config.businessHours && Array.isArray(config.businessHours)) {
       const days = config.businessHours as { day: string; open: boolean; openTime: string; closeTime: string }[];
       const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-      const now = new Date();
-      const nowHour = now.getHours();
-      const todayName = dayNames[now.getDay()];
+      const nowHour = getArgentinaHour();
+      const todayName = dayNames[getArgentinaDayIndex()];
       const today = days.find((h: any) => h.day === todayName);
 
       if (today?.open) {
@@ -355,12 +353,11 @@ El pan mayorista (B2B) SÍ está disponible y es lo que se vende ahora.`);
     const deliveryHour = config.deliveryStartHour?.trim() || "14:00";
     if (isDeliveryActive) {
       const deliveryStartNum = parseInt(deliveryHour.split(":")[0] || "14", 10);
-      const now = new Date();
-      const currentHour = now.getHours();
+      const currentHour = getArgentinaHour();
 
       // Obtener closeTime de business_hours para detectar si cruza medianoche
       const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-      const todayName = days[now.getDay()];
+      const todayName = days[getArgentinaDayIndex()];
       let businessHoursData: any[] | null = null;
       try {
         businessHoursData = config.businessHours as any[] | null;

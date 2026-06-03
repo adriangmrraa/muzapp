@@ -1,0 +1,54 @@
+[4:12 a. m., 2/6/2026] Hector Adrian Gamarra: hola
+[4:12 a. m., 2/6/2026] Hector Adrian Gamarra: estan trabajando?
+
+AQUI ESTA EL PRIMER ERROR, YA QUE MANDA BIEN EL MENU OSEA LA IMAGEN CORRECTAMENTE, DICE ACA TENES EL MENU, Y DESPEUS DICE HOLA, DEBERIA SER PRIMERO EL: Holaa. Sii, decime. Acá tenés el menú Y LA IMAGEN DEL MENU. entendes? 
+FOTO MENU HAMBURGUESAS
+[4:13 a. m., 2/6/2026] Leandro Patiño: Acá tenés el menú
+[4:13 a. m., 2/6/2026] Leandro Patiño: Holaa. Sii, decime
+
+
+EL SEGUNDO ERROR ES ACA PORQUE MANDA NUEVAMENTE LA IMAGEN DEL MENU CUANDO YA LA MANDO Y DEBE MANDARLA UNA VEZ CADA DOS 4HORAS DIGAMOS, ES UN BUEN PLAZO DE TIEMPO PARA QUE FUNCIONE CORRECTAMENTE, ENTIENDES LO QUE DIGO? 
+
+- FOTO MENU HAMBURGUESAS
+[4:13 a. m., 2/6/2026] Leandro Patiño: Acá tenés el menú
+[4:13 a. m., 2/6/2026] Leandro Patiño: ¿qué te preparamos?
+[4:22 a. m., 2/6/2026] Hector Adrian Gamarra: como es la bookbinder?
+
+Aca funciona muy bien, llega la imagen de la bookbinder, y el precio. Pero esta mal formulada la respuesta, el dale luego del precio queda agresivo, suavizalo y mejorala a esta repsuesta, ok? 
+
+- FOTO BOOKBINDER
+[4:22 a. m., 2/6/2026] Leandro Patiño: Bookbinder - $7000.00
+[4:22 a. m., 2/6/2026] Leandro Patiño: Dale, ¿la querés?
+[4:24 a. m., 2/6/2026] Hector Adrian Gamarra: si quiero dos
+[4:24 a. m., 2/6/2026] Hector Adrian Gamarra: hacen envios hastya el mariano moreno?
+
+Aca esta otro error y es que como ya mando recien , (osea en 4 horas la misma imagen, OSEA QUE APLICA LAS 4 HS PARA TODAS LAS IMAGENES. ) YA MANDO IMAHGEN DE LA BOOKBINDER HACE UN MINUTO, ENTONCES MANDARLA NUEVAMENTE QUEDA RARO, AUNQUE SE ESTE HABLANDO DE LO MISMO, OK?  una sola vez cada 4 horas las imagenes, aplica a todas.Lo del delivery y a la misma direccion de siempre, como recordando mi direccion es fantastico y esta super genial eso! ME ENCANTA!
+
+- FOTO BOOKBINDER
+[4:25 a. m., 2/6/2026] Leandro Patiño: Bookbinder - $7000.00
+[4:25 a. m., 2/6/2026] Leandro Patiño: Dale, ¿delivery o buscás? ¿a la misma dirección de siempre? (clno sur 77 casa 19 (-26.171421051025, -58.203086853027))
+[4:25 a. m., 2/6/2026] Hector Adrian Gamarra: delivery porfavor
+[4:25 a. m., 2/6/2026] Hector Adrian Gamarra: la misma direccion
+
+Aca nuevamente manda la foto por tercera vez, a esto me refiero que debe mandar una sola vez, con esa regla de las 4 horas o si hay otra regla mejor aplicala, planifica que e smejor, investiga que es mejor para arreglar esto de forma certera digamos.  que mande una sola imagen, no mas, pero que si luego de 5, 10 o 18 hs vuelven a hablarle entienda que puede ser que haya borrado, o algo asi, pero ya deberiamandarle, aplica mandarle. 
+
+- FOTO BOOKBINDER
+[4:25 a. m., 2/6/2026] Leandro Patiño: Bookbinder - $7000.00
+[4:25 a. m., 2/6/2026] Leandro Patiño: Dale agrego 2 Bookbinder y pregunto delivery o retiro?
+
+ACA ME DICE QUE DELIVERY DEVUELTA CUANDO YA CONFIRMAMOS QUE ERA DELIVERY. EN EL MENSAJE ANTERIOR MEDIJO EL AGENTE QUE TENIA MI DIRECCION ME PREGUNTO SI DELIVERY A L A MISMA DIRECCION Y SE LOC ONFIRMWE, QUIZAS FALTA AGREGAR SINONIMOS DE COMO PUEDEN REFERIRSE LOS CLIENTES A UNA CONFIRMACION DE QUE SI ES DELIVERY, NO? 
+
+[4:25 a. m., 2/6/2026] Hector Adrian Gamarra: delivery te dije
+
+aCA MUY BIEN YA SE CREO EL PEDIDO CUANDO CONFIRMO, AUNQUE FUE REPETITIVO, CONFIRMO LA DIRECCION Y AGREGO EL PEDIDO. eL TEMA ES QUE ME DICE 14 MIL, SIN DECIRME CUANTO ES EL ENVIO, (EL GENERAL ES 3000, PROMEDIO DIGAMOS ENTONCRS SI ES UN MAS VA A SER COMO M UCHO 1000 Y ES ACEPTABLE. ENTONCES PARA QUE NO ESTE BUSCANDO EN DATABASE LO QUE SE CARGA O VER POR ZONA, DIRECTAMENTE DICE 3000 O 3500 QUE VARIE, ENTENDES?  ) ENTONCES ESTA MAL EL 14MIL, AHI SERIA SOLO LAS DOS BOOKBINDER, Y AHI FALTA EL DELIVERY EL PRECIO DEL DELIVERY ENTENDES ? DEBE SUMAR SIEMPRE SI ES DELIVERY EL RCOSTO DEL MISMO AL TOTAL, OK? A MENOS DE QUE SEA POR UBER QUE SE GESTIONA DIFERENTE, ENTIENDES? 
+
+[4:26 a. m., 2/6/2026] Leandro Patiño: Genial, ya está cargado el pedido. El total es 14mil. Te paso el alias para pagar?
+[4:26 a. m., 2/6/2026] Hector Adrian Gamarra: puedo pagar con efectivo?
+[4:26 a. m., 2/6/2026] Hector Adrian Gamarra: le pago al delivery
+[4:26 a. m., 2/6/2026] Hector Adrian Gamarra: cuando me trae
+[4:26 a. m., 2/6/2026] Hector Adrian Gamarra: con delivery es 14mil?
+
+Aca se vuelve loco y esto esta mal, fijate la hora que son los mensajes y luego fijate la hora que esta en database de horarios laborales, yo los confuigure en 08 inicio y fin a las 04 dle dia siguiente seria, revisa si esta bien y esos datos son los que tenes, domingos esta apagado ahora, pero voya  encenderlo luego, fijate que debe aparecerte apagado y la ia tambien deberia entender y obtener esos valores para saber horarios de todos los dias. Te lo mencionn porque fijate que en este ultimo mensaje , que me dice que lo gestiona uber y son las 4:26 am, ya estamos cerrados en teoria, por eso te lo menciono porque aparentemente noe sta funcionando , incluso creo un pedido a las 4:26 am cuando en teoria ya estamos cerrados, quiero que hagas la logica deesto, revis a profundidad y decime si entendes esta parte es la mas importante digamos de todo este chat, ok? 
+
+[4:27 a. m., 2/6/2026] Leandro Patiño: No, ahora el delivery se gestiona con Uber: no aceptamos efectivo — tenés que transferir solo los productos (14mil) y el Uber lo pagás al chofer al recibir. ¿Querés que te pase el alias para transferir?
+[4:27 a. m., 2/6/2026] Leandro Patiño: Lea..LEMON. Mandá el comprobante cuando transfieras y ya te confirmo ☺️

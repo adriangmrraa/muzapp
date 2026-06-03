@@ -1,0 +1,14 @@
+TE DEJO UN CHAT MUY REVELADOR DE LO BIEN QUE ESTA FUNCIONANDO. DETECTA QUE SON LAS 3AM ENTONCES EN TEORIA ES TURNO MANANA Y LOS PEDIDOS SE GESTIONAN CON UBER. El tema es que ahora son las 3 am y el delivery esta activo, trabajamos hasta las 4, entonces falta darle esta logica de que el deliveri de ahora que esta activo seria el que empezo a las 15 hs de yaer seria y termina a las 4 am hoy. Fijate en los horarios en la database que horarios ves cargados, y decime como debo cargar los horarios. En teoriala idea es estar trabajando desde las 8 am digamos hasta las 4 am de la madrugada del dia siguiente, y ese dia sifuiente abriria nuevamente a las 8 entendes? esa seria la logica de los horarios que trabajamos. chat revelador:
+
+[3:12 a. m., 2/6/2026] Hector Adrian Gamarra: Hola
+[3:12 a. m., 2/6/2026] Hector Adrian Gamarra: ?
+[3:12 a. m., 2/6/2026] Leandro Patiño: Holaa, ¿qué te preparo?
+[3:16 a. m., 2/6/2026] Hector Adrian Gamarra: la promo de coca tenes?
+[3:16 a. m., 2/6/2026] Hector Adrian Gamarra: cuanto cuesta?
+[3:16 a. m., 2/6/2026] Hector Adrian Gamarra: son dos hamburguesas?
+[3:17 a. m., 2/6/2026] Leandro Patiño: Estamos sin stock, disculpa! No tenemos hamburguesas ni la promo con Coca hoy; te mandé el menú de pan, ¿querés ver opciones de pan mayorista?
+[3:18 a. m., 2/6/2026] Hector Adrian Gamarra: no tienen stock? pero si me dijeron que si
+[3:19 a. m., 2/6/2026] Leandro Patiño: Dale, perdón por la confusión: sí tenemos la Combo 17 (2 Bookbinder + Coca 1,5L) por $17.000, sí son dos hamburguesas — ¿la querés que te la reserve?
+[3:20 a. m., 2/6/2026] Hector Adrian Gamarra: sisi
+[3:20 a. m., 2/6/2026] Hector Adrian Gamarra: hacen envios?
+[3:21 a. m., 2/6/2026] Leandro Patiño: Dale, ¿delivery o buscás? En este turno el delivery arranca a las 15:00 — antes lo gestionamos con Uber, podés pedir uno o te lo pedimos nosotros.

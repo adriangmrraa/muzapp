@@ -39,6 +39,7 @@ import {
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
+import { getArgentinaHour } from "@/lib/argentina-time";
 interface RunAgentParams {
   conversationId: number;
   customerPhone: string;
@@ -165,8 +166,8 @@ export async function runWhatsAppAgent({
         // El pedido activo es el último que está "pending"
         const pendingOrder = recentOrders.find(o => o.status === "pending");
         
-        // Hora actual para contexto temporal (SDD#4)
-        const currentHour = new Date().getHours();
+        const { getArgentinaHour } = await import("@/lib/argentina-time");
+        const currentHour = getArgentinaHour();
 
         // Último mensaje de la conversación anterior para memoria (SDD#10)
         let previousContext: string | undefined;

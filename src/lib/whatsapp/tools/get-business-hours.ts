@@ -3,6 +3,11 @@ import { z } from "zod";
 import { db } from "@/db";
 import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import {
+  getArgentinaMinutes,
+  getArgentinaDayIndex,
+  getArgentinaDayName,
+} from "@/lib/argentina-time";
 
 interface BusinessHourDay {
   day: string;
@@ -29,10 +34,9 @@ export const getBusinessHoursTool = tool({
     if (!config?.businessHours) return "No tengo información de horarios configurada.";
 
     const hours = config.businessHours as BusinessHourDay[];
-    const now = new Date();
-    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const nowMin = getArgentinaMinutes();
     const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-    const todayName = days[now.getDay()];
+    const todayName = getArgentinaDayName(days);
 
     const today = hours.find(h => h.day === todayName);
 
@@ -40,7 +44,7 @@ export const getBusinessHoursTool = tool({
     let isOpenNow = false;
     let activeDayName = todayName;
 
-    const yesterdayIndex = (now.getDay() - 1 + 7) % 7;
+    const yesterdayIndex = (getArgentinaDayIndex() - 1 + 7) % 7;
     const yesterdayName = days[yesterdayIndex];
     const yesterday = hours.find((h) => h.day === yesterdayName);
     if (yesterday?.open) {

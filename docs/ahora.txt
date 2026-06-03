@@ -1,0 +1,313 @@
+
+
+
+Hola?
+
+01:09 a. m.
+Bot
+Holaa ¿todo bien?
+
+01:09 a. m.
+Quiero una docena de prepizzas para mañana
+
+01:09 a. m.
+A qué hora puedo pasar a buscar?
+
+01:09 a. m.
+Bot
+Sii, mañana estamos de 08:00 a 04:00hs.  
+¿Querés que la deje anotada para cuando abramos?
+
+01:10 a. m.
+Sisi Porfavor
+
+01:12 a. m.
+Dos docenas no una sola
+
+01:12 a. m.
+Bot
+Dale, lo anoto para cuando abramos.
+
+01:13 a. m.
+Pueden mandarme ahora con un Delivery?
+
+01:14 a. m.
+Las dos prepizzas?
+
+01:14 a. m.
+Bot
+Ahora estamos cerrados, volvemos a las 08:00hs; dale, te dejo anotadas las 2 docenas de prepizza para cuando abramos.
+
+01:15 a. m.
+
+
+
+
+--------------------------
+
+
+
+chat dos donde interumpio el operador: 
+
+
+
+Hola
+
+09:31 p. m.
+[image]
+
+09:31 p. m.
+Quiero la promo
+
+09:31 p. m.
+Bot
+Holaa
+
+09:31 p. m.
+[Ubicacion]: ubicación compartida (-26.181932449341, -58.237895965576)
+[Ubicacion]: ubicación compartida (-26.181932449341, -58.237895965576)
+
+[Ubicacion]: ubicación compartida (-26.181932449341, -58.237895965576)
+
+09:31 p. m.
+Bot
+Dale, ¿cuál querés: Combo 17, Combo 14, Combo 19 o Combo 10?
+
+09:31 p. m.
+Me decís los otro combos
+
+09:32 p. m.
+Bot
+Perfecto, ya guardé tu ubicación; ¿cuál combo querés: Combo 17, Combo 14, Combo 19 o Combo 10?
+
+09:32 p. m.
+Sisi Mostrame los combo solo vi el de 10
+
+09:32 p. m.
+Bot
+Listo, te mandé Combo 17, Combo 14 y Combo 19; miralos y decime cuál querés.
+
+09:33 p. m.
+No me llega 🧐
+
+09:34 p. m.
+Bot
+Dale, te los vuelvo a mandar ahora; querés que te los mande uno por uno o todos juntos?
+
+09:35 p. m.
+Sii
+
+09:35 p. m.
+Todo junt
+
+09:35 p. m.
+Xfiii
+
+09:35 p. m.
+Bot
+Listo, te los mandé todos juntos. ¿Cuál querés?
+
+09:35 p. m.
+[image]
+
+09:36 p. m.
+Es q no me llega
+
+09:36 p. m.
+X eso
+
+09:36 p. m.
+Bot
+Dale, guardé tu ubicación; decime cuál combo querés?
+
+09:36 p. m.
+Bot
+Perfecto, ya guardé tu ubicación y te reenvié los tres combos juntos; ¿cuál querés?
+
+09:37 p. m.
+Q trae el combo de 15
+
+09:37 p. m.
+14
+
+09:37 p. m.
+Bot
+Dale, te lo mando de nuevo. ¿Querés ese Combo 14?
+
+09:38 p. m.
+Operador
+Dalee
+
+09:39 p. m.
+Operador
+Holaa buenas
+
+09:39 p. m.
+Operador
+Disculpe estaba hablando con el chat bot
+
+09:39 p. m.
+Operador
+Te puedo tomar el pedido de vuelta
+
+09:39 p. m.
+Me podes decir el combo 14
+
+09:39 p. m.
+Q trae
+
+09:39 p. m.
+Lpm no entendí
+
+09:40 p. m.
+Entendía nada
+
+09:41 p. m.
+!
+
+09:41 p. m.
+Operador
+[image]
+
+09:42 p. m.
+Operador
+Este es el combo de 14mil
+
+09:42 p. m.
+Operador
+[Mensaje desde WhatsApp Business]
+
+09:42 p. m.
+Dame el 10 nomas
+
+09:43 p. m.
+Operador
+Dalee, con envio?
+
+09:44 p. m.
+Operador
+[Mensaje desde WhatsApp Business]
+
+09:47 p. m.
+Siii
+
+09:47 p. m.
+Operador
+Ubii
+
+09:48 p. m.
+[Ubicacion]: ubicación compartida (-26.181953430176, -58.237846374512)
+[Ubicacion]: ubicación compartida (-26.181953430176, -58.237846374512)
+
+[Ubicacion]: ubicación compartida (-26.181953430176, -58.237846374512)
+
+09:48 p. m.
+Operador
+[Mensaje desde WhatsApp Business]
+
+09:50 p. m.
+Operador
+Dentro de 20
+
+09:50 p. m.
+Oki
+
+09:50 p. m.
+Operador
+Ya salio tu pedido sabss
+
+10:17 p. m.
+Operador
+Muchas gracias
+
+10:17 p. m.
+Dale
+
+10:17 p. m.
+Cuánto sería
+
+10:17 p. m.
+Operador
+En unos minutos te habla el delivery
+
+10:17 p. m.
+Operador
+13mil seria todo
+
+10:17 p. m.
+Ok
+
+10:17 p. m.
+Operador
+Muchas gracias
+
+10:17 p. m.
+
+
+
+
+------------------------
+
+CHAT 3 DONDE TMABIEN INTERUMPIO EL OPERADOR, COMENZO RESPONDIENDO BIEN LA IA, PERO DESPUES PATINO Y DIJO ESO QUE ESTA MAL DE LOS HORARIOS DIGAMOS, YA QU EAHI EN ESE MOMENTO ESTABAN TRABAJANDO BIEN DIGAMOS, Y REPITE LO DE DELIVERY O BUSCAS:
+
+
+Buenas
+
+10:04 p. m.
+Quisiera 20 panes de lomito con parmesano porfa
+
+10:04 p. m.
+Bot
+Holaa ¿todo bien?
+
+10:04 p. m.
+Bot
+¿Los querés por docena (Pan de Lomito x12) o en pack de 4 (x4u)?
+
+10:05 p. m.
+Por docena
+
+10:05 p. m.
+2 docenas entonces
+
+10:06 p. m.
+Bot
+Dale, te los anoto. ¿Delivery o buscás?
+
+10:06 p. m.
+Para que hora estaría?
+
+10:06 p. m.
+Bot
+Dale, ¿delivery o buscás?
+
+10:06 p. m.
+Bot
+Dale, te los anoto. ¿A qué hora querés pasar?
+
+10:06 p. m.
+Si está para antes de las 19 lo busco, si está para después con delivery
+
+10:07 p. m.
+
+--ACA ES DONDE SE EQUIVOCA, ESTO DE AVISAR QUE ESTAMOS DE 08 AM A 04 AM, SOLO DEBE SER CUANDO PREGUNTAN DIGAMOS, YCUANDO  HABLAN FUERA DE ESE HORARIO , OK? Aqui deberia haberle tomafo ya el pedido y haberle confirmado que se le tomo el pedido, y en breve le confirmamos si se lo mandamos o si puede retirar, PUNTO, FACIL, nose porque se complica tanto, ok? ESTO DEL HORARIO, ESTE MENSAJE QUE MANDA EL BOT ESTA RE MAL, EN ESTE MOMENTO NOVA, OK? ----
+
+Bot
+Hoy estamos de 08:00 a 04:00; si pasás antes de las 19 lo podés retirar, si es después te lo mandamos por delivery — ¿querés que lo reserve para esa franja?
+
+10:07 p. m.
+Operador
+[Mensaje desde WhatsApp Business]
+
+10:07 p. m.
+Dale avísame
+
+10:11 p. m.
+Operador
+Muchas gracias
+
+10:12 p. m.
+Operador
+Dalee
+
+10:12 p. m.
