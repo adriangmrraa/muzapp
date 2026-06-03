@@ -11,6 +11,12 @@ interface BusinessHourDay {
   closeTime: string;
 }
 
+// Convierte "HH:MM" a minutos desde medianoche
+function toMin(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + (m || 0);
+}
+
 export const getBusinessHoursTool = tool({
   description: "Consulta los horarios de atención. Cuando el cliente pregunte: 'hasta qué hora están?', 'abren los domingos?', 'a qué hora cierran?', 'trabajan los sábados?', 'a la tarde están?', 'qué días abren?', 'están ahora?'",
   inputSchema: z.object({}),
@@ -24,22 +30,40 @@ export const getBusinessHoursTool = tool({
 
     const hours = config.businessHours as BusinessHourDay[];
     const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
     const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     const todayName = days[now.getDay()];
 
     const today = hours.find(h => h.day === todayName);
-    // Soporte para horarios que cruzan medianoche (ej: 06:00 a 04:00)
+
+    // ─── PASO 1: Verificar si la madrugada está cubierta por el turno del día anterior ───
     let isOpenNow = false;
-    if (today?.open) {
-      const nowHour = now.getHours();
-      const openHour = parseInt(today.openTime.split(":")[0], 10);
-      const closeHour = parseInt(today.closeTime.split(":")[0], 10);
-      if (closeHour < openHour) {
-        // Cruza medianoche: abierto si hora >= apertura O hora < cierre
-        isOpenNow = nowHour >= openHour || nowHour < closeHour;
-      } else {
-        // Horario normal
-        isOpenNow = nowHour >= openHour && nowHour < closeHour;
+    let activeDayName = todayName;
+
+    const yesterdayIndex = (now.getDay() - 1 + 7) % 7;
+    const yesterdayName = days[yesterdayIndex];
+    const yesterday = hours.find((h) => h.day === yesterdayName);
+    if (yesterday?.open) {
+      const yCloseMin = toMin(yesterday.closeTime);
+      const yOpenMin = toMin(yesterday.openTime);
+      if (yCloseMin < yOpenMin && nowMin < yCloseMin) {
+        // El día anterior tenía turno nocturno que cubre esta madrugada
+        isOpenNow = true;
+        activeDayName = yesterdayName;
+      }
+    }
+
+    // ─── PASO 2: Si no está cubierto por madrugada, verificar el día actual ───
+    if (!isOpenNow && today?.open) {
+      const openMin = toMin(today.openTime);
+      const closeMin = toMin(today.closeTime);
+      const crossesMidnight = closeMin < openMin;
+      if (nowMin >= openMin) {
+        if (crossesMidnight) {
+          isOpenNow = true;
+        } else {
+          isOpenNow = nowMin < closeMin;
+        }
       }
     }
 
@@ -48,6 +72,9 @@ export const getBusinessHoursTool = tool({
       .map(h => `${h.day}: ${h.openTime} – ${h.closeTime}`)
       .join("\n");
 
-    return `${isOpenNow ? "🟢 Estamos ABIERTOS ahora." : "🔴 Estamos CERRADOS en este momento."}\n\nHorarios:\n${schedule}`;
+    const statusPrefix = isOpenNow ? "🟢 Estamos ABIERTOS ahora" : "🔴 Estamos CERRADOS en este momento";
+    const daySuffix = activeDayName !== todayName ? ` (en turno de ${activeDayName})` : "";
+
+    return `${statusPrefix}${daySuffix}.\n\nHorarios:\n${schedule}`;
   },
 });
