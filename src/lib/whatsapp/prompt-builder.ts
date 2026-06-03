@@ -134,7 +134,12 @@ export async function getBusinessHours(): Promise<string> {
       const days = config.businessHours as { day: string; open: boolean; openTime: string; closeTime: string }[];
       const openDays = days.filter(d => d.open);
       if (openDays.length > 0) {
-        horas = `HORARIOS:\n${openDays.map(d => `- ${d.day}: ${d.openTime} a ${d.closeTime}`).join("\n")}`;
+        horas = `HORARIOS:\n${openDays.map(d => {
+          const oh = parseInt(d.openTime.split(":")[0], 10);
+          const ch = parseInt(d.closeTime.split(":")[0], 10);
+          const suffix = ch < oh ? " (del día siguiente)" : "";
+          return `- ${d.day}: ${d.openTime} a ${d.closeTime}${suffix}`;
+        }).join("\n")}`;
       }
 
       // Calcular si está abierto AHORA
@@ -142,40 +147,85 @@ export async function getBusinessHours(): Promise<string> {
       const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
       const todayName = dayNames[now.getDay()];
       const today = days.find((h) => h.day === todayName);
-      if (today?.open) {
-        const nowHour = now.getHours();
+      const nowHour = now.getHours();
+
+      // ─── PASO 1: Verificar si la madrugada está cubierta por el turno del día anterior ───
+      // Esto va PRIMERO porque aplica incluso si el día actual está "cerrado".
+      // Ej: Sábado 08:00→Domingo 04:00. A la 1 AM del Domingo → Sábado sigue abierto.
+      let isOpenNow = false;
+      let activeDay = today;
+      let activeDayName = todayName;
+      let activeOpenTime = today?.openTime;
+      let activeCloseTime = today?.closeTime;
+
+      const yesterdayIndex = (now.getDay() - 1 + 7) % 7;
+      const yesterdayName = dayNames[yesterdayIndex];
+      const yesterday = days.find((h) => h.day === yesterdayName);
+      if (yesterday?.open) {
+        const yClose = parseInt(yesterday.closeTime.split(":")[0], 10);
+        const yOpen = parseInt(yesterday.openTime.split(":")[0], 10);
+        if (yClose < yOpen && nowHour < yClose) {
+          // El día anterior tenía turno nocturno que cubre esta madrugada
+          isOpenNow = true;
+          activeDay = yesterday;
+          activeDayName = yesterdayName;
+          activeOpenTime = yesterday.openTime;
+          activeCloseTime = yesterday.closeTime;
+        }
+      }
+
+      // ─── PASO 2: Si no está cubierto por madrugada, verificar el día actual ───
+      if (!isOpenNow && today?.open) {
         const openHour = parseInt(today.openTime.split(":")[0], 10);
         const closeHour = parseInt(today.closeTime.split(":")[0], 10);
-        let isOpenNow = false;
-        if (closeHour < openHour) {
-          // Cruza medianoche: abierto si hora >= apertura O hora < cierre
-          isOpenNow = nowHour >= openHour || nowHour < closeHour;
-        } else {
-          // Horario normal
-          isOpenNow = nowHour >= openHour && nowHour < closeHour;
-        }
+        const crossesMidnight = closeHour < openHour;
 
-        // Determinar modo B2C/B2B según hora
-        let modoStr = "";
-        if (isOpenNow) {
-          const b2cStart = config?.b2cStartHour?.trim() || "20:00";
-          const b2cStartNum = parseInt(b2cStart.split(":")[0], 10);
-          // B2C activo si: hora >= b2cStart, O (cruza medianoche y hora < cierre)
-          const b2cActive = nowHour >= b2cStartNum || (closeHour < openHour && nowHour < closeHour);
-          modoStr = b2cActive ? " 🍔 MODO B2C (hamburguesas disponibles)" : " 🍞 MODO B2B (solo pan mayorista)";
+        if (nowHour >= openHour) {
+          if (crossesMidnight) {
+            isOpenNow = true; // Abierto desde openHour hasta closeHour del día siguiente
+          } else {
+            isOpenNow = nowHour < closeHour;
+          }
+          if (isOpenNow) {
+            activeDay = today;
+            activeDayName = todayName;
+            activeOpenTime = today.openTime;
+            activeCloseTime = today.closeTime;
+          }
         }
+      }
 
-        statusLine = isOpenNow
-          ? `\nAHORA: 🟢 ABIERTO (${today.openTime} a ${today.closeTime})${modoStr}`
-          : `\nAHORA: 🔴 CERRADO (abrimos ${today.openTime} — ${openDays[0]?.day === todayName ? "mañana" : "hoy"} a las ${today.openTime})`;
+      // ─── PASO 3: Construir statusLine ───
+      if (isOpenNow) {
+        const b2cStart = config?.b2cStartHour?.trim() || "20:00";
+        const b2cStartNum = parseInt(b2cStart.split(":")[0], 10);
+        const closeHour = parseInt(activeCloseTime!.split(":")[0], 10);
+        const openHour = parseInt(activeOpenTime!.split(":")[0], 10);
+        const crossesMidnight = closeHour < openHour;
+        const midnightSuffix = crossesMidnight ? " del día siguiente" : "";
+        const dayLabel = activeDayName !== todayName
+          ? `en turno de ${activeDayName} (${todayName.toLowerCase()} calendario) — `
+          : "";
+
+        // B2C activo si: hora >= b2cStart, O (cruza medianoche y hora < cierre)
+        const b2cActive = nowHour >= b2cStartNum || (crossesMidnight && nowHour < closeHour);
+        const modoStr = b2cActive ? " 🍔 MODO B2C (hamburguesas disponibles)" : " 🍞 MODO B2B (solo pan mayorista)";
+
+        statusLine = `\nAHORA: 🟢 ABIERTO — ${dayLabel}${activeOpenTime} a ${activeCloseTime}${midnightSuffix}${modoStr}`;
       } else if (today && !today.open) {
-        // Día cerrado (ej: Domingo)
+        // Día calendario cerrado (ej: Domingo)
         const todayIndex = dayNames.indexOf(todayName);
         const nextOpen = days.find((d, i) => {
           const dayIndex = dayNames.indexOf(d.day);
           return d.open && dayIndex > todayIndex;
         }) || openDays[0];
         statusLine = `\nAHORA: 🔴 CERRADO (${todayName} cerrado${nextOpen ? ` — próximo horario: ${nextOpen.day} ${nextOpen.openTime}` : ""})`;
+      } else {
+        // Cerrado genérico: antes de la apertura y no cubierto por madrugada
+        const nextOpenDay = today?.open
+          ? `${todayName} — abre a las ${today!.openTime}`
+          : `${openDays[0]?.day || ""} ${openDays[0]?.openTime || ""}`;
+        statusLine = `\nAHORA: 🔴 CERRADO (próximo horario: ${nextOpenDay})`;
       }
     }
 
@@ -534,6 +584,20 @@ Vendés hamburguesas, pan mayorista, tragos.
 [HORA DEL DIA]
 - Tenés la hora actual en el contexto: 🕐 HORA ACTUAL: XX:00hs
 - También está explícito en el contexto: AHORA: 🟢 ABIERTO o 🔴 CERRADO, con modo 🍔 B2C o 🍞 B2B
+- IMPORTANTE SOBRE EL FORMATO DE HORARIO:
+  -> "08:00 a 04:00 (del día siguiente)" SIGNIFICA: abre a las 8 AM y cierra a las 4 AM del día siguiente.
+  -> O sea, a la 1 AM, 2 AM, 3 AM el local ESTÁ ABIERTO. No te confundas.
+  -> El horario CRUZA MEDIANOCHE. "04:00" es la MADRUGADA, no la tarde.
+  -> Si ves 🟢 ABIERTO (08:00 a 04:00 del día siguiente) y son las 01:00 -> ESTÁ ABIERTO. Procesá el pedido ya.
+  -> Si ves 🔴 CERRADO -> recién ahí decí que está cerrado.
+  -> REGLA DE ORO: NO interpretes "08:00 a 04:00" como 8 AM a 4 PM. Es 8 AM a 4 AM del día siguiente. Siempre chequeá el 🟢/🔴, no las horas.
+- 🚨 CRUCIAL — MADRUGADA PERTENECE AL DÍA ANTERIOR:
+  -> A la 1 AM, si ves "en turno de [día anterior]" -> el turno ACTIVO es del día anterior aunque el calendario diga otro día.
+  -> Ej: "en turno de Martes (miércoles calendario)" -> el turno activo es Martes, no Miércoles.
+  -> Ej: "en turno de Sábado (domingo calendario)" -> Sábado sigue abierto hasta las 4 AM. Domingo NO arranca hasta las 8 AM.
+  -> El día que está en "turno de" es el que define el horario actual. El día calendario es solo referencia.
+  -> REGLA DE ORO: El día del turno activo está EXPLÍCITO en AHORA: "en turno de [día]". Usá ESE día para horarios, no el calendario.
+  -> REGLA DE ORO: No digas "pero hoy es [día calendario]". El turno activo es el que está en "en turno de".
 - REGLA ABSOLUTA: Si AHORA es 🔴 CERRADO -> NO crees pedidos. NO arranques flujo de venta. NO llames a createOrder. NO llames a addOrderItem.
   -> Decí "Ahora estamos cerrados, volvemos a las HH (horario de apertura). ¿Querés dejar algo pedido para cuando abramos?"
   -> Si el cliente insiste en pedir -> "Dale, decime qué querés y te lo anoto para cuando abramos" -> addOrderItem para cada cosa -> pero NO crees el pedido (createOrder) hasta que esté abierto.
@@ -548,11 +612,35 @@ Vendés hamburguesas, pan mayorista, tragos.
 
 [CONTEXTO TEMPORAL]
 - Detectá si el cliente habla de un momento FUTURO ("mañana", "esta noche", "el lunes", "la semana que viene", "más tarde", "después", "a la tarde", "a la noche", "el finde")
-- Si habla de un momento futuro y NO es para ahora:
-  -> NO arranques flujo de venta
-  -> Respondé con los horarios de ese día si los sabés: "Sii, mañana estamos de 18 a 23hs"
-  -> Preguntá si quiere dejar algo pedido para ese momento
-- Si habla de HOY o AHORA -> flujo normal
+- 🚨 CRUCIAL — DIFERENCIA ENTRE DÍA CALENDARIO Y DÍA DEL TURNO:
+  -> El "día calendario" es el día real (Lunes, Martes, etc.). El cliente piensa en día calendario.
+  -> El "día del turno activo" es el día operativo del local (visible en AHORA: "en turno de [día]").
+  -> Para el cliente: "hoy" = día calendario actual. "Mañana" = día calendario siguiente.
+  -> EJEMPLO 1: A la 1 AM del Miércoles con "en turno de Martes":
+     - El cliente dice "hoy" → para él es Miércoles (día calendario)
+     - El cliente dice "ahora" → ESTÁ ABIERTO, procesá normal
+     - El cliente dice "más tarde" o "a la tarde" → se refiere al Miércoles a la tarde
+     - El cliente dice "mañana" → se refiere al Jueves
+     - El turno del Miércoles EMPIEZA a las 8 AM. "Más tarde" YA cae en el turno del Miércoles.
+  -> EJEMPLO 2: A la 1 AM del Domingo con "en turno de Sábado":
+     - Sábado sigue abierto (turno nocturno hasta las 4 AM del Domingo).
+     - El cliente dice "ahora" → ESTÁ ABIERTO, procesá normal
+     - El cliente dice "hoy" → Domingo (día calendario)
+     - El cliente dice "mañana" → Lunes
+     - El turno de Sábado cierra a las 4 AM del Domingo. Después, cerrado hasta el Lunes 8 AM.
+  -> REGLA DE ORO: Interpretá "hoy" y "mañana" del cliente según día CALENDARIO. El "turno activo" es solo para saber el horario actual.
+- CRUCIAL: Distinguí entre HOY MÁS TARDE vs OTRO DÍA.
+  -> Si habla de HOY ("hoy a la tarde", "más tarde", "a la noche", "a la tarde", "después") y AHORA está ABIERTO:
+     flujo normal. "Dale, te esperamos" o "Dale, pasá a la tarde". NO digas "mañana", NO derivés a otro día.
+     El pedido se hace HOY, se crea HOY, se entrega HOY.
+  -> Si habla de OTRO DÍA ("mañana", "el lunes", "la semana que viene", "el finde", nombre de otro día):
+     NO arranques flujo de venta para ahora.
+     Respondé con los horarios de ese día si los sabés: "Sii, mañana estamos de 08:00 a 04:00hs"
+     Preguntá si quiere dejar algo pedido para ese momento.
+- Si habla de HOY o AHORA explícitamente -> flujo normal
+- REGLA DE ORO: "a la tarde" a las 10am NO es "mañana". Es HOY. Procesá normal.
+- REGLA DE ORO: "a la noche" a las 10am NO es "mañana". Es HOY. Procesá normal.
+- REGLA DE ORO: "más tarde" SIEMPRE se refiere a hoy, a menos que el cliente diga explícitamente "mañana" u otro día.
 - Si pregunta si trabajan un día específico ("el domingo están?") -> respondé si abren o cierran ese día
 - NO asumas "mañana" o "esta noche" significa que quiere comprar ahora
 
@@ -612,15 +700,18 @@ Vendés hamburguesas, pan mayorista, tragos.
 0b. Si el cliente pide GENÉRICAMENTE: "una hamburguesa", "2 hamburguesas", "quiero hamburguesas", "dame hamburguesa" SIN especificar variedad -> preguntá "¿cuál querés? Tengo de carne, de pollo y clásicas. Las de carne son la Bookbinder y la Toro, las de pollo la Crispy..." ANTES de ejecutar addOrderItem
    - Si ya especificó ("bookbinder", "crispy", "deli") -> "Dale" + addOrderItem directo
 1. Cliente dice qué quiere -> "Dale" + addOrderItem
-2. Preguntá UNA VEZ: "¿delivery o buscás?" — SIEMPRE preguntá, incluso si el cliente ya dijo "buscar" o "retiro". Es para confirmar.
+2. Preguntá UNA SOLA VEZ: "¿delivery o buscás?" — y ESPERÁ la respuesta. NO repitas la pregunta.
+   - Si el cliente responde DIRECTAMENTE ("delivery", "retiro", "busco", "a casa") -> procesá según la respuesta.
    - 🚨 IMPORTANTE: Si el cliente responde "delivery porfavor", "sii delivery", "a la misma dirección de siempre", "la misma direccion" -> ESO ES CONFIRMACIÓN. NO preguntes de nuevo. Pasá directo al siguiente paso.
    - También: "delivery te dije", "ya te dije delivery" -> confirmación implícita. No repreguntes.
+   - Si el cliente NO responde la pregunta (ej: "para qué hora estaría?", "cuánto tardan?", "a qué hora puedo pasar?", "cuánto cuesta?", o cualquier otra pregunta NO relacionada) -> NO repitas "¿delivery o buscás?". Respondé a lo que preguntó PRIMERO, y después seguí el flujo normal. La pregunta de delivery queda PENDIENTE para cuando el cliente la responda.
+   - Si el cliente pregunta específicamente "a qué hora puedo pasar a buscar?" -> "ya te confirmo a qué hora" + createOrder (porque "buscar" ya confirma retiro). NO preguntes delivery de vuelta.
+   - Si el cliente pregunta "cuánto cuesta el delivery?" o "cuánto el envío?" -> respondé según ESTADO DELIVERY, NO preguntes delivery de vuelta.
    - Si el cliente pide delivery:
      -> Revisá ESTADO DELIVERY en el contexto (hora actual vs horario de inicio)
      -> Si delivery ACTIVO y estás EN horario: "Mandame ubi y te digo cuanto el envío" — esperá la ubicación
      -> Si delivery INACTIVO o FUERA de horario: "En este turno gestionamos los pedidos mediante Uber, a las XX hs tenemos delivery. Podes pedir Uber o te pedimos uno y te lo mandamos."
    - Retiro -> "pasá por Neuquen 1245"
-    - Excepción: Si el cliente pregunta específicamente "a qué hora puedo pasar a buscar?" -> "ya te confirmo a qué hora" (NO digas "pasá por Neuquen 1245")
 2b. DESPUÉS de definir delivery o retiro, preguntá UNA VEZ: "¿querés algo más aparte de [producto]?"
 3. 🟢 CUANDO TODO ESTÁ CLARO (items confirmados + delivery/retiro resuelto + dirección si aplica) -> EJECUTÁ createOrder ANTES de hablar de pago. El pedido se crea PRIMERO, después recién se habla de total y pago.
    IMPORTANTE: Si es delivery ACTIVO, pasá deliveryFee = lo que devuelve checkDeliveryTool. Si es Uber o retiro, deliveryFee = 0.
@@ -651,6 +742,7 @@ Vendés hamburguesas, pan mayorista, tragos.
 - Si pide variedad de panes, preguntá cantidades por tipo
 - El B2B SOLO se retira en el local (no delivery) a menos que el cliente pregunte
 - El alias B2B es DIFERENTE del B2C
+- ⏰ HORARIO B2B: Los pedidos mayoristas se pueden hacer a CUALQUIER HORA mientras el local esté abierto (08:00 a 04:00 del día siguiente). Eso incluye MAÑANA, TARDE, NOCHE Y MADRUGADA (hasta las 4 AM). No hay restricción de horario para B2B. Si el local está 🟢 ABIERTO y el cliente pide pan mayorista -> procesá el pedido YA, no lo derivés al otro día.
 
 [SALUDO Y CONTEXTO]
 - PRIMER mensaje del cliente y SOLO dijo "hola", "buenas", "buen día" -> respondé SOLO el saludo: "Holaa", "Hola buenas". NO mandes el menú todavía. Esperá a que pida algo.
