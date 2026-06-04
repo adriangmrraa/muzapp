@@ -211,6 +211,94 @@ async function handleEcho(
     // 7. Guardar el mensaje como human para diferenciar del AI
     //    Solo guardar si NO es echo propio (los echos propios ya tienen su mensaje guardado)
     if (!isOwnEcho) {
+      // ── AUDIO: download + transcribe (P2) ─────────────────────────────────
+      if (msgType === "audio") {
+        const mediaObj = msg["audio"] as Record<string, unknown> | undefined;
+        if (mediaObj?.id) {
+          try {
+            const [acConfig] = await db
+              .select({ apiKey: agentConfig.ycloudApiKey })
+              .from(agentConfig)
+              .where(eq(agentConfig.id, 1))
+              .limit(1);
+
+            if (acConfig?.apiKey) {
+              const { buffer, mimeType, filename } = await downloadYCloudMedia(
+                mediaObj.id as string,
+                acConfig.apiKey
+              );
+              const mediaUrl = await saveMediaLocally(buffer, conversationId, filename, mimeType);
+
+              const contentAttachments: MediaAttachment[] = [{
+                type: "audio",
+                url: mediaUrl,
+                fileName: (mediaObj.filename as string) || filename,
+                mimeType,
+                fileSize: mediaObj.fileSize as number | undefined,
+              }];
+
+              const echoInsert = await insertMessage(
+                conversationId, "human", displayText,
+                contentAttachments, echoMsgId
+              );
+
+              if (!echoInsert.wasDuplicate) {
+                const storedMsgId = echoInsert.id;
+                // Fire-and-forget: transcribe async, then update stored message
+                transcribeAudio(buffer, filename, mimeType)
+                  .then(async (transcription) => {
+                    if (transcription && storedMsgId) {
+                      const { chatMessages: cmTable } = await import("@/db/schema");
+                      try {
+                        const [stored] = await db
+                          .select({ contentAttributes: cmTable.contentAttributes })
+                          .from(cmTable)
+                          .where(eq(cmTable.id, storedMsgId))
+                          .limit(1);
+
+                        if (stored?.contentAttributes) {
+                          const attrs = stored.contentAttributes as any[];
+                          if (attrs.length > 0) attrs[0].transcription = transcription;
+                          await db
+                            .update(cmTable)
+                            .set({
+                              content: `[Audio]: ${transcription}`,
+                              contentAttributes: attrs as any,
+                            })
+                            .where(eq(cmTable.id, storedMsgId));
+                        }
+                      } catch (updateErr) {
+                        console.error("[webhook:echo] Failed to update transcription:", updateErr);
+                      }
+                    }
+                  })
+                  .catch(async (err) => {
+                    console.error("[webhook:echo] Transcription failed for operator audio:", err);
+                    // Spec OA-6: update content to fallback on failure
+                    if (storedMsgId) {
+                      try {
+                        const { chatMessages: cmTable } = await import("@/db/schema");
+                        await db
+                          .update(cmTable)
+                          .set({ content: "[Audio sin transcripción]" })
+                          .where(eq(cmTable.id, storedMsgId));
+                      } catch (updateErr) {
+                        console.error("[webhook:echo] Failed to update fallback content:", updateErr);
+                      }
+                    }
+                  });
+              }
+
+              return NextResponse.json({ ok: true }, { status: 200 });
+            }
+          } catch (mediaErr) {
+            console.error("[webhook:echo] Audio processing error:", mediaErr);
+            // Fall through to generic store
+          }
+        }
+      }
+
+      // Generic store (non-audio or audio fallback)
       const echoInsert = await insertMessage(
         conversationId,
         "human",
@@ -763,7 +851,7 @@ export async function POST(request: NextRequest) {
         });
 
       // If the buffer had multiple messages, add the combined view as the last user turn
-      if (bufferedMessages.length > 1) {
+      if (bufferedMessages.length >= 1) {
         const lastUserIdx = [...aiMessages].reverse().findIndex((m) => m.role === "user");
         if (lastUserIdx !== -1) {
           const realIdx = aiMessages.length - 1 - lastUserIdx;

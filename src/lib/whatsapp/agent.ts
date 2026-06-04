@@ -356,7 +356,18 @@ export async function runWhatsAppAgent({
       if (mediaToolNames.includes(tr.toolName)) {
         try {
           const parsed = typeof tr.output === "string" ? JSON.parse(tr.output) : null;
-          if (parsed?._media) {
+          if (parsed?._batch && Array.isArray(parsed._media)) {
+            // Batch: múltiples media items (ej: varias promos)
+            for (const m of parsed._media) {
+              pendingMedia.push({
+                type: m.type || "image",
+                url: m.url,
+                caption: m.caption || "",
+                dbContent: m.dbContent || "",
+              });
+            }
+          } else if (parsed?._media) {
+            // Legacy: single media object (ej: { _media: true, type, url, ... })
             pendingMedia.push({
               type: parsed.type || "image",
               url: parsed.url,

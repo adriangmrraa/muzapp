@@ -42,9 +42,16 @@ function AudioMedia({ media }: { media: MediaAttachment }) {
       <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2.5">
         <Mic className="h-4 w-4 text-[#D4A017] flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full w-1/3 bg-gradient-to-r from-[#D4A017] to-[#F5A623] rounded-full" />
-          </div>
+          {media.url ? (
+            <audio
+              controls
+              src={resolveUrl(media.url)}
+              className="w-full h-8"
+              preload="none"
+            />
+          ) : (
+            <span className="text-xs text-neutral-400">Archivo no disponible</span>
+          )}
         </div>
         {media.fileSize && (
           <span className="text-[10px] text-neutral-500 flex-shrink-0">
@@ -63,12 +70,19 @@ function AudioMedia({ media }: { media: MediaAttachment }) {
 
 function VideoMedia({ media }: { media: MediaAttachment }) {
   return (
-    <div className="relative rounded-lg overflow-hidden bg-black/40 cursor-pointer group">
-      <div className="aspect-video flex items-center justify-center">
-        <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
-          <Play className="h-5 w-5 text-white ml-0.5" fill="currentColor" />
+    <div className="relative rounded-lg overflow-hidden bg-black/40">
+      {media.url ? (
+        <video
+          controls
+          src={resolveUrl(media.url)}
+          className="w-full max-h-48 rounded-lg"
+          preload="metadata"
+        />
+      ) : (
+        <div className="aspect-video flex items-center justify-center">
+          <span className="text-xs text-neutral-400">Archivo no disponible</span>
         </div>
-      </div>
+      )}
       {media.caption && (
         <p className="text-xs text-neutral-300 px-2 pb-2">{media.caption}</p>
       )}

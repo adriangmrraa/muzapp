@@ -186,6 +186,7 @@ export const chatMessages = pgTable("chat_messages", {
     mimeType?: string;
     caption?: string;
     transcription?: string;
+    description?: string;
   }[]>().default([]),
   platformMessageId: varchar("platform_message_id", { length: 255 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

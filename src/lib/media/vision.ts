@@ -205,9 +205,14 @@ function parseDocumentType(description: string): string {
 }
 
 function formatForAgent(description: string): string {
-  // Extract just the description line for the agent
-  const match = description.match(/DESCRIPCION:\s*(.+)/i);
-  return match ? match[1].trim() : description;
+  // Include CATEGORIA in agent-facing text for classification context
+  const catMatch = description.match(/CATEGORIA:\s*(\w+)/i);
+  const descMatch = description.match(/DESCRIPCION:\s*(.+)/i);
+
+  const category = catMatch ? catMatch[1].toUpperCase() : null;
+  const desc = descMatch ? descMatch[1].trim() : description;
+
+  return category ? `[${category}] ${desc}` : desc;
 }
 
 async function persistDescription(
@@ -236,7 +241,10 @@ async function persistDescription(
         attrs[0].description = description;
         await db
           .update(chatMessages)
-          .set({ contentAttributes: attrs as any })
+          .set({
+            contentAttributes: attrs as any,
+            content: `[Imagen]: ${formatForAgent(description)}`,
+          })
           .where(eq(chatMessages.id, messageId));
       }
     }

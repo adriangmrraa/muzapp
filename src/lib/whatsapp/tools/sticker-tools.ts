@@ -162,12 +162,68 @@ export function createSendMenuImageTool(_conversationId: number, _customerPhone:
 export function createSendPromoImageTool(_conversationId: number, _customerPhone: string) {
   return tool({
     description:
-      "Envía la foto de una PROMOCIÓN al cliente por WhatsApp. Busca por ID (promoId) o por nombre (promoName, ej: 'Combo 17'). Es OBLIGATORIO ejecutar esta tool cuando el cliente pide ver o pregunta por una promo específica. NO digas 'tiene foto' o 'te mando foto' sin ejecutar la tool. Ejecutala directamente.",
+      "Envía la foto de UNA O VARIAS PROMOCIONES al cliente por WhatsApp. Podés mandar un array de IDs (promoIds) para enviar varias, o buscar por ID individual (promoId) o por nombre (promoName, ej: 'Combo 17'). Es OBLIGATORIO ejecutar esta tool cuando el cliente pide ver promos. NO digas 'te mando foto' sin ejecutar la tool.",
     inputSchema: z.object({
-      promoId: z.number().optional().describe("ID de la promoción (alternativa al nombre)"),
-      promoName: z.string().optional().describe("Nombre de la promo para buscar (alternativa al ID). Ej: 'Combo 17', 'Combo 10'"),
+      promoId: z.number().optional().describe("ID de una promoción individual (alternativa a promoIds)"),
+      promoName: z.string().optional().describe("Nombre de la promo para buscar individual (alternativa a promoIds). Ej: 'Combo 17', 'Combo 10'"),
+      promoIds: z.array(z.number()).optional().describe("Array de IDs de promos para enviar VARIAS en un solo llamado. Usar cuando el cliente pide ver TODAS o VARIAS promos. Máximo 6."),
     }),
-    execute: async ({ promoId, promoName }) => {
+    execute: async ({ promoId, promoName, promoIds }) => {
+      const baseUrl = getBaseUrl();
+
+      // ─── BATCH: múltiples promos por IDs ─────────────────────────────────
+      if (promoIds && promoIds.length > 0) {
+        const capped = promoIds.slice(0, 6);
+        const rows = await db
+          .select()
+          .from(promotions)
+          .where(and(eq(promotions.active, true)))
+          .orderBy(promotions.id);
+
+        const matched = rows.filter((p) => capped.includes(p.id));
+
+        if (matched.length === 0) {
+          return "No encontré esas promociones activas.";
+        }
+
+        const mediaItems = matched
+          .filter((p) => p.imageUrl)
+          .map((p) => {
+            const priceText = p.customPrice
+              ? `$${Number(p.customPrice).toLocaleString("es-AR")}`
+              : "";
+            const absoluteUrl = p.imageUrl!.startsWith("http") ? p.imageUrl! : `${baseUrl}${p.imageUrl}`;
+            return {
+              type: "image" as const,
+              url: absoluteUrl,
+              caption: `${p.name}${priceText ? ` — ${priceText}` : ""}`,
+              dbContent: `Promo: ${p.name}${priceText ? ` — ${priceText}` : ""} 📸`,
+            };
+          });
+
+        if (mediaItems.length === 0) {
+          // Ninguna promo tiene imagen — devolver texto
+          return matched
+            .map((p) => {
+              const priceText = p.customPrice
+                ? `$${Number(p.customPrice).toLocaleString("es-AR")}`
+                : "";
+              const itemsList = (p.items as { productName: string; quantity: number }[] || [])
+                .map((i) => `• ${i.quantity}x ${i.productName}`)
+                .join("\n");
+              return `${p.name}${priceText ? ` — ${priceText}` : ""}\n${p.description ? `${p.description}\n` : ""}${itemsList}`;
+            })
+            .join("\n\n");
+        }
+
+        return JSON.stringify({
+          _batch: true,
+          text: "Esas son las promos:",
+          _media: mediaItems,
+        });
+      }
+
+      // ─── SINGLE: por ID o nombre (backwards compat) ─────────────────────
       let promo;
 
       if (promoId) {
@@ -195,7 +251,6 @@ export function createSendPromoImageTool(_conversationId: number, _customerPhone
         : "";
 
       if (promo.imageUrl) {
-        const baseUrl = getBaseUrl();
         const absoluteUrl = promo.imageUrl.startsWith("http") ? promo.imageUrl : `${baseUrl}${promo.imageUrl}`;
         const caption = `${promo.name}${priceText ? ` — ${priceText}` : ""}`;
 

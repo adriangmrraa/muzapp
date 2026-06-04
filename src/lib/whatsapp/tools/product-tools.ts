@@ -229,7 +229,14 @@ export const getActivePromosTool = tool({
   inputSchema: z.object({}),
   execute: async () => {
     const activePromos = await db
-      .select({ id: promotions.id, name: promotions.name, description: promotions.description, customPrice: promotions.customPrice, imageUrl: promotions.imageUrl })
+      .select({
+        id: promotions.id,
+        name: promotions.name,
+        description: promotions.description,
+        customPrice: promotions.customPrice,
+        imageUrl: promotions.imageUrl,
+        items: promotions.items,
+      })
       .from(promotions)
       .where(eq(promotions.active, true))
       .orderBy(desc(promotions.createdAt));
@@ -238,10 +245,24 @@ export const getActivePromosTool = tool({
       return "No hay promociones activas en este momento.";
     }
 
-    return activePromos.map((p) => {
-      const price = p.customPrice ? ` — $${Number(p.customPrice).toLocaleString("es-AR")}` : "";
-      const hasImg = p.imageUrl ? " 📸" : "";
-      return `• [ID:${p.id}] ${p.name}${price}${hasImg}${p.description ? `: ${p.description}` : ""}`;
-    }).join("\n");
+    const promos = activePromos.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      price: p.customPrice ? Number(p.customPrice) : null,
+      imageUrl: p.imageUrl,
+      hasImage: p.imageUrl !== null,
+      items: (p.items || []) as { productName: string; quantity: number }[],
+    }));
+
+    const textFallback = promos
+      .map((p) => {
+        const price = p.price ? ` — $${p.price.toLocaleString("es-AR")}` : "";
+        const hasImg = p.hasImage ? " 📸" : "";
+        return `• ${p.name}${price}${hasImg}${p.description ? `: ${p.description}` : ""}`;
+      })
+      .join("\n");
+
+    return JSON.stringify({ _promos: true, promos }) + "\n\n" + textFallback;
   },
 });
