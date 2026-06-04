@@ -284,9 +284,11 @@ export async function runWhatsAppAgent({
     system = DEFAULT_SYSTEM_PROMPT;
   }
 
+  const MODEL_NAME = "gpt-5-mini";
+  console.log(`[agent] Using model: ${MODEL_NAME} — Chat Completions API (no SDK fallback, invalid model = 404 error)`);
   try {
     const result = await generateText({
-      model: openai.chat("gpt-5-mini"),
+      model: openai.chat(MODEL_NAME),
       system,
       messages,
       providerOptions: {
@@ -343,6 +345,10 @@ export async function runWhatsAppAgent({
       stopWhen: stepCountIs(10),
       toolChoice: "auto",
     });
+
+    // Log modelo real usado por la API (cross-check)
+    const responseModel = (result as any).response?.model || (result as any).response?.headers?.["x-request-id"] || "unknown";
+    console.log(`[agent] ✅ generateText success — API model: ${JSON.stringify((result as any).response?.model || "unknown")}, tools called: ${(result.toolResults || []).length}`);
 
     const rawText = result.text || "";
     const finalText = rawText.replace(/\[INTERNAL_[^\]]*\]/g, "").trim();

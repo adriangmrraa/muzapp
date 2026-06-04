@@ -787,8 +787,10 @@ export async function POST(request: NextRequest) {
           aiMessages.push({ role: "user" as const, content: combinedText });
         }
 
+        const SELLER_MODEL = "gpt-5-mini";
+        console.log(`[webhook:wa] Seller agent using model: ${SELLER_MODEL}`);
         const result = await generateText({
-          model: openai.chat("gpt-5-mini"),
+          model: openai.chat(SELLER_MODEL),
           system: await buildSellerPrompt(),
           messages: aiMessages,
           tools: internalSellerTools,
