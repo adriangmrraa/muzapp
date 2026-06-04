@@ -58,7 +58,7 @@ export async function runWhatsAppAgent({
   customerPhone,
   messages,
 }: RunAgentParams): Promise<{ text: string; pendingMedia: PendingMedia[] }> {
-  console.log("[agent] === AGENT v2.1 (gpt-5.4-mini + parallelToolCalls:false + retry guard) ===");
+  console.log("[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===");
   // 🛡️ PROMPT INJECTION DETECTION
   const lastUserMessage = messages[messages.length - 1]?.content || "";
   const injectionCheck = detectInjection(lastUserMessage);
@@ -289,6 +289,10 @@ export async function runWhatsAppAgent({
   const MAX_HALLUCINATION_RETRIES = 1;
   let attempt = 0;
 
+  // 🔍 Detectar si el usuario preguntó por algo del negocio (promos, menú, productos, horarios)
+  // Si es business intent, forzamos toolChoice:"required" desde el primer intento
+  const hasBusinessIntent = /promos?\b|menú|menu|oferta|descuento|combo|bookbinder|hamburguesa|carta|qué\s*(tienen|hay|venden)|producto|abierto|horario|disponible/i.test(lastUserMessage);
+
   console.log(`[agent] Using model: ${MODEL_NAME} — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction`);
   
   while (attempt <= MAX_HALLUCINATION_RETRIES) {
@@ -306,7 +310,7 @@ export async function runWhatsAppAgent({
           ...messages.slice(0, -1),
           {
             role: "user" as const,
-            content: `${lastMsg.content}\n\n⚠️ IMPORTANTE: El asistente anterior respondió diciendo que envió imágenes pero NO llamó a ninguna herramienta multimedia. El nuevo asistente DEBE llamar primero a sendPromoImage, sendMenuImage o sendProductImage antes de decir que las envió.`,
+            content: `${lastMsg.content}\n\n⚠️ IMPORTANTE: El asistente anterior respondió SIN llamar a las herramientas necesarias para responder correctamente. El nuevo asistente DEBE llamar a las herramientas apropiadas (getActivePromos, sendPromoImage, getMenu, sendMenuImage, getBusinessHours, etc.) para obtener información REAL de la base de datos antes de responder. No invente ni fabrique información. Si el cliente pregunta por promos, llame a getActivePromos y sendPromoImage. Si pregunta por el menú, llame a getMenu y sendMenuImage.`,
           },
         ];
       }
@@ -370,7 +374,7 @@ export async function runWhatsAppAgent({
         sendPromoImage: createSendPromoImageTool(conversationId, customerPhone),
       },
       stopWhen: stepCountIs(10),
-      toolChoice: attempt > 1 ? "required" : "auto",
+      toolChoice: attempt > 1 || hasBusinessIntent ? "required" : "auto",
     });
 
     // Log modelo real usado por la API (cross-check)
@@ -420,9 +424,13 @@ export async function runWhatsAppAgent({
     // Type B: usuario pidió EXPLÍCITAMENTE una foto/imagen y el assistant no llamó tools multimedia
     const userExplicitlyAskedPhoto = /mand[aeá]\s*(foto|imagen|fotito)|quiero\s*ver\s*(la\s*)?foto|mostr[áa]me\s*(la\s*)?foto|enseñ[áa]|pas[áa]me\s*(la\s*)?foto/i.test(lastUserMsg);
     
+    // Type C: usuario preguntó por algo del negocio (promos/menú/productos) y el assistant NO llamó NINGUNA herramienta
+    const noToolsCalled = (result.toolResults || []).length === 0;
+    const isHallucinationC = hasBusinessIntent && noToolsCalled;
+    
     const isHallucinationA = userWantsMedia && assistantClaimsMedia && pendingMedia.length === 0;
     const isHallucinationB = userExplicitlyAskedPhoto && pendingMedia.length === 0;
-    const isHallucination = isHallucinationA || isHallucinationB;
+    const isHallucination = isHallucinationA || isHallucinationB || isHallucinationC;
     
     if (isHallucination && attempt <= MAX_HALLUCINATION_RETRIES) {
       console.warn(`[agent] 🚨 MODEL HALLUCINATION detected (attempt ${attempt}/${MAX_HALLUCINATION_RETRIES+1}) — retrying with force directive`);
