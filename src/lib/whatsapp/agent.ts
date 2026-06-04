@@ -296,6 +296,54 @@ export async function runWhatsAppAgent({
   // Así NO dependemos de un regex frágil para detectar intención de compra.
   const isNonCommercial = nonCommercialDirective.length > 0;
 
+  // 🛠️ Tools compartidas (mismo objeto para Phase 1 y Phase 2)
+  const agentTools = {
+    // Grupo A: Menú y productos
+    getMenu: getMenuTool,
+    getProductDetails: getProductDetailsTool,
+    getProductPrice: getProductPriceTool,
+    searchProducts: searchProductsTool,
+    // Grupo B: Disponibilidad y delivery
+    checkAvailability: checkAvailabilityTool,
+    checkProductAvailability: checkProductAvailabilityTool,
+    checkDelivery: checkDeliveryTool,
+    getDeliveryTime: getDeliveryTimeTool,
+    listAvailableProducts: listAvailableProductsTool,
+    getWaitTime: getWaitTimeTool,
+    // Grupo C: Pedidos (5)
+    createOrder: createCreateOrderTool(conversationId),
+    getOrderStatus: getOrderStatusTool,
+    addToOrder: addToOrderTool,
+    updateOrder: updateOrderTool,
+    cancelOrder: cancelOrderTool,
+    // Grupo D: Cliente y venta consultiva (2)
+    suggestProducts: suggestProductsTool,
+    getClientHistory: getClientHistoryTool,
+    // Grupo E: Operaciones (2)
+    getBusinessHours: getBusinessHoursTool,
+    transferToHuman: createTransferToHumanTool(conversationId),
+    // Grupo F: Cocina + Stock + Hamburguesas + Alias (4)
+    checkKitchenStatus: checkKitchenStatusTool,
+    checkPanStock: checkPanStockTool,
+    checkHamburguesasStock: checkHamburguesasStockTool,
+    saveAddress: saveAddressTool,
+    getPaymentAlias: getPaymentAliasTool,
+    // Grupo G: Multimedia + Stickers (5)
+    sendProductImage: createSendProductImageTool(conversationId, customerPhone),
+    sendSticker: createSendStickerTool(conversationId, customerPhone),
+    sendMenuImage: createSendMenuImageTool(conversationId, customerPhone),
+    sendImage: createSendImageTool(conversationId, customerPhone),
+    sendDocument: createSendDocumentTool(conversationId, customerPhone),
+    // Grupo H: Order Context (memoria del pedido)
+    addOrderItem: createAddOrderItemTool(conversationId, customerPhone),
+    getOrderSummary: createGetOrderSummaryTool(conversationId),
+    confirmOrder: createConfirmOrderTool(conversationId, customerPhone),
+    getAddresses: createGetAddressesTool(customerPhone),
+    // Grupo I: Promos (2)
+    getActivePromos: getActivePromosTool,
+    sendPromoImage: createSendPromoImageTool(conversationId, customerPhone),
+  };
+
   console.log(`[agent] Using model: ${MODEL_NAME} — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction`);
   
   while (attempt <= MAX_HALLUCINATION_RETRIES) {
@@ -330,52 +378,7 @@ export async function runWhatsAppAgent({
             parallelToolCalls: false,
           } satisfies OpenAILanguageModelChatOptions,
         },
-        tools: {
-        // Grupo A: Menú y productos
-        getMenu: getMenuTool,
-        getProductDetails: getProductDetailsTool,
-        getProductPrice: getProductPriceTool,
-        searchProducts: searchProductsTool,
-        // Grupo B: Disponibilidad y delivery
-        checkAvailability: checkAvailabilityTool,
-        checkProductAvailability: checkProductAvailabilityTool,
-        checkDelivery: checkDeliveryTool,
-        getDeliveryTime: getDeliveryTimeTool,
-        listAvailableProducts: listAvailableProductsTool,
-        getWaitTime: getWaitTimeTool,
-        // Grupo C: Pedidos (5)
-        createOrder: createCreateOrderTool(conversationId),
-        getOrderStatus: getOrderStatusTool,
-        addToOrder: addToOrderTool,
-        updateOrder: updateOrderTool,
-        cancelOrder: cancelOrderTool,
-        // Grupo D: Cliente y venta consultiva (2)
-        suggestProducts: suggestProductsTool,
-        getClientHistory: getClientHistoryTool,
-        // Grupo E: Operaciones (2)
-        getBusinessHours: getBusinessHoursTool,
-        transferToHuman: createTransferToHumanTool(conversationId),
-        // Grupo F: Cocina + Stock + Hamburguesas + Alias (4)
-        checkKitchenStatus: checkKitchenStatusTool,
-        checkPanStock: checkPanStockTool,
-        checkHamburguesasStock: checkHamburguesasStockTool,
-        saveAddress: saveAddressTool,
-        getPaymentAlias: getPaymentAliasTool,
-        // Grupo G: Multimedia + Stickers (5)
-        sendProductImage: createSendProductImageTool(conversationId, customerPhone),
-        sendSticker: createSendStickerTool(conversationId, customerPhone),
-        sendMenuImage: createSendMenuImageTool(conversationId, customerPhone),
-        sendImage: createSendImageTool(conversationId, customerPhone),
-        sendDocument: createSendDocumentTool(conversationId, customerPhone),
-        // Grupo H: Order Context (memoria del pedido)
-        addOrderItem: createAddOrderItemTool(conversationId, customerPhone),
-        getOrderSummary: createGetOrderSummaryTool(conversationId),
-        confirmOrder: createConfirmOrderTool(conversationId, customerPhone),
-        getAddresses: createGetAddressesTool(customerPhone),
-        // Grupo I: Promos (2)
-        getActivePromos: getActivePromosTool,
-        sendPromoImage: createSendPromoImageTool(conversationId, customerPhone),
-      },
+        tools: agentTools,
       stopWhen: stepCountIs(10),
       toolChoice: attempt > 1 || !isNonCommercial ? "required" : "auto",
     });
@@ -460,17 +463,35 @@ export async function runWhatsAppAgent({
         : "Ahí te las mando.";
     }
     if (!responseText) {
-      // 🚨 El modelo NO devolvió texto (porque toolChoice:"required" lo fuerza a solo llamar tools
-      // sin generar texto de respuesta). En vez del error genérico, usamos los outputs de las tools.
-      // Las tools devuelven texto informativo y coherente (createOrder devuelve "✅ Pedido #101...")
-      // que es mejor que un hardcode genérico.
-      const toolOutputs = (result.toolResults || [])
-        .map(t => typeof t.output === "string" ? t.output.trim() : "")
-        .filter(Boolean);
-      
-      if (toolOutputs.length > 0) {
-        // Unir outputs de todas las tools que se ejecutaron
-        responseText = toolOutputs.join("\n\n");
+      // 🚨 Phase 2: El modelo NO devolvió texto porque toolChoice:"required" lo obligó a
+      // llamar tools sin generar respuesta. Hacemos una SEGUNDA generación con toolChoice:"auto"
+      // para que el modelo vea los resultados de las tools y genere texto natural.
+      // Esto evita: (1) filtrar instrucciones internas al cliente, (2) respuestas impersonales.
+      if (result.toolResults && result.toolResults.length > 0) {
+        try {
+          // Construir mensaje completo: originales + tool calls + tool results
+          const allMessages = [...retryMessages, ...result.response.messages] as any;
+          
+          const textResult = await generateText({
+            model: openai.chat(MODEL_NAME),
+            system,
+            messages: allMessages,
+            providerOptions: {
+              openai: {
+                systemMessageMode: "developer",
+                parallelToolCalls: false,
+              } satisfies OpenAILanguageModelChatOptions,
+            },
+            tools: agentTools,
+            stopWhen: stepCountIs(10),
+            toolChoice: "auto",
+          });
+          
+          responseText = textResult.text?.trim() || "Ahí te lo estamos gestionando, en breve te confirmamos.";
+        } catch (error) {
+          console.error("[agent] Phase 2 generateText failed:", error);
+          responseText = "Ahí te lo estamos gestionando, en breve te confirmamos.";
+        }
       } else {
         responseText = "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
       }
