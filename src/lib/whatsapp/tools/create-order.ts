@@ -93,6 +93,29 @@ export function createCreateOrderTool(conversationId: number) {
       }
     }
 
+    // ─── IDEMPOTENCIA: ver si ya hay un pedido pending creado hace <30s ──
+    try {
+      const recentThreshold = new Date(Date.now() - 30_000);
+      const [recentOrder] = await db
+        .select({ id: orders.id })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.phoneNumber, customerPhone),
+            eq(orders.status, "pending"),
+            gt(orders.createdAt, recentThreshold),
+          )
+        )
+        .orderBy(desc(orders.createdAt))
+        .limit(1);
+      if (recentOrder) {
+        console.log(`[createOrder] 🛑 Duplicate prevention — order #${recentOrder.id} already created for ${customerPhone} in last 30s`);
+        return `✅ Dale, ya registramos tu pedido #${recentOrder.id}. Cualquier cosa avisanos.`;
+      }
+    } catch {
+      // non-fatal — si falla la consulta, permitir crear igual
+    }
+
     // ─── AUTO-LEER CARRITO desde orderContextItems si no se pasaron items explícitos ──
     let items = explicitItems;
     if (!items || items.length === 0) {

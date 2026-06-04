@@ -460,7 +460,22 @@ export async function runWhatsAppAgent({
         : "Ahí te las mando.";
     }
     if (!responseText) {
-      responseText = "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
+      // 🚨 El modelo NO devolvió texto pero puede haber llamado tools exitosamente
+      // En vez del error genérico, responder según qué tools se ejecutaron
+      const calledToolNames = (result.toolResults || []).map(t => t.toolName);
+      const anyOrderTool = calledToolNames.some(n => ["createOrder", "confirmOrder", "addOrderItem"].includes(n));
+      const anyMenuTool = calledToolNames.some(n => ["getMenu", "getProductDetails", "searchProducts", "getActivePromos"].includes(n));
+      const anyCheckTool = calledToolNames.some(n => ["checkAvailability", "checkDelivery", "getBusinessHours", "checkKitchenStatus"].includes(n));
+
+      if (anyOrderTool) {
+        responseText = "Dale, te tomamos el pedido. Cualquier cosa te escribo.";
+      } else if (anyMenuTool) {
+        responseText = "Dale, ahora te muestro lo que tenemos.";
+      } else if (anyCheckTool) {
+        responseText = "Dale, ahí te confirmo.";
+      } else {
+        responseText = "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
+      }
     }
     return { text: responseText, pendingMedia };
     
