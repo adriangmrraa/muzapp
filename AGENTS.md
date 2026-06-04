@@ -17,3 +17,9 @@ Cuando hay múltiples agentes trabajando en paralelo en este proyecto:
 **Proyecto**: muzapp
 **Specs activas**: `sdd/muzzarella-core/specs`
 <!-- END:inter-agent-engram -->
+
+<!-- BEGIN:skill-clear-chat -->
+# Skill: clear-chat
+
+Cargá la skill `clear-chat` desde `skills/clear-chat/SKILL.md` cuando el usuario pida vaciar su chat de WhatsApp. Trigger: "vacia mi chat", "clear my chat", "empty my chat", "borra mis mensajes", "limpia mi chat".
+<!-- END:skill-clear-chat -->
