@@ -450,10 +450,10 @@ export async function runWhatsAppAgent({
     let responseText = finalText;
     if (!responseText && pendingMedia.length > 0) {
       const descriptions = pendingMedia
-        .map(m => m.caption || m.dbContent || "")
+        .map(m => m.caption || "")
         .filter(Boolean);
       responseText = descriptions.length > 0
-        ? descriptions.join("\n")
+        ? "Ahí te las mando:\n" + descriptions.join("\n")
         : "Ahí te las mando.";
     }
     if (!responseText) {

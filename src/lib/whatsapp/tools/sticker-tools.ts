@@ -39,7 +39,7 @@ function getBaseUrl(): string {
 export function createSendStickerTool(_conversationId: number, _customerPhone: string) {
   return tool({
     description:
-      "Envía un sticker de confirmación al cliente. Usar después de confirmar pedido, pago recibido, o cuando el cliente confirma algo. Stickers: flama (🔥 épico), ok (👍 confirmación), dale (✅ aprobación), corazon (❤️ feedback/agradecimiento).",
+      "Envía un sticker de confirmación al cliente. Usar SOLO después de confirmar pedido, pago recibido, o cuando el cliente confirma algo. 🚫 NO usar cuando el cliente pide ver el menú, promos, ofertas, carta, fotos de productos, o cualquier contenido visual — para eso están sendMenuImage, sendPromoImage y sendProductImage. Stickers: flama (🔥 épico), ok (👍 confirmación), dale (✅ aprobación), corazon (❤️ feedback/agradecimiento).",
     inputSchema: z.object({
       sticker: z
         .enum(["flama", "ok", "dale", "corazon"])
