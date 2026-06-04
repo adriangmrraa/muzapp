@@ -255,14 +255,6 @@ export const getActivePromosTool = tool({
       items: (p.items || []) as { productName: string; quantity: number }[],
     }));
 
-    const textFallback = promos
-      .map((p) => {
-        const price = p.price ? ` — $${p.price.toLocaleString("es-AR")}` : "";
-        const hasImg = p.hasImage ? " 📸" : "";
-        return `• ${p.name}${price}${hasImg}${p.description ? `: ${p.description}` : ""}`;
-      })
-      .join("\n");
-
-    return JSON.stringify({ _promos: true, promos }) + "\n\n" + textFallback;
+    return JSON.stringify({ _promos: true, promos, hint: "Call sendPromoImage to show promos to the user - the client cannot see this JSON data." });
   },
 });
