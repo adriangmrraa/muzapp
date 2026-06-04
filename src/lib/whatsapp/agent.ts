@@ -284,19 +284,45 @@ export async function runWhatsAppAgent({
     system = DEFAULT_SYSTEM_PROMPT;
   }
 
-  const MODEL_NAME = "gpt-5-mini";
-  console.log(`[agent] Using model: ${MODEL_NAME} — Chat Completions API (no SDK fallback, invalid model = 404 error)`);
-  try {
-    const result = await generateText({
-      model: openai.chat(MODEL_NAME),
-      system,
-      messages,
-      providerOptions: {
-        openai: {
-          systemMessageMode: "developer",
-        } satisfies OpenAILanguageModelChatOptions,
-      },
-      tools: {
+  const MODEL_NAME = "gpt-5.4-mini";
+  const MAX_HALLUCINATION_RETRIES = 1;
+  let attempt = 0;
+
+  console.log(`[agent] Using model: ${MODEL_NAME} — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction`);
+  
+  while (attempt <= MAX_HALLUCINATION_RETRIES) {
+    attempt++;
+    if (attempt > 1) {
+      console.log(`[agent] 🔄 Hallucination retry #${attempt - 1} — injecting force directive`);
+    }
+
+    // On retry, inject a force directive into the LAST user message
+    let retryMessages = messages;
+    if (attempt > 1) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg?.role === "user") {
+        retryMessages = [
+          ...messages.slice(0, -1),
+          {
+            role: "user" as const,
+            content: `${lastMsg.content}\n\n⚠️ IMPORTANTE: El asistente anterior respondió diciendo que envió imágenes pero NO llamó a ninguna herramienta multimedia. El nuevo asistente DEBE llamar primero a sendPromoImage, sendMenuImage o sendProductImage antes de decir que las envió.`,
+          },
+        ];
+      }
+    }
+
+    try {
+      const result = await generateText({
+        model: openai.chat(MODEL_NAME),
+        system,
+        messages: retryMessages,
+        providerOptions: {
+          openai: {
+            systemMessageMode: "developer",
+            parallelToolCalls: false,
+          } satisfies OpenAILanguageModelChatOptions,
+        },
+        tools: {
         // Grupo A: Menú y productos
         getMenu: getMenuTool,
         getProductDetails: getProductDetailsTool,
@@ -347,14 +373,12 @@ export async function runWhatsAppAgent({
     });
 
     // Log modelo real usado por la API (cross-check)
-    const responseModel = (result as any).response?.model || (result as any).response?.headers?.["x-request-id"] || "unknown";
     console.log(`[agent] ✅ generateText success — API model: ${JSON.stringify((result as any).response?.model || "unknown")}, tools called: ${(result.toolResults || []).length}`);
 
     const rawText = result.text || "";
     const finalText = rawText.replace(/\[INTERNAL_[^\]]*\]/g, "").trim();
 
     // 🔍 Extraer media pendiente de los tool results
-    // Los tools multimedia devuelven JSON con { _media: true, ... } en vez de enviar directo
     const pendingMedia: PendingMedia[] = [];
     const mediaToolNames = ["sendMenuImage", "sendProductImage", "sendImage", "sendSticker", "sendDocument", "sendPromoImage"];
     
@@ -363,7 +387,6 @@ export async function runWhatsAppAgent({
         try {
           const parsed = typeof tr.output === "string" ? JSON.parse(tr.output) : null;
           if (parsed?._batch && Array.isArray(parsed._media)) {
-            // Batch: múltiples media items (ej: varias promos)
             for (const m of parsed._media) {
               pendingMedia.push({
                 type: m.type || "image",
@@ -373,7 +396,6 @@ export async function runWhatsAppAgent({
               });
             }
           } else if (parsed?._media) {
-            // Legacy: single media object (ej: { _media: true, type, url, ... })
             pendingMedia.push({
               type: parsed.type || "image",
               url: parsed.url,
@@ -387,21 +409,35 @@ export async function runWhatsAppAgent({
       }
     }
     
-    // 🛡️ POST-PROCESSING GUARD: detectar si el modelo dijo que envió algo sin haberlo hecho
-    // Esto pasa cuando el modelo alucina el envío en vez de ejecutar la tool
+    // 🛡️ POST-PROCESSING GUARD: detectar hallucination y retry
     const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content.toLowerCase() || "";
     const userWantsMedia = /menú|menu|foto|imagen|ver\s*(las\s*)?promo|mostr|qué\s*tienen|carta|bookbinder|combo|promo|oferta|descuento|qué\s*me\s*recomend|la\s*de\s*\d+|qué\s*me\s*convién/i.test(lastUserMsg);
     const assistantClaimsMedia = /acá\s*ten[eé]s\s*(el\s*menú|la\s*foto|las\s*promos|el\s*men[uú])|te\s*mand[éeui]|ahí\s*van/i.test(finalText);
     
-    if (userWantsMedia && assistantClaimsMedia && pendingMedia.length === 0) {
-      console.warn(`[agent] 🚨 MODEL HALLUCINATION: said "${finalText.slice(0,80)}" but called NO media tools. User asked for visuals.`);
-      // No retry — este log es para monitorear. Con gpt-5-mini el tool calling
-      // funciona en Chat Completions. gpt-5.4-mini requiere reasoning activo.
+    const isHallucination = userWantsMedia && assistantClaimsMedia && pendingMedia.length === 0;
+    
+    if (isHallucination && attempt <= MAX_HALLUCINATION_RETRIES) {
+      console.warn(`[agent] 🚨 MODEL HALLUCINATION detected (attempt ${attempt}/${MAX_HALLUCINATION_RETRIES+1}) — retrying with force directive`);
+      continue; // retry with force directive injected at top of while loop
     }
     
+    if (isHallucination) {
+      console.error(`[agent] 💀 MODEL HALLUCINATION survived after ${MAX_HALLUCINATION_RETRIES+1} attempts — returning fallback response`);
+      return {
+        text: "Te consulto con Leandro sobre las promos y te paso las imágenes en un toque.",
+        pendingMedia: [],
+      };
+    }
+    
+    // ✅ No hallucination — return normal response
     return { text: finalText || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?", pendingMedia };
-  } catch (error) {
-    console.error("[agent] Error running WhatsApp agent:", error);
-    return { text: "Disculpá, tuve un problema técnico. Escribí 'hablar con humano' si querés que te atienda Leandro personalmente.", pendingMedia: [] };
+    
+    } catch (error) {
+      console.error("[agent] Error running WhatsApp agent:", error);
+      return { text: "Disculpá, tuve un problema técnico. Escribí 'hablar con humano' si querés que te atienda Leandro personalmente.", pendingMedia: [] };
+    }
   }
+
+  // Safety guard — should never reach here (all paths return or continue inside loop)
+  return { text: "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?", pendingMedia: [] };
 }

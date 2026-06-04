@@ -27,7 +27,7 @@ import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 import { buildSellerPrompt, internalSellerTools } from "@/lib/whatsapp/seller-prompt";
 import { generateText, stepCountIs } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { openai, type OpenAILanguageModelChatOptions } from "@ai-sdk/openai";
 
 /**
  * GET — Webhook verification (YCloud sends a challenge token)
@@ -787,13 +787,19 @@ export async function POST(request: NextRequest) {
           aiMessages.push({ role: "user" as const, content: combinedText });
         }
 
-        const SELLER_MODEL = "gpt-5-mini";
-        console.log(`[webhook:wa] Seller agent using model: ${SELLER_MODEL}`);
+        const SELLER_MODEL = "gpt-5.4-mini";
+        console.log(`[webhook:wa] Seller agent using model: ${SELLER_MODEL} (parallelToolCalls:false)`);
         const result = await generateText({
           model: openai.chat(SELLER_MODEL),
           system: await buildSellerPrompt(),
           messages: aiMessages,
           tools: internalSellerTools,
+          providerOptions: {
+            openai: {
+              systemMessageMode: "developer",
+              parallelToolCalls: false,
+            } satisfies OpenAILanguageModelChatOptions,
+          },
           stopWhen: stepCountIs(10),
         });
         const reply = result.text || "Disculpá, no pude procesar eso.";
