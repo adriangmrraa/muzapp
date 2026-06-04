@@ -289,9 +289,12 @@ export async function runWhatsAppAgent({
   const MAX_HALLUCINATION_RETRIES = 1;
   let attempt = 0;
 
-  // 🔍 Detectar si el usuario preguntó por algo del negocio (promos, menú, productos, horarios)
-  // Si es business intent, forzamos toolChoice:"required" desde el primer intento
-  const hasBusinessIntent = /promos?\b|menú|menu|oferta|descuento|combo|bookbinder|hamburguesa|carta|qué\s*(tienen|hay|venden)|producto|abierto|horario|disponible/i.test(lastUserMessage);
+  // 🔍 tools: decidir si forzar "required" o dejar "auto"
+  // 🚨 REGLA: En un agente de ventas, DEFAULT = required.
+  // Solo usamos "auto" cuando detectamos que el cliente NO está en modo compra
+  // (nonCommercialDirective se setea con 1+ mensajes no comerciales consecutivos).
+  // Así NO dependemos de un regex frágil para detectar intención de compra.
+  const isNonCommercial = nonCommercialDirective.length > 0;
 
   console.log(`[agent] Using model: ${MODEL_NAME} — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction`);
   
@@ -374,7 +377,7 @@ export async function runWhatsAppAgent({
         sendPromoImage: createSendPromoImageTool(conversationId, customerPhone),
       },
       stopWhen: stepCountIs(10),
-      toolChoice: attempt > 1 || hasBusinessIntent ? "required" : "auto",
+      toolChoice: attempt > 1 || !isNonCommercial ? "required" : "auto",
     });
 
     // Log modelo real usado por la API (cross-check)
@@ -426,7 +429,7 @@ export async function runWhatsAppAgent({
     
     // Type C: usuario preguntó por algo del negocio (promos/menú/productos) y el assistant NO llamó NINGUNA herramienta
     const noToolsCalled = (result.toolResults || []).length === 0;
-    const isHallucinationC = hasBusinessIntent && noToolsCalled;
+    const isHallucinationC = !isNonCommercial && noToolsCalled;
     
     const isHallucinationA = userWantsMedia && assistantClaimsMedia && pendingMedia.length === 0;
     const isHallucinationB = userExplicitlyAskedPhoto && pendingMedia.length === 0;
