@@ -153,6 +153,7 @@ export function createSendMenuImageTool(_conversationId: number, _customerPhone:
         url: imageUrl,
         caption,
         dbContent: `Menú de ${menuLabel} 📸`,
+        description: `Menú de ${menuLabel} enviado`,
       });
     },
   });
@@ -202,24 +203,35 @@ export function createSendPromoImageTool(_conversationId: number, _customerPhone
           });
 
         if (mediaItems.length === 0) {
-          // Ninguna promo tiene imagen — devolver texto
-          return matched
+          // Ninguna promo tiene imagen — devolver JSON con descripción
+          const noImgDescription = matched
             .map((p) => {
               const priceText = p.customPrice
                 ? `$${Number(p.customPrice).toLocaleString("es-AR")}`
                 : "";
-              const itemsList = (p.items as { productName: string; quantity: number }[] || [])
+              const itemsList = ((p.items as { productName: string; quantity: number }[]) || [])
                 .map((i) => `• ${i.quantity}x ${i.productName}`)
                 .join("\n");
               return `${p.name}${priceText ? ` — ${priceText}` : ""}\n${p.description ? `${p.description}\n` : ""}${itemsList}`;
             })
             .join("\n\n");
+          return JSON.stringify({ _batch: true, _media: [], description: noImgDescription });
         }
+
+        const description = matched
+          .map((p) => {
+            const price = p.customPrice ? `$${Number(p.customPrice).toLocaleString("es-AR")}` : "";
+            const itemsList = ((p.items as { productName: string; quantity: number }[]) || [])
+              .map((i) => `• ${i.quantity}x ${i.productName}`)
+              .join("\n");
+            return `${p.name}${price ? ` — ${price}` : ""}${p.description ? `: ${p.description}` : ""}\n${itemsList}`;
+          })
+          .join("\n\n");
 
         return JSON.stringify({
           _batch: true,
-          text: "Esas son las promos:",
           _media: mediaItems,
+          description,
         });
       }
 
@@ -264,11 +276,11 @@ export function createSendPromoImageTool(_conversationId: number, _customerPhone
       }
 
       // Fallback: texto si no hay imagen
-      const itemsList = (promo.items as { productName: string; quantity: number }[] || [])
+      const itemsList = ((promo.items as { productName: string; quantity: number }[]) || [])
         .map((i) => `• ${i.quantity}x ${i.productName}`)
         .join("\n");
-
-      return `${promo.name}${priceText ? ` — ${priceText}` : ""}\n${promo.description ? `${promo.description}\n` : ""}${itemsList}`;
+      const singleDescription = `${promo.name}${priceText ? ` — ${priceText}` : ""}\n${promo.description ? `${promo.description}\n` : ""}${itemsList}`;
+      return JSON.stringify({ _batch: true, _media: [], description: singleDescription });
     },
   });
 }
