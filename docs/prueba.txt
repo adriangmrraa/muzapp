@@ -1,58 +1,448 @@
 CHAT: 
 
-Hola, que promos tienen?
+Hola que promos tienen?
 
-05:23 a. m.
+05:50 a. m.
 Bot
-Esas son las promos, ¿te gusta alguna?
+Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?
 
-05:23 a. m.
+05:51 a. m.
+Bot
+Promo: Combo 10 — $10.000 📸
+
+05:51 a. m.
+Bot
+Promo: Combo 19 — $19.000 📸
+
+05:51 a. m.
+Bot
+Promo: Combo 14 — $14.000 📸
+
+05:51 a. m.
+Bot
+Promo: Combo 17 — $17.000 📸
+
+05:51 a. m.
+Bot
+Promo: Combo 13 — $13.000 📸
+
+05:51 a. m.
+El combo 13 me gusta
+
+05:51 a. m.
+Puedo agregarle unas papas?
+
+05:52 a. m.
+Unas papas cheese
+
+05:52 a. m.
+Bot
+Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?
+
+05:52 a. m.
+Bot
+Dale, ya te sumé las papas cheese. ¿Delivery o buscás?
+
+05:52 a. m.
+Delivery Porfavor
+
+05:54 a. m.
+Bot
+Dale, me pasás ubi y te digo cuánto sale el envío.
+
+05:54 a. m.
+[Ubicacion]: ubicación compartida (-26.183729171753, -58.21117401123)
+[Ubicacion]: ubicación compartida (-26.183729171753, -58.21117401123)
+
+[Ubicacion]: ubicación compartida (-26.183729171753, -58.21117401123)
+
+05:55 a. m.
+Barrio Cono sur Mz 77 casa 19 esa sería la dirección
+
+05:55 a. m.
+Bot
+Listo, te queda $3.500 de envío y el total es $22.500. ¿Transferencia o efectivo?
+
+05:55 a. m.
+Pago en efectivo aquí
+
+05:57 a. m.
+En cuanto Maso menos Estaria?
+
+05:57 a. m.
+Bot
+Genial, ya se comunican, gracias por elegirnos ☺️
+
+05:57 a. m.
+Bot
+Aprox 30-40 min, te avisamos cuando salga.
+
+05:57 a. m.
+
+---------------
 
 
 LOGS DE RENDER: 
 
-ead more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "40b2125c404365127cb3485aca4f26366c5a5c51e6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "709a84137823db3c92a64eed251f81aff9159c7203". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "40b2125c404365127cb3485aca4f26366c5a5c51e6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-[webhook:wa] Config loaded — enabled:true phone:+5493705115020
-[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a2135fa38258220f841c6e3
+ Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://muzapp.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a213c6a241c404e4c4f42ea
 [webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
 [webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
 [buffer:lock] Acquired lock for whatsapp:+5493704868421
-[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_RnVdAj8c4NmQVECY3azqM"}}
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_778RiWrlxKCZH6BCtMXqZz"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1ziiH1mQubV1wBZpac0Res"}}
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_74fsSSgdqOQxlvepwmAdGU"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_3E5XWlXCCm1Ws9YMC1pWMG"}}
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_2hPEDmn6wz0KXEoNoZbmn8"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_3MI8nXD0nWBDbb21hTaS3Y"}}
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_bF6drHmPxAzG3jEBLaA0t"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_Xgff032KJIYJkcGviGXLf"}}
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_4DQVcqmSbQasPttllmuMC9"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
 [buffer:process] Timer expired or max attempts reached for whatsapp:+5493704868421 after 3s
 [buffer:process] Start — 1 msgs for whatsapp:+5493704868421 (depth=0)
 [buffer:process] About to call processCallback for whatsapp:+5493704868421
 [webhook:wa] Buffer callback fired — 1 msgs for +5493704868421
-[webhook:wa] Running agent with 2 history messages
-[agent] === AGENT v2.1 (gpt-5.4-mini + parallelToolCalls:false + retry guard) ===
+[webhook:wa] Running agent with 1 history messages
+[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===
 [agent] Using model: gpt-5.4-mini — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction
-[agent] ✅ generateText success — API model: "unknown", tools called: 0
-[webhook:wa] Agent response: Esas son las promos, ¿te gusta alguna?... (0 media pending)
-[ycloud] Message sent to +5493704868421 — id:6a21360c5c8ac409daa2bfa8 status:accepted
-[webhook:wa] Updated chatMessage 8309 with wamid 6a21360c5c8ac409daa2bfa8
+[agent] ✅ generateText success — API model: "unknown", tools called: 1
+[webhook:wa] Agent response: Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?... (5 media pending)
+[ycloud] Message sent to +5493704868421 — id:6a213c85c677377ed3824cdd status:accepted
+[webhook:wa] Updated chatMessage 8311 with wamid 6a213c85c677377ed3824cdd
+[webhook:wa] Sending 5 pending media after text...
 [webhook:wa] Response sent to +5493704868421
 [buffer:process] Done for whatsapp:+5493704868421 (depth=0)
 [buffer:lock] Released lock for whatsapp:+5493704868421
+[webhook:wa] Config loaded — enabled:true phone:+5493705115020
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a213cad7e0c542f10359d7f
+[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
+[webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
+[buffer:lock] Acquired lock for whatsapp:+5493704868421
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6QE58R3A3RPSsokPOxLt23"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_53Og6rvTb7V7s8LCzYQwh6"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_45SUdwFm9MQh0lKg5avWFh"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6rZnsmyjs9RQtwd5L8MgAR"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_2tMIwsYmZhI7jvyuWucIzJ"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[buffer:process] Timer expired or max attempts reached for whatsapp:+5493704868421 after 3s
+[buffer:process] Start — 1 msgs for whatsapp:+5493704868421 (depth=0)
+[buffer:process] About to call processCallback for whatsapp:+5493704868421
+[webhook:wa] Buffer callback fired — 1 msgs for +5493704868421
+[webhook:wa] Config loaded — enabled:true phone:+5493705115020
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a213cb442d1f5014bf354f7
+[webhook:wa] Running agent with 8 history messages
+[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===
+[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
+[webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
+[buffer:lock] Lock already held for whatsapp:+5493704868421, skipping
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1ZctGgCl395bTU79gjQiOD"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_2pIM2HQ0SNRJkUNsm3q3JH"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_421HETBCFmBVnXleAlwD9X"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_79iD4Rwf4qCUOzrsozdMiq"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[agent] Using model: gpt-5.4-mini — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6HFbp1htxrsOssGJTtFMQH"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[webhook:wa] Config loaded — enabled:true phone:+5493705115020
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a213cb9c4160b4f651b01d7
+[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
+[webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
+[buffer:lock] Lock already held for whatsapp:+5493704868421, skipping
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_4sGzLx5vQiPsgFjJYXzB01"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_7UpcK9w4LYnksFLEMIS6Yu"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_7A7zkjZueVp24gtKCLxs5I"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6SNAgnQUkMPnOUCb5HFQmq"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_3XwruHappByfZQHqFwXhl5"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[createOrder] Auto-read 1 items from carrito (conversation 203)
+[agent] ✅ generateText success — API model: "unknown", tools called: 1
+[webhook:wa] Agent response: Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?... (0 media pending)
+[ycloud] Message sent to +5493704868421 — id:6a213ccc19a9aa65f5e55dd1 status:accepted
+[webhook:wa] Updated chatMessage 8320 with wamid 6a213ccc19a9aa65f5e55dd1
+[webhook:wa] Response sent to +5493704868421
+[buffer:process] Done for whatsapp:+5493704868421 (depth=0)
+[buffer:interrupt] New (different) messages during processing for whatsapp:+5493704868421, re-processing (depth=1)
+[buffer:process] Timer expired or max attempts reached for whatsapp:+5493704868421 after 3s
+[buffer:process] Start — 2 msgs for whatsapp:+5493704868421 (depth=1)
+[buffer:process] About to call processCallback for whatsapp:+5493704868421
+[webhook:wa] Buffer callback fired — 2 msgs for +5493704868421
+[webhook:wa] Running agent with 11 history messages
+[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===
+[agent] Using model: gpt-5.4-mini — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction
+[agent] ✅ generateText success — API model: "unknown", tools called: 0
+[webhook:wa] Agent response: Dale, ya te sumé las papas cheese. ¿Delivery o buscás?... (0 media pending)
+[ycloud] Message sent to +5493704868421 — id:6a213cda6b9a772cd977d986 status:accepted
+[webhook:wa] Updated chatMessage 8321 with wamid 6a213cda6b9a772cd977d986
+[webhook:wa] Response sent to +5493704868421
+[buffer:process] Done for whatsapp:+5493704868421 (depth=1)
+[buffer:lock] Released lock for whatsapp:+5493704868421
+⨯ Error: Failed query: select count(*) from "conversations" where "conversations"."channel" = $1
+params: whatsapp
+    at cX.queryWithCache (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:24:38907)
+    at async cX.execute (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:24:41454)
+    at async i (.next/server/chunks/ssr/_0am8lta._.js:7:4224)
+    at async h (.next/server/chunks/ssr/[root-of-the-server]__03nbyej._.js:1:2127) {
+  query: 'select count(*) from "conversations" where "conversations"."channel" = $1',
+  params: [ 'whatsapp' ],
+  digest: '3275918605',
+  [cause]: Error [NeonDbError]: Error connecting to database: TypeError: fetch failed
+      at bt.execute (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:14:10445)
+      at async (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:24:41497)
+      at async cX.queryWithCache (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:24:38882)
+      at async cX.execute (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:24:41454)
+      at async i (.next/server/chunks/ssr/_0am8lta._.js:7:4224) {
+    severity: undefined,
+    code: undefined,
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: undefined,
+    line: undefined,
+    routine: undefined,
+    sourceError: TypeError: fetch failed
+        at async bt.execute (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:14:10356)
+        at async (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:24:41497)
+        at async cX.queryWithCache (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:24:38882)
+        at async cX.execute (.next/server/chunks/ssr/src_db_index_ts_02dlp.l._.js:24:41454) {
+      [cause]: [AggregateError]
+    }
+  }
+}
+[webhook:wa] Config loaded — enabled:true phone:+5493705115020
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a213d487e0c542f1035b9cf
+[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
+[webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
+[buffer:lock] Acquired lock for whatsapp:+5493704868421
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_5CFNPdmm7Bq1Jex87Mlhj0"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_7czj46GUzkp7g5WL9pP3fy"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_5mt5BcjQQ5vfkAIGf5gyKl"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6GqovvE6MLLAvwInQ0PHne"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1Cp7Sdcw0xcx9xV0a2QrEQ"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[buffer:process] Timer expired or max attempts reached for whatsapp:+5493704868421 after 3s
+[buffer:process] Start — 1 msgs for whatsapp:+5493704868421 (depth=0)
+[buffer:process] About to call processCallback for whatsapp:+5493704868421
+[webhook:wa] Buffer callback fired — 1 msgs for +5493704868421
+[webhook:wa] Running agent with 13 history messages
+[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===
+[agent] Using model: gpt-5.4-mini — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction
+[agent] ✅ generateText success — API model: "unknown", tools called: 0
+[webhook:wa] Agent response: Dale, me pasás ubi y te digo cuánto sale el envío.... (0 media pending)
+[ycloud] Message sent to +5493704868421 — id:6a213d5a6b9a772cd977e0e7 status:accepted
+[webhook:wa] Updated chatMessage 8323 with wamid 6a213d5a6b9a772cd977e0e7
+[webhook:wa] Response sent to +5493704868421
+[buffer:process] Done for whatsapp:+5493704868421 (depth=0)
+[buffer:lock] Released lock for whatsapp:+5493704868421
+[webhook:wa] Config loaded — enabled:true phone:+5493705115020
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=location id=6a213d7a241c404e4c4f78a2
+[webhook:wa] Config loaded — enabled:true phone:+5493705115020
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a213d7ac4160b4f651b2477
+[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
+[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
+[webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
+[buffer:lock] Acquired lock for whatsapp:+5493704868421
+[webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
+[buffer:lock] Lock already held for whatsapp:+5493704868421, skipping
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6yEXamsD5w0LPMSkn1jKFW"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1iJjATsGB8aWKZubJzdGXi"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1BQVC3y5RuqyG5HDzZ3cvD"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1Jd278UWSgzdsoYBq8PpVX"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_2p975HPk5inhPt5luDFJ47"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_15VxG7jTApCkgRjuBoBI0g"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1guZsm2A0xZXHuwp7EJmpH"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_7DIztsMI2By7F5je8MOMY"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_7C8t2es5CQc2yMp8MAKXcw"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_FxLP9XB8BVF12oHlx2gJV"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[buffer:process] Timer expired or max attempts reached for whatsapp:+5493704868421 after 3s
+[buffer:process] Start — 2 msgs for whatsapp:+5493704868421 (depth=0)
+[buffer:process] About to call processCallback for whatsapp:+5493704868421
+[webhook:wa] Buffer callback fired — 2 msgs for +5493704868421
+[webhook:wa] Running agent with 16 history messages
+[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===
+[agent] Using model: gpt-5.4-mini — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction
+[createOrder] Auto-read 2 items from carrito (conversation 203)
+[ycloud] Message sent to 5493704500888 — id:6a213d8c5c8ac409daa33ec6 status:accepted
+[delivery] Order #97 notified to 5493704500888
+[agent] ✅ generateText success — API model: "unknown", tools called: 0
+[webhook:wa] Agent response: Listo, te queda $3.500 de envío y el total es $22.500. ¿Transferencia o efectivo?... (0 media pending)
+[ycloud] Message sent to +5493704868421 — id:6a213d8ec677377ed3825eb6 status:accepted
+[webhook:wa] Updated chatMessage 8326 with wamid 6a213d8ec677377ed3825eb6
+[webhook:wa] Response sent to +5493704868421
+[buffer:process] Done for whatsapp:+5493704868421 (depth=0)
+[buffer:lock] Released lock for whatsapp:+5493704868421
+[webhook:wa] Config loaded — enabled:true phone:+5493705115020
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a213de4c4160b4f651b3832
+[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
+[webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
+[buffer:lock] Acquired lock for whatsapp:+5493704868421
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6ibUiep0ebrSwuqWt0PY43"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6OlNI0VtkEmGYfS9LH0TlV"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_2MV0XJ9zHnUZLBtnkNoJSN"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_3iXFZYUqLepJhAdsfErRoJ"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_3MrrsnROSvPMG0MtsbrqbJ"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[webhook:wa] Config loaded — enabled:true phone:+5493705115020
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a213de9c4160b4f651b3911
+[buffer:process] Timer expired or max attempts reached for whatsapp:+5493704868421 after 3s
+[buffer:process] Start — 1 msgs for whatsapp:+5493704868421 (depth=0)
+[buffer:process] About to call processCallback for whatsapp:+5493704868421
+[webhook:wa] Buffer callback fired — 1 msgs for +5493704868421
+[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
+[webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
+[webhook:wa] Running agent with 19 history messages
+[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===
+[buffer:lock] Lock already held for whatsapp:+5493704868421, skipping
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_3uMDUQoyO8yrHSV2CNzF8h"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_2Ie4Rbl78vg2qbtY2Bh9no"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_2yaBJbkdWj3Aip1cjwZaYS"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6hMYMJ5E5jn7iEdk0stkz8"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1GjrXnmKLnZAQPUnRi0kzL"}}
+    at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
+    at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
+[agent] Using model: gpt-5.4-mini — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction
+[createOrder] Auto-read 2 items from carrito (conversation 203)
+[agent] ✅ generateText success — API model: "unknown", tools called: 0
+[webhook:wa] Agent response: Genial, ya se comunican, gracias por elegirnos ☺️... (0 media pending)
+[ycloud] Message sent to 5493704500888 — id:6a213dfd19a9aa65f5e571d5 status:accepted
+[delivery] Order #98 notified to 5493704500888
+[ycloud] Message sent to +5493704868421 — id:6a213dfdc677377ed38265ff status:accepted
+[webhook:wa] Updated chatMessage 8329 with wamid 6a213dfdc677377ed38265ff
+[webhook:wa] Response sent to +5493704868421
+[buffer:process] Done for whatsapp:+5493704868421 (depth=0)
+[buffer:interrupt] New (different) messages during processing for whatsapp:+5493704868421, re-processing (depth=1)
+[buffer:process] Timer expired or max attempts reached for whatsapp:+5493704868421 after 3s
+[buffer:process] Start — 1 msgs for whatsapp:+5493704868421 (depth=1)
+[buffer:process] About to call processCallback for whatsapp:+5493704868421
+[webhook:wa] Buffer callback fired — 1 msgs for +5493704868421
+[webhook:wa] Running agent with 20 history messages
+[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===
+[agent] Using model: gpt-5.4-mini — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction
+[agent] ✅ generateText success — API model: "unknown", tools called: 0
+[webhook:wa] Agent response: Aprox 30-40 min, te avisamos cuando salga.... (0 media pending)
+[ycloud] Message sent to +5493704868421 — id:6a213e09720b5d1b99ef0765 status:accepted
+[webhook:wa] Updated chatMessage 8330 with wamid 6a213e09720b5d1b99ef0765
+[webhook:wa] Response sent to +5493704868421
+[buffer:process] Done for whatsapp:+5493704868421 (depth=1)
+[buffer:lock] Released lock for whatsapp:+5493704868421
+
+
+-------
+
+
+dos pedidos creados, se apuro a crear el combo 13 solo, cuando le confirme le pedi agregar unas papas: 
+
+#97
+🍔 Hamburguesas
+Hector Adrian Gamarra
+5493704868421
+1x Combo 13
+1x Papas chesse
+delivery
+Pendiente
+Ahora
+#96
+🍔 Hamburguesas
+Hector Adrian Gamarra
+5493704868421
+1x Combo 13
+pedido para otro día / combo 13
+Pendiente
+Hace 3 min

@@ -446,7 +446,20 @@ export async function runWhatsAppAgent({
     }
     
     // ✅ No hallucination — return normal response
-    return { text: finalText || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?", pendingMedia };
+    // When we have pending media but empty text, join media captions as fallback
+    let responseText = finalText;
+    if (!responseText && pendingMedia.length > 0) {
+      const descriptions = pendingMedia
+        .map(m => m.caption || m.dbContent || "")
+        .filter(Boolean);
+      responseText = descriptions.length > 0
+        ? descriptions.join("\n")
+        : "Ahí te las mando.";
+    }
+    if (!responseText) {
+      responseText = "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
+    }
+    return { text: responseText, pendingMedia };
     
     } catch (error) {
       console.error("[agent] Error running WhatsApp agent:", error);

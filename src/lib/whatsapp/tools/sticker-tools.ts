@@ -266,12 +266,16 @@ export function createSendPromoImageTool(_conversationId: number, _customerPhone
         const absoluteUrl = promo.imageUrl.startsWith("http") ? promo.imageUrl : `${baseUrl}${promo.imageUrl}`;
         const caption = `${promo.name}${priceText ? ` — ${priceText}` : ""}`;
 
+        const promoItemsList = ((promo.items as { productName: string; quantity: number }[]) || [])
+          .map((i) => `• ${i.quantity}x ${i.productName}`)
+          .join("\n");
         return JSON.stringify({
           _media: true,
           type: "image",
           url: absoluteUrl,
           caption,
           dbContent: `Promo: ${promo.name}${priceText ? ` — ${priceText}` : ""} 📸`,
+          description: `${promo.name}${priceText ? ` — ${priceText}` : ""}${promoItemsList ? `\n${promoItemsList}` : ""}`,
         });
       }
 

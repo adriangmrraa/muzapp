@@ -158,6 +158,7 @@ export function createSendProductImageTool(_conversationId: number, _customerPho
         url: fullImageUrl,
         caption,
         dbContent: `📸 ${product.name}`,
+        description: `${product.name} — $${product.price}`,
       });
     },
   });
