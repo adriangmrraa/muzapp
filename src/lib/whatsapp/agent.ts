@@ -460,19 +460,17 @@ export async function runWhatsAppAgent({
         : "Ahí te las mando.";
     }
     if (!responseText) {
-      // 🚨 El modelo NO devolvió texto pero puede haber llamado tools exitosamente
-      // En vez del error genérico, responder según qué tools se ejecutaron
-      const calledToolNames = (result.toolResults || []).map(t => t.toolName);
-      const anyOrderTool = calledToolNames.some(n => ["createOrder", "confirmOrder", "addOrderItem"].includes(n));
-      const anyMenuTool = calledToolNames.some(n => ["getMenu", "getProductDetails", "searchProducts", "getActivePromos"].includes(n));
-      const anyCheckTool = calledToolNames.some(n => ["checkAvailability", "checkDelivery", "getBusinessHours", "checkKitchenStatus"].includes(n));
-
-      if (anyOrderTool) {
-        responseText = "Dale, te tomamos el pedido. Cualquier cosa te escribo.";
-      } else if (anyMenuTool) {
-        responseText = "Dale, ahora te muestro lo que tenemos.";
-      } else if (anyCheckTool) {
-        responseText = "Dale, ahí te confirmo.";
+      // 🚨 El modelo NO devolvió texto (porque toolChoice:"required" lo fuerza a solo llamar tools
+      // sin generar texto de respuesta). En vez del error genérico, usamos los outputs de las tools.
+      // Las tools devuelven texto informativo y coherente (createOrder devuelve "✅ Pedido #101...")
+      // que es mejor que un hardcode genérico.
+      const toolOutputs = (result.toolResults || [])
+        .map(t => typeof t.output === "string" ? t.output.trim() : "")
+        .filter(Boolean);
+      
+      if (toolOutputs.length > 0) {
+        // Unir outputs de todas las tools que se ejecutaron
+        responseText = toolOutputs.join("\n\n");
       } else {
         responseText = "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?";
       }
