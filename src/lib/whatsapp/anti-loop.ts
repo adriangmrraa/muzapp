@@ -43,12 +43,19 @@ export function classifyMessageType(text: string): MessageType {
   const infoKeywords = ["precio", "cuesta", "vale", "horario", "ubica", "dirección", "donde", "dónde", "abierto", "cierran"];
   if (infoKeywords.some((k) => lower.includes(k))) return "info";
 
-  // Detección de mensaje NO comercial (amigo, joda, charla casual)
+  // Detección de mensaje NO comercial (amigo, joda, charla casual, agradecimientos, afirmaciones)
   const nonCommercialKeywords = [
     "cumpa", "vro", "q pendejo", "todo bien?", "todo bien",
     "que onda", "que ondaa", "ke onda", "ké onda",
     "amigo", "como andas", "cómo andas", "todo tranqui",
     "en la lucha", "de una de una", "fortín", "yunka",
+    // Agradecimientos y afirmaciones comunes
+    "gracias", "graciass", "muchas gracias", "mil gracias",
+    "ok", "okay", "okei", "dale", "dahle",
+    "sí", "si", "sisí", "obvio", "claro", "seguro",
+    "listo", "perfecto", "genial", "buenisimo", "bárbaro", "joya",
+    "de una", "d1", "sale", "tranqui", "tranquilo",
+    "buenísimo", "excelente", "naa", "nah",
   ];
   if (nonCommercialKeywords.some((k) => lower.includes(k))) return "non_commercial";
 

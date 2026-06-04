@@ -84,7 +84,7 @@ export async function runWhatsAppAgent({
     const { classifyMessageType } = await import("./anti-loop");
     const currentType = classifyMessageType(lastUserMessage);
     
-    if (currentType === "non_commercial") {
+    if (currentType === "non_commercial" || currentType === "greeting") {
       // Buscar el mensaje ANTERIOR del usuario en el array messages
       const prevUserMessage = messages
         .slice(0, -1) // todo excepto el actual
@@ -92,14 +92,14 @@ export async function runWhatsAppAgent({
         .find((m) => m.role === "user");
       
       const wasPrevNonCommercial = prevUserMessage
-        ? classifyMessageType(prevUserMessage.content) === "non_commercial"
+        ? classifyMessageType(prevUserMessage.content) === "non_commercial" || classifyMessageType(prevUserMessage.content) === "greeting"
         : false;
 
-      if (wasPrevNonCommercial) {
+      if (wasPrevNonCommercial && currentType === "non_commercial") {
         // 2+ mensajes no-comerciales consecutivos → transferir a humano
         nonCommercialDirective = "🚫 NO COMERCIAL: El cliente NO está haciendo un pedido ni consulta del negocio. Respondé: 'Ahí te paso con Leandro, yo estoy para cosas del negocio' y ejecutá transferToHuman.";
       } else {
-        // Primer mensaje no-comercial → responder amable sin vender
+        // Primer mensaje no-comercial/saludo → responder amable sin vender
         nonCommercialDirective = "🚫 NO COMERCIAL: Este mensaje no parece ser sobre el negocio. Respondé amable 'Holaa ¿todo bien?' SIN ofrecer menú, SIN arrancar flujo de venta, SIN preguntar qué quiere.";
       }
     }
