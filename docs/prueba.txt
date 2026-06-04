@@ -1,33 +1,29 @@
+Plan: B2B pedidos en horario CERRADO
+Archivo a modificar
+Solo src/lib/whatsapp/prompt-builder.ts — reglas del agente, ni una línea de código.
+Cambios puntuales
+1. Dividir la regla actual (línea 605) en dos:
+🚫 REGLA: Si AHORA es 🔴 CERRADO y el cliente pide B2C (hamburguesas, combos, etc.):
+  -> NO createOrder. NO addOrderItem (salvo que insista, ahí anotamos).
+  -> "Ahora estamos cerrados, volvemos a las HH. ¿Querés dejar algo pedido?"
 
-Hoy
-Hola que promos tienen?
-
-03:12 a. m.
-Bot
-Sii, esas son las promos que tenemos, ¿querés alguna?
-
-03:13 a. m.
-Y no me dijiste cuáles son
-
-03:13 a. m.
-Quiero saber que promos tienen
-
-03:13 a. m.
-Bot
-Perdón, tenés estas promos: Combo 10, Combo 13, Combo 14, Combo 17 y Combo 19.  
-Querés que te muestre alguna en detalle?
-
-03:13 a. m.
-Tenés fotos o imágenes
-
-03:14 a. m.
-Mandame las imágenes de la promo
-
-03:14 a. m.
-De las promos
-
-03:14 a. m.
-Bot
-Listo, te mandé las imágenes de todas las promos; ¿querés que te prepare alguna?
-
-03:14 a. m.
+✅ REGLA: Si AHORA es 🔴 CERRADO y el cliente pide B2B / mayorista (prepizzas, pancitos, panes de hamburguesa, panes de lomito, pan al por mayor):
+  -> FLUJO NORMAL: createOrder igual.
+  -> Notes: "para retirar en el transcurso del día [fecha]" (o delivery vía Uber si pide envío).
+  -> Respuesta: "Dale, ya quedó registrado tu pedido. Apenas tengamos el horario te avisamos para que puedas retirar (o coordinamos el delivery con Uber)."
+2. Instrucción sobre aviso posterior:
+El agente debe dejar claro que:
+- El pedido QUEDÓ REGISTRADO (no en el aire)
+- Cuando arranque el día se le avisa para coordinar retiro o delivery
+- Delivery = Uber, no delivery propio fuera de horario
+3. No tocar NADA de la lógica existente:
+- El status 🔴 CERRADO y 🟢 ABIERTO se calcula igual
+- El HORARIO DE PRODUCCIÓN ya se inyecta (línea 253), el agente lo usará naturalmente
+- Nada de DB, nada de schemas, nada de APIs
+Lo que NO cambia
+- Hamburguesas/B2C en CERRADO → mismo comportamiento de ahora (no crear pedido)
+- getBusinessHours sigue funcionando igual
+- isOpenNow logic untouched
+Riesgos
+- Muy bajo: es solo texto de prompt, no toca lógica de negocio
+- Único riesgo: que el agente malinterprete y cree pedidos B2C estando cerrado. Se mitiga con instrucciones explícitas: "SOLO B2B/mayorista, NUNCA hamburguesas en horario cerrado"
