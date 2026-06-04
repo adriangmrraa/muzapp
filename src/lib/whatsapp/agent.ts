@@ -84,7 +84,7 @@ export async function runWhatsAppAgent({
     const { classifyMessageType } = await import("./anti-loop");
     const currentType = classifyMessageType(lastUserMessage);
     
-    if (currentType === "non_commercial" || currentType === "greeting") {
+    if (currentType === "non_commercial") {
       // Buscar el mensaje ANTERIOR del usuario en el array messages
       const prevUserMessage = messages
         .slice(0, -1) // todo excepto el actual
@@ -92,7 +92,7 @@ export async function runWhatsAppAgent({
         .find((m) => m.role === "user");
       
       const wasPrevNonCommercial = prevUserMessage
-        ? classifyMessageType(prevUserMessage.content) === "non_commercial" || classifyMessageType(prevUserMessage.content) === "greeting"
+        ? classifyMessageType(prevUserMessage.content) === "non_commercial"
         : false;
 
       if (wasPrevNonCommercial && currentType === "non_commercial") {
@@ -432,14 +432,22 @@ export async function runWhatsAppAgent({
     
     // Type C: usuario preguntó por algo del negocio (promos/menú/productos) y el assistant NO llamó NINGUNA herramienta
     const noToolsCalled = (result.toolResults || []).length === 0;
-    const isHallucinationC = !isNonCommercial && noToolsCalled;
-    
-    const isHallucinationA = userWantsMedia && assistantClaimsMedia && pendingMedia.length === 0;
-    const isHallucinationB = userExplicitlyAskedPhoto && pendingMedia.length === 0;
-    const isHallucination = isHallucinationA || isHallucinationB || isHallucinationC;
+const isHallucinationC = !isNonCommercial && noToolsCalled;
+
+// Type D: assistant llamó data tools (search/getProduct/getPromos) pero NO llamó media tools,
+// y sin embargo el texto dice que mandó una imagen/foto/menú
+const dataToolNames = ["searchProducts", "getProductDetails", "getActivePromos"];
+const calledDataTools = (result.toolResults || []).some(tr => dataToolNames.includes(tr.toolName));
+const calledMediaTools = (result.toolResults || []).some(tr => mediaToolNames.includes(tr.toolName));
+const assistantClaimsMediaSent = /te\s*mand[eéui]\s*(la\s*)?foto|te\s*pas[eé]\s*(la\s*)?foto|acá\s*ten[eé]s\s*(el\s*menú|la\s*foto|las\s*promos)|ahí\s*va\s*(la\s*)?foto|te\s*mand[eéui]\s*(el\s*)?men[uú]|ahí\s*ten[eé]s|mir[aá]\s*(la\s*)?foto/i.test(finalText);
+const isHallucinationD = calledDataTools && !calledMediaTools && assistantClaimsMediaSent;
+
+const isHallucinationA = userWantsMedia && assistantClaimsMedia && pendingMedia.length === 0;
+const isHallucinationB = userExplicitlyAskedPhoto && pendingMedia.length === 0;
+const isHallucination = isHallucinationA || isHallucinationB || isHallucinationC || isHallucinationD;
     
     if (isHallucination && attempt <= MAX_HALLUCINATION_RETRIES) {
-      console.warn(`[agent] 🚨 MODEL HALLUCINATION detected (attempt ${attempt}/${MAX_HALLUCINATION_RETRIES+1}) — retrying with force directive`);
+      console.warn(`[agent] 🚨 MODEL HALLUCINATION detected (attempt ${attempt}/${MAX_HALLUCINATION_RETRIES+1}) [A=${isHallucinationA} B=${isHallucinationB} C=${isHallucinationC} D=${isHallucinationD}] — retrying with force directive`);
       continue; // retry with force directive + toolChoice:required
     }
     
@@ -452,15 +460,11 @@ export async function runWhatsAppAgent({
     }
     
     // ✅ No hallucination — return normal response
-    // When we have pending media but empty text, join media captions as fallback
+    // When we have pending media but empty text, use a simple generic message
+    // (AVOID duplicating image captions in the text bubble — the caption is sent separately)
     let responseText = finalText;
     if (!responseText && pendingMedia.length > 0) {
-      const descriptions = pendingMedia
-        .map(m => m.caption || "")
-        .filter(Boolean);
-      responseText = descriptions.length > 0
-        ? "Ahí te las mando:\n" + descriptions.join("\n")
-        : "Ahí te las mando.";
+      responseText = "Ahí te las mando.";
     }
     if (!responseText) {
       // 🚨 Phase 2: El modelo NO devolvió texto porque toolChoice:"required" lo obligó a

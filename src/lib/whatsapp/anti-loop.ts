@@ -31,17 +31,17 @@ export function classifyMessageType(text: string): MessageType {
   const menuKeywords = ["menú", "menu", "carta", "productos", "tienen", "venden", "qué hay", "que hay", "lista"];
   if (menuKeywords.some((k) => lower.includes(k))) return "menu";
 
-  // Keywords de saludo
-  const greetingKeywords = ["hola", "buenas", "buen día", "buenas tardes", "buenas noches", "qué tal", "que tal", "como estas", "cómo estás", "buen dia"];
-  if (greetingKeywords.some((k) => lower.includes(k))) return "greeting";
+  // Keywords de información (ANTES que saludo — para detectar intención comercial incluso si hay saludo)
+  const infoKeywords = ["precio", "precios", "cuesta", "vale", "horario", "ubica", "dirección", "donde", "dónde", "abierto", "cierran"];
+  if (infoKeywords.some((k) => lower.includes(k))) return "info";
 
   // Keywords de queja
   const complaintKeywords = ["queja", "reclamo", "mal", "pésimo", "error", "falta", "problema", "demor", "tard"];
   if (complaintKeywords.some((k) => lower.includes(k))) return "complaint";
 
-  // Keywords de información
-  const infoKeywords = ["precio", "cuesta", "vale", "horario", "ubica", "dirección", "donde", "dónde", "abierto", "cierran"];
-  if (infoKeywords.some((k) => lower.includes(k))) return "info";
+  // Keywords de saludo (se evalúa DESPUÉS de infoKeywords para que "Hola, pasame los precios" sea "info", no "greeting")
+  const greetingKeywords = ["hola", "buenas", "buen día", "buenas tardes", "buenas noches", "qué tal", "que tal", "como estas", "cómo estás", "buen dia"];
+  if (greetingKeywords.some((k) => lower.includes(k))) return "greeting";
 
   // Detección de mensaje NO comercial (amigo, joda, charla casual, agradecimientos, afirmaciones)
   const nonCommercialKeywords = [
