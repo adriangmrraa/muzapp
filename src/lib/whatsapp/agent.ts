@@ -286,7 +286,7 @@ export async function runWhatsAppAgent({
 
   try {
     const result = await generateText({
-      model: openai.chat("gpt-5.4-mini"),
+      model: openai.chat("gpt-5-mini"),
       system,
       messages,
       providerOptions: {
@@ -389,8 +389,8 @@ export async function runWhatsAppAgent({
     
     if (userWantsMedia && assistantClaimsMedia && pendingMedia.length === 0) {
       console.warn(`[agent] 🚨 MODEL HALLUCINATION: said "${finalText.slice(0,80)}" but called NO media tools. User asked for visuals.`);
-      // No retry — el nuevo modelo (gpt-5.4-mini) debería solucionarlo.
-      // Este log sirve para monitorear si el problema persiste.
+      // No retry — este log es para monitorear. Con gpt-5-mini el tool calling
+      // funciona en Chat Completions. gpt-5.4-mini requiere reasoning activo.
     }
     
     return { text: finalText || "Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?", pendingMedia };

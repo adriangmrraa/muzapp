@@ -788,7 +788,7 @@ export async function POST(request: NextRequest) {
         }
 
         const result = await generateText({
-          model: openai.chat("gpt-5.4-mini"),
+          model: openai.chat("gpt-5-mini"),
           system: await buildSellerPrompt(),
           messages: aiMessages,
           tools: internalSellerTools,
