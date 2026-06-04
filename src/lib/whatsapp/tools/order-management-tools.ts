@@ -125,10 +125,13 @@ export const addToOrderTool = tool({
 // ─── updateOrder ────────────────────────────────────────────────────────────
 export const updateOrderTool = tool({
   description:
-    "Modifica notas o items de un pedido pendiente. Solo funciona si está en 'pending'.",
+    "Modifica notas, items, tipo de entrega, o dirección de un pedido pendiente. Solo funciona si está en 'pending'. Usar cuando el cliente cambia delivery/retiro, dirección, o contenido del pedido.",
   inputSchema: z.object({
     orderId: z.number().describe("ID del pedido"),
     notes: z.string().optional().describe("Nuevas notas"),
+    orderType: z.enum(["delivery", "retiro"]).optional().describe("Cambiar tipo de entrega: delivery o retiro"),
+    address: z.string().optional().describe("Nueva dirección si cambia a delivery"),
+    deliveryFee: z.number().optional().describe("Nuevo costo de envío"),
     items: z
       .array(
         z.object({
@@ -140,7 +143,7 @@ export const updateOrderTool = tool({
       .optional()
       .describe("Items actualizados (reemplaza los existentes)"),
   }),
-  execute: async ({ orderId, notes, items }) => {
+  execute: async ({ orderId, notes, items, orderType, address, deliveryFee }) => {
     const rows = await db
       .select()
       .from(orders)
@@ -154,10 +157,16 @@ export const updateOrderTool = tool({
     const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (notes !== undefined) updates.notes = notes;
     if (items !== undefined) updates.items = items;
+    if (orderType !== undefined) updates.orderType = orderType;
+    if (address !== undefined) updates.address = address;
+    if (deliveryFee !== undefined) updates.deliveryFee = deliveryFee;
 
     await db.update(orders).set(updates).where(eq(orders.id, orderId));
 
     const parts: string[] = [`✅ Pedido #${orderId} actualizado.`];
+    if (orderType) parts.push(`📦 Tipo de entrega: ${orderType}`);
+    if (address) parts.push(`📍 Dirección: ${address}`);
+    if (deliveryFee !== undefined) parts.push(`🚚 Delivery: $${deliveryFee}`);
     if (items) {
       const total = items.reduce(
         (sum, i) => sum + i.quantity * i.unitPrice,

@@ -108,7 +108,7 @@ export async function runWhatsAppAgent({
 
   // 🔧 BUILD DYNAMIC PROMPT (V6 + customer context)
   let system: string;
-  let customerContext: { name?: string; phone?: string; address?: string | null; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null }; lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any }; currentCart?: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[]; currentHour?: number; previousContext?: string } | undefined;
+  let customerContext: { name?: string; phone?: string; address?: string | null; savedAddresses?: string[]; detectedLine?: "b2c" | "b2b"; notes?: string | null; preferences?: string[]; orderHistory?: any[]; pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null }; lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any }; currentCart?: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[]; currentHour?: number; previousContext?: string } | undefined;
   
   try {
     // Cargar contexto del cliente (nombre, historial de pedidos)
@@ -131,6 +131,18 @@ export async function runWhatsAppAgent({
           .from(leads)
           .where(eq(leads.phone, conv.phone))
           .limit(1);
+
+        // 📍 Direcciones guardadas (pueden ser múltiples)
+        let savedAddresses: string[] = [];
+        try {
+          const { getCustomerAddresses } = await import("@/lib/addresses");
+          const addrs = await getCustomerAddresses(conv.phone);
+          if (addrs.length > 0) {
+            savedAddresses = addrs.map(a => a.address);
+          }
+        } catch {
+          // non-fatal
+        }
 
         // Productos que más repite (preferencias)
         const allOrders = await db
@@ -216,10 +228,28 @@ export async function runWhatsAppAgent({
           // non-fatal
         }
 
+        // 🔍 Detectar línea del cliente (B2C hamburguesas vs B2B pan mayorista)
+        let detectedLine: "b2c" | "b2b" | undefined;
+        if (lastOrder?.orderType === "hamburguesas") {
+          detectedLine = "b2c";
+        } else if (lastOrder?.orderType === "pan_mayorista") {
+          detectedLine = "b2b";
+        } else if (preferences.length > 0) {
+          // Clasificar por productos favoritos
+          const b2bKwd = ["prepizza", "pan de lomito", "pan de hamburguesa", "pancho", "pan ", "lomito"];
+          const b2cKwd = ["bookbinder", "deli deli", "mamita", "crispy", "toro", "papas", "hamburguesa", "genesis"];
+          const b2bScore = preferences.filter(p => b2bKwd.some(k => p.toLowerCase().includes(k))).length;
+          const b2cScore = preferences.filter(p => b2cKwd.some(k => p.toLowerCase().includes(k))).length;
+          if (b2bScore > b2cScore) detectedLine = "b2b";
+          else if (b2cScore > b2bScore) detectedLine = "b2c";
+        }
+
         customerContext = {
           name: conv.name || undefined,
           phone: conv.phone,
           address: lead?.address || null,
+          savedAddresses: savedAddresses.length > 0 ? savedAddresses : undefined,
+          detectedLine,
           notes: lead?.notes || null,
           preferences: preferences.length > 0 ? preferences : undefined,
           orderHistory: recentOrders.map(o => ({ items: o.items, status: o.status, id: o.id })),
