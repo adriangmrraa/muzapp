@@ -12,10 +12,9 @@ interface Product {
   description: string | null;
 }
 
-interface CartItem {
-  product: Product;
-  quantity: number;
-}
+type CartItem =
+  | { type: "product"; id: string; data: Product; quantity: number }
+  | { type: "promo"; id: string; data: Promo; quantity: number };
 
 interface Promo {
   id: number;
@@ -78,7 +77,10 @@ export function MenuDigitalClient({
   );
 
   const total = useMemo(
-    () => cart.reduce((s, i) => s + parseFloat(i.product.price || "0") * i.quantity, 0),
+    () => cart.reduce((s, i) => {
+      if (i.type === "product") return s + parseFloat(i.data.price || "0") * i.quantity;
+      return s + parseFloat(i.data.customPrice || "0") * i.quantity;
+    }, 0),
     [cart]
   );
 
@@ -94,24 +96,39 @@ export function MenuDigitalClient({
     return () => clearTimeout(timer);
   }, [activeCat, filtered]);
 
-  const add = (p: Product) => setCart((prev) => {
-    const ex = prev.find((i) => i.product.id === p.id);
+  const addProduct = (p: Product) => setCart((prev) => {
+    const id = "product-" + p.id;
+    const ex = prev.find((i) => i.id === id);
     return ex
-      ? prev.map((i) => i.product.id === p.id ? { ...i, quantity: i.quantity + 1 } : i)
-      : [...prev, { product: p, quantity: 1 }];
+      ? prev.map((i) => i.id === id ? { ...i, quantity: i.quantity + 1 } : i)
+      : [...prev, { type: "product", id, data: p, quantity: 1 } as CartItem];
   });
 
-  const remove = (id: number) => setCart((prev) => {
-    const ex = prev.find((i) => i.product.id === id);
-    if (ex && ex.quantity > 1) return prev.map((i) => i.product.id === id ? { ...i, quantity: i.quantity - 1 } : i);
-    return prev.filter((i) => i.product.id !== id);
+  const addPromo = (promo: Promo) => setCart((prev) => {
+    const id = "promo-" + promo.id;
+    const ex = prev.find((i) => i.id === id);
+    return ex
+      ? prev.map((i) => i.id === id ? { ...i, quantity: i.quantity + 1 } : i)
+      : [...prev, { type: "promo", id, data: promo, quantity: 1 } as CartItem];
+  });
+
+  const remove = (id: string) => setCart((prev) => {
+    const ex = prev.find((i) => i.id === id);
+    if (ex && ex.quantity > 1) return prev.map((i) => i.id === id ? { ...i, quantity: i.quantity - 1 } : i);
+    return prev.filter((i) => i.id !== id);
   });
 
   const send = () => {
     if (!cart.length) return;
-    const lines = cart.map((i) =>
-      `• ${i.quantity}x ${i.product.name.trim()} — $${(parseFloat(i.product.price || "0") * i.quantity).toLocaleString("es-AR")}`
-    );
+    const lines = cart.map((i) => {
+      if (i.type === "product") {
+        return `• ${i.quantity}x ${i.data.name.trim()} — $${(parseFloat(i.data.price || "0") * i.quantity).toLocaleString("es-AR")}`;
+      }
+      const price = (parseFloat(i.data.customPrice || "0") * i.quantity).toLocaleString("es-AR");
+      const itemsIncluded = (i.data.items || []).map((item) => `  ${item.quantity}x ${item.productName}`).join("\n");
+      const line = `• 🔥 ${i.quantity}x ${i.data.name.trim()} — $${price}`;
+      return itemsIncluded ? `${line}\n${itemsIncluded}` : line;
+    });
     const msg = ["🛵 *Nuevo Pedido*", "", ...lines, "", `💰 *Total: $${total.toLocaleString("es-AR")}*`].join("\n");
     window.open(`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`, "_blank");
     setOrderSent(true);
@@ -132,17 +149,6 @@ export function MenuDigitalClient({
       document.body.style.overflow = "";
     };
   }, [selectedItem]);
-
-  const sendPromo = (promo: Promo) => {
-    const itemsList = (promo.items || [])
-      .map((i) => `• ${i.quantity}x ${i.productName}`)
-      .join("\n");
-    const price = promo.customPrice
-      ? `$${parseFloat(promo.customPrice).toLocaleString("es-AR")}`
-      : "Consultar";
-    const msg = [`🔥 *${promo.name.trim()}*`, "", itemsList, "", `💰 *Precio: ${price}*`, "", "¡Quiero esta promo!"].join("\n");
-    window.open(`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`, "_blank");
-  };
 
   return (
     <div style={{
@@ -336,16 +342,35 @@ export function MenuDigitalClient({
                         ? `$${parseFloat(promo.customPrice).toLocaleString("es-AR")}`
                         : "Consultar"}
                     </span>
-                    <button onClick={(e) => { e.stopPropagation(); sendPromo(promo); }}
-                      style={{ padding: "12px 24px", borderRadius: "100px", border: "none",
-                        background: "linear-gradient(135deg, #EAB308, #CA8A04)",
-                        color: "#000", fontSize: "13px", fontWeight: 700, cursor: "pointer",
-                        fontFamily: "inherit", transition: "all 0.3s ease",
-                        boxShadow: "0 4px 20px rgba(234,179,8,0.25)" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.03)"; e.currentTarget.style.boxShadow = "0 6px 30px rgba(234,179,8,0.35)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(234,179,8,0.25)"; }}>
-                      🔥 Pedir
-                    </button>
+                    {(() => {
+                      const inCart = cart.find((i): i is CartItem & { type: "promo" } => i.type === "promo" && i.data.id === promo.id);
+                      const qty = inCart?.quantity || 0;
+                      return qty > 0 ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <button onClick={(e) => { e.stopPropagation(); remove("promo-" + promo.id); }}
+                            style={{ width: "38px", height: "38px", borderRadius: "50%", border: "none",
+                              background: "rgba(255,255,255,0.06)", color: "#EAB308", fontSize: "18px", fontWeight: 600,
+                              cursor: "pointer", fontFamily: "inherit" }}>−</button>
+                          <span style={{ fontSize: "16px", fontWeight: 600, color: "#fff", minWidth: "22px", textAlign: "center" }}>{qty}</span>
+                          <button onClick={(e) => { e.stopPropagation(); addPromo(promo); }}
+                            style={{ width: "38px", height: "38px", borderRadius: "50%", border: "none",
+                              background: "#EAB308", color: "#000", fontSize: "18px", fontWeight: 600,
+                              cursor: "pointer", fontFamily: "inherit",
+                              boxShadow: "0 4px 16px rgba(234,179,8,0.25)" }}>+</button>
+                        </div>
+                      ) : (
+                        <button onClick={(e) => { e.stopPropagation(); addPromo(promo); }}
+                          style={{ padding: "12px 24px", borderRadius: "100px", border: "none",
+                            background: "linear-gradient(135deg, #EAB308, #CA8A04)",
+                            color: "#000", fontSize: "13px", fontWeight: 700, cursor: "pointer",
+                            fontFamily: "inherit", transition: "all 0.3s ease",
+                            boxShadow: "0 4px 20px rgba(234,179,8,0.25)" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.03)"; e.currentTarget.style.boxShadow = "0 6px 30px rgba(234,179,8,0.35)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(234,179,8,0.25)"; }}>
+                          + Agregar
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -360,7 +385,7 @@ export function MenuDigitalClient({
           }}>
             {filtered.map((product, idx) => {
               const imgUrl = getImageUrl(product);
-              const inCart = cart.find((i) => i.product.id === product.id);
+              const inCart = cart.find((i): i is CartItem & { type: "product" } => i.type === "product" && i.data.id === product.id);
               const qty = inCart?.quantity || 0;
               const isVisible = visibleItems.has(product.id);
               const delay = idx * 0.08;
@@ -439,21 +464,21 @@ export function MenuDigitalClient({
                     </span>
                     {qty > 0 ? (
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <button onClick={(e) => { e.stopPropagation(); remove(product.id); }}
+                      <button onClick={(e) => { e.stopPropagation(); remove("product-" + product.id); }}
                         style={{ width: "38px", height: "38px", borderRadius: "50%", border: "none",
                           background: "rgba(255,255,255,0.06)", color: "#D4A017", fontSize: "18px", fontWeight: 600,
                           cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}
                         onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(212,160,23,0.15)")}
                         onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}>−</button>
                       <span style={{ fontSize: "16px", fontWeight: 600, color: "#fff", minWidth: "22px", textAlign: "center" }}>{qty}</span>
-                      <button onClick={(e) => { e.stopPropagation(); add(product); }}
+                      <button onClick={(e) => { e.stopPropagation(); addProduct(product); }}
                         style={{ width: "38px", height: "38px", borderRadius: "50%", border: "none",
                           background: "#D4A017", color: "#000", fontSize: "18px", fontWeight: 600,
                           cursor: "pointer", fontFamily: "inherit",
                           boxShadow: "0 4px 16px rgba(212,160,23,0.25)" }}>+</button>
                       </div>
                     ) : (
-                      <button onClick={(e) => { e.stopPropagation(); add(product); }}
+                      <button onClick={(e) => { e.stopPropagation(); addProduct(product); }}
                         style={{ padding: "12px 24px", borderRadius: "100px", border: "none",
                           background: "linear-gradient(135deg, rgba(212,160,23,0.2), rgba(212,160,23,0.08))",
                           color: "#D4A017", fontSize: "13px", fontWeight: 600, cursor: "pointer",
@@ -516,17 +541,26 @@ export function MenuDigitalClient({
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {cart.map((item) => (
-                  <div key={item.product.id} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "16px 20px", borderRadius: "20px", background: "rgba(255,255,255,0.03)", boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
+                  <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "16px 20px", borderRadius: "20px", background: "rgba(255,255,255,0.03)", boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: "14px", fontWeight: 600, margin: 0, color: "#fff" }}>{item.product.name.trim()}</p>
-                      <p style={{ fontSize: "13px", color: "#D4A017", fontWeight: 600, margin: "3px 0 0" }}>
-                        ${(parseFloat(item.product.price || "0") * item.quantity).toLocaleString("es-AR")}
+                      <p style={{ fontSize: "14px", fontWeight: 600, margin: 0, color: "#fff" }}>
+                        {item.type === "product" ? item.data.name.trim() : `🔥 ${item.data.name.trim()}`}
                       </p>
+                      <p style={{ fontSize: "13px", color: item.type === "promo" ? "#EAB308" : "#D4A017", fontWeight: 600, margin: "3px 0 0" }}>
+                        ${((item.type === "product"
+                          ? parseFloat(item.data.price || "0")
+                          : parseFloat(item.data.customPrice || "0")) * item.quantity).toLocaleString("es-AR")}
+                      </p>
+                      {item.type === "promo" && item.data.items && item.data.items.length > 0 && (
+                        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", margin: "4px 0 0" }}>
+                          Incluye: {item.data.items.map((i) => `${i.quantity}x ${i.productName}`).join(", ")}
+                        </p>
+                      )}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <button onClick={() => remove(item.product.id)} style={{ width: "28px", height: "28px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>−</button>
+                      <button onClick={() => remove(item.id)} style={{ width: "28px", height: "28px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>−</button>
                       <span style={{ fontSize: "14px", fontWeight: 600, color: "#fff", minWidth: "18px", textAlign: "center" }}>{item.quantity}</span>
-                      <button onClick={() => add(item.product)} style={{ width: "28px", height: "28px", borderRadius: "50%", border: "none", background: "#D4A017", color: "#000", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>+</button>
+                      <button onClick={() => { if (item.type === "product") addProduct(item.data); else addPromo(item.data); }} style={{ width: "28px", height: "28px", borderRadius: "50%", border: "none", background: item.type === "promo" ? "#EAB308" : "#D4A017", color: "#000", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>+</button>
                     </div>
                   </div>
                 ))}
@@ -726,26 +760,26 @@ export function MenuDigitalClient({
                       : "Consultar"}
                 </span>
 
-                {selectedItem.type === "product" ? (
-                  (() => {
+                {(() => {
+                  if (selectedItem.type === "product") {
                     const p = selectedItem.data;
-                    const inCart = cart.find((i) => i.product.id === p.id);
+                    const inCart = cart.find((i): i is CartItem & { type: "product" } => i.type === "product" && i.data.id === p.id);
                     const qty = inCart?.quantity || 0;
                     return qty > 0 ? (
                       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <button onClick={(e) => { e.stopPropagation(); remove(p.id); }}
+                        <button onClick={(e) => { e.stopPropagation(); remove("product-" + p.id); }}
                           style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none",
                             background: "rgba(255,255,255,0.08)", color: "#D4A017", fontSize: "20px", fontWeight: 600,
                             cursor: "pointer", fontFamily: "inherit" }}>−</button>
                         <span style={{ fontSize: "18px", fontWeight: 600, color: "#fff", minWidth: "24px", textAlign: "center" }}>{qty}</span>
-                        <button onClick={(e) => { e.stopPropagation(); add(p.id !== undefined ? p : p); }}
+                        <button onClick={(e) => { e.stopPropagation(); addProduct(p); }}
                           style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none",
                             background: "#D4A017", color: "#000", fontSize: "20px", fontWeight: 600,
                             cursor: "pointer", fontFamily: "inherit",
                             boxShadow: "0 4px 20px rgba(212,160,23,0.3)" }}>+</button>
                       </div>
                     ) : (
-                      <button onClick={(e) => { e.stopPropagation(); add(p); }}
+                      <button onClick={(e) => { e.stopPropagation(); addProduct(p); }}
                         style={{ padding: "14px 28px", borderRadius: "100px", border: "none",
                           background: "linear-gradient(135deg, #D4A017, #F5A623)",
                           color: "#000", fontSize: "15px", fontWeight: 700, cursor: "pointer",
@@ -754,17 +788,35 @@ export function MenuDigitalClient({
                         + Agregar
                       </button>
                     );
-                  })()
-                ) : (
-                  <button onClick={(e) => { e.stopPropagation(); sendPromo(selectedItem.data); }}
-                    style={{ padding: "14px 28px", borderRadius: "100px", border: "none",
-                      background: "linear-gradient(135deg, #EAB308, #CA8A04)",
-                      color: "#000", fontSize: "15px", fontWeight: 700, cursor: "pointer",
-                      fontFamily: "inherit",
-                      boxShadow: "0 4px 20px rgba(234,179,8,0.25)" }}>
-                    🔥 Pedir
-                  </button>
-                )}
+                  } else {
+                    const promo = selectedItem.data;
+                    const inCart = cart.find((i): i is CartItem & { type: "promo" } => i.type === "promo" && i.data.id === promo.id);
+                    const qty = inCart?.quantity || 0;
+                    return qty > 0 ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <button onClick={(e) => { e.stopPropagation(); remove("promo-" + promo.id); }}
+                          style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none",
+                            background: "rgba(255,255,255,0.08)", color: "#EAB308", fontSize: "20px", fontWeight: 600,
+                            cursor: "pointer", fontFamily: "inherit" }}>−</button>
+                        <span style={{ fontSize: "18px", fontWeight: 600, color: "#fff", minWidth: "24px", textAlign: "center" }}>{qty}</span>
+                        <button onClick={(e) => { e.stopPropagation(); addPromo(promo); }}
+                          style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none",
+                            background: "#EAB308", color: "#000", fontSize: "20px", fontWeight: 600,
+                            cursor: "pointer", fontFamily: "inherit",
+                            boxShadow: "0 4px 20px rgba(234,179,8,0.3)" }}>+</button>
+                      </div>
+                    ) : (
+                      <button onClick={(e) => { e.stopPropagation(); addPromo(promo); }}
+                        style={{ padding: "14px 28px", borderRadius: "100px", border: "none",
+                          background: "linear-gradient(135deg, #EAB308, #CA8A04)",
+                          color: "#000", fontSize: "15px", fontWeight: 700, cursor: "pointer",
+                          fontFamily: "inherit",
+                          boxShadow: "0 4px 20px rgba(234,179,8,0.25)" }}>
+                        + Agregar
+                      </button>
+                    );
+                  }
+                })()}
               </div>
             </div>
           </div>
