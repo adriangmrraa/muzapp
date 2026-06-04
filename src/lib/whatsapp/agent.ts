@@ -412,14 +412,21 @@ export async function runWhatsAppAgent({
     
     // 🛡️ POST-PROCESSING GUARD: detectar hallucination y retry
     const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content.toLowerCase() || "";
+    
+    // Type A: usuario pidió media + assistant dijo "te mando" pero no llamó tools
     const userWantsMedia = /menú|menu|foto|imagen|ver\s*(las\s*)?promo|mostr|qué\s*tienen|carta|bookbinder|combo|promo|oferta|descuento|qué\s*me\s*recomend|la\s*de\s*\d+|qué\s*me\s*convién/i.test(lastUserMsg);
     const assistantClaimsMedia = /acá\s*ten[eé]s\s*(el\s*menú|la\s*foto|las\s*promos|el\s*men[uú])|te\s*mand[éeui]|ahí\s*van/i.test(finalText);
     
-    const isHallucination = userWantsMedia && assistantClaimsMedia && pendingMedia.length === 0;
+    // Type B: usuario pidió EXPLÍCITAMENTE una foto/imagen y el assistant no llamó tools multimedia
+    const userExplicitlyAskedPhoto = /mand[aeá]\s*(foto|imagen|fotito)|quiero\s*ver\s*(la\s*)?foto|mostr[áa]me\s*(la\s*)?foto|enseñ[áa]|pas[áa]me\s*(la\s*)?foto/i.test(lastUserMsg);
+    
+    const isHallucinationA = userWantsMedia && assistantClaimsMedia && pendingMedia.length === 0;
+    const isHallucinationB = userExplicitlyAskedPhoto && pendingMedia.length === 0;
+    const isHallucination = isHallucinationA || isHallucinationB;
     
     if (isHallucination && attempt <= MAX_HALLUCINATION_RETRIES) {
       console.warn(`[agent] 🚨 MODEL HALLUCINATION detected (attempt ${attempt}/${MAX_HALLUCINATION_RETRIES+1}) — retrying with force directive`);
-      continue; // retry with force directive injected at top of while loop
+      continue; // retry with force directive + toolChoice:required
     }
     
     if (isHallucination) {
