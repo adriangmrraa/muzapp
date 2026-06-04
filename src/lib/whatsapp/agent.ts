@@ -58,6 +58,7 @@ export async function runWhatsAppAgent({
   customerPhone,
   messages,
 }: RunAgentParams): Promise<{ text: string; pendingMedia: PendingMedia[] }> {
+  console.log("[agent] === AGENT v2.1 (gpt-5.4-mini + parallelToolCalls:false + retry guard) ===");
   // 🛡️ PROMPT INJECTION DETECTION
   const lastUserMessage = messages[messages.length - 1]?.content || "";
   const injectionCheck = detectInjection(lastUserMessage);
@@ -369,7 +370,7 @@ export async function runWhatsAppAgent({
         sendPromoImage: createSendPromoImageTool(conversationId, customerPhone),
       },
       stopWhen: stepCountIs(10),
-      toolChoice: "auto",
+      toolChoice: attempt > 1 ? "required" : "auto",
     });
 
     // Log modelo real usado por la API (cross-check)
