@@ -17,7 +17,21 @@ interface CartItem {
   quantity: number;
 }
 
+interface Promo {
+  id: number;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  customPrice: string | null;
+  items: { productId: number; productName: string; quantity: number }[] | null;
+}
+
+type ItemDetail =
+  | { type: "product"; data: Product }
+  | { type: "promo"; data: Promo };
+
 const CATEGORIES = [
+  { key: "promos", label: "Promos", emoji: "⭐", gradient: "from-yellow-800/40 via-amber-950/30 to-transparent", glow: "rgba(250,204,21,0.18)", bgEmoji: "⭐" },
   { key: "hamburguesa", label: "Hamburguesas", emoji: "🍔", gradient: "from-amber-900/40 via-red-950/30 to-transparent", glow: "rgba(212,160,23,0.15)", bgEmoji: "🍔" },
   { key: "acompanamiento", label: "Acompañamientos", emoji: "🍟", gradient: "from-orange-900/40 via-amber-950/30 to-transparent", glow: "rgba(234,88,12,0.12)", bgEmoji: "🍟" },
   { key: "bebidas", label: "Bebidas", emoji: "🥤", gradient: "from-cyan-900/30 via-blue-950/20 to-transparent", glow: "rgba(6,182,212,0.1)", bgEmoji: "🥤" },
@@ -26,7 +40,7 @@ const CATEGORIES = [
 ];
 
 const emojiMap: Record<string, string> = {
-  hamburguesa: "🍔", acompanamiento: "🍟", bebidas: "🥤",
+  promos: "⭐", hamburguesa: "🍔", acompanamiento: "🍟", bebidas: "🥤",
   pan_mayorista: "🍞", tragos_vip: "🍹",
 };
 
@@ -38,20 +52,23 @@ function getImageUrl(product: Product): string | null {
 
 export function MenuDigitalClient({
   products,
+  promos,
   whatsappPhone,
 }: {
   products: Product[];
+  promos: Promo[];
   whatsappPhone: string;
 }) {
-  const [activeCat, setActiveCat] = useState("hamburguesa");
+  const [activeCat, setActiveCat] = useState("promos");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [orderSent, setOrderSent] = useState(false);
   const [visibleItems, setVisibleItems] = useState<Set<number>>(new Set());
+  const [selectedItem, setSelectedItem] = useState<ItemDetail | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const categories = useMemo(
-    () => CATEGORIES.filter((c) => products.some((p) => p.category === c.key)),
+    () => CATEGORIES.filter((c) => c.key === "promos" || products.some((p) => p.category === c.key)),
     [products]
   );
 
@@ -99,6 +116,32 @@ export function MenuDigitalClient({
     window.open(`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`, "_blank");
     setOrderSent(true);
     setTimeout(() => setOrderSent(false), 3000);
+  };
+
+  // Cerrar modal con ESC
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedItem(null);
+    };
+    if (selectedItem) {
+      document.addEventListener("keydown", handler);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handler);
+      document.body.style.overflow = "";
+    };
+  }, [selectedItem]);
+
+  const sendPromo = (promo: Promo) => {
+    const itemsList = (promo.items || [])
+      .map((i) => `• ${i.quantity}x ${i.productName}`)
+      .join("\n");
+    const price = promo.customPrice
+      ? `$${parseFloat(promo.customPrice).toLocaleString("es-AR")}`
+      : "Consultar";
+    const msg = [`🔥 *${promo.name.trim()}*`, "", itemsList, "", `💰 *Precio: ${price}*`, "", "¡Quiero esta promo!"].join("\n");
+    window.open(`https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   return (
@@ -185,122 +228,254 @@ export function MenuDigitalClient({
           {catInfo.bgEmoji}
         </div>
 
-        {/* ── PRODUCTS SCROLL ── */}
-        <div ref={scrollRef} style={{
-          display: "flex", gap: "20px", padding: "28px 20px",
-          overflowX: "auto", scrollSnapType: "x mandatory",
-          scrollbarWidth: "none", position: "relative", zIndex: 1,
-        }}>
-          {filtered.map((product, idx) => {
-            const imgUrl = getImageUrl(product);
-            const inCart = cart.find((i) => i.product.id === product.id);
-            const qty = inCart?.quantity || 0;
-            const isVisible = visibleItems.has(product.id);
-            const delay = idx * 0.08;
+        {activeCat === "promos" ? (
+          /* ── PROMOS SCROLL ── */
+          <div style={{
+            display: "flex", gap: "20px", padding: "28px 20px",
+            overflowX: "auto", scrollSnapType: "x mandatory",
+            scrollbarWidth: "none", position: "relative", zIndex: 1,
+          }}>
+            {promos.map((promo, idx) => {
+              const imgUrl = promo.imageUrl && (promo.imageUrl.startsWith("http") ? promo.imageUrl : null);
+              const delay = idx * 0.08;
 
-            return (
-              <div key={product.id} className="product-card" style={{
-                minWidth: "300px", maxWidth: "340px",
-                background: "rgba(255,255,255,0.03)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                borderRadius: "28px",
-                padding: "24px",
-                scrollSnapAlign: "start",
-                display: "flex", flexDirection: "column", gap: "16px",
-                flexShrink: 0,
-                transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-                boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible ? "translateY(0)" : "translateY(30px)",
-                transitionDelay: `${delay}s`,
-                border: "1px solid rgba(212,160,23,0.06)",
-              }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-6px) scale(1.01)";
-                  e.currentTarget.style.boxShadow = "0 16px 60px rgba(0,0,0,0.6), 0 0 30px rgba(212,160,23,0.1), inset 0 1px 0 rgba(255,255,255,0.08)";
-                  e.currentTarget.style.borderColor = "rgba(212,160,23,0.15)";
+              return (
+                <div key={promo.id} className="product-card" style={{
+                  minWidth: "300px", maxWidth: "340px",
+                  background: "linear-gradient(135deg, rgba(250,204,21,0.04), rgba(212,160,23,0.02))",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  borderRadius: "28px",
+                  padding: "24px",
+                  scrollSnapAlign: "start",
+                  display: "flex", flexDirection: "column", gap: "16px",
+                  flexShrink: 0,
+                  cursor: "pointer",
+                  transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                  boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(250,204,21,0.06)",
+                  border: "1px solid rgba(250,204,21,0.08)",
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0) scale(1)";
-                  e.currentTarget.style.boxShadow = "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)";
-                  e.currentTarget.style.borderColor = "rgba(212,160,23,0.06)";
-                }}>
-                {/* Image */}
-                <div className="product-image" style={{
-                  width: "100%", height: "180px", borderRadius: "20px",
-                  background: `linear-gradient(135deg, ${catInfo.glow}, rgba(0,0,0,0.2))`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  overflow: "hidden", position: "relative",
-                  boxShadow: "inset 0 2px 12px rgba(0,0,0,0.2)",
-                }}>
-                  {imgUrl ? (
-                    <img src={imgUrl} alt={product.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s" }}
-                      onMouseEnter={(e) => (e.target as HTMLElement).style.transform = "scale(1.08)"}
-                      onMouseLeave={(e) => (e.target as HTMLElement).style.transform = "scale(1)"}
-                      onError={(e) => { const el = e.currentTarget; el.style.display = "none"; const p = el.parentElement; if (p) p.innerHTML = `<span style="font-size:72px;opacity:0.3;">${emojiMap[product.category] || "📦"}</span>`; }} />
-                  ) : (
-                    <span style={{ fontSize: "72px", opacity: 0.25, animation: "float 4s ease-in-out infinite" }}>
-                      {emojiMap[product.category] || "📦"}
-                    </span>
-                  )}
-                </div>
-
-                {/* Name + Desc */}
-                <div style={{ flex: 1 }}>
-                  <h3 className="product-name" style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "#fff", letterSpacing: "-0.3px" }}>
-                    {product.name.trim()}
-                  </h3>
-                  {product.description && (
-                    <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", margin: "6px 0 0", lineHeight: 1.4 }}>
-                      {product.description.trim()}
-                    </p>
-                  )}
-                </div>
-
-                {/* Price + Actions */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
-                  <span className="product-price" style={{
-                    fontSize: "26px", fontWeight: 800,
-                    background: "linear-gradient(135deg, #D4A017, #F5A623)",
-                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                  onClick={() => setSelectedItem({ type: "promo", data: promo })}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-6px) scale(1.01)";
+                    e.currentTarget.style.boxShadow = "0 16px 60px rgba(0,0,0,0.6), 0 0 40px rgba(250,204,21,0.1), inset 0 1px 0 rgba(250,204,21,0.08)";
+                    e.currentTarget.style.borderColor = "rgba(250,204,21,0.18)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0) scale(1)";
+                    e.currentTarget.style.boxShadow = "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(250,204,21,0.06)";
+                    e.currentTarget.style.borderColor = "rgba(250,204,21,0.08)";
                   }}>
-                    ${parseFloat(product.price || "0").toLocaleString("es-AR")}
-                  </span>
-                  {qty > 0 ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <button onClick={() => remove(product.id)}
+                  {/* Promo Image */}
+                  <div className="product-image" style={{
+                    width: "100%", height: "180px", borderRadius: "20px",
+                    background: `linear-gradient(135deg, rgba(250,204,21,0.1), rgba(0,0,0,0.2))`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    overflow: "hidden", position: "relative",
+                    boxShadow: "inset 0 2px 12px rgba(0,0,0,0.2)",
+                  }}>
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={promo.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s" }}
+                        onMouseEnter={(e) => (e.target as HTMLElement).style.transform = "scale(1.08)"}
+                        onMouseLeave={(e) => (e.target as HTMLElement).style.transform = "scale(1)"}
+                        onError={(e) => { const el = e.currentTarget; el.style.display = "none"; const p = el.parentElement; if (p) p.innerHTML = '<span style="font-size:72px;opacity:0.3;">⭐</span>'; }} />
+                    ) : (
+                      <span style={{ fontSize: "72px", opacity: 0.25, animation: "float 4s ease-in-out infinite" }}>⭐</span>
+                    )}
+                    {/* Badge PROMO */}
+                    <div style={{
+                      position: "absolute", top: "12px", left: "12px",
+                      padding: "4px 14px", borderRadius: "100px",
+                      background: "linear-gradient(135deg, #EAB308, #CA8A04)",
+                      color: "#000", fontSize: "11px", fontWeight: 800,
+                      letterSpacing: "0.5px", textTransform: "uppercase",
+                    }}>
+                      PROMO
+                    </div>
+                  </div>
+
+                  {/* Name + Desc */}
+                  <div style={{ flex: 1 }}>
+                    <h3 className="product-name" style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "#fff", letterSpacing: "-0.3px" }}>
+                      {promo.name.trim()}
+                    </h3>
+                    {promo.description && (
+                      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", margin: "6px 0 0", lineHeight: 1.4 }}>
+                        {promo.description.trim()}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Items included */}
+                  {promo.items && promo.items.length > 0 && (
+                    <div style={{
+                      padding: "12px 14px", borderRadius: "16px",
+                      background: "rgba(250,204,21,0.04)",
+                      border: "1px solid rgba(250,204,21,0.06)",
+                    }}>
+                      <p style={{ fontSize: "11px", fontWeight: 600, color: "rgba(250,204,21,0.5)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                        Incluye:
+                      </p>
+                      {promo.items.map((item, i) => (
+                        <p key={i} style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", margin: "2px 0" }}>
+                          {item.quantity}x {item.productName}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Price + CTA */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
+                    <span className="product-price" style={{
+                      fontSize: "26px", fontWeight: 800,
+                      background: "linear-gradient(135deg, #EAB308, #F5A623)",
+                      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                    }}>
+                      {promo.customPrice
+                        ? `$${parseFloat(promo.customPrice).toLocaleString("es-AR")}`
+                        : "Consultar"}
+                    </span>
+                    <button onClick={(e) => { e.stopPropagation(); sendPromo(promo); }}
+                      style={{ padding: "12px 24px", borderRadius: "100px", border: "none",
+                        background: "linear-gradient(135deg, #EAB308, #CA8A04)",
+                        color: "#000", fontSize: "13px", fontWeight: 700, cursor: "pointer",
+                        fontFamily: "inherit", transition: "all 0.3s ease",
+                        boxShadow: "0 4px 20px rgba(234,179,8,0.25)" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.03)"; e.currentTarget.style.boxShadow = "0 6px 30px rgba(234,179,8,0.35)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(234,179,8,0.25)"; }}>
+                      🔥 Pedir
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* ── PRODUCTS SCROLL ── */
+          <div ref={scrollRef} style={{
+            display: "flex", gap: "20px", padding: "28px 20px",
+            overflowX: "auto", scrollSnapType: "x mandatory",
+            scrollbarWidth: "none", position: "relative", zIndex: 1,
+          }}>
+            {filtered.map((product, idx) => {
+              const imgUrl = getImageUrl(product);
+              const inCart = cart.find((i) => i.product.id === product.id);
+              const qty = inCart?.quantity || 0;
+              const isVisible = visibleItems.has(product.id);
+              const delay = idx * 0.08;
+
+              return (
+                <div key={product.id} className="product-card" style={{
+                  minWidth: "300px", maxWidth: "340px",
+                  background: "rgba(255,255,255,0.03)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  borderRadius: "28px",
+                  padding: "24px",
+                  scrollSnapAlign: "start",
+                  display: "flex", flexDirection: "column", gap: "16px",
+                  flexShrink: 0,
+                  cursor: "pointer",
+                  transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                  boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible ? "translateY(0)" : "translateY(30px)",
+                  transitionDelay: `${delay}s`,
+                  border: "1px solid rgba(212,160,23,0.06)",
+                }}
+                  onClick={() => setSelectedItem({ type: "product", data: product })}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-6px) scale(1.01)";
+                    e.currentTarget.style.boxShadow = "0 16px 60px rgba(0,0,0,0.6), 0 0 30px rgba(212,160,23,0.1), inset 0 1px 0 rgba(255,255,255,0.08)";
+                    e.currentTarget.style.borderColor = "rgba(212,160,23,0.15)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0) scale(1)";
+                    e.currentTarget.style.boxShadow = "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)";
+                    e.currentTarget.style.borderColor = "rgba(212,160,23,0.06)";
+                  }}>
+                  {/* Image */}
+                  <div className="product-image" style={{
+                    width: "100%", height: "180px", borderRadius: "20px",
+                    background: `linear-gradient(135deg, ${catInfo.glow}, rgba(0,0,0,0.2))`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    overflow: "hidden", position: "relative",
+                    boxShadow: "inset 0 2px 12px rgba(0,0,0,0.2)",
+                  }}>
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={product.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s" }}
+                        onMouseEnter={(e) => (e.target as HTMLElement).style.transform = "scale(1.08)"}
+                        onMouseLeave={(e) => (e.target as HTMLElement).style.transform = "scale(1)"}
+                        onError={(e) => { const el = e.currentTarget; el.style.display = "none"; const p = el.parentElement; if (p) p.innerHTML = `<span style="font-size:72px;opacity:0.3;">${emojiMap[product.category] || "📦"}</span>`; }} />
+                    ) : (
+                      <span style={{ fontSize: "72px", opacity: 0.25, animation: "float 4s ease-in-out infinite" }}>
+                        {emojiMap[product.category] || "📦"}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Name + Desc */}
+                  <div style={{ flex: 1 }}>
+                    <h3 className="product-name" style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "#fff", letterSpacing: "-0.3px" }}>
+                      {product.name.trim()}
+                    </h3>
+                    {product.description && (
+                      <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", margin: "6px 0 0", lineHeight: 1.4 }}>
+                        {product.description.trim()}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Price + Actions */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
+                    <span className="product-price" style={{
+                      fontSize: "26px", fontWeight: 800,
+                      background: "linear-gradient(135deg, #D4A017, #F5A623)",
+                      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                    }}>
+                      ${parseFloat(product.price || "0").toLocaleString("es-AR")}
+                    </span>
+                    {qty > 0 ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <button onClick={(e) => { e.stopPropagation(); remove(product.id); }}
                         style={{ width: "38px", height: "38px", borderRadius: "50%", border: "none",
                           background: "rgba(255,255,255,0.06)", color: "#D4A017", fontSize: "18px", fontWeight: 600,
                           cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}
                         onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(212,160,23,0.15)")}
                         onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}>−</button>
                       <span style={{ fontSize: "16px", fontWeight: 600, color: "#fff", minWidth: "22px", textAlign: "center" }}>{qty}</span>
-                      <button onClick={() => add(product)}
+                      <button onClick={(e) => { e.stopPropagation(); add(product); }}
                         style={{ width: "38px", height: "38px", borderRadius: "50%", border: "none",
                           background: "#D4A017", color: "#000", fontSize: "18px", fontWeight: 600,
                           cursor: "pointer", fontFamily: "inherit",
                           boxShadow: "0 4px 16px rgba(212,160,23,0.25)" }}>+</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => add(product)}
-                      style={{ padding: "12px 24px", borderRadius: "100px", border: "none",
-                        background: "linear-gradient(135deg, rgba(212,160,23,0.2), rgba(212,160,23,0.08))",
-                        color: "#D4A017", fontSize: "13px", fontWeight: 600, cursor: "pointer",
-                        fontFamily: "inherit", transition: "all 0.3s ease" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(212,160,23,0.3), rgba(212,160,23,0.15))"; e.currentTarget.style.transform = "scale(1.03)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(212,160,23,0.2), rgba(212,160,23,0.08))"; e.currentTarget.style.transform = "scale(1)"; }}>
-                      + Agregar
-                    </button>
-                  )}
+                      </div>
+                    ) : (
+                      <button onClick={(e) => { e.stopPropagation(); add(product); }}
+                        style={{ padding: "12px 24px", borderRadius: "100px", border: "none",
+                          background: "linear-gradient(135deg, rgba(212,160,23,0.2), rgba(212,160,23,0.08))",
+                          color: "#D4A017", fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                          fontFamily: "inherit", transition: "all 0.3s ease" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(212,160,23,0.3), rgba(212,160,23,0.15))"; e.currentTarget.style.transform = "scale(1.03)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(212,160,23,0.2), rgba(212,160,23,0.08))"; e.currentTarget.style.transform = "scale(1)"; }}>
+                        + Agregar
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
-        {filtered.length === 0 && (
+        {activeCat === "promos" && promos.length === 0 && (
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "rgba(255,255,255,0.2)" }}>
+            <p style={{ fontSize: "16px" }}>No hay promos activas por ahora</p>
+          </div>
+        )}
+        {activeCat !== "promos" && filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "rgba(255,255,255,0.2)" }}>
             <p style={{ fontSize: "16px" }}>Próximamente</p>
           </div>
@@ -379,8 +554,233 @@ export function MenuDigitalClient({
         </div>
       )}
 
+      {/* ── MODAL DE DETALLE ── */}
+      {selectedItem && (
+        <div className="modal-backdrop"
+          onClick={() => setSelectedItem(null)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 300,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.7)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            animation: "fadeIn 0.2s ease",
+          }}>
+          <div className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%", maxWidth: "480px",
+              height: "100dvh", maxHeight: "100dvh",
+              background: "#0a0a0a",
+              display: "flex", flexDirection: "column",
+              position: "relative",
+              animation: "slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              overflow: "hidden",
+            }}>
+            {/* Close button */}
+            <button onClick={() => setSelectedItem(null)}
+              style={{
+                position: "absolute", top: "16px", right: "16px", zIndex: 10,
+                width: "40px", height: "40px", borderRadius: "50%",
+                background: "rgba(0,0,0,0.5)", border: "none",
+                color: "#fff", fontSize: "20px", cursor: "pointer",
+                fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center",
+                backdropFilter: "blur(8px)",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.5)"}>
+              ✕
+            </button>
+
+            {/* ── Image section ── */}
+            <div style={{
+              width: "100%", height: "45dvh", minHeight: "280px",
+              overflow: "hidden", position: "relative", flexShrink: 0,
+              background: "linear-gradient(135deg, rgba(212,160,23,0.08), rgba(0,0,0,0.3))",
+            }}>
+              {selectedItem.type === "product" ? (
+                (() => {
+                  const imgUrl = getImageUrl(selectedItem.data);
+                  return imgUrl ? (
+                    <img src={imgUrl} alt={selectedItem.data.name}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                      <span style={{ fontSize: "120px", opacity: 0.2 }}>{emojiMap[selectedItem.data.category] || "📦"}</span>
+                    </div>
+                  );
+                })()
+              ) : (
+                (() => {
+                  const promo = selectedItem.data;
+                  const imgUrl = promo.imageUrl && (promo.imageUrl.startsWith("http") ? promo.imageUrl : null);
+                  return (
+                    <>
+                      {imgUrl ? (
+                        <img src={imgUrl} alt={promo.name}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                          <span style={{ fontSize: "120px", opacity: 0.2 }}>⭐</span>
+                        </div>
+                      )}
+                      <div style={{
+                        position: "absolute", top: "16px", left: "16px",
+                        padding: "6px 16px", borderRadius: "100px",
+                        background: "linear-gradient(135deg, #EAB308, #CA8A04)",
+                        color: "#000", fontSize: "12px", fontWeight: 800,
+                        letterSpacing: "0.5px", textTransform: "uppercase",
+                      }}>
+                        PROMO
+                      </div>
+                    </>
+                  );
+                })()
+              )}
+              {/* Gradient fade at bottom of image */}
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, right: 0,
+                height: "80px",
+                background: "linear-gradient(transparent, #0a0a0a)",
+              }} />
+            </div>
+
+            {/* ── Info section ── */}
+            <div style={{
+              flex: 1, overflowY: "auto", padding: "24px",
+              display: "flex", flexDirection: "column", gap: "20px",
+            }}>
+              {/* Product: category pill */}
+              {selectedItem.type === "product" && (
+                <div style={{
+                  display: "inline-flex", alignSelf: "flex-start",
+                  padding: "4px 14px", borderRadius: "100px",
+                  background: "rgba(212,160,23,0.1)",
+                  border: "1px solid rgba(212,160,23,0.1)",
+                  fontSize: "12px", fontWeight: 600, color: "#D4A017",
+                }}>
+                  {CATEGORIES.find((c) => c.key === selectedItem.data.category)?.label || selectedItem.data.category}
+                </div>
+              )}
+
+              {/* Name */}
+              <h2 style={{
+                fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 800,
+                margin: 0, color: "#fff", lineHeight: 1.2,
+              }}>
+                {selectedItem.type === "product"
+                  ? selectedItem.data.name.trim()
+                  : selectedItem.data.name.trim()}
+              </h2>
+
+              {/* Description */}
+              {(selectedItem.type === "product" && selectedItem.data.description) && (
+                <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.5)", margin: 0, lineHeight: 1.6 }}>
+                  {selectedItem.data.description.trim()}
+                </p>
+              )}
+              {(selectedItem.type === "promo" && selectedItem.data.description) && (
+                <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.5)", margin: 0, lineHeight: 1.6 }}>
+                  {selectedItem.data.description.trim()}
+                </p>
+              )}
+
+              {/* Promo: items included */}
+              {selectedItem.type === "promo" && selectedItem.data.items && selectedItem.data.items.length > 0 && (
+                <div style={{
+                  padding: "16px 18px", borderRadius: "16px",
+                  background: "rgba(250,204,21,0.04)",
+                  border: "1px solid rgba(250,204,21,0.08)",
+                }}>
+                  <p style={{ fontSize: "11px", fontWeight: 600, color: "rgba(250,204,21,0.5)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Incluye:
+                  </p>
+                  {selectedItem.data.items.map((item, i) => (
+                    <p key={i} style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", margin: "4px 0" }}>
+                      {item.quantity}x {item.productName}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {/* Spacer */}
+              <div style={{ flex: 1 }} />
+
+              {/* ── Price + Action ── */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <span style={{
+                  fontSize: "clamp(24px, 5vw, 32px)", fontWeight: 800,
+                  background: selectedItem.type === "promo"
+                    ? "linear-gradient(135deg, #EAB308, #F5A623)"
+                    : "linear-gradient(135deg, #D4A017, #F5A623)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                }}>
+                  {selectedItem.type === "product"
+                    ? `$${parseFloat(selectedItem.data.price || "0").toLocaleString("es-AR")}`
+                    : selectedItem.data.customPrice
+                      ? `$${parseFloat(selectedItem.data.customPrice).toLocaleString("es-AR")}`
+                      : "Consultar"}
+                </span>
+
+                {selectedItem.type === "product" ? (
+                  (() => {
+                    const p = selectedItem.data;
+                    const inCart = cart.find((i) => i.product.id === p.id);
+                    const qty = inCart?.quantity || 0;
+                    return qty > 0 ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <button onClick={(e) => { e.stopPropagation(); remove(p.id); }}
+                          style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none",
+                            background: "rgba(255,255,255,0.08)", color: "#D4A017", fontSize: "20px", fontWeight: 600,
+                            cursor: "pointer", fontFamily: "inherit" }}>−</button>
+                        <span style={{ fontSize: "18px", fontWeight: 600, color: "#fff", minWidth: "24px", textAlign: "center" }}>{qty}</span>
+                        <button onClick={(e) => { e.stopPropagation(); add(p.id !== undefined ? p : p); }}
+                          style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none",
+                            background: "#D4A017", color: "#000", fontSize: "20px", fontWeight: 600,
+                            cursor: "pointer", fontFamily: "inherit",
+                            boxShadow: "0 4px 20px rgba(212,160,23,0.3)" }}>+</button>
+                      </div>
+                    ) : (
+                      <button onClick={(e) => { e.stopPropagation(); add(p); }}
+                        style={{ padding: "14px 28px", borderRadius: "100px", border: "none",
+                          background: "linear-gradient(135deg, #D4A017, #F5A623)",
+                          color: "#000", fontSize: "15px", fontWeight: 700, cursor: "pointer",
+                          fontFamily: "inherit",
+                          boxShadow: "0 4px 20px rgba(212,160,23,0.25)" }}>
+                        + Agregar
+                      </button>
+                    );
+                  })()
+                ) : (
+                  <button onClick={(e) => { e.stopPropagation(); sendPromo(selectedItem.data); }}
+                    style={{ padding: "14px 28px", borderRadius: "100px", border: "none",
+                      background: "linear-gradient(135deg, #EAB308, #CA8A04)",
+                      color: "#000", fontSize: "15px", fontWeight: 700, cursor: "pointer",
+                      fontFamily: "inherit",
+                      boxShadow: "0 4px 20px rgba(234,179,8,0.25)" }}>
+                    🔥 Pedir
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── ANIMATIONS Y RESPONSIVE ── */}
       <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(60px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
         @keyframes orbFloat {
           0%, 100% { transform: translate(0, 0) scale(1); }
           33% { transform: translate(30px, -40px) scale(1.1); }

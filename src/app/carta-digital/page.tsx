@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { products } from "@/db/schema";
+import { products, promotions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { MenuDigitalClient } from "./menu-digital-client";
 
@@ -19,9 +19,20 @@ export default async function CartaDigitalPage() {
     .where(eq(products.available, true))
     .orderBy(products.sortOrder);
 
+  const activePromos = await db
+    .select()
+    .from(promotions)
+    .where(eq(promotions.active, true));
+
   const whatsappPhone = process.env.WHATSAPP_PHONE_NUMBER
     ? process.env.WHATSAPP_PHONE_NUMBER.replace(/[+\s]/g, "")
     : "5493705241065";
 
-  return <MenuDigitalClient products={items} whatsappPhone={whatsappPhone} />;
+  return (
+    <MenuDigitalClient
+      products={items}
+      promos={activePromos}
+      whatsappPhone={whatsappPhone}
+    />
+  );
 }
