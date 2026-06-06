@@ -17,7 +17,8 @@ import {
   cardEntrance,
   fadeUpSmall,
 } from "@/lib/animation-variants";
-import type { DashboardCard, ActivityItem, RecentOrder } from "./page";
+import type { DashboardCard, ActivityItem, RecentOrder, ActionCard } from "./page";
+import { DashboardActions } from "./dashboard-actions";
 
 // ─── Icon map ─────────────────────────────────────────────────────────────────
 
@@ -226,9 +227,10 @@ interface DashboardClientProps {
   cards: DashboardCard[];
   activity: ActivityItem[];
   recentOrders: RecentOrder[];
+  actionCards: ActionCard[];
 }
 
-export function DashboardClient({ cards, activity, recentOrders }: DashboardClientProps) {
+export function DashboardClient({ cards, activity, recentOrders, actionCards }: DashboardClientProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -311,6 +313,9 @@ export function DashboardClient({ cards, activity, recentOrders }: DashboardClie
         {/* Recent Orders Table */}
         <OrdersTable orders={recentOrders} />
       </div>
+
+      {/* Actions Section — dashboard vivo */}
+      <DashboardActions actionCards={actionCards} />
     </div>
   );
 }
