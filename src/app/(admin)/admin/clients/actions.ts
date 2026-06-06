@@ -92,7 +92,7 @@ export async function fetchClients(params: {
     if (existing) {
       existing.leadStatus = l.status;
       existing.type = l.type;
-      if (!existing.name && l.name) existing.name = l.name;
+      existing.name = l.name || existing.name;
       if (l.tags) existing.tags = l.tags;
     }
     // leads without orders are NOT added as clients

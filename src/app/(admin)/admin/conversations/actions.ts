@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import { conversations, chatMessages, leads, orders } from "@/db/schema";
 import { eq, desc, and, ilike, or, sql, count } from "drizzle-orm";
+import { resolveClientName } from "@/lib/lead-utils";
 
 const PAGE_SIZE = 50;
 
@@ -77,14 +78,12 @@ export async function getConversations(
   const enriched = await Promise.all(rows.map(async (conv) => {
     if (conv.customerPhone) {
       try {
-        const [lead] = await db
-          .select({ name: leads.name })
-          .from(leads)
-          .where(eq(leads.phone, conv.customerPhone))
-          .limit(1);
-        if (lead?.name && lead.name !== conv.customerName) {
-          // Si el lead tiene un nombre distinto al de WhatsApp, usamos el de la DB
-          return { ...conv, customerName: lead.name };
+        const resolvedName = await resolveClientName(
+          conv.customerPhone,
+          conv.customerName ?? ""
+        );
+        if (resolvedName !== conv.customerName) {
+          return { ...conv, customerName: resolvedName };
         }
       } catch {}
     }

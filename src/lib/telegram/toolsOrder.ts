@@ -5,6 +5,7 @@ import { orders, leads, products } from "@/db/schema";
 import { eq, or, ilike, asc, sql } from "drizzle-orm";
 import { resolveItems } from "@/lib/order-utils";
 import { normalizePhone, isValidPhone } from "@/lib/phone-utils";
+import { resolveClientName } from "@/lib/lead-utils";
 
 
 // ─── manageOrder: Herramientas de gestión de pedidos
@@ -437,6 +438,7 @@ export const confirmOrder = tool({
       .select({
         id: orders.id,
         customerName: orders.customerName,
+        phoneNumber: orders.phoneNumber,
         items: orders.items,
         status: orders.status,
       })
@@ -447,6 +449,12 @@ export const confirmOrder = tool({
     if (!existing) {
       return { success: false, message: "Pedido no encontrado" };
     }
+
+    // Resolver nombre desde leads
+    const resolvedName = await resolveClientName(
+      existing.phoneNumber,
+      existing.customerName ?? ""
+    );
 
     // Calcular total
     const items = existing.items as { name: string; quantity: number; price?: number }[];
@@ -463,8 +471,8 @@ export const confirmOrder = tool({
 
     return {
       success: true,
-      message: `Pedido #${orderId} confirmado. Total: $${total}. Ahora está en preparación.`,
-      customer: existing.customerName,
+      message: `Pedido #${orderId} confirmado para ${resolvedName}. Total: $${total}. Ahora está en preparación.`,
+      customer: resolvedName,
       items: items?.map((i) => `${i.quantity}x ${i.name}`),
       total,
     };

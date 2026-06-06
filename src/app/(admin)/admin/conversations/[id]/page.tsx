@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { conversations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { resolveClientName } from "@/lib/lead-utils";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -88,6 +89,13 @@ export default async function ConversationDetailPage({ params }: { params: Param
 
   if (!row) notFound();
 
+  // Resolver el nombre del cliente desde leads si tiene pedidos
+  let displayName = row.customerName;
+  if (row.customerPhone) {
+    const resolved = await resolveClientName(row.customerPhone, row.customerName ?? "");
+    displayName = resolved;
+  }
+
   const messages = parseMessages(row.messages);
   const status = row.status as ConversationStatus;
   const cfg = statusConfig[status] ?? statusConfig.closed;
@@ -112,7 +120,7 @@ export default async function ConversationDetailPage({ params }: { params: Param
       <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-2xl font-bold tracking-tight text-gold-gradient">
-            {row.customerName ?? "Sin nombre"}
+            {displayName ?? "Sin nombre"}
           </h1>
           {row.customerPhone && (
             <p className="text-sm text-muted-foreground font-mono">

@@ -652,21 +652,42 @@ export const getConversationMessagesTool = tool({
     let convId = conversationId;
 
     if (!convId) {
-      const conditions = [];
-      if (customerPhone) conditions.push(eq(conversations.customerPhone, customerPhone));
-      if (customerName) conditions.push(ilike(conversations.customerName || conversations.whatsappId, `%${customerName}%`));
+      if (customerName) {
+        // Buscar por customerName O leads.name (managed name)
+        const otherConditions = [];
+        if (customerPhone) otherConditions.push(eq(conversations.customerPhone, customerPhone));
 
-      if (conditions.length === 0) return "Necesito un ID de conversación, teléfono o nombre del cliente.";
+        const [conv] = await db
+          .select({ id: conversations.id })
+          .from(conversations)
+          .leftJoin(leads, eq(leads.phone, conversations.customerPhone))
+          .where(
+            and(
+              or(
+                ilike(conversations.customerName, `%${customerName}%`),
+                ilike(leads.name, `%${customerName}%`)
+              ),
+              ...otherConditions
+            )
+          )
+          .orderBy(desc(conversations.lastMessageAt))
+          .limit(1);
 
-      const [conv] = await db
-        .select({ id: conversations.id })
-        .from(conversations)
-        .where(conditions.length === 1 ? conditions[0] : or(...conditions))
-        .orderBy(desc(conversations.lastMessageAt))
-        .limit(1);
+        if (!conv) return "No encontré esa conversación.";
+        convId = conv.id;
+      } else if (customerPhone) {
+        const [conv] = await db
+          .select({ id: conversations.id })
+          .from(conversations)
+          .where(eq(conversations.customerPhone, customerPhone))
+          .orderBy(desc(conversations.lastMessageAt))
+          .limit(1);
 
-      if (!conv) return "No encontré esa conversación.";
-      convId = conv.id;
+        if (!conv) return "No encontré esa conversación.";
+        convId = conv.id;
+      } else {
+        return "Necesito un ID de conversación, teléfono o nombre del cliente.";
+      }
     }
 
     const messages = await db

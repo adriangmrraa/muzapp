@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { orders } from "@/db/schema";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { resolveClientNamesBatch } from "@/lib/lead-utils";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -41,9 +42,14 @@ export const getOrderById = tool({
       return { error: `No encontré el pedido #${orderId}` };
     }
 
+    const nameMap = await resolveClientNamesBatch(
+      row.phoneNumber ? [row.phoneNumber] : []
+    );
+    const customer = nameMap.get(row.phoneNumber) ?? row.customerName ?? "Sin nombre";
+
     return {
       id: row.id,
-      customer: row.customerName ?? "Sin nombre",
+      customer,
       phone: row.phoneNumber,
       type: row.orderType,
       status: statusLabels[row.status ?? "pending"] ?? row.status,
@@ -121,11 +127,14 @@ export const getOrderHistory = tool({
       .orderBy(desc(orders.createdAt))
       .limit(limit);
 
+    const phones = rows.map((r) => r.phoneNumber).filter(Boolean);
+    const nameMap = await resolveClientNamesBatch(phones);
+
     return {
       count: rows.length,
       orders: rows.map((r) => ({
         id: r.id,
-        customer: r.customerName ?? "Sin nombre",
+        customer: nameMap.get(r.phoneNumber) ?? r.customerName ?? "Sin nombre",
         type: r.orderType,
         status: statusLabels[r.status ?? "pending"] ?? r.status,
         date: r.createdAt?.toLocaleDateString("es-AR", {
@@ -161,6 +170,7 @@ export const searchOrdersByDate = tool({
       .select({
         id: orders.id,
         customerName: orders.customerName,
+        phoneNumber: orders.phoneNumber,
         orderType: orders.orderType,
         status: orders.status,
         items: orders.items,
@@ -176,6 +186,9 @@ export const searchOrdersByDate = tool({
       byStatus[s] = (byStatus[s] ?? 0) + 1;
     }
 
+    const phones = rows.map((r) => r.phoneNumber).filter(Boolean);
+    const nameMap = await resolveClientNamesBatch(phones);
+
     return {
       date: start.toLocaleDateString("es-AR"),
       total: rows.length,
@@ -184,7 +197,7 @@ export const searchOrdersByDate = tool({
       ),
       orders: rows.slice(0, 10).map((r) => ({
         id: r.id,
-        customer: r.customerName ?? "Sin nombre",
+        customer: nameMap.get(r.phoneNumber) ?? r.customerName ?? "Sin nombre",
         type: r.orderType,
         status: statusLabels[r.status ?? "pending"] ?? r.status,
       })),
@@ -202,6 +215,7 @@ export const getPendingOrders = tool({
       .select({
         id: orders.id,
         customerName: orders.customerName,
+        phoneNumber: orders.phoneNumber,
         orderType: orders.orderType,
         items: orders.items,
         notes: orders.notes,
@@ -216,6 +230,9 @@ export const getPendingOrders = tool({
     const preparingCount = rows.filter((r) => r.status === "preparing").length;
     const readyCount = rows.filter((r) => r.status === "ready").length;
 
+    const phones = rows.map((r) => r.phoneNumber).filter(Boolean);
+    const nameMap = await resolveClientNamesBatch(phones);
+
     return {
       pending: pendingCount,
       preparing: preparingCount,
@@ -223,7 +240,7 @@ export const getPendingOrders = tool({
       total: rows.length,
       orders: rows.map((r) => ({
         id: r.id,
-        customer: r.customerName ?? "Sin nombre",
+        customer: nameMap.get(r.phoneNumber) ?? r.customerName ?? "Sin nombre",
         type: r.orderType,
         items: r.items,
         status: statusLabels[r.status ?? "pending"] ?? r.status,
@@ -248,6 +265,7 @@ export const getTodaysOrders = tool({
       .select({
         id: orders.id,
         customerName: orders.customerName,
+        phoneNumber: orders.phoneNumber,
         orderType: orders.orderType,
         status: orders.status,
         items: orders.items,
@@ -266,6 +284,9 @@ export const getTodaysOrders = tool({
       byType[t] = (byType[t] ?? 0) + 1;
     }
 
+    const phones = rows.map((r) => r.phoneNumber).filter(Boolean);
+    const nameMap = await resolveClientNamesBatch(phones);
+
     return {
       date: start.toLocaleDateString("es-AR"),
       total: rows.length,
@@ -279,7 +300,7 @@ export const getTodaysOrders = tool({
       }),
       recentOrders: rows.slice(0, 5).map((r) => ({
         id: r.id,
-        customer: r.customerName ?? "Sin nombre",
+        customer: nameMap.get(r.phoneNumber) ?? r.customerName ?? "Sin nombre",
         type: r.orderType,
         status: statusLabels[r.status ?? "pending"] ?? r.status,
       })),

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { orders, leads } from "@/db/schema";
 import { and, gte, lte, desc, eq, ne } from "drizzle-orm";
+import { resolveClientNamesBatch } from "@/lib/lead-utils";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -236,6 +237,14 @@ export const getTopClients = tool({
       }
       clientMap[phone].orders += 1;
       clientMap[phone].revenue += orderTotal(row.items);
+    }
+
+    // Resolver nombres desde leads para clientes con pedidos
+    const phones = Array.from(Object.keys(clientMap));
+    const nameMap = await resolveClientNamesBatch(phones);
+    for (const [phone, data] of Object.entries(clientMap)) {
+      const resolvedName = nameMap.get(phone);
+      if (resolvedName) data.name = resolvedName;
     }
 
     const sorted = Object.entries(clientMap)

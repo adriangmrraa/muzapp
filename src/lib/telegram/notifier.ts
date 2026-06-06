@@ -1,4 +1,5 @@
 import { getTelegramConfigFromEnv, sendTelegramMessage } from "./bot";
+import { resolveClientName } from "@/lib/lead-utils";
 
 interface OrderNotification {
   id: number;
@@ -19,8 +20,10 @@ export async function notifyNewOrder(order: OrderNotification): Promise<void> {
     ? order.items.map((i: any) => `${i.quantity || 1}x ${i.name || "Item"}`).join(", ")
     : "Ver detalle";
 
+  const resolvedName = await resolveClientName(order.phoneNumber || "", order.customerName || "Desconocido");
+
   const typeIcon = order.orderType === "pan_mayorista" ? "🍞" : "🍔";
-  const message = `${typeIcon} *Nuevo Pedido #${order.id}*\n👤 Cliente: ${order.customerName || "Desconocido"}\n📦 Items: ${items}\n💰 Total: $${(order.total || 0).toLocaleString("es-AR")}\n📋 Estado: ${order.status}\n${order.orderType === "pan_mayorista" ? "\n🔔 Pedido al por mayor — revisar con urgencia" : ""}`;
+  const message = `${typeIcon} *Nuevo Pedido #${order.id}*\n👤 Cliente: ${resolvedName}\n📦 Items: ${items}\n💰 Total: $${(order.total || 0).toLocaleString("es-AR")}\n📋 Estado: ${order.status}\n${order.orderType === "pan_mayorista" ? "\n🔔 Pedido al por mayor — revisar con urgencia" : ""}`;
 
   for (const chatId of config.allowedChatIds) {
     await sendTelegramMessage(config.botToken, chatId, message, "Markdown");
@@ -30,10 +33,11 @@ export async function notifyNewOrder(order: OrderNotification): Promise<void> {
   if (order.orderType === "pan_mayorista") {
     const lichasChatId = process.env.TELEGRAM_LICHAS_CHAT_ID;
     if (lichasChatId) {
+      const lichasResolvedName = await resolveClientName(order.phoneNumber || "", order.customerName || "Desconocido");
       const lichasMessage = [
         "🫓 *NUEVO PEDIDO PAN MAYORISTA*",
         "",
-        `*Cliente:* ${order.customerName || "Desconocido"}`,
+        `*Cliente:* ${lichasResolvedName}`,
         `*Teléfono:* ${order.phoneNumber || "No especificado"}`,
         `*Pedido:*`,
         `${items}`,
