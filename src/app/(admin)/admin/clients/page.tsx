@@ -31,6 +31,7 @@ export default async function ClientsPage({ searchParams }: Props) {
 
       <ClientsView
         clients={data.clients}
+        total={data.total}
         currentPage={data.currentPage}
         totalPages={data.totalPages}
         currentSearch={params.search ?? ""}

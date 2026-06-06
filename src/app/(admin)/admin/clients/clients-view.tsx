@@ -66,11 +66,13 @@ function formatClientDate(d: Date | string | null): string {
 
 export function ClientsView({
   clients,
+  total,
   currentPage,
   totalPages,
   currentSearch,
 }: {
   clients: ClientSummary[];
+  total: number;
   currentPage: number;
   totalPages: number;
   currentSearch: string;
@@ -122,7 +124,10 @@ export function ClientsView({
 
       {/* Stats */}
       <motion.div variants={fadeUpSmall} className="text-xs text-white/20">
-        Total: {localClients.length > 0 ? localClients.length : "..."} clientes
+        {total > 0 ? `${total} clientes` : "..."}
+        {totalPages > 1 && total > 0 && (
+          <span className="text-white/10"> · Pág. {currentPage}/{totalPages}</span>
+        )}
       </motion.div>
 
       {/* Client Cards */}
@@ -203,6 +208,55 @@ export function ClientsView({
           ))
         )}
       </motion.div>
+
+      {/* ── Pagination ───────────────────────────────────────────────── */}
+      {totalPages > 1 && (
+        <motion.div variants={fadeUpSmall} className="flex items-center justify-center gap-2 mt-4">
+          <button
+            onClick={() => navigate({ search: currentSearch, page: String(currentPage - 1) })}
+            disabled={currentPage <= 1}
+            className="px-3 py-1.5 rounded-lg text-xs bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08] disabled:opacity-20 disabled:pointer-events-none transition-all"
+          >
+            ← Anterior
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+            // Show first, last, and pages around current
+            const isCurrent = page === currentPage;
+            const isNear = Math.abs(page - currentPage) <= 2;
+            const isEdge = page === 1 || page === totalPages;
+            if (!isNear && !isEdge) return null;
+
+            // Ellipsis
+            const prev = page - 1;
+            if (page > 1 && prev !== currentPage && prev !== currentPage - 1 && prev !== currentPage + 1 && prev !== 1) {
+              return null; // ellipsis handled by next iteration
+            }
+
+            return (
+              <button
+                key={page}
+                onClick={() => navigate({ search: currentSearch, page: String(page) })}
+                className={`w-8 h-8 rounded-lg text-xs font-medium transition-all ${
+                  isCurrent
+                    ? "bg-[#D4A017] text-black"
+                    : "bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08]"
+                }`}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          <button
+            onClick={() => navigate({ search: currentSearch, page: String(currentPage + 1) })}
+            disabled={currentPage >= totalPages}
+            className="px-3 py-1.5 rounded-lg text-xs bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08] disabled:opacity-20 disabled:pointer-events-none transition-all"
+          >
+            Siguiente →
+          </button>
+        </motion.div>
+      )}
 
       {/* ── Edit Modal ───────────────────────────────────────────────── */}
       {editClient && (
