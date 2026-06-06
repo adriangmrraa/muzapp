@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { leads, orders } from "@/db/schema";
-import { eq, sql, inArray } from "drizzle-orm";
+import { eq, sql, inArray, asc } from "drizzle-orm";
 
 /**
  * Returns the managed client name if the person has orders,
@@ -18,6 +18,7 @@ export async function resolveClientName(
     .select({ id: leads.id, name: leads.name })
     .from(leads)
     .where(eq(leads.phone, phone))
+    .orderBy(asc(leads.id))
     .limit(1);
 
   if (!lead || !lead.name) return fallbackName;
@@ -51,7 +52,8 @@ export async function resolveClientNamesBatch(
   const leadRows = await db
     .select({ phone: leads.phone, name: leads.name })
     .from(leads)
-    .where(inArray(leads.phone, uniquePhones));
+    .where(inArray(leads.phone, uniquePhones))
+    .orderBy(asc(leads.id));
 
   if (leadRows.length === 0) return new Map();
 
