@@ -2,10 +2,11 @@ import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
 import { orders, leads, agentConfig, addresses, orderContextItems } from "@/db/schema";
-import { eq, desc, and, gt, asc } from "drizzle-orm";
+import { eq, desc, and, gt, asc, inArray } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 import { resolveItems } from "@/lib/order-utils";
 import { normalizePhone } from "@/lib/phone-utils";
+import { isActiveStatus, ORDER_STATUS_INFO } from "@/lib/whatsapp/status-utils";
 
 async function notifyDeliveryOrder(
   customerName: string,
@@ -77,6 +78,31 @@ export function createCreateOrderTool(conversationId: number) {
     // Normalizar teléfono antes de cualquier operación
     customerPhone = normalizePhone(customerPhone);
 
+    // ─── ACTIVE ORDER GUARD: genérico para TODOS los tipos de pedido ──────
+    // Verifica si el cliente ya tiene un pedido activo (pending/preparing/ready)
+    // dentro de la ventana configurable de tiempo.
+    try {
+      const windowMinutes = parseInt(process.env.DUPLICATE_ORDER_WINDOW_MINUTES || "15", 10);
+      const activeThreshold = new Date(Date.now() - windowMinutes * 60 * 1000);
+      const activeStatuses = ["pending", "preparing", "ready"];
+      const [activeOrder] = await db
+        .select({ id: orders.id, status: orders.status })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.phoneNumber, customerPhone),
+            inArray(orders.status, activeStatuses),
+            gt(orders.createdAt, activeThreshold),
+          )
+        )
+        .orderBy(desc(orders.createdAt))
+        .limit(1);
+      if (activeOrder) {
+        const statusLabel = ORDER_STATUS_INFO[activeOrder.status as keyof typeof ORDER_STATUS_INFO]?.label || activeOrder.status;
+        return `Ya tenés un pedido activo (#${activeOrder.id}) en estado ${statusLabel}. No puedo crear otro. Si querés modificar algo, decime.`;
+      }
+    } catch { /* non-fatal */ }
+
     // ─── Verificar si hay stock de hamburguesas ──────────────────────────
     if (orderType === "hamburguesas") {
       try {
@@ -91,28 +117,6 @@ export function createCreateOrderTool(conversationId: number) {
       } catch {
         // non-fatal — si falla la consulta, permitir el pedido
       }
-    }
-
-    // ─── ACTIVE ORDER GUARD: solo B2B — verificar si ya hay un pedido pending activo (<10min) ─
-    if (orderType === "pan_mayorista") {
-      try {
-        const activeThreshold = new Date(Date.now() - 10 * 60 * 1000);
-        const [activeOrder] = await db
-          .select({ id: orders.id })
-          .from(orders)
-          .where(
-            and(
-              eq(orders.phoneNumber, customerPhone),
-              eq(orders.status, "pending"),
-              gt(orders.createdAt, activeThreshold),
-            )
-          )
-          .orderBy(desc(orders.createdAt))
-          .limit(1);
-        if (activeOrder) {
-          return `Ya tenés un pedido activo (#${activeOrder.id}). Si querés modificar algo, decime.`;
-        }
-      } catch { /* non-fatal */ }
     }
 
     // ─── AUTO-LEER CARRITO desde orderContextItems si no se pasaron items explícitos ──
