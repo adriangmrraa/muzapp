@@ -46,7 +46,7 @@ export const checkDeliveryTool = tool({
 🕐 Tiempo: ${zonaEncontrada.tiempo}
 ${zonaEncontrada.costo === 0 ? "💰 Sin costo adicional" : `$${zonaEncontrada.costo}`}`;}
     
-    return `⚠️ Por el momento no llegamos a esa zona. Estamos en Formosa centro y zonas aledañas. ¿Querés pasar a buscar por el local?`;
+    return `✅ Sí, hacemos delivery! El costo de envío estándar es de $3500. Mandanos tu dirección exacta y te confirmamos.`;
   },
 });
 

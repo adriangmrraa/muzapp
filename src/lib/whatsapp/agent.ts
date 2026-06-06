@@ -128,7 +128,7 @@ export async function runWhatsAppAgent({
         // Datos del lead (dirección, notas, tags)
         const { leads } = await import("@/db/schema");
         const [lead] = await db
-          .select({ address: leads.address, tags: leads.tags, notes: leads.notes })
+          .select({ name: leads.name, address: leads.address, tags: leads.tags, notes: leads.notes })
           .from(leads)
           .where(eq(leads.phone, conv.phone))
           .limit(1);
@@ -246,7 +246,7 @@ export async function runWhatsAppAgent({
         }
 
         customerContext = {
-          name: conv.name || undefined,
+          name: lead?.name || conv.name || undefined,
           phone: conv.phone,
           address: lead?.address || null,
           savedAddresses: savedAddresses.length > 0 ? savedAddresses : undefined,
@@ -463,9 +463,6 @@ const isHallucination = isHallucinationA || isHallucinationB || isHallucinationC
     // When we have pending media but empty text, use a simple generic message
     // (AVOID duplicating image captions in the text bubble — the caption is sent separately)
     let responseText = finalText;
-    if (!responseText && pendingMedia.length > 0) {
-      responseText = "Ahí te las mando.";
-    }
     if (!responseText) {
       // 🚨 Phase 2: El modelo NO devolvió texto porque toolChoice:"required" lo obligó a
       // llamar tools sin generar respuesta. Hacemos una SEGUNDA generación con toolChoice:"auto"

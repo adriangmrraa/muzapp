@@ -76,7 +76,7 @@ export async function findOrCreateConversation(
       whatsappId:
         channel === "whatsapp" ? externalUserId : `tg_${externalUserId}`,
       customerName: customerName || null,
-      customerPhone: customerPhone ? normalizePhone(customerPhone) : externalUserId,
+      customerPhone: normalizePhone(customerPhone || externalUserId),
       channel,
       externalUserId,
       status: "active",

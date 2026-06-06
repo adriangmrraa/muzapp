@@ -51,11 +51,9 @@ export function classifyMessageType(text: string): MessageType {
     "en la lucha", "de una de una", "fortín", "yunka",
     // Agradecimientos y afirmaciones comunes
     "gracias", "graciass", "muchas gracias", "mil gracias",
-    "ok", "okay", "okei", "dale", "dahle",
-    "sí", "si", "sisí", "obvio", "claro", "seguro",
-    "listo", "perfecto", "genial", "buenisimo", "bárbaro", "joya",
-    "de una", "d1", "sale", "tranqui", "tranquilo",
-    "buenísimo", "excelente", "naa", "nah",
+    "ok", "okay", "okei",
+    "obvio", "claro", "seguro",
+    "naa", "nah",
   ];
   if (nonCommercialKeywords.some((k) => lower.includes(k))) return "non_commercial";
 

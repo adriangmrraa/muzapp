@@ -93,27 +93,26 @@ export function createCreateOrderTool(conversationId: number) {
       }
     }
 
-    // ─── IDEMPOTENCIA: ver si ya hay un pedido pending creado hace <30s ──
-    try {
-      const recentThreshold = new Date(Date.now() - 30_000);
-      const [recentOrder] = await db
-        .select({ id: orders.id })
-        .from(orders)
-        .where(
-          and(
-            eq(orders.phoneNumber, customerPhone),
-            eq(orders.status, "pending"),
-            gt(orders.createdAt, recentThreshold),
+    // ─── ACTIVE ORDER GUARD: solo B2B — verificar si ya hay un pedido pending activo (<10min) ─
+    if (orderType === "pan_mayorista") {
+      try {
+        const activeThreshold = new Date(Date.now() - 10 * 60 * 1000);
+        const [activeOrder] = await db
+          .select({ id: orders.id })
+          .from(orders)
+          .where(
+            and(
+              eq(orders.phoneNumber, customerPhone),
+              eq(orders.status, "pending"),
+              gt(orders.createdAt, activeThreshold),
+            )
           )
-        )
-        .orderBy(desc(orders.createdAt))
-        .limit(1);
-      if (recentOrder) {
-        console.log(`[createOrder] 🛑 Duplicate prevention — order #${recentOrder.id} already created for ${customerPhone} in last 30s`);
-        return `✅ Dale, ya registramos tu pedido #${recentOrder.id}. Cualquier cosa avisanos.`;
-      }
-    } catch {
-      // non-fatal — si falla la consulta, permitir crear igual
+          .orderBy(desc(orders.createdAt))
+          .limit(1);
+        if (activeOrder) {
+          return `Ya tenés un pedido activo (#${activeOrder.id}). Si querés modificar algo, decime.`;
+        }
+      } catch { /* non-fatal */ }
     }
 
     // ─── AUTO-LEER CARRITO desde orderContextItems si no se pasaron items explícitos ──
@@ -183,12 +182,7 @@ export function createCreateOrderTool(conversationId: number) {
             .set({ status: "converted" })
             .where(eq(leads.id, lead.id));
         }
-        // Actualizar nombre
-        if (customerName) {
-          await db.update(leads)
-            .set({ name: customerName })
-            .where(eq(leads.id, lead.id));
-        }
+
       }
     } catch {
       // non-fatal
@@ -225,7 +219,7 @@ export function createCreateOrderTool(conversationId: number) {
 
     const typeLabel = orderType === "hamburguesas" ? "🍔 Hamburguesas" : "🍞 Pan Mayorista";
 
-    return `✅ Pedido #${order.id} registrado (${typeLabel}).\n👤 Cliente: ${customerName}\n💰 Total: $${total.toFixed(2)}\n⏱ Estimado: 30-40 minutos.\nSi el cliente quiere agregar algo más, decile que tiene 5 minutos.`;
+    return `✅ Pedido #${order.id} registrado (${typeLabel}).\n👤 Cliente: ${customerName}\n💰 Total: $${total.toFixed(2)}\n⏱ Estimado: 30-40 minutos.`;
   },
 });
 }

@@ -8,10 +8,12 @@ const TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export async function loadConversation(phone: string): Promise<ModelMessage[]> {
   try {
+    const { normalizePhone } = await import("@/lib/phone-utils");
+    const normalizedPhone = normalizePhone(phone);
     const rows = await db
       .select()
       .from(conversations)
-      .where(eq(conversations.whatsappId, phone))
+      .where(eq(conversations.whatsappId, normalizedPhone))
       .limit(1);
 
     if (rows.length === 0) return [];
