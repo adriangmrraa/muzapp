@@ -1,54 +1,57 @@
-[4:12 a. m., 2/6/2026] Hector Adrian Gamarra: hola
-[4:12 a. m., 2/6/2026] Hector Adrian Gamarra: estan trabajando?
+Te mando el chat conmigo recien, le hice un pedido y super bien como me repsondio y me lo tomo al pedido, entonces aparecio en pedidos y le dimos al boton de Preparando y posteriormente al de Listo, entonces se le mando el mensaje de que el pedido ya esta listo, que puedo pasar a retirarlo. Entonces yo le digo DALE, PASO AHI VOY. Y el agente ahi me dice que ya quedo registrado pero crea un pedido nuevo, el mismo pero duplicado, fijate la database que hay dos pedidos, de todas maneras t elos mando a los dos pedidos y al chat conmigo, mi numeor es 5493705868421:
 
-AQUI ESTA EL PRIMER ERROR, YA QUE MANDA BIEN EL MENU OSEA LA IMAGEN CORRECTAMENTE, DICE ACA TENES EL MENU, Y DESPEUS DICE HOLA, DEBERIA SER PRIMERO EL: Holaa. Sii, decime. Acá tenés el menú Y LA IMAGEN DEL MENU. entendes? 
-FOTO MENU HAMBURGUESAS
-[4:13 a. m., 2/6/2026] Leandro Patiño: Acá tenés el menú
-[4:13 a. m., 2/6/2026] Leandro Patiño: Holaa. Sii, decime
+CHAT CON MIGO: 
+BOT:
+Buenas
+Holaa, te paso el menú 😊
+FOTO
+Acá tenés el menú
+CLIENTE: 
+Puede ser dos paquetes de 12 lomito
+cuanto seria?
+BOT:
+Dale, dos paquetes de 12 lomito en sésamo te quedan $9.200, y en parmesano $10.000.
+de sesamo quiero
+CLIENTE:
+paso a retirar nomas?
 
+BOT:
+Dale, te lo preparamos 😌 Pasame ubi y te digo el envío.
+Dale, retirá por Neuquén 1245 y te esperamos.
+avisame y retiro
+CLIENTE:
+dos docenas me cargaste no?
+BOT:
+Dale, te quedó en 12x Pan de Lomito x 4 u - Sesamo; retiro pendiente.
+MENSAJE AL CAMBIAR EL ESTADO DEL PEDIDO:
+🍞 Pedido #143 — Ya esta tu pedido de pan, retiralo por Neuquen 1245.
 
-EL SEGUNDO ERROR ES ACA PORQUE MANDA NUEVAMENTE LA IMAGEN DEL MENU CUANDO YA LA MANDO Y DEBE MANDARLA UNA VEZ CADA DOS 4HORAS DIGAMOS, ES UN BUEN PLAZO DE TIEMPO PARA QUE FUNCIONE CORRECTAMENTE, ENTIENDES LO QUE DIGO? 
+CLIENTE:
 
-- FOTO MENU HAMBURGUESAS
-[4:13 a. m., 2/6/2026] Leandro Patiño: Acá tenés el menú
-[4:13 a. m., 2/6/2026] Leandro Patiño: ¿qué te preparamos?
-[4:22 a. m., 2/6/2026] Hector Adrian Gamarra: como es la bookbinder?
+Dale paso ahí voy 
 
-Aca funciona muy bien, llega la imagen de la bookbinder, y el precio. Pero esta mal formulada la respuesta, el dale luego del precio queda agresivo, suavizalo y mejorala a esta repsuesta, ok? 
+BOT AQUI RESPONDE Y CARGA EL PEDIDO NUEVAMENTE, LO CUAL ES UN ERROR:
+Dale, te lo dejo para hoy y ya quedó registrado; si querés retiro es en Neuquén 1245 o mandame ubi para delivery.
 
-- FOTO BOOKBINDER
-[4:22 a. m., 2/6/2026] Leandro Patiño: Bookbinder - $7000.00
-[4:22 a. m., 2/6/2026] Leandro Patiño: Dale, ¿la querés?
-[4:24 a. m., 2/6/2026] Hector Adrian Gamarra: si quiero dos
-[4:24 a. m., 2/6/2026] Hector Adrian Gamarra: hacen envios hastya el mariano moreno?
+00-----------------------Creo que el error puede deberse a que el agente de ia no lee el estado del pedido y no ve el mensaje que se manda tras cambiar el estado del pedido a listo, ya que cuando eso se cambia, la conversacion cambia digamos el contexto. Yo respondi al mensaje y el bot me crea un nuevo pedido, lo cual esta mal. Entendes el error, no? ambas cosas debe tener en cuenta siempre, el pedido del cliente y su estado, y leer el contexto, si se encuentra con es emensaje especificamente es porque cambio el estado, entonces debe verificar el estado, y responder en consecuencia con un: Dale, te esperamos. No como lo hizo en este chat conmigo y tampoco debe cargar un pedido nuevo, entiendes?
 
-Aca esta otro error y es que como ya mando recien , (osea en 4 horas la misma imagen, OSEA QUE APLICA LAS 4 HS PARA TODAS LAS IMAGENES. ) YA MANDO IMAHGEN DE LA BOOKBINDER HACE UN MINUTO, ENTONCES MANDARLA NUEVAMENTE QUEDA RARO, AUNQUE SE ESTE HABLANDO DE LO MISMO, OK?  una sola vez cada 4 horas las imagenes, aplica a todas.Lo del delivery y a la misma direccion de siempre, como recordando mi direccion es fantastico y esta super genial eso! ME ENCANTA!
+---------------------------
 
-- FOTO BOOKBINDER
-[4:25 a. m., 2/6/2026] Leandro Patiño: Bookbinder - $7000.00
-[4:25 a. m., 2/6/2026] Leandro Patiño: Dale, ¿delivery o buscás? ¿a la misma dirección de siempre? (clno sur 77 casa 19 (-26.171421051025, -58.203086853027))
-[4:25 a. m., 2/6/2026] Hector Adrian Gamarra: delivery porfavor
-[4:25 a. m., 2/6/2026] Hector Adrian Gamarra: la misma direccion
+Dos pedidos, el correcto y el duplicado 111 minutos despues:
 
-Aca nuevamente manda la foto por tercera vez, a esto me refiero que debe mandar una sola vez, con esa regla de las 4 horas o si hay otra regla mejor aplicala, planifica que e smejor, investiga que es mejor para arreglar esto de forma certera digamos.  que mande una sola imagen, no mas, pero que si luego de 5, 10 o 18 hs vuelven a hablarle entienda que puede ser que haya borrado, o algo asi, pero ya deberiamandarle, aplica mandarle. 
-
-- FOTO BOOKBINDER
-[4:25 a. m., 2/6/2026] Leandro Patiño: Bookbinder - $7000.00
-[4:25 a. m., 2/6/2026] Leandro Patiño: Dale agrego 2 Bookbinder y pregunto delivery o retiro?
-
-ACA ME DICE QUE DELIVERY DEVUELTA CUANDO YA CONFIRMAMOS QUE ERA DELIVERY. EN EL MENSAJE ANTERIOR MEDIJO EL AGENTE QUE TENIA MI DIRECCION ME PREGUNTO SI DELIVERY A L A MISMA DIRECCION Y SE LOC ONFIRMWE, QUIZAS FALTA AGREGAR SINONIMOS DE COMO PUEDEN REFERIRSE LOS CLIENTES A UNA CONFIRMACION DE QUE SI ES DELIVERY, NO? 
-
-[4:25 a. m., 2/6/2026] Hector Adrian Gamarra: delivery te dije
-
-aCA MUY BIEN YA SE CREO EL PEDIDO CUANDO CONFIRMO, AUNQUE FUE REPETITIVO, CONFIRMO LA DIRECCION Y AGREGO EL PEDIDO. eL TEMA ES QUE ME DICE 14 MIL, SIN DECIRME CUANTO ES EL ENVIO, (EL GENERAL ES 3000, PROMEDIO DIGAMOS ENTONCRS SI ES UN MAS VA A SER COMO M UCHO 1000 Y ES ACEPTABLE. ENTONCES PARA QUE NO ESTE BUSCANDO EN DATABASE LO QUE SE CARGA O VER POR ZONA, DIRECTAMENTE DICE 3000 O 3500 QUE VARIE, ENTENDES?  ) ENTONCES ESTA MAL EL 14MIL, AHI SERIA SOLO LAS DOS BOOKBINDER, Y AHI FALTA EL DELIVERY EL PRECIO DEL DELIVERY ENTENDES ? DEBE SUMAR SIEMPRE SI ES DELIVERY EL RCOSTO DEL MISMO AL TOTAL, OK? A MENOS DE QUE SEA POR UBER QUE SE GESTIONA DIFERENTE, ENTIENDES? 
-
-[4:26 a. m., 2/6/2026] Leandro Patiño: Genial, ya está cargado el pedido. El total es 14mil. Te paso el alias para pagar?
-[4:26 a. m., 2/6/2026] Hector Adrian Gamarra: puedo pagar con efectivo?
-[4:26 a. m., 2/6/2026] Hector Adrian Gamarra: le pago al delivery
-[4:26 a. m., 2/6/2026] Hector Adrian Gamarra: cuando me trae
-[4:26 a. m., 2/6/2026] Hector Adrian Gamarra: con delivery es 14mil?
-
-Aca se vuelve loco y esto esta mal, fijate la hora que son los mensajes y luego fijate la hora que esta en database de horarios laborales, yo los confuigure en 08 inicio y fin a las 04 dle dia siguiente seria, revisa si esta bien y esos datos son los que tenes, domingos esta apagado ahora, pero voya  encenderlo luego, fijate que debe aparecerte apagado y la ia tambien deberia entender y obtener esos valores para saber horarios de todos los dias. Te lo mencionn porque fijate que en este ultimo mensaje , que me dice que lo gestiona uber y son las 4:26 am, ya estamos cerrados en teoria, por eso te lo menciono porque aparentemente noe sta funcionando , incluso creo un pedido a las 4:26 am cuando en teoria ya estamos cerrados, quiero que hagas la logica deesto, revis a profundidad y decime si entendes esta parte es la mas importante digamos de todo este chat, ok? 
-
-[4:27 a. m., 2/6/2026] Leandro Patiño: No, ahora el delivery se gestiona con Uber: no aceptamos efectivo — tenés que transferir solo los productos (14mil) y el Uber lo pagás al chofer al recibir. ¿Querés que te pase el alias para transferir?
-[4:27 a. m., 2/6/2026] Leandro Patiño: Lea..LEMON. Mandá el comprobante cuando transfieras y ya te confirmo ☺️
+#144
+🍞 Pan Mayorista
+Hector Adrian Gamarra
+5493704868421
+12x Pan de Lomito x 4 u - Sesamo
+para hoy — retiro/delivery (gestionar a la mañana)
+Pendiente
+Ahora
+#143
+🍞 Pan Mayorista
+Hector Adrian Gamarra
+5493704868421
+12x Pan de Lomito x 4 u - Sesamo
+pedido corregido a dos docenas; retiro
+Listo
+Hace 11 min

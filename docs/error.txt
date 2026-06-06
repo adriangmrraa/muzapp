@@ -1,197 +1,120 @@
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
+Hola don voy a querer 3 docenas de pizzas y 2 de lomito parmesano
+
+06:44 a. m.
+Para media mañana más o menos si puedo buscar sería genial
+
+06:44 a. m.
+Bot
+Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?
+
+06:44 a. m.
+Bot
+Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?
+
+06:45 a. m.
+
+
+logs render: 
+
+muzapp@0.1.0 start
+> next start
+▲ Next.js 16.2.4
+- Local:         http://localhost:10000
+- Network:       http://10.194.237.174:10000
+✓ Ready in 1609ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+[Mrs Muzzarella] Agente Interno cargado con 55 tools
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://muzapp.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+Error: Failed to find Server Action "406b01a6d7b8456653ee77fc32c8d11006f64feb7b". This request might be from an older or newer deployment.
 Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
     at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
+Error: Failed to find Server Action "70fa98079554e4b08b69083b3c7e16343d441766a8". This request might be from an older or newer deployment.
 Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
     at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
+Error: Failed to find Server Action "406b01a6d7b8456653ee77fc32c8d11006f64feb7b". This request might be from an older or newer deployment.
 Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
     at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
+Error: Failed to find Server Action "70fa98079554e4b08b69083b3c7e16343d441766a8". This request might be from an older or newer deployment.
 Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
     at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
+Error: Failed to find Server Action "70fa98079554e4b08b69083b3c7e16343d441766a8". This request might be from an older or newer deployment.
 Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
     at ignore-listed frames
 [webhook:wa] Config loaded — enabled:true phone:+5493705115020
-[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a212b7c42d1f5014befae78
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a2148ed38230426b225dabc
 [webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
 [webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
 [buffer:lock] Acquired lock for whatsapp:+5493704868421
-[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_59b0zcCgMBBnEIWDMvDc1U"}}
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_7SKkPfzaEE4nPjq3oH25ca"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1JoUeJtbqUSOHIWBya2oPf"}}
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_ppHRMCPCMvG79aPW0izgc"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_45WxbujZzvVZI4h0xE45V8"}}
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_5urJeSmH2k6i8yV1nvy0aa"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_H5qUIZRacA7s3pC3nNVcZ"}}
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_72l8XfbJtaxC4DBVQlSdgm"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_3Gn2ELBE7CzmEDCMukTrU8"}}
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_zc2WlwcbrxFLx35pMmv0j"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-[webhook:wa] Config loaded — enabled:true phone:+5493705115020
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a212b82c4160b4f6517519b
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
 [buffer:process] Timer expired or max attempts reached for whatsapp:+5493704868421 after 3s
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
-[buffer:process] Start — 4 msgs for whatsapp:+5493704868421 (depth=0)
+[buffer:process] Start — 1 msgs for whatsapp:+5493704868421 (depth=0)
 [buffer:process] About to call processCallback for whatsapp:+5493704868421
-[webhook:wa] Buffer callback fired — 4 msgs for +5493704868421
+[webhook:wa] Buffer callback fired — 1 msgs for +5493704868421
+[webhook:wa] Running agent with 1 history messages
+[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===
+[agent] Using model: gpt-5.4-mini — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction
+[webhook:wa] Config loaded — enabled:true phone:+5493705115020
+[webhook:wa] Message from +5493704868421 (Hector Adrian Gamarra) type=text id=6a2148fc2d84fb008c6375d7
+[webhook:wa] Enqueueing to buffer for whatsapp:+5493704868421
 [webhook:wa] Config for agent — apiKey:SET botNumber:+5493705115020 prompt:SET
-[webhook:wa] Running agent with 4 history messages
 [buffer:lock] Lock already held for whatsapp:+5493704868421, skipping
-[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_6uQMGu5mQFaAqDyM9oBt7H"}}
+[followup] Failed for order #66: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mput18f3-oium","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_2RirIHjIPeWnmA5PNi30B4"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_26bR5wK2PeUy59mUQcGkm7"}}
+[followup] Failed for order #71: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuksaf-04ts","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_3qt7pL2QOlmuicZLmBBqTF"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_4IIsdE0nZdzGujgK99OvjZ"}}
+[followup] Failed for order #72: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuumc82-vscu","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_1ZIvK79vI8GbFo0vR2b7I0"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_43qMitywYk9YV7tsClMMgX"}}
+[followup] Failed for order #78: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuuvcfs-21nc","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_3VMr7RQJpfKQsGZduQnH9z"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_4ZtDB42M8nqhYqVYvzc1eo"}}
+[followup] Failed for order #73: Error: YCloud API error (400): {"error":{"status":400,"code":"PARAM_INVALID","message":"Invalid E.164 phone number: sin-telefono-mpuunjdq-clrb","target":"to","docUrl":"https://docs.ycloud.com/v2/reference/errors#param_invalid","requestId":"req_2Ewhm3pbc1reK8YQEuoBvY"}}
     at r (.next/server/chunks/[root-of-the-server]__0_8llej._.js:1:12860)
     at async m (.next/server/chunks/[root-of-the-server]__0puuzm8._.js:1:6614)
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-[webhook:wa] Agent response: Esas son las promos, ¿te gusta alguna?... (0 media pending)
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-[ycloud] Message sent to +5493704868421 — id:6a212b8cdb8eff5734bb389b status:accepted
-[webhook:wa] Updated chatMessage 8272 with wamid 6a212b8cdb8eff5734bb389b
+[createOrder] Auto-read 2 items from carrito (conversation 203)
+[agent] ✅ generateText success — API model: "unknown", tools called: 1
+[webhook:wa] Agent response: Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?... (0 media pending)
+[ycloud] Message sent to +5493704868421 — id:6a21490c5c8ac409daa3faeb status:accepted
+[webhook:wa] Updated chatMessage 8354 with wamid 6a21490c5c8ac409daa3faeb
 [webhook:wa] Response sent to +5493704868421
 [buffer:process] Done for whatsapp:+5493704868421 (depth=0)
 [buffer:interrupt] New (different) messages during processing for whatsapp:+5493704868421, re-processing (depth=1)
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
 [buffer:process] Timer expired or max attempts reached for whatsapp:+5493704868421 after 3s
 [buffer:process] Start — 1 msgs for whatsapp:+5493704868421 (depth=1)
 [buffer:process] About to call processCallback for whatsapp:+5493704868421
 [webhook:wa] Buffer callback fired — 1 msgs for +5493704868421
-[webhook:wa] Running agent with 5 history messages
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-[webhook:wa] Agent response: Ahora estamos cerrados, volvemos a las 08:00. ¿Querés ver el menú o dejar algo pedido?... (0 media pending)
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-[ycloud] Message sent to +5493704868421 — id:6a212b9fc677377ed380b1fa status:accepted
-[webhook:wa] Updated chatMessage 8273 with wamid 6a212b9fc677377ed380b1fa
+[webhook:wa] Running agent with 3 history messages
+[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===
+[agent] Using model: gpt-5.4-mini — parallelToolCalls:false (sequential tools) to avoid reasoning=none restriction
+[createOrder] Auto-read 2 items from carrito (conversation 203)
+[ycloud] Message sent to 5493704500888 — id:6a214922c677377ed3833564 status:accepted
+[delivery] Order #101 notified to 5493704500888
+[agent] ✅ generateText success — API model: "unknown", tools called: 1
+[webhook:wa] Agent response: Disculpá, no pude procesar tu mensaje. ¿Podés intentar de nuevo?... (0 media pending)
+[ycloud] Message sent to +5493704868421 — id:6a21492919a9aa65f5e641c5 status:accepted
+[webhook:wa] Updated chatMessage 8355 with wamid 6a21492919a9aa65f5e641c5
 [webhook:wa] Response sent to +5493704868421
 [buffer:process] Done for whatsapp:+5493704868421 (depth=1)
 [buffer:lock] Released lock for whatsapp:+5493704868421
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "70f9a7d54755fd3d0d79144e16a5b04f6f3665bdb5". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
-Error: Failed to find Server Action "404bf0a366cc4ba5c4f6127c8cef5f5122b38b7cd6". This request might be from an older or newer deployment.
-Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
-    at ignore-listed frames
