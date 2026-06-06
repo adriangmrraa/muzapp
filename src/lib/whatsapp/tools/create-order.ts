@@ -84,7 +84,7 @@ export function createCreateOrderTool(conversationId: number) {
     try {
       const windowMinutes = parseInt(process.env.DUPLICATE_ORDER_WINDOW_MINUTES || "15", 10);
       const activeThreshold = new Date(Date.now() - windowMinutes * 60 * 1000);
-      const activeStatuses = ["pending", "preparing", "ready"];
+      const activeStatuses = ["pending", "preparing", "ready"] as const;
       const [activeOrder] = await db
         .select({ id: orders.id, status: orders.status })
         .from(orders)

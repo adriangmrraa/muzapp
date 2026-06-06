@@ -447,7 +447,7 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
   preferences?: string[];
   orderHistory?: any[];
   pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null };
-  lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any; statusSemantic?: string };
+  lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any; address?: string | null; statusSemantic?: string };
   currentCart?: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[];
   currentHour?: number;
   previousContext?: string;
