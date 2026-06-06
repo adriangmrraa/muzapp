@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { products, conversations, leads, agentConfig, orders } from "@/db/schema";
 import { sql, gte, desc, count, eq } from "drizzle-orm";
+import { resolveClientNamesBatch } from "@/lib/lead-utils";
 
 import { DashboardClient } from "./dashboard-client";
 
@@ -99,10 +100,14 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
     timeLabel: tiempoRelativo(l.createdAt),
   }));
 
+  // Resolve names for activity orders too
+  const orderPhones = recentOrders.map((o) => o.phone).filter(Boolean) as string[];
+  const activityNameMap = await resolveClientNamesBatch(orderPhones);
+
   const ordersItems: ActivityItem[] = recentOrders.map((o) => ({
     type: "order",
     id: o.id,
-    name: null,
+    name: activityNameMap.get(o.phone) ?? null,
     phone: o.phone,
     createdAt: o.createdAt,
     timeLabel: tiempoRelativo(o.createdAt),
@@ -114,7 +119,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
 }
 
 async function getRecentOrders() {
-  return await db
+  const rows = await db
     .select({
       id: orders.id,
       customerName: orders.customerName,
@@ -127,6 +132,16 @@ async function getRecentOrders() {
     .from(orders)
     .orderBy(desc(orders.createdAt))
     .limit(8);
+
+  // Enrich with managed client names
+  const phones = rows.map((r) => r.phoneNumber).filter(Boolean) as string[];
+  const nameMap = await resolveClientNamesBatch(phones);
+  for (const row of rows) {
+    const resolved = nameMap.get(row.phoneNumber);
+    if (resolved) row.customerName = resolved;
+  }
+
+  return rows;
 }
 
 export type DashboardCard = {

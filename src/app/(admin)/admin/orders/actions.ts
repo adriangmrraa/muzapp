@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { orders, orderStatusEnum, conversations } from "@/db/schema";
 import { eq, desc, and, count, ilike, or } from "drizzle-orm";
 import { auth } from "@/auth";
+import { resolveClientNamesBatch } from "@/lib/lead-utils";
 
 const PAGE_SIZE = 30;
 
@@ -114,6 +115,16 @@ export async function fetchOrders(params: {
       .offset(offset),
     db.select({ total: count() }).from(orders).where(whereClause),
   ]);
+
+  // Enrich with managed client names from leads
+  if (rows.length > 0) {
+    const phones = rows.map((r) => r.phoneNumber).filter(Boolean) as string[];
+    const nameMap = await resolveClientNamesBatch(phones);
+    for (const row of rows) {
+      const resolved = nameMap.get(row.phoneNumber);
+      if (resolved) row.customerName = resolved;
+    }
+  }
 
   return {
     rows,
