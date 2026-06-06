@@ -40,6 +40,7 @@ import {
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
 import { getArgentinaHour } from "@/lib/argentina-time";
+import { getStatusSemantic } from "./status-utils";
 interface RunAgentParams {
   conversationId: number;
   customerPhone: string;
@@ -267,6 +268,12 @@ export async function runWhatsAppAgent({
             paymentStatus: lastOrder.paymentStatus,
             orderType: lastOrder.orderType,
             items: lastOrder.items,
+            statusSemantic: getStatusSemantic(
+              lastOrder.status || "",
+              lastOrder.orderType,
+              lastOrder.address,
+              lastOrder.id,
+            ),
           } : undefined,
           currentCart,
           currentHour,
@@ -277,9 +284,36 @@ export async function runWhatsAppAgent({
   } catch (err) {
     console.warn("[agent] Customer context load failed, continuing without it", err);
   }
+
+  // 🔍 DETECTAR si el cliente está respondiendo a una notificación de estado
+  // Si el último mensaje en el historial es "system" (notificación automática de estado)
+  // y el mensaje actual del cliente es del humano → el cliente responde a la notificación
+  let replyToNotificationDirective = "";
+  try {
+    const lastAssistantOrSystem = [...messages]
+      .reverse()
+      .find((m) => m.role !== "user");
+    if (
+      lastAssistantOrSystem?.role === "system" &&
+      lastAssistantOrSystem.content.includes("Pedido #")
+    ) {
+      replyToNotificationDirective =
+        "⚠️ DETECCIÓN: El cliente está respondiendo a una NOTIFICACIÓN AUTOMÁTICA de estado de pedido que le enviamos. " +
+        "Esta respuesta NO es un pedido nuevo. NO ejecutes createOrder. " +
+        "Respondé amablemente a lo que el cliente diga, pero NO crees un nuevo pedido.";
+      console.log("[agent] Cliente respondiendo a notificación de estado — anti-duplicate activo");
+    }
+  } catch {
+    // non-fatal
+  }
+
+  // Combinar directivas
+  const combinedAntiLoop = [antiLoopDirective, replyToNotificationDirective]
+    .filter(Boolean)
+    .join("\n\n");
   
   try {
-    system = await buildSystemPrompt(conversationId, customerContext, antiLoopDirective, nonCommercialDirective);
+    system = await buildSystemPrompt(conversationId, customerContext, combinedAntiLoop, nonCommercialDirective);
   } catch (err) {
     console.warn("[agent] buildSystemPrompt failed, using fallback", err);
     system = DEFAULT_SYSTEM_PROMPT;

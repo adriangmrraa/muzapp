@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { orders } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { getStatusSemantic, isActiveStatus, getStatusNotificationMessage } from "@/lib/whatsapp/status-utils";
 
 // ─── getOrderStatus ─────────────────────────────────────────────────────────
 export const getOrderStatusTool = tool({
@@ -55,7 +56,30 @@ export const getOrderStatusTool = tool({
       ? items.map((i) => `  • ${i.quantity}x ${i.name}`).join("\n")
       : "Sin detalle";
 
-    return `📋 Pedido #${order.id}\n${statusLabels[order.status] || order.status}\n${itemList}\n👤 ${order.customerName || "Sin nombre"}`;
+    const active = isActiveStatus(order.status);
+    const semantic = getStatusSemantic(order.status, order.orderType, order.address, order.id);
+    const notificationMsg = getStatusNotificationMessage(
+      order.status, order.id, order.orderType, order.address,
+    );
+
+    let result = `📋 Pedido #${order.id}\n${statusLabels[order.status] || order.status}\n${itemList}\n👤 ${order.customerName || "Sin nombre"}`;
+    result += `\n📌 Estado: ${semantic}`;
+    result += `\n🔵 Pedido activo: ${active ? "SÍ" : "NO"}`;
+
+    if (notificationMsg) {
+      result += `\n📨 Notificación enviada al cliente: "${notificationMsg}"`;
+    }
+
+    // Instrucciones para el agente según el estado
+    if (order.status === "ready") {
+      result += `\n⚠️ IMPORTANTE: Si el cliente responde a la notificación de 'Listo', NO es un pedido nuevo. Es respuesta a la notificación. NO ejecutes createOrder.`;
+    } else if (order.status === "delivered") {
+      result += `\n⚠️ Este pedido ya fue entregado. No es un pedido activo. Tratá al cliente como si fuera nuevo.`;
+    } else if (active) {
+      result += `\n⚠️ El cliente tiene un pedido activo. Si pide algo nuevo, primero completá este pedido.`;
+    }
+
+    return result;
   },
 });
 

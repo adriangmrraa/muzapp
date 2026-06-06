@@ -3,6 +3,7 @@ import { products } from "@/db/schema";
 import { eq, and, asc, isNotNull } from "drizzle-orm";
 import { agentConfig } from "@/db/schema";
 import { getArgentinaMinutes, getArgentinaDayIndex, getArgentinaHour, getArgentinaDayName } from "@/lib/argentina-time";
+import { getStatusSemantic, isActiveStatus } from "@/lib/whatsapp/status-utils";
 
 // Layer 1: Core prompt (V2 SIEMPRE como base) + extras del usuario desde la UI
 export async function getCorePrompt(): Promise<string> {
@@ -446,7 +447,7 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
   preferences?: string[];
   orderHistory?: any[];
   pendingOrder?: { id: number; items: any; orderType: string | null; address: string | null; paymentStatus?: string | null };
-  lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any };
+  lastOrder?: { id: number; status: string | null; paymentStatus: string | null; orderType: string | null; items: any; statusSemantic?: string };
   currentCart?: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[];
   currentHour?: number;
   previousContext?: string;
@@ -503,12 +504,29 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
     } else if (customerContext.lastOrder) {
       const lo = customerContext.lastOrder;
       const items = Array.isArray(lo.items) ? lo.items.map((i: any) => `${i.quantity || 1}x ${i.name || "?"}`).join(", ") : "ver detalle";
-      const completado = lo.status === "delivered" && lo.paymentStatus === "paid";
+      const statusDesc = lo.statusSemantic || getStatusSemantic(lo.status || "", lo.orderType, lo.address, lo.id);
       context += `\n\n📦 ÚLTIMO PEDIDO (#${lo.id}): ${items} | Estado: ${lo.status || "?"} | Pago: ${lo.paymentStatus || "?"}`;
-      if (completado) {
-        context += `\n⚠️ Este pedido ya fue ENTREGADO y PAGADO. NO es un pedido activo. Tratá al cliente como si fuera nuevo.`;
-      } else {
-        context += `\n⚠️ Este pedido NO está activo (${lo.status}). No lo trates como pedido en curso.`;
+
+      // Status-aware switch: cada estado tiene su propio contexto semántico + directiva anti-duplicado
+      switch (lo.status) {
+        case "preparing":
+          context += `\n⏳ Este pedido está en preparación. No es un pedido completado.`;
+          break;
+        case "ready":
+          context += `\n📦 ${statusDesc}`;
+          context += `\n⚠️ IMPORTANTE: Si el cliente responde al mensaje de notificación que se le envió, NO es un nuevo pedido. Es una respuesta a la notificación.`;
+          break;
+        case "delivered":
+          context += `\n✅ ${statusDesc}`;
+          context += `\n⚠️ IMPORTANTE: Si el cliente responde al mensaje de agradecimiento que se le envió, NO es un nuevo pedido. Es una respuesta a la notificación.`;
+          context += `\n⚠️ Este pedido ya fue ENTREGADO. NO es un pedido activo. Tratá al cliente como si fuera nuevo.`;
+          break;
+        case "cancelled":
+          context += `\n❌ Pedido cancelado. No es un pedido activo.`;
+          break;
+        default:
+          context += `\n⚠️ Este pedido NO está activo (${lo.status}). No lo trates como pedido en curso.`;
+          break;
       }
     } else {
       context += `\n📭 El cliente NO tiene pedidos registrados. Empezá de cero.`;
