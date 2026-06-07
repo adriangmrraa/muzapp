@@ -55,7 +55,7 @@ export const internalSellerTools = {
 
   // WhatsApp: notificar clientes
   sendWhatsAppMessage: whatsAppTools.sendWhatsAppMessage,
-  batchSendWhatsApp: whatsAppTools.batchSendWhatsApp,
+  broadcastWhatsApp: whatsAppTools.broadcastWhatsApp,
 };
 
 // ─── Capa 1: Menú de productos actualizado ──────────────────────────────
@@ -296,7 +296,7 @@ getAnalytics, getSalesByDateRange, getTopProducts, getTopClients, getAverageTick
 getBusinessSummary, getActivePromotions
 
 — WHATSAPP (2) —
-sendWhatsAppMessage, batchSendWhatsApp
+sendWhatsAppMessage, broadcastWhatsApp
 
 Importante: createOrder usa resolveItems() que mapea automáticamente los productos.
 Este mapeo de sinónimos es para que VOS entiendas lo que dice el vendedor.`;

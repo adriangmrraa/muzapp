@@ -130,7 +130,7 @@ export const internalAgentTools = {
 
   // whatsApp (2 tools)
   sendWhatsAppMessage: whatsAppTools.sendWhatsAppMessage,
-  batchSendWhatsApp: whatsAppTools.batchSendWhatsApp,
+  broadcastWhatsApp: whatsAppTools.broadcastWhatsApp,
 };
 
 // whatsApp: Comunicación por WhatsApp
