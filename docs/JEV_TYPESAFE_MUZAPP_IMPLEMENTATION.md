@@ -1654,3 +1654,945 @@ Archivos principales inspeccionados:
 Este archivo es una especificación de arquitectura. No modifica todavía el runtime de Muzapp.
 
 El siguiente cambio lógico en el repositorio es crear una especificación SDD para **jev-integration**, implementar F0 + F1 en shadow mode y agregar un set de evaluación antes de habilitar cualquier decisión de Jev que altere side effects.
+
+
+---
+
+# 39. Segunda pasada de arquitectura — revisión ampliada
+
+Fecha: 22 de septiembre de 2026.
+
+Esta sección amplía y, donde se indica, corrige la primera propuesta después de revisar nuevamente el repositorio, sus SDD históricas y la documentación actual de TypeSafe.
+
+## 39.1 Hallazgos nuevos principales
+
+1. Muzapp no tiene sólo dos actores agénticos. Existe también un agente interno para vendedores por WhatsApp.
+2. La política debe distinguir customer, seller, admin y automation.
+3. El seller agent puede ejecutar operaciones de negocio relevantes, entre ellas markAsPaid, cancelOrder, sendWhatsAppMessage y broadcastWhatsApp.
+4. Las SDD existentes ya contienen casos reales etiquetados y deben convertirse en el primer eval suite de Jev.
+5. Jev puede aportar valor fuera del request path mediante conversation intelligence, enriquecimiento CRM, evaluación de follow-ups y análisis de pérdidas de ventas.
+6. Jev 1.13 tiene límites que deben afectar el diseño: lectura literal, menor precisión fuera del inglés, debilidad con números y fechas, degradación con state irrelevante y sensibilidad a contenido adversarial.
+7. El SDK JavaScript reintenta por defecto. Un timeout por intento no equivale a un presupuesto total de latencia.
+8. El mejor patrón para Muzapp es una evaluación preflight con fan-out de preguntas atómicas, no varias llamadas secuenciales.
+9. En comandos internos simples se puede crear un Direct Command Lane que evite GPT cuando la función y sus argumentos son cerrados y verificables.
+10. Hace falta una fuente de verdad para tools, roles, riesgo y confirmaciones.
+
+---
+
+# 40. Correcciones importantes a la primera propuesta
+
+## 40.1 Jev no es una barrera anti-jailbreak infalible
+
+La documentación de Jev 1.13 indica que el state no se trata como hostil por defecto y que contenido adversarial puede mover una clasificación.
+
+Pipeline correcto:
+
+~~~text
+normalización y límites
+  -> reglas deterministas de ataques conocidos
+  -> Jev como señal semántica adicional
+  -> restricción de capacidades
+  -> política en código
+~~~
+
+Nunca habilitar una tool sensible sólo porque Jev juzgó el mensaje como seguro.
+
+## 40.2 Noul no tiene confidence
+
+Noul devuelve P(true) entre 0 y 1.
+
+Choice y Score devuelven distribución de probabilidades y confidence.
+
+Los thresholds deben separarse por primitiva. No se debe reutilizar un threshold calibrado para Noul en Choice, ni al revés.
+
+## 40.3 Números, conteos, fechas y ventanas quedan en código
+
+No usar Jev para:
+
+- comparar timestamps;
+- determinar si pasaron 24 horas;
+- contar repeticiones;
+- sumar items;
+- calcular totales;
+- comparar cantidades;
+- calcular delivery;
+- ordenar fechas.
+
+## 40.4 Reducir indirection y contexto
+
+No enviar prompts enormes. Para la mayoría de decisiones alcanza con último mensaje, turno previo relevante y flags como hasCartItems, deliveryAgreed, hasActiveOrder y pendingAction.
+
+## 40.5 Presupuesto real de latencia
+
+El SDK tiene retries configurables y timeout por intento.
+
+Propuesta inicial:
+
+~~~env
+JEV_REALTIME_TIMEOUT_MS=700
+JEV_REALTIME_MAX_RETRIES=0
+JEV_INTERNAL_TIMEOUT_MS=1500
+JEV_INTERNAL_MAX_RETRIES=1
+~~~
+
+Cuando sea necesario, agregar AbortController para un deadline total.
+
+## 40.6 Logging
+
+No habilitar debug del SDK en producción para requests con conversaciones. El wrapper de Muzapp debe registrar metadata y resultados sanitizados, no cuerpos completos.
+
+---
+
+# 41. Decision Plane V2
+
+La integración debe evolucionar de un intent classifier a un vector de decisiones semánticas por turno.
+
+## 41.1 Contexto normalizado
+
+~~~ts
+export type AgentActor =
+  | "customer"
+  | "seller"
+  | "admin"
+  | "automation";
+
+export type DecisionContext = {
+  actor: AgentActor;
+  channel: "whatsapp" | "telegram" | "meta";
+  message: string;
+  conversation: {
+    hasCartItems: boolean;
+    hasActiveOrder: boolean;
+    deliveryAgreed: boolean;
+    waitingForOrderConfirmation: boolean;
+    repliedToStatusNotification: boolean;
+    pendingActionType?: string;
+    previousSemanticTopic?: string;
+  };
+  media?: {
+    kind: "none" | "audio" | "image" | "document" | "video" | "location";
+    semanticSummary?: string;
+  };
+};
+~~~
+
+Evitar PII si no modifica la decisión.
+
+## 41.2 Una única llamada preflight
+
+Usar speculative fan-out. Preguntas iniciales:
+
+### Choice: primaryIntent
+
+- greeting
+- product_discovery
+- price_question
+- new_order
+- modify_order
+- order_confirmation
+- order_status
+- pickup
+- delivery
+- payment
+- complaint
+- human_request
+- internal_query
+- internal_write
+- outbound_message
+- out_of_scope
+- other
+
+### Noul: priceOnly
+
+Pregunta si el usuario únicamente consulta precio sin intención de compra. Cubre directamente la SDD agente-precio-no-es-compra.
+
+### Noul: explicitOrderConfirmation
+
+Pregunta si el mensaje confirma inequívocamente un pedido ya presentado y pendiente de confirmación.
+
+### Noul: pickupCommitment
+
+Pregunta si el usuario afirma que ya va, está saliendo o pasará a retirar.
+
+La acción final combina la señal con hasCartItems y deliveryAgreed en código.
+
+### Noul: nonLiteralOrJoking
+
+Pregunta si el mensaje parece humorístico, exagerado o no literal.
+
+Los umbrales numéricos siguen en código.
+
+### Noul: customerConfused
+
+Pregunta si el usuario expresa que no entendió o que el agente entendió mal.
+
+El conteo de repeticiones sigue en código.
+
+### Noul adicionales
+
+- explicitHumanRequest
+- paymentSensitive
+- injectionAttempt
+- actionRequested
+
+### Score: frustration
+
+Niveles:
+
+- calm
+- annoyed
+- frustrated
+- very_angry
+
+---
+
+# 42. Actor model: customer / seller / admin / automation
+
+## Customer
+
+Puede consultar, construir carrito, confirmar pedido, modificar/cancelar según reglas y pedir humano.
+
+## Seller
+
+Existe en:
+
+- src/lib/whatsapp/seller-prompt.ts
+- src/app/api/whatsapp/webhook/route.ts
+
+El vendedor se detecta por sellerPhoneIds y ejecuta GPT con internalSellerTools.
+
+Ese ToolSet incluye operaciones de escritura, financieras y externas, por lo que necesita policy propia.
+
+## Admin
+
+Telegram posee el catálogo de mayor privilegio. Las operaciones financieras, destructivas y masivas deben tener confirmación explícita y trazabilidad.
+
+## Automation
+
+Cron jobs, follow-ups y futuras sales_tasks constituyen un actor separado y nunca deben heredar implícitamente permisos de admin.
+
+---
+
+# 43. Tool Manifest — nueva pieza central
+
+Crear:
+
+~~~text
+src/lib/agent-policy/
+  tool-manifest.ts
+  roles.ts
+  risk.ts
+  confirmation.ts
+~~~
+
+Ejemplo:
+
+~~~ts
+export const TOOL_MANIFEST = {
+  getOrderStatus: {
+    family: "order_read",
+    roles: ["customer", "seller", "admin"],
+    risk: "read_only",
+    sideEffect: false,
+    confirmation: "never",
+  },
+  createOrder: {
+    family: "order_write",
+    roles: ["customer", "seller", "admin"],
+    risk: "business_write",
+    sideEffect: true,
+    confirmation: "policy",
+  },
+  markAsPaid: {
+    family: "financial",
+    roles: ["seller", "admin"],
+    risk: "financial",
+    sideEffect: true,
+    confirmation: "explicit",
+  },
+  broadcastWhatsApp: {
+    family: "bulk_external",
+    roles: ["admin"],
+    risk: "bulk_external",
+    sideEffect: true,
+    confirmation: "always",
+  },
+} as const;
+~~~
+
+Recomendación: broadcastWhatsApp no debe quedar disponible a vendedores por defecto.
+
+Si se habilita en el futuro, debe requerir permiso determinista, preview, filtro, cantidad de destinatarios, texto exacto, confirmación posterior, límite máximo y audit log.
+
+---
+
+# 44. Drift encontrado entre prompts y capacidades
+
+## Seller prompt
+
+El prompt indica que borrar/eliminar debe ejecutar deleteLead o cancelOrder, pero internalSellerTools no expone deleteLead.
+
+La IA recibe una instrucción para una capacidad que no posee.
+
+## Precios hardcodeados
+
+BASE_SELLER_PROMPT contiene precios estáticos y buildSellerPrompt agrega después el menú dinámico desde DB.
+
+Esto puede crear dos verdades dentro del mismo prompt.
+
+src/lib/telegram/system-prompt.ts también contiene mapeos y precios estáticos.
+
+Recomendación:
+
+- quitar precios estáticos;
+- DB como fuente de verdad;
+- tools/product resolver para valores;
+- mantener sólo aliases/sinónimos cuando realmente sean necesarios.
+
+## Conteos/comentarios de tools
+
+Hay comentarios con cantidades históricas de tools que ya no representan el ToolSet actual.
+
+El Tool Manifest debe convertirse en fuente de verdad para permisos, grupos, riesgo, documentación, subsets y tests.
+
+---
+
+# 45. Tool routing V2 — progressive disclosure
+
+Primera etapa: Jev ve familias, no 50+ tools.
+
+Familias:
+
+- order_read
+- order_write
+- client_read
+- client_write
+- product_read
+- product_write
+- analytics
+- config
+- outbound_message
+- broadcast
+
+Preguntas:
+
+- Choice: mejor familia
+- Noul: realmente necesita una tool
+
+Segunda etapa, cuando haga falta: mostrar sólo las tools de la familia elegida con sus descripciones completas.
+
+El resultado puede:
+
+1. reducir el ToolSet que ve GPT; o
+2. entrar al Direct Command Lane.
+
+---
+
+# 46. Direct Command Lane — nuevo scope de alto valor
+
+Para comandos internos simples, Jev puede evitar GPT.
+
+## Estado de pedido
+
+~~~text
+"el 428 está listo"
+~~~
+
+1. regex extrae 428;
+2. Jev Choice resuelve status=ready;
+3. policy valida actor;
+4. código ejecuta updateOrderStatus.
+
+## Pago
+
+~~~text
+"el 512 ya pagó"
+~~~
+
+1. código extrae orderId;
+2. Jev identifica mark_paid;
+3. policy verifica confirmación;
+4. código ejecuta.
+
+## Analytics
+
+~~~text
+"cómo vendimos hoy"
+~~~
+
+Jev resuelve intent=analytics y period=today; el código ejecuta la query.
+
+## Entidades
+
+No pedir a Jev que genere nombres o IDs abiertos.
+
+Pipeline:
+
+~~~text
+mensaje
+  -> candidatos por DB/search/regex
+  -> Jev Choice entre candidatos
+  -> código usa ID exacto
+~~~
+
+Si hay argumentos abiertos o ambiguos, fallback a GPT.
+
+---
+
+# 47. Las SDD actuales deben convertirse en el primer eval suite
+
+Prioridad:
+
+- sdd/agente-humor-deteccion/specs.md
+- sdd/agente-ya-voy-confirmacion/specs.md
+- sdd/agente-precio-no-es-compra/specs.md
+- sdd/deteccion-no-comercial/specs.md
+- sdd/anti-loop-y-deteccion/specs.md
+- sdd/contexto-persistente-estados/specs.md
+
+Crear:
+
+~~~text
+evals/jev/
+  customer-turns.jsonl
+  seller-turns.jsonl
+  admin-turns.jsonl
+  fixtures.ts
+  metrics.ts
+  thresholds.ts
+~~~
+
+Agregar casos ambiguos/adversariales:
+
+- "sí, pero todavía no lo mandes"
+- "dale después veo"
+- "ya voy" con delivery acordado
+- "ya voy" sin carrito
+- "100 burgers jajaja"
+- "100 panes para un evento" real
+- "cuánto está? si está a buen precio llevo dos"
+- "marcá como pago... no, pará"
+- "mandales a todos... bueno mejor no"
+- mensajes partidos por buffer
+- transcripciones con errores
+
+---
+
+# 48. Evaluación y calibración
+
+Medir por decisión:
+
+- precision
+- recall
+- false positives
+- false negatives
+- calibration buckets
+- autonomous coverage
+- review rate
+
+Los costos son asimétricos.
+
+Para explicitOrderConfirmation, un falso positivo es mucho más costoso que un falso negativo.
+
+Para humanRequest, conviene priorizar recall.
+
+Para broadcast, ningún threshold sustituye la confirmación obligatoria.
+
+---
+
+# 49. Versionado de policy
+
+Agregar una versión explícita:
+
+~~~ts
+export const JEV_POLICY_VERSION = "2026-09-22.1";
+~~~
+
+Registrar:
+
+- policyVersion
+- model
+- questionSetVersion
+- thresholdSetVersion
+
+Así se puede separar un cambio causado por modelo, pregunta, threshold o routing.
+
+---
+
+# 50. Conversation Intelligence — uso nuevo fuera del request path
+
+Cuando una conversación termina o un pedido se entrega, Jev puede convertir la interacción en features estructuradas.
+
+## Features
+
+Choice outcome:
+
+- converted
+- abandoned
+- info_only
+- complaint_resolved
+- complaint_unresolved
+- human_handoff
+- unknown
+
+Choice primary_objection:
+
+- price
+- delivery
+- wait_time
+- stock
+- payment
+- product_fit
+- trust
+- no_objection
+- other
+
+Noul:
+
+- customer_received_answer
+- customer_showed_purchase_intent
+- agent_missed_purchase_signal
+- agent_asked_unnecessary_question
+- possible_upsell_opportunity
+- unresolved_issue
+- repeated_question
+- customer_satisfied_post_delivery
+
+Score:
+
+- frustration
+- conversation_effort
+- purchase_readiness
+
+Tabla sugerida:
+
+~~~text
+conversation_features
+- id
+- conversation_id
+- model
+- policy_version
+- outcome
+- primary_objection
+- features jsonb
+- generated_at
+~~~
+
+Esto habilita analytics reales de motivos de pérdida, handoffs, objeciones, demanda no cubierta y fallos del agente.
+
+---
+
+# 51. Enriquecimiento de leads
+
+Agregar tags operativos derivados de la interacción:
+
+- b2b_intent
+- b2c_intent
+- price_sensitive_conversation
+- delivery_question
+- repeat_customer
+- complaint_open
+- human_requested
+- high_purchase_intent
+
+No inferir rasgos sensibles. Los tags deben describir la interacción comercial.
+
+---
+
+# 52. Media intelligence
+
+Muzapp ya preprocesa audio, imagen, video y documentos.
+
+Después de Whisper/Vision/extracción, Jev puede clasificar mediaIntent:
+
+- payment_receipt
+- product_reference
+- complaint_evidence
+- address_or_location
+- menu_or_price
+- unrelated
+- unknown
+
+Aplicaciones:
+
+- comprobante -> flujo de pago/humano
+- evidencia de reclamo -> prioridad y attachment
+- referencia de producto -> tools de producto
+- documento interno -> handler adecuado
+
+Jev recibe texto/estructura, nunca bytes.
+
+---
+
+# 53. Follow-ups y tareas diferidas
+
+Superficies existentes:
+
+- src/app/api/cron/followup/route.ts
+- sendPendingFollowups() en src/lib/channels/router.ts
+- docs/sales-tasks-system.md
+
+Jev puede decidir semántica, pero scheduler y ventana temporal siguen siendo código.
+
+Preguntas opcionales:
+
+- followupStillNeeded — Noul
+- followupGoal — Choice: feedback_request, review_request, product_followup, no_message
+
+Al comienzo, el texto debe salir de templates revisados.
+
+---
+
+# 54. Unified channel decision layer
+
+src/app/api/meta/webhook/route.ts todavía tiene un TODO para procesar mensajes con agente.
+
+No integrar Jev por canal de manera separada.
+
+Arquitectura:
+
+~~~text
+channel event
+  -> normalizer
+  -> DecisionContext
+  -> Jev preflight
+  -> policy/router
+  -> agent/handler
+~~~
+
+WhatsApp, Telegram y futuros canales Meta comparten intent, risk, handoff, telemetry y policy version.
+
+---
+
+# 55. Context selector / memory relevance
+
+No es prioritario con historiales cortos.
+
+Cuando crezcan notas, documentos, pedidos y memoria persistente:
+
+1. recuperar candidatos;
+2. evaluar relevancia por bloque;
+3. pasar a GPT sólo el contexto relevante.
+
+Esto aplica el principio de evitar context rot tanto a Jev como al LLM generativo.
+
+---
+
+# 56. Response Guard V2 — basado en riesgo
+
+Ejecutarlo siempre cuando:
+
+- hubo tool con side effect;
+- la respuesta contiene precio/stock/estado obtenido de tools;
+- hubo pago;
+- hubo reclamo;
+- hubo handoff;
+- hubo acción sensible.
+
+Puede omitirse para saludos y turnos triviales sin datos de negocio.
+
+Los guards deterministas existentes se mantienen.
+
+---
+
+# 57. Cache de decisiones
+
+Key:
+
+~~~text
+jev:{model}:{policyVersion}:{hash(state+questions)}
+~~~
+
+Redis TTL corto.
+
+No cachear por mensaje solamente. Dos "dale" pueden tener significado distinto según el estado.
+
+---
+
+# 58. Pending Actions — requisito para confirmaciones
+
+Crear pending_agent_actions:
+
+~~~text
+id
+actor_type
+actor_id
+channel
+conversation_id
+tool_name
+arguments_json
+arguments_hash
+risk_class
+status
+expires_at
+created_at
+confirmed_at
+executed_at
+~~~
+
+Estados:
+
+- proposed
+- awaiting_confirmation
+- confirmed
+- executed
+- cancelled
+- expired
+
+Un "sí" autoriza solamente la acción exacta pendiente identificada por arguments_hash.
+
+Nunca debe autorizar una acción nueva generada en ese mismo turno.
+
+---
+
+# 59. Tool-call provenance
+
+Cada side effect debe poder responder:
+
+- quién lo pidió;
+- qué mensaje lo originó;
+- qué actor tenía permiso;
+- qué tool se propuso;
+- qué decisión permitió/retuvo;
+- si hubo confirmación;
+- qué código ejecutó;
+- cuál fue el resultado.
+
+Agregar un agent_actions event log cuando se implemente enforcement.
+
+---
+
+# 60. Política de fallos V2
+
+## read_only
+
+Si Jev falla: usar router actual/GPT.
+
+## customer conversational
+
+Continuar con fallback actual.
+
+## business_write
+
+Usar validaciones deterministas; si la intención queda ambigua, pedir confirmación.
+
+## destructive
+
+Nunca ejecutar por fallback semántico incierto.
+
+## financial
+
+Confirmación explícita o revisión.
+
+## external_message
+
+Destinatario verificable desde DB/argumento.
+
+## bulk_external
+
+No ejecutar sin pending action confirmado.
+
+---
+
+# 61. Retry policy recomendada
+
+Realtime customer:
+
+~~~ts
+{
+  timeout: 700,
+  retry: { maxRetries: 0 }
+}
+~~~
+
+Seller/admin:
+
+~~~ts
+{
+  timeout: 1500,
+  retry: { maxRetries: 1 }
+}
+~~~
+
+Offline analytics/evals puede tolerar retries normales.
+
+Estos números deben medirse desde el deployment antes de fijarse.
+
+---
+
+# 62. Policy constants en un solo lugar
+
+Crear:
+
+~~~text
+src/lib/jev/policy/
+  customer.ts
+  seller.ts
+  admin.ts
+  output.ts
+  thresholds.ts
+  version.ts
+~~~
+
+No dispersar preguntas ni thresholds por handlers.
+
+---
+
+# 63. CI y regression harness
+
+Agregar:
+
+~~~bash
+npm run eval:jev
+npm run eval:agent-policy
+~~~
+
+eval:jev mide juicio del modelo.
+
+eval:agent-policy mide si la aplicación toma la acción correcta dada una decisión fixtureada.
+
+Esto separa errores de modelo de errores de policy.
+
+---
+
+# 64. Canary rollout
+
+Después de shadow:
+
+~~~env
+JEV_ENFORCEMENT_PERCENT=5
+~~~
+
+Cohorte determinista por hash de conversationId/actorId.
+
+Subir 5% -> 20% -> 50% -> 100% sólo con métricas dentro de tolerancia.
+
+---
+
+# 65. Prioridad revisada
+
+## P0
+
+1. Tool Manifest + roles/risk.
+2. Resolver drift de prompts/capacidades.
+3. Eval fixtures desde SDD.
+4. Wrapper Jev con deadline, retry, telemetry y versionado.
+5. Shadow preflight en customer, seller y admin.
+
+## P1
+
+6. WhatsApp semantic state vector.
+7. Seller tool scoping.
+8. Admin tool-family routing.
+9. Pending actions para financial/destructive/bulk.
+10. Retirar broadcastWhatsApp del seller por defecto.
+
+## P2
+
+11. Direct Command Lane.
+12. Risk-based output guard.
+13. Product/entity candidate resolution.
+14. Decision cache.
+
+## P3
+
+15. Conversation Intelligence.
+16. Lead enrichment.
+17. Follow-up eligibility/template routing.
+18. Media intent routing.
+19. Meta/Instagram/Facebook sobre unified decision layer.
+
+---
+
+# 66. Arquitectura objetivo V2
+
+~~~text
+CHANNEL ADAPTERS
+WA / TG / Meta
+      |
+auth / signature / dedup
+      |
+NORMALIZED DECISION CONTEXT
+      |
+JEV PREFLIGHT
+fan-out questions
+      |
+POLICY ENGINE
+roles / risk / thresholds
+   /      |       \
+direct   scoped   human
+handler    GPT     handoff
+   |        |
+   |    proposed tool
+   |        |
+   |    TOOL POLICY
+   |   allow/confirm/deny
+   |        |
+   +--------+
+      |
+deterministic domain guards
+      |
+execute
+      |
+response
+      |
+risk-based output guard
+      |
+channel send
+      |
+telemetry / audit
+
+
+OFFLINE
+completed conversations
+      |
+Jev feature extraction
+      |
+CRM analytics / evals / policy calibration
+~~~
+
+---
+
+# 67. Qué queda explícitamente fuera del scope de Jev
+
+Mantener determinista:
+
+- YCloud signature
+- Telegram authorization
+- seller/admin role membership
+- idempotencia
+- webhook dedup
+- human override TTL
+- Redis queue
+- DLQ
+- retry counters
+- fechas
+- ventana 24h
+- rate limiting
+- precios
+- stock
+- totales
+- delivery fee
+- duplicate-order checks
+- DB constraints
+- order IDs
+- permisos
+- ejecución real de tools
+
+Jev participa sólo cuando existe ambigüedad semántica real.
+
+---
+
+# 68. Conclusión después de la segunda pasada
+
+La integración óptima ya no debe pensarse como "poner Jev delante del agente".
+
+Debe construirse un Decision Plane transversal para Muzapp que sirva a customer, seller, admin, automation y futuros canales Meta.
+
+Antes del enforcement hay tres fundamentos obligatorios:
+
+1. Tool Manifest con roles y riesgo.
+2. Eval suite basada en las SDD reales.
+3. Pending Actions para confirmaciones exactas.
+
+La oportunidad principal no es ahorrar tokens. Es sacar decisiones semánticas de regex, listas de keywords y prompt engineering disperso y convertirlas en una capa explícita, versionable, observable y calibrable.
