@@ -23,3 +23,13 @@ export function normalizePhone(phone: string): string {
 export function isValidPhone(phone: string): boolean {
   return /^549\d{7,11}$/.test(phone);
 }
+
+/** Compare configured identities using the same canonical digits on both sides. */
+export function phoneMatches(a: string, b: string): boolean {
+  const left = normalizePhone(a);
+  return left.length > 0 && left === normalizePhone(b);
+}
+
+export function phoneInList(phone: string, entries: readonly { phone: string }[]): boolean {
+  return entries.some((entry) => phoneMatches(phone, entry.phone));
+}

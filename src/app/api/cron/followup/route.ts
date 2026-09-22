@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { orders, conversations } from "@/db/schema";
 import { eq, and, lte } from "drizzle-orm";
+import { getArgentinaHour } from "@/lib/argentina-time";
 
 /**
  * Endpoint para procesar follow-ups de pedidos entregados.
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
   }
 
   const now = new Date();
-  const hora = now.getHours();
+  const hora = getArgentinaHour();
 
   // No enviar follow-ups fuera de horario hábil (9-22hs)
   if (hora < 9 || hora >= 22) {
@@ -58,6 +59,15 @@ export async function GET(request: Request) {
     for (const order of pendingFollowups) {
       if (!order.phoneNumber) continue;
 
+      // Atomic claim: another cron invocation cannot send this same order.
+      // The flag remains claimed on ambiguous provider/network errors to favor
+      // at-most-once delivery; such failures need manual review.
+      const claimed = await db.update(orders)
+        .set({ followupSent: true, updatedAt: new Date() })
+        .where(and(eq(orders.id, order.id), eq(orders.followupSent, false)))
+        .returning({ id: orders.id });
+      if (!claimed.length) continue;
+
       const followupText = `Holaa, ¿todo bien con el pedido? No te olvides de etiquetarnos en ig porfa 🙌`;
 
       try {
@@ -65,28 +75,30 @@ export async function GET(request: Request) {
         const result = await sendText(order.phoneNumber, followupText);
 
         if (result.ok) {
-          await db
-            .update(orders)
-            .set({ followupSent: true, updatedAt: new Date() })
-            .where(eq(orders.id, order.id));
           processed++;
           console.log(`[followup] Sent for order #${order.id} to ${order.phoneNumber}`);
 
-          // Save follow-up in conversation history so AI has context (role "system")
-          const { insertMessage } = await import("@/lib/channels/router");
-          const phone = order.phoneNumber.startsWith("+") ? order.phoneNumber : `+${order.phoneNumber}`;
-          const conv = await db
-            .select({ id: conversations.id })
-            .from(conversations)
-            .where(eq(conversations.whatsappId, phone))
-            .limit(1);
-          if (conv[0]) {
-            await insertMessage(conv[0].id, "system", followupText, undefined, result.wamid);
-            console.log(`[followup] Follow-up saved to conversation #${conv[0].id} (role=system, wamid=${result.wamid})`);
+          try {
+            // Save follow-up in conversation history so AI has context (role "system")
+            const { insertMessage } = await import("@/lib/channels/router");
+            const phone = order.phoneNumber.startsWith("+") ? order.phoneNumber : `+${order.phoneNumber}`;
+            const conv = await db
+              .select({ id: conversations.id })
+              .from(conversations)
+              .where(eq(conversations.whatsappId, phone))
+              .limit(1);
+            if (conv[0]) {
+              await insertMessage(conv[0].id, "system", followupText, undefined, result.wamid);
+              console.log(`[followup] Follow-up saved to conversation #${conv[0].id} (role=system, wamid=${result.wamid})`);
+            }
+          } catch (historyError) {
+            console.warn(`[followup] Sent order #${order.id}, but could not save conversation history:`, historyError);
           }
+        } else {
+          console.warn(`[followup] Provider rejected order #${order.id}; claimed for manual review: ${result.error}`);
         }
       } catch (e) {
-        console.warn(`[followup] Failed for order #${order.id}:`, e);
+        console.warn(`[followup] Ambiguous send for order #${order.id}; claimed for manual review:`, e);
       }
     }
 

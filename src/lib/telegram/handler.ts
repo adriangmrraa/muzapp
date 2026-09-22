@@ -8,7 +8,7 @@ import {
   isChatAuthorized,
 } from "./bot";
 import { internalAgentTools } from "./tools";
-import { INTERNAL_AGENT_SYSTEM_PROMPT } from "./system-prompt";
+import { buildTelegramPrompt } from "./prompt-builder";
 import { transcribeAudio } from "@/lib/media/transcription";
 import { processImageWithVision } from "@/lib/media/vision";
 import { findOrCreateConversation, insertMessage } from "@/lib/channels/router";
@@ -33,6 +33,7 @@ export async function handleTelegramUpdate(
 
   const chatId = message.chat.id;
   let text = message.text?.trim() || "";
+  let storedMediaMessageId: number | undefined;
 
   // ── Verificar autorización PRIMERO ──
   if (!isChatAuthorized(chatId, config.allowedChatIds)) {
@@ -78,6 +79,7 @@ export async function handleTelegramUpdate(
         };
 
         const { id: msgId } = await insertMessage(conversationId, "user", "[Imagen recibida]", [attachment]);
+        storedMediaMessageId = msgId;
 
         // Get attachment ID
         const { db } = await import("@/db");
@@ -134,6 +136,7 @@ export async function handleTelegramUpdate(
           isImage ? "[Imagen recibida]" : `[Documento]: ${doc.file_name || "archivo"}`,
           [attachment]
         );
+        storedMediaMessageId = msgId;
 
         if (isImage) {
           const { db } = await import("@/db");
@@ -184,14 +187,21 @@ export async function handleTelegramUpdate(
     // El system prompt instruye a tratar cada solicitud como independiente por defecto.
     const history = await getConversationMessages(conversationId, 6);
     conversationMessages = history
-      .filter((m) => m.role === "user" || m.role === "assistant")
+      .filter((m) => m.id !== storedMediaMessageId && (m.role === "user" || m.role === "assistant"))
       .map((m) => ({
         role: m.role as "user" | "assistant",
         content: m.content,
       }));
 
     // Persistir el mensaje actual
-    await insertMessage(conversationId, "user", text);
+    if (storedMediaMessageId !== undefined) {
+      const { db } = await import("@/db");
+      const { chatMessages } = await import("@/db/schema");
+      const { eq } = await import("drizzle-orm");
+      await db.update(chatMessages).set({ content: text }).where(eq(chatMessages.id, storedMediaMessageId));
+    } else {
+      await insertMessage(conversationId, "user", text);
+    }
   } catch (err) {
     console.warn("[telegram-handler] History load failed, continuing stateless", err);
   }
@@ -202,7 +212,7 @@ export async function handleTelegramUpdate(
   try {
     const result = await generateText({
       model: openai.chat("gpt-5-mini"),
-      system: INTERNAL_AGENT_SYSTEM_PROMPT,
+      system: await buildTelegramPrompt(),
       messages: conversationMessages,
       tools: internalAgentTools,
       stopWhen: stepCountIs(10),

@@ -30,6 +30,7 @@ import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { internalAgentTools } from "@/lib/telegram/tools";
 import { buildTelegramPrompt } from "@/lib/telegram/prompt-builder";
+import { mergeBufferedTurn } from "@/lib/whatsapp/buffered-history";
 
 export async function POST(
   request: NextRequest,
@@ -222,26 +223,14 @@ export async function POST(
 
     // Fire-and-forget: webhook returns 200 immediately, processing happens in background
     scheduleBufferProcessing("telegram", String(chatId), async (bufferedMessages) => {
-      // Concatenate all buffered messages
-      const combinedText = bufferedMessages.map((m) => m.content).join("\n");
-
       // Get conversation history for context (last 6 messages)
       const history = await getConversationMessages(convId, 6);
-      const aiMessages = history
-        .filter((m) => m.role === "user" || m.role === "assistant")
+      const aiMessages = mergeBufferedTurn(history
+        .filter((m) => m.role === "user" || m.role === "assistant"), bufferedMessages)
         .map((m) => ({
           role: m.role as "user" | "assistant",
           content: m.content,
         }));
-
-      // If buffer had multiple messages, replace last user turn with combined text
-      if (bufferedMessages.length > 1) {
-        const lastUserIdx = [...aiMessages].reverse().findIndex((m) => m.role === "user");
-        if (lastUserIdx !== -1) {
-          const realIdx = aiMessages.length - 1 - lastUserIdx;
-          aiMessages[realIdx] = { role: "user", content: combinedText };
-        }
-      }
 
       // Build dynamic prompt with live business data
       const systemPrompt = await buildTelegramPrompt();
