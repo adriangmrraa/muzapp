@@ -5,20 +5,25 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-"build:render": "next build",
+    "build:render": "next build",
     "start": "next start",
     "lint": "eslint",
     "db:push": "drizzle-kit push --force 2>/dev/null || echo '[db:push] Skipped (already applied)'",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "npx tsx src/db/seed.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/lib/jev/*.test.ts src/lib/agent-policy/*.test.ts",
+    "eval:jev": "node --import tsx evals/jev/run-jev.ts",
+    "eval:agent-policy": "node --import tsx evals/jev/run-policy.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.60",
     "@base-ui/react": "^1.4.1",
     "@neondatabase/serverless": "^1.1.0",
     "@tanstack/react-query": "^5.100.13",
+    "@typesafe-ai/sdk": "^0.6.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "ai": "^6.0.175",

@@ -1,0 +1,4 @@
+{"id":"admin-broadcast-retract","source":"agente-interno-nova-level","actor":"admin","message":"Mandales a todos… bueno mejor no","conversation":{},"expected":{"actionRequested":false,"primaryIntent":"outbound_message"}}
+{"id":"admin-paid-retract","source":"agente-interno-nova-level","actor":"admin","message":"Marcalo como pago… no, pará","conversation":{},"expected":{"paymentSensitive":true,"actionRequested":false}}
+{"id":"admin-broadcast","source":"agente-interno-nova-level","actor":"admin","message":"Mandales a todos la promo de hoy","conversation":{},"expected":{"primaryIntent":"outbound_message","actionRequested":true}}
+{"id":"admin-typo","source":"agente-interno-nova-level","actor":"admin","message":"kiero ber las bntas de oi","conversation":{},"expected":{"primaryIntent":"internal_query"}}

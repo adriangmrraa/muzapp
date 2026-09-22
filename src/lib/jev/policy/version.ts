@@ -1,0 +1,1 @@
+export { POLICY_VERSION, QUESTION_SET_VERSION, THRESHOLD_VERSION } from "../config";
