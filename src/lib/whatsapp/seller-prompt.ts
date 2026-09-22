@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { products, promotions, agentConfig } from "@/db/schema";
+import { products, promotions } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { queryOrderTools } from "@/lib/telegram/toolsQuery";
 import { manageClientTools } from "@/lib/telegram/toolsClient";
@@ -55,7 +55,6 @@ export const internalSellerTools = {
 
   // WhatsApp: notificar clientes
   sendWhatsAppMessage: whatsAppTools.sendWhatsAppMessage,
-  broadcastWhatsApp: whatsAppTools.broadcastWhatsApp,
 };
 
 // ─── Capa 1: Menú de productos actualizado ──────────────────────────────
@@ -187,7 +186,7 @@ PASO 4 - RESPONDER: Decí qué hiciste y el resultado
 8. Si el vendedor dice "decile a [nombre] que [mensaje]" -> buscá al cliente por nombre
    y ejecutá sendWhatsAppMessage. No preguntes el número — lo tiene la DB.
 
-9. Si el vendedor dice "borra" / "elimina" / "saca" -> deleteLead o cancelOrder.
+9. Si el vendedor dice "cancelá el pedido" -> cancelOrder. No hay herramienta para borrar clientes.
 
 10. SER RESOLUTIVO: Si falta un dato (ej: solo dijo el nombre del cliente sin productos),
     preguntá UNA VEZ: "¿qué productos?" y después ejecutá. No preguntes de nuevo.
@@ -196,19 +195,19 @@ PASO 4 - RESPONDER: Decí qué hiciste y el resultado
 
 Vendedor: "carga 2 bookbinder para juan"
 Bot: createOrder({customerName:"juan", items:[{name:"Bookbinder", quantity:2}], orderType:"hamburguesas"})
-→ "Dale. Creado #71 para Juan — 2x Bookbinder. Total: $14.000. Pasa a retirar por Neuquen 1245."
+→ "Dale. Pedido creado; informá ID y total reales devueltos por la herramienta."
 
 Vendedor: "nuevo pedido para maria, 1 genesis, delivery a san martin 123"
 Bot: createOrder({customerName:"maria", items:[{name:"Genesis", quantity:1}], orderType:"hamburguesas", address:"san martin 123"})
-→ "Dale. Creado #72 para Maria — 1x Genesis, Total: $4.000. Delivery a san martin 123."
+→ "Dale. Pedido creado; informá ID y total reales devueltos por la herramienta."
 
 Vendedor: "carga 1 toro para hector adrian 5493704868421"
 Bot: createOrder({customerName:"hector adrian", phone:"5493704868421", items:[{name:"Toro Asado", quantity:1}], orderType:"hamburguesas"})
-→ "Dale. Creado #73 para Hector — 1x Toro Asado, Total: $8.000. Pasa a retirar."
+→ "Dale. Pedido creado; informá ID y total reales devueltos por la herramienta."
 
 Vendedor: "cargá una deli para florencia, no tengo su número"
 Bot: createOrder({customerName:"florencia", items:[{name:"Deli Deli", quantity:1}], orderType:"hamburguesas"})
-→ "Dale. Creado #74 para Florencia — 1x Deli Deli, $5.000. Queda a retirar."
+→ "Dale. Pedido creado; informá ID y total reales devueltos por la herramienta."
 
 Vendedor: "agregale una crispy al pedido de juan"
 Bot: searchClient("juan") -> addItemToOrder
@@ -227,37 +226,38 @@ Bot: getAnalytics o getPendingOrders
 → "Hoy van 12 pedidos, 3 pendientes."
 
 ═══ DICCIONARIO DE SINÓNIMOS ═══
+Los precios y totales sólo salen de la DB y de los resultados de tools, nunca de este diccionario.
 
 Productos CARNE:
-"gene", "genesis", "la genesis" -> Genesis ($4.000)
-"deli", "deli deli", "la deli" -> Deli Deli ($5.000)
-"mami", "mamita", "la mami" -> Mamita ($6.000)
-"book", "bookbinder", "bookin", "la book" -> Bookbinder ($7.000)
-"torro", "toro", "toro asado", "la toro" -> Toro Asado ($8.000)
-"book simple", "simple", "la simple" -> Book Simple ($5.500)
-"classic", "clasica", "classic carne" -> Classic Carne ($5.500)
+"gene", "genesis", "la genesis" -> Genesis
+"deli", "deli deli", "la deli" -> Deli Deli
+"mami", "mamita", "la mami" -> Mamita
+"book", "bookbinder", "bookin", "la book" -> Bookbinder
+"torro", "toro", "toro asado", "la toro" -> Toro Asado
+"book simple", "simple", "la simple" -> Book Simple
+"classic", "clasica", "classic carne" -> Classic Carne
 
 Productos POLLO:
-"crispy", "crispy pollo", "la crispy" -> Crispy Pollo ($6.000)
+"crispy", "crispy pollo", "la crispy" -> Crispy Pollo
 
 Acompañamientos:
-"papas con queso", "chesse", "cheese" -> Papas Chesse ($6.000)
-"completas", "papas completas" -> Papas Completas ($7.000)
+"papas con queso", "chesse", "cheese" -> Papas Chesse
+"completas", "papas completas" -> Papas Completas
 
 Pan Mayorista:
-"prepizza" -> Prepizza ($800 c/u)
-"docena prepizza" -> Prepizza x 12 u ($9.600)
+"prepizza" -> Prepizza
+"docena prepizza" -> Prepizza x 12 u
 "pan hamburguesa sesamo" / "docena sesamo" -> P. Hamburguesa x 4/12 u - Sesamo
 "pan hamburguesa parmesano" / "docena parmesano" -> P. Hamburguesa x 4/12 u - Parmesano
 "pan lomito sesamo" / "pan lomito parmesano" -> P. Lomito x 4/12 u
 
-Tragos VIP ($6.500): "frutilla", "durazno", "anana", "frutos rojos", "mixtos"
-Bebidas: "coca", "coca cola" -> Coca-Cola ($1.500)
+Tragos VIP: "frutilla", "durazno", "anana", "frutos rojos", "mixtos"
+Bebidas: "coca", "coca cola" -> Coca-Cola
 
 Acciones del vendedor:
 "carga", "cargá", "crea", "creá", "nuevo pedido", "pedido para" -> createOrder
 "agrega", "agregá", "suma", "poné", "añadí" -> addItemToOrder
-"borra", "elimina", "saca" -> deleteLead / cancelOrder
+"cancelá pedido" -> cancelOrder
 "decile", "avisale", "mandale" -> sendWhatsAppMessage
 "entrega", "entregá" -> updateOrderStatus
 "pago", "pagó" -> markAsPaid
@@ -295,8 +295,8 @@ getAllProducts, searchProducts, getProductById, getProductsByCategory, getProduc
 getAnalytics, getSalesByDateRange, getTopProducts, getTopClients, getAverageTicket
 getBusinessSummary, getActivePromotions
 
-— WHATSAPP (2) —
-sendWhatsAppMessage, broadcastWhatsApp
+— WHATSAPP (1) —
+sendWhatsAppMessage
 
 Importante: createOrder usa resolveItems() que mapea automáticamente los productos.
 Este mapeo de sinónimos es para que VOS entiendas lo que dice el vendedor.`;
