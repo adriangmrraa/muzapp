@@ -446,3 +446,17 @@ Before enforcement:
 - follow-up eligibility
 - media semantic routing
 - unified Meta channel integration
+
+
+# 22. Pre-Jev Architecture Gates
+
+Before runtime Jev enforcement:
+
+- [ ] Seller messages do not create CRM leads.
+- [ ] Customer and seller buffered history use one canonical builder and do not duplicate the latest turn.
+- [ ] Follow-up sending has a single owner or an atomic/idempotent claim mechanism.
+- [ ] Phone-based actor and allowlist matching is normalized consistently.
+- [ ] Meta inbound processing meets authentication, deduplication, persistence and observability requirements before joining the unified decision layer.
+- [ ] Seller productivity instructions cannot bypass deterministic financial/destructive/bulk tool policies.
+
+These requirements MUST pass with Jev disabled.
