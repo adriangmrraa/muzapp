@@ -2596,3 +2596,56 @@ Antes del enforcement hay tres fundamentos obligatorios:
 3. Pending Actions para confirmaciones exactas.
 
 La oportunidad principal no es ahorrar tokens. Es sacar decisiones semánticas de regex, listas de keywords y prompt engineering disperso y convertirlas en una capa explícita, versionable, observable y calibrable.
+
+
+---
+
+# 69. Deuda técnica preexistente detectada en la segunda auditoría
+
+Estos puntos no son responsabilidades de Jev. Deben resolverse antes o durante Phase -1 para que el Decision Plane no se apoye sobre flujos inconsistentes.
+
+## 69.1 Seller capturado como lead
+
+En el webhook de WhatsApp se resuelve isSeller, pero más adelante captureLeadIfNew(customerPhone, customerName, textForLead) se ejecuta sin excluir vendedores.
+
+Eso permite que un teléfono configurado como vendedor sea insertado en leads si no existía previamente.
+
+Recomendación: actor resolution debe ocurrir antes de cualquier lógica CRM específica de customer, y el lead capture debe ejecutarse sólo para customer.
+
+## 69.2 Posible duplicación del último mensaje en seller context
+
+En el callback del vendedor: el inbound ya fue persistido; getConversationMessages(conversationId, 4) puede incluir ese mensaje; después se agrega combinedText nuevamente como un nuevo user turn.
+
+El customer path reemplaza el último user por el buffer combinado; el seller path lo agrega. Esto puede presentar dos veces el mismo contenido al modelo y sesgar selección de tools.
+
+Recomendación: normalizar customer y seller mediante un único helper de construcción de historial buffered.
+
+## 69.3 Dos ejecutores de follow-up con riesgo de carrera
+
+Actualmente existen al menos dos mecanismos: src/app/api/cron/followup/route.ts y sendPendingFollowups() en src/lib/channels/router.ts, invocado al final del webhook.
+
+Ambos consultan pedidos delivered con followupSent=false, envían y recién después marcan followupSent=true. Si se solapan, dos workers pueden leer el mismo pedido antes de que cualquiera lo marque y producir un follow-up duplicado.
+
+Esto no se resuelve con Jev. Conviene elegir un único scheduler/worker como owner o implementar claim atómico e idempotency key por orderId + followupType.
+
+Jev puede decidir si semánticamente hace falta el follow-up, pero la exclusión mutua y exactamente-una-vez pertenecen al código.
+
+## 69.4 Meta webhook todavía no está listo para compartir el Decision Plane
+
+src/app/api/meta/webhook/route.ts persiste mensajes y contiene un TODO para ejecutar el agente. Antes de conectarlo a la capa común debe alcanzar los mismos requisitos operativos que WhatsApp/YCloud: autenticidad del webhook, deduplicación por provider message ID, normalización de actor/canal, persistence consistente, human override, buffer/idempotencia, media handling y observabilidad.
+
+## 69.5 Allowed IDs y normalización
+
+Seller detection utiliza normalizePhone, mientras que el check de allowedPhoneIds compara directamente entry.phone con customerPhone. Conviene normalizar ambos lados de toda comparación de identidad telefónica y centralizarla en actor resolution.
+
+## 69.6 El seller prompt favorece ejecución inmediata incluso para tools sensibles
+
+El prompt base del vendedor contiene reglas orientadas a ejecutar inmediatamente sin confirmar. Eso puede servir para operaciones de bajo riesgo, pero no debe gobernar markAsPaid, cancelOrder ambiguo, mensajes externos sensibles ni broadcast.
+
+La policy de seguridad debe vivir fuera del prompt y ejecutarse antes de la tool.
+
+## 69.7 Gate adicional de Phase -1
+
+Antes de enforcement Jev: excluir sellers de lead capture; unificar construcción del historial buffered; consolidar o idempotentizar follow-ups; normalizar identity matching; endurecer Meta webhook; y separar instrucciones de productividad del seller de la autorización real de tools.
+
+Estos cambios mejoran Muzapp incluso aunque Jev se desactive completamente.
