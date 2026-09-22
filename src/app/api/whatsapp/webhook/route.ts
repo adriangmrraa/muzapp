@@ -12,7 +12,10 @@ import {
   type MediaAttachment,
 } from "@/lib/channels/router";
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
-import { runWhatsAppAgent, type PendingMedia } from "@/lib/whatsapp/agent";
+import { runWhatsAppAgent, resolveAgentRouting, type PendingMedia } from "@/lib/whatsapp/agent";
+import { toSessionContext, type RoutingDecision } from "@/lib/whatsapp/session-policy";
+import { resolveHandoffTransport } from "@/lib/whatsapp/human-handoff";
+import { sendEscalationEmail } from "@/lib/whatsapp/tools/escalation-email";
 import { sendImage } from "@/lib/ycloud";
 import { db } from "@/db";
 import { agentConfig, conversations, leads, addresses } from "@/db/schema";
@@ -29,6 +32,14 @@ import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 import { buildSellerPrompt, internalSellerTools } from "@/lib/whatsapp/seller-prompt";
 import { generateText, stepCountIs } from "ai";
 import { openai, type OpenAILanguageModelChatOptions } from "@ai-sdk/openai";
+import {
+  isProtocolArtifact,
+  resolveSessionPersistence,
+} from "@/lib/whatsapp/webhook-pipeline";
+import {
+  loadSessionState,
+  persistSessionTransition,
+} from "@/lib/whatsapp/session-store";
 
 /**
  * GET — Webhook verification (YCloud sends a challenge token)
@@ -372,8 +383,12 @@ async function checkHumanOverride(conversationId: number): Promise<boolean> {
     // humanOverrideUntil en el futuro → override activo → AI no responde
     return new Date(conv.humanOverrideUntil).getTime() > Date.now();
   } catch (error) {
-    console.error("[webhook] Error checking human override:", error);
-    return false; // fallback: permitir que AI responda
+    // SDD memoria-persistente-sesion-whatsapp (W4): fail CLOSED. A DB error
+    // must never be read as "no override" (that would let the AI answer over
+    // a human). Treat as overridden so every caller skips AI/buffering; the
+    // post-debounce revalidation stays fail-closed the same way.
+    console.error("[webhook] Error checking human override — fail closed, AI skipped:", error);
+    return true;
   }
 }
 
@@ -387,9 +402,59 @@ async function checkHumanOverride(conversationId: number): Promise<boolean> {
 
 
 /**
- * POST — Incoming WhatsApp messages from YCloud
+ * Minimal webhook handoff transport (SDD memoria-persistente-sesion-whatsapp,
+ * W2). Claims are at-most-once per episode/message and the transport follows
+ * the same claims, so retries stay silent. The owner side (24h override write
+ * + escalation email/Telegram) is deliverable even with AI disabled; the
+ * customer reply is NEVER sent from this path while the IA stays off.
  */
-export async function POST(request: NextRequest) {
+async function deliverWebhookHandoff(input: {
+  conversationId: number;
+  customerName: string | null;
+  customerPhone: string;
+  messageId: string;
+  decision: Extract<RoutingDecision, { kind: "handoff" }>;
+}): Promise<void> {
+  const { decision } = input;
+  console.log(`[webhook:wa] Session handoff notifyClaim=${decision.notifyClaim} replyClaim=${decision.replyClaim} delivery=${decision.delivery} — persisting without GPT/tools or automatic replies`);
+  const transport = resolveHandoffTransport({
+    notifyClaim: decision.notifyClaim,
+    replyClaim: decision.replyClaim,
+    delivery: decision.delivery,
+  });
+  if (transport.writeOverride) {
+    try {
+      await db
+        .update(conversations)
+        .set({ humanOverrideUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) })
+        .where(eq(conversations.id, input.conversationId));
+    } catch (overrideError) {
+      console.error("[webhook:wa] Handoff override write failed — claim already durable", overrideError);
+    }
+  }
+  if (transport.sendOwnerNotification) {
+    try {
+      await sendEscalationEmail({
+        customerName: input.customerName ?? "Desconocido",
+        customerPhone: input.customerPhone,
+        reason: "Derivación automática por política de sesión (handoff determinístico)",
+        category: "otro",
+        conversationSummary:
+          `Sesión handed_off — conversación ${input.conversationId}, ` +
+          `episodio ${input.decision.state.episode}, mensaje ${input.messageId} ` +
+          `(notifyClaim=${input.decision.notifyClaim} replyClaim=${input.decision.replyClaim} ` +
+          `delivery=${input.decision.delivery})`,
+        lastMessages: [],
+      });
+    } catch (notifyError) {
+      console.error("[webhook:wa] Handoff owner notification failed — claim already durable", notifyError);
+    }
+  }
+}
+
+/**
+ * POST — Incoming WhatsApp messages from YCloud
+ */export async function POST(request: NextRequest) {
   const rawBody = await request.text();
 
   // 1. Verify webhook signature (header: ycloud-signature)
@@ -407,6 +472,14 @@ export async function POST(request: NextRequest) {
 
   // Parse the payload
   const payload = JSON.parse(rawBody);
+
+  // 2a. Protocol-eligibility gate FIRST: empty Business echoes and
+  //     delivery/status events are acknowledged with 200 and cause no
+  //     conversation lookup, session/event mutation, routing, or reply.
+  //     Non-empty echoes (human override) still fall through to handleEcho.
+  if (isProtocolArtifact(payload)) {
+    return NextResponse.json({ ok: true }, { status: 200 });
+  }
 
   // 2. Handle ECHO events (outgoing messages from WhatsApp Business App)
   //    Esto va ANTES del filtro de inbound messages porque los echoes
@@ -434,6 +507,18 @@ export async function POST(request: NextRequest) {
   const messageId = message.id as string;
   const customerPhone = message.from as string;
   const customerName = (message.customerProfile?.name as string) || null;
+
+  // 3b. Durable inbound dedup BEFORE any conversation lookup or session
+  //     work. A dedup failure fails closed: no routing and no output.
+  try {
+    if (!messageId || (await isMessageDuplicate(messageId))) {
+      if (messageId) console.log(`[webhook:wa] Duplicate message ${messageId} — skipping`);
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+  } catch (dedupError) {
+    console.error("[webhook:wa] Dedup lookup failed — fail closed, no routing or output", dedupError);
+    return NextResponse.json({ ok: true }, { status: 200 });
+  }
 
   // Normalizar teléfono para operaciones DB
   // customerPhone (raw) se usa para enviar mensajes a YCloud
@@ -499,11 +584,9 @@ export async function POST(request: NextRequest) {
     const autoReplyMessage = config.autoReply24hMessage?.trim();
     const isAiEnabled = config.enabled === true;
 
-    // 6. Deduplication check
-    if (await isMessageDuplicate(messageId)) {
-      console.log(`[webhook:wa] Duplicate message ${messageId} — skipping`);
-      return NextResponse.json({ ok: true }, { status: 200 });
-    }
+    // 6. Deduplication already enforced before conversation lookup (see 3b);
+    //    per-branch insertMessage calls below still guard races via
+    //    wasDuplicate. No second lookup here by design.
 
     // 7. Capture lead if first contact
     const textForLead = msgType === "text" ? (message.text?.body as string) || "" : "";
@@ -525,6 +608,10 @@ export async function POST(request: NextRequest) {
     // -------------------------------------------------------------------------
     let agentText: string;
     let contentAttributes: MediaAttachment[] | undefined;
+    // Text eligible for boundary classification. Contentless media/location
+    // placeholders must never drive the session machine, so they stay null
+    // and only persist the inbound message.
+    let policyText: string | null = null;
 
     if (msgType === "location") {
       // ── LOCATION (pin de Maps) ──────────────────────────────────────────
@@ -585,6 +672,7 @@ export async function POST(request: NextRequest) {
     } else if (msgType === "text") {
       // ── TEXT ──────────────────────────────────────────────────────────────
       agentText = (message.text?.body as string) || "";
+      policyText = agentText.trim().length > 0 ? agentText : null;
       const textInsert = await insertMessage(conversationId, "user", agentText, undefined, messageId);
 
       // Si el platformMessageId ya existía (duplicate webhook de YCloud),
@@ -634,9 +722,11 @@ export async function POST(request: NextRequest) {
             // Transcripción exitosa — se la pasamos al agente
             attachment.transcription = transcription;
             agentText = `[Audio]: ${transcription}`;
+            policyText = transcription;
           } else {
             // Transcripción fallida — mensaje limpio, sin fallback string
             agentText = "[Audio sin transcripción]";
+            policyText = null;
           }
 
           contentAttributes = [attachment];
@@ -668,6 +758,10 @@ export async function POST(request: NextRequest) {
 
           const attachmentId = att?.id || 0;
           const captionCtx = mediaObj.caption ? `Caption del cliente: ${mediaObj.caption}` : undefined;
+          policyText =
+            typeof mediaObj.caption === "string" && mediaObj.caption.trim().length > 0
+              ? mediaObj.caption
+              : null;
 
           const visionResult = await processImageWithVision(buffer, mimeType, attachmentId, msgId, captionCtx);
           agentText = visionResult.agentText;
@@ -683,6 +777,10 @@ export async function POST(request: NextRequest) {
           attachment.transcription = clip.transcription ?? undefined;
           contentAttributes = [attachment];
           agentText = clip.agentText;
+          policyText =
+            typeof mediaObj.caption === "string" && mediaObj.caption.trim().length > 0
+              ? mediaObj.caption
+              : null;
           const vidResult = await insertMessage(conversationId, "user", agentText, contentAttributes, messageId);
           if (vidResult.wasDuplicate) {
             console.log(`[webhook:wa] Duplicate video message ${messageId} — skipping`);
@@ -694,6 +792,10 @@ export async function POST(request: NextRequest) {
           const extractedText = mimeType === "application/pdf" || mimeType === "text/plain"
             ? await extractDocumentText(buffer, filename, mimeType)
             : null;
+          policyText =
+            typeof mediaObj.caption === "string" && mediaObj.caption.trim().length > 0
+              ? mediaObj.caption
+              : null;
 
           if (extractedText) {
             agentText = `El cliente envió un documento "${mediaObj.filename || filename}". Contenido extraído:\n\n${extractedText}`;
@@ -724,13 +826,78 @@ export async function POST(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // 9b. Session boundary persistence — runs for classifiable customer
+    //     input even when AI is disabled. Dedup/CAS failure fails closed:
+    //     no buffering, no GPT/Jev/tools, no automatic customer replies.
+    //     Sellers bypass the customer boundary machine.
+    // ─────────────────────────────────────────────────────────────────────────
+    let sessionDecision: Awaited<ReturnType<typeof persistSessionTransition>> | null = null;
+    if (!isSeller && policyText !== null) {
+      try {
+        sessionDecision = await persistSessionTransition({
+          conversationId,
+          messageId,
+          text: policyText,
+          messageType: msgType,
+          aiEnabled: isAiEnabled,
+          hasHumanOverride: await checkHumanOverride(conversationId),
+        });
+      } catch (sessionError) {
+        console.error("[webhook:wa] Session persistence failed — fail closed, no routing or output", sessionError);
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
+      if (sessionDecision.kind === "duplicate") {
+        console.log(`[webhook:wa] Duplicate session transition ${messageId} — skipping`);
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
+      // W1 — fixed paths never reach buffer, GPT, Jev, or tools. While AI is
+      // disabled (delivery suppressed) the durable transition above is the
+      // whole effect: silent 200. When AI is enabled the single fixed reply
+      // is sent directly, still bypassing the LLM/tool stack. Legacy is
+      // preserved: when there is no session decision (sellers, contentless
+      // media/location), the flow below runs exactly as before.
+      if (sessionDecision.kind === "fixed_ack" || sessionDecision.kind === "fixed_clarification") {
+        if (sessionDecision.delivery !== "allowed") {
+          console.log(`[webhook:wa] Session ${sessionDecision.kind} suppressed (AI disabled) — persisting without reply`);
+          return NextResponse.json({ ok: true }, { status: 200 });
+        }
+        const fixedReply = resolveAgentRouting(sessionDecision.kind).fixedReply ?? "";
+        try {
+          await insertMessage(conversationId, "assistant", fixedReply);
+          await sendWhatsAppBubbles({
+            to: customerPhone,
+            text: fixedReply,
+            apiKey: config.ycloudApiKey || "",
+            from: config.phoneNumber || "",
+          });
+        } catch (fixedError) {
+          console.error("[webhook:wa] Fixed reply failed — transition already durable, no retry", fixedError);
+        }
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
+      if (sessionDecision.kind === "blocked" || sessionDecision.kind === "handoff") {
+        if (sessionDecision.kind === "handoff") await deliverWebhookHandoff({ conversationId, customerName, customerPhone, messageId, decision: sessionDecision });
+        console.log(`[webhook:wa] Session ${sessionDecision.kind} — persisting without GPT/tools or automatic replies`);
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // 10. Verificar si la AI DEBE responder o no
     //     El mensaje YA FUE GUARDADO arriba. Ahora decidimos si ejecutamos AI.
     // ─────────────────────────────────────────────────────────────────────────
 
     // Check 1: ¿La AI está habilitada en el admin?
-    if (!isAiEnabled) {
-      console.log(`[webhook:wa] AI disabled — message ${messageId} saved, AI skipped`);
+    // State persists while AI is disabled: the eligible transition above is
+    // already durable, and buffering/GPT/tools/automatic replies stay off.
+    const sessionGate = resolveSessionPersistence({
+      eligible: true,
+      aiEnabled: isAiEnabled,
+      dedup: "new",
+      cas: "saved",
+    });
+    if (!sessionGate.allowAgent) {
+      console.log(`[webhook:wa] AI disabled — message ${messageId} saved, session persisted, AI skipped`);
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
@@ -835,6 +1002,24 @@ export async function POST(request: NextRequest) {
         return;
       }
 
+      // Re-read persisted boundary state and override after debounce.
+      // Any race or read failure fails closed: no GPT/tools, no reply.
+      try {
+        const gated = await loadSessionState(conversationId);
+        if (gated?.mode === "handed_off") {
+          console.log(`[webhook:wa] Session handed_off for ${customerPhone} — aborting AI`);
+          return;
+        }
+        const overrideNow = await checkHumanOverride(conversationId);
+        if (overrideNow) {
+          console.log(`[webhook:wa] Human override re-read after debounce for ${customerPhone} — aborting AI`);
+          return;
+        }
+      } catch (stateError) {
+        console.error("[webhook:wa] Session revalidation failed — fail closed, aborting AI", stateError);
+        return;
+      }
+
       // Concatenate all buffered messages into a single context for the agent
       // Get fresh conversation history for AI context (last 20 messages)
       const history = await getConversationMessages(conversationId, 20);
@@ -857,11 +1042,19 @@ export async function POST(request: NextRequest) {
       // ya se carga DENTRO de runWhatsAppAgent() → buildSystemPrompt().
       // NO inyectar nada como role:"user" — eso contamina la línea temporal.
 
-      // Run agent with combined context
+      // Run agent with combined context.
+      // W1 — thread the boundary routing into the agent: commercial paths
+      // carry the validated compact session facts plus an explicit
+      // allow_agent kind, so fixed/handoff/blocked can never fall through to
+      // GPT/tools here (they already returned above). Legacy preserved: when
+      // there is no session decision, the call keeps its original shape.
       const { text: responseText, pendingMedia } = await runWhatsAppAgent({
         conversationId,
         customerPhone,
         messages: aiMessages,
+        ...(sessionDecision && sessionDecision.kind === "allow_agent"
+          ? { routingKind: "allow_agent" as const, sessionContext: toSessionContext(sessionDecision.state) }
+          : {}),
       });
 
       console.log(`[webhook:wa] Agent response: ${responseText.slice(0, 100)}... (${pendingMedia.length} media pending)`);

@@ -38,12 +38,55 @@ import {
 } from "./tools";
 import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
+import { assertSessionContext, type SessionContext } from "./session-policy";
 import { getArgentinaHour } from "@/lib/argentina-time";
 import { getStatusSemantic } from "./status-utils";
+
+// ─── Session routing guard (SDD memoria-persistente-sesion-whatsapp, PR 4) ───
+// Only an AI-enabled, permitted commercial flow may reach the LLM/tools.
+// Fixed, handoff, blocked, and duplicate paths resolve to a fixed reply (or
+// silence) WITHOUT invoking GPT or any tool.
+export type AgentRoutingKind =
+  | "allow_agent"
+  | "fixed_ack"
+  | "fixed_clarification"
+  | "handoff"
+  | "blocked"
+  | "duplicate";
+
+export const FIXED_ACK_REPLY = "Holaa ¿todo bien?";
+export const FIXED_CLARIFICATION_REPLY =
+  "¿Me contás qué necesitás del negocio? Si querés pedir o consultar precios, decime.";
+export const HANDOFF_REPLY = "Ahí te paso con Leandro, yo estoy para cosas del negocio.";
+
+export function resolveAgentRouting(kind: AgentRoutingKind): {
+  invokeLLM: boolean;
+  useTools: boolean;
+  fixedReply: string | null;
+} {
+  switch (kind) {
+    case "allow_agent":
+      return { invokeLLM: true, useTools: true, fixedReply: null };
+    case "fixed_ack":
+      return { invokeLLM: false, useTools: false, fixedReply: FIXED_ACK_REPLY };
+    case "fixed_clarification":
+      return { invokeLLM: false, useTools: false, fixedReply: FIXED_CLARIFICATION_REPLY };
+    case "handoff":
+      return { invokeLLM: false, useTools: false, fixedReply: HANDOFF_REPLY };
+    case "blocked":
+    case "duplicate":
+      return { invokeLLM: false, useTools: false, fixedReply: null };
+  }
+}
+
 interface RunAgentParams {
   conversationId: number;
   customerPhone: string;
   messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+  /** Compact permitted session facts only (validated, never text/PII). */
+  sessionContext?: SessionContext;
+  /** Boundary routing kind — non-commercial kinds never reach the LLM/tools. */
+  routingKind?: AgentRoutingKind;
 }
 
 export interface PendingMedia {
@@ -57,7 +100,24 @@ export async function runWhatsAppAgent({
   conversationId,
   customerPhone,
   messages,
+  sessionContext,
+  routingKind,
 }: RunAgentParams): Promise<{ text: string; pendingMedia: PendingMedia[] }> {
+  // 🧠 SESIÓN PERSISTENTE (SDD memoria-persistente-sesion-whatsapp, PR 4):
+  // fixed/handoff/blocked/duplicate NEVER reach the LLM or tools — return
+  // the fixed reply (or silence) before any GPT/tool code runs.
+  if (routingKind !== undefined) {
+    const routing = resolveAgentRouting(routingKind);
+    if (!routing.invokeLLM) {
+      return { text: routing.fixedReply ?? "", pendingMedia: [] };
+    }
+  }
+  // Only permitted compact non-text commercial facts are accepted. Any
+  // message text, PII, payment value, prompt, or media payload fails closed.
+  if (sessionContext !== undefined) {
+    assertSessionContext(sessionContext);
+  }
+
   console.log("[agent] === AGENT v2.2 (gpt-5.4-mini + business-intent toolChoice:required + Type C) ===");
   // 🛡️ PROMPT INJECTION DETECTION
   const lastUserMessage = messages[messages.length - 1]?.content || "";
@@ -312,7 +372,7 @@ export async function runWhatsAppAgent({
     .join("\n\n");
   
   try {
-    system = await buildSystemPrompt(conversationId, customerContext, combinedAntiLoop, nonCommercialDirective);
+    system = await buildSystemPrompt(conversationId, customerContext, combinedAntiLoop, nonCommercialDirective, sessionContext);
   } catch (err) {
     console.warn("[agent] buildSystemPrompt failed, using fallback", err);
     system = DEFAULT_SYSTEM_PROMPT;

@@ -4,6 +4,11 @@ import { db } from "@/db";
 import { conversations, chatMessages } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { sendEscalationEmail } from "./escalation-email";
+import {
+  DrizzleHandoffEffectRepository,
+  HandoffEffectService,
+} from "../human-handoff";
+import { DrizzleSessionPolicyRepository } from "../session-store";
 
 export function createTransferToHumanTool(conversationId: number) {
   return tool({
@@ -28,13 +33,30 @@ export function createTransferToHumanTool(conversationId: number) {
         .describe("Resumen breve de la conversación hasta ahora"),
     }),
     execute: async ({ reason, category, conversationSummary }) => {
-      // 1. Mark conversation for human attention
-      await db
-        .update(conversations)
-        .set({
-          humanOverrideUntil: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
-        })
-        .where(eq(conversations.id, conversationId));
+      // 0. Claim the handoff effects through the shared idempotent service.
+      //    Retries of the same episode are harmless: override, owner
+      //    notification, and customer reply each happen at most once.
+      //    The tool only runs inside an AI turn, so delivery is allowed.
+      const session = await new DrizzleSessionPolicyRepository().load(conversationId);
+      const episode = session?.episode ?? 0;
+      const claims = await new HandoffEffectService(
+        new DrizzleHandoffEffectRepository()
+      ).claimHandoffEffects({
+        conversationId,
+        episode,
+        inboundMessageId: `tool-transfer:${conversationId}:${episode}`,
+        aiEnabled: true,
+      });
+
+      // 1. Mark conversation for human attention (only on first claim)
+      if (claims.overrideClaimed) {
+        await db
+          .update(conversations)
+          .set({
+            humanOverrideUntil: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
+          })
+          .where(eq(conversations.id, conversationId));
+      }
 
       // 2. Get conversation details
       const [conv] = await db
@@ -58,15 +80,17 @@ export function createTransferToHumanTool(conversationId: number) {
         .reverse()
         .map((m) => `${m.role === "user" ? "Cliente" : "Bot"}: ${m.content.slice(0, 120)}`);
 
-      // 4. Send escalation notification
-      await sendEscalationEmail({
-        customerName: conv?.customerName || "Desconocido",
-        customerPhone: conv?.customerPhone || "N/A",
-        reason,
-        category,
-        conversationSummary,
-        lastMessages,
-      });
+      // 4. Send escalation notification (only on first claim — retries stay silent)
+      if (claims.ownerNotificationDeliverable) {
+        await sendEscalationEmail({
+          customerName: conv?.customerName || "Desconocido",
+          customerPhone: conv?.customerPhone || "N/A",
+          reason,
+          category,
+          conversationSummary,
+          lastMessages,
+        });
+      }
 
       return "Te paso con Leandro, el dueño, él se va a encargar personalmente. Gracias por esperar.";
     },

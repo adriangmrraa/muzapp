@@ -4,6 +4,48 @@ import { eq, and, asc, isNotNull } from "drizzle-orm";
 import { agentConfig } from "@/db/schema";
 import { getArgentinaMinutes, getArgentinaDayIndex, getArgentinaHour, getArgentinaDayName } from "@/lib/argentina-time";
 import { getStatusSemantic, isActiveStatus } from "@/lib/whatsapp/status-utils";
+import { assertSessionContext, type SessionContext } from "./session-policy";
+
+// ─── Permitted session facts (SDD memoria-persistente-sesion-whatsapp, PR 4) ─
+// Only compact non-text commercial facts may cross into LLM context. Message
+// text, PII, payment values, prompts, and media payloads are rejected by
+// assertSessionContext (fail closed). Returns "" when there is nothing
+// worth injecting so callers can skip the section entirely.
+export function formatPermittedSessionFacts(context: SessionContext): string {
+  // SessionContext's type allows explicit nulls for absent fields; normalize
+  // them before validation so type-correct values never fail closed.
+  const normalized = Object.fromEntries(
+    Object.entries(context as Record<string, unknown>).filter(([, value]) => value !== undefined && value !== null)
+  );
+  const permitted = assertSessionContext(normalized);
+  const hasSignal =
+    permitted.commercialIntent !== undefined ||
+    permitted.pendingQuestion !== undefined ||
+    permitted.hasActiveOrder === true ||
+    permitted.activeOrderId !== undefined ||
+    permitted.hasActiveCart === true ||
+    permitted.hasAddressReference === true ||
+    (permitted.recentAssetKinds !== undefined && permitted.recentAssetKinds.length > 0);
+  if (!hasSignal) return "";
+
+  const slots = [`intent=${permitted.commercialIntent ?? "none"}`];
+  if (permitted.pendingQuestion !== undefined) slots.push(`pending=${permitted.pendingQuestion}`);
+  const order =
+    permitted.hasActiveOrder === true
+      ? `yes${permitted.activeOrderId !== undefined ? `#${permitted.activeOrderId}` : ""}`
+      : "no";
+  slots.push(`order=${order}`);
+  slots.push(`cart=${permitted.hasActiveCart === true ? "yes" : "no"}`);
+  slots.push(`address=${permitted.hasAddressReference === true ? "yes" : "no"}`);
+  slots.push(
+    `assets=${
+      permitted.recentAssetKinds !== undefined && permitted.recentAssetKinds.length > 0
+        ? [...permitted.recentAssetKinds].sort().join(",")
+        : "none"
+    }`
+  );
+  return `SESIÓN: ${slots.join(" ")}`;
+}
 
 // Layer 1: Core prompt (V2 SIEMPRE como base) + extras del usuario desde la UI
 export async function getCorePrompt(): Promise<string> {
@@ -451,7 +493,7 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
   currentCart?: { productName: string; quantity: number; variant?: string | null; notes?: string | null }[];
   currentHour?: number;
   previousContext?: string;
-}, antiLoopDirective?: string, nonCommercialDirective?: string): Promise<string> {
+}, antiLoopDirective?: string, nonCommercialDirective?: string, sessionFacts?: SessionContext): Promise<string> {
   const layer1 = await getCorePrompt();
   const layer2 = await getMenuData();
   const layer3 = await getBusinessHours();
@@ -550,6 +592,14 @@ export async function buildSystemPrompt(conversationId?: number, customerContext
     if (customerContext.previousContext) {
       context += `\n📝 CONTEXTO ANTERIOR: La última vez el cliente preguntó/dijo: "${customerContext.previousContext}". Usá esto como referencia pero no asumas que quiere lo mismo.`;
     }
+  }
+
+  // 🧠 SESIÓN PERSISTENTE (SDD memoria-persistente-sesion-whatsapp, PR 4):
+  // solo hechos comerciales compactos permitidos (sin texto, sin PII).
+  // formatPermittedSessionFacts valida y falla cerrado ante cualquier otro campo.
+  if (sessionFacts !== undefined) {
+    const factsSection = formatPermittedSessionFacts(sessionFacts);
+    if (factsSection) context += `\n${factsSection}`;
   }
   
   // Read tiempoEspera from DB

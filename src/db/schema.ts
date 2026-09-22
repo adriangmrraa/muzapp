@@ -9,6 +9,7 @@ import {
   integer,
   jsonb,
   timestamp,
+  index,
   unique,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -52,6 +53,13 @@ export const clientTypeEnum = pgEnum("client_type", ["b2c", "b2b"]);
 
 export const channelEnum = pgEnum("channel", ["whatsapp", "telegram"]);
 export const messageRoleEnum = pgEnum("message_role", ["user", "assistant", "system", "human"]);
+export const sessionModeEnum = pgEnum("conversation_session_mode", ["commercial", "personal_acknowledged", "handed_off"]);
+export const sessionIntentEnum = pgEnum("conversation_session_intent", ["catalog", "order", "delivery", "support", "other"]);
+export const sessionQuestionEnum = pgEnum("conversation_session_question", ["unit_or_dozen", "delivery_time", "address", "payment", "other"]);
+export const sessionAssetKindEnum = pgEnum("conversation_session_asset_kind", ["image", "audio", "document", "video"]);
+export const sessionEventTypeEnum = pgEnum("conversation_session_event_type", ["commercial_detected", "personal_acknowledged", "ambiguous_clarified", "handoff_requested"]);
+export const sessionSignalEnum = pgEnum("conversation_session_signal", ["commercial", "personal", "ambiguous"]);
+export const sessionEffectKindEnum = pgEnum("conversation_session_effect_kind", ["human_override", "owner_notification", "customer_reply"]);
 
 // ─── Tables ───────────────────────────────────────────────────────────────────
 
@@ -172,6 +180,57 @@ export const conversations = pgTable("conversations", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Durable boundary state only: business entities remain authoritative in their own tables.
+export const conversationSessionStates = pgTable("conversation_session_states", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id),
+  version: integer("version").notNull().default(0),
+  policyVersion: integer("policy_version").notNull().default(1),
+  episode: integer("episode").notNull().default(0),
+  mode: sessionModeEnum("mode").notNull().default("commercial"),
+  ackSent: boolean("ack_sent").notNull().default(false),
+  clarificationSent: boolean("clarification_sent").notNull().default(false),
+  commercialIntent: sessionIntentEnum("commercial_intent"),
+  pendingQuestion: sessionQuestionEnum("pending_question"),
+  recentAssetKinds: sessionAssetKindEnum("recent_asset_kinds").array().notNull().default([]),
+  activeOrderId: integer("active_order_id").references(() => orders.id),
+  hasActiveCart: boolean("has_active_cart").notNull().default(false),
+  hasAddressReference: boolean("has_address_reference").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  conversationUnique: unique("conversation_session_states_conversation_unique").on(table.conversationId),
+  versionIndex: index("conversation_session_states_conversation_version_idx").on(table.conversationId, table.version),
+}));
+
+export const conversationSessionEvents = pgTable("conversation_session_events", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id),
+  episode: integer("episode").notNull(),
+  stateVersion: integer("state_version").notNull(),
+  policyVersion: integer("policy_version").notNull(),
+  eventType: sessionEventTypeEnum("event_type").notNull(),
+  signal: sessionSignalEnum("signal").notNull(),
+  inboundMessageId: varchar("inbound_message_id", { length: 255 }).notNull(),
+  inboundHash: varchar("inbound_hash", { length: 128 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  inboundTransitionUnique: unique("conversation_session_events_inbound_unique").on(table.conversationId, table.inboundMessageId),
+  auditIndex: index("conversation_session_events_conversation_created_idx").on(table.conversationId, table.createdAt),
+}));
+
+export const conversationSessionEffectClaims = pgTable("conversation_session_effect_claims", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id),
+  episode: integer("episode").notNull(),
+  effectKind: sessionEffectKindEnum("effect_kind").notNull(),
+  inboundMessageId: varchar("inbound_message_id", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  effectUnique: unique("conversation_session_effect_claims_episode_effect_unique").on(table.conversationId, table.episode, table.effectKind),
+  inboundEffectUnique: unique("conversation_session_effect_claims_inbound_effect_unique").on(table.conversationId, table.inboundMessageId, table.effectKind),
+}));
 
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
