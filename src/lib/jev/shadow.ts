@@ -1,28 +1,37 @@
 import { jevConfig } from "./config";
 import { jevClient, typesafeCircuitBreaker } from "./client";
+import type { CircuitBreaker } from "@/lib/infra/circuit-breaker";
 import { cachedDecision, cacheDecision, decisionCacheKey } from "./cache";
 import { intents, preflightQuestions } from "./preflight";
-import { proposedRoute } from "./policy/customer";
+import { projectPolicy } from "./policy/projection";
 import { recordDecision } from "./telemetry";
 import type { DecisionContext, JevResult } from "./types";
 
+export type ShadowDependencies = {
+  /** Controlled transport for deterministic tests; never used for production routing. */
+  request?: (context: DecisionContext, model: string, timeoutMs: number, maxRetries: number) => Promise<unknown>;
+  emit?: typeof recordDecision;
+  breaker?: CircuitBreaker;
+};
 /** Observe only. This return value is deliberately void: no routing, blocking or tools. */
-export async function observeJevShadow(context: DecisionContext): Promise<void> {
+export async function observeJevShadow(context: DecisionContext, deps: ShadowDependencies = {}): Promise<void> {
   const config = jevConfig(context.actor);
   if (!config.enabled) return;
   const started = Date.now();
   let fallbackReason: string | undefined;
   let result: JevResult | undefined;
   try {
-    if (!process.env.TYPESAFE_API_KEY) throw new Error("missing_api_key");
+    if (!process.env.TYPESAFE_API_KEY && !deps.request) throw new Error("missing_api_key");
     if (!/^jev-\d+\.\d+\.\d+$/.test(config.model)) throw new Error("unpinned_model");
     const key = decisionCacheKey(config.model, config.policyVersion, context);
     result = await cachedDecision(key) ?? undefined;
     if (!result) {
-      const response = await typesafeCircuitBreaker.call(() => jevClient(process.env.TYPESAFE_API_KEY!, config.model).systemOne(
-        { state: context, model: config.model, questions: preflightQuestions },
-        { timeout: config.timeout, retry: { maxRetries: config.maxRetries } },
-      ));
+      const response = await (deps.breaker ?? typesafeCircuitBreaker).call(() => deps.request
+        ? deps.request(context, config.model, config.timeout, config.maxRetries)
+        : jevClient(process.env.TYPESAFE_API_KEY!, config.model).systemOne(
+            { state: context, model: config.model, questions: preflightQuestions },
+            { timeout: config.timeout, retry: { maxRetries: config.maxRetries } },
+          ));
       result = response as JevResult;
       if (!validResult(result)) throw new Error("malformed_output");
       await cacheDecision(key, result);
@@ -32,11 +41,14 @@ export async function observeJevShadow(context: DecisionContext): Promise<void> 
     const reason = error instanceof Error ? error.name : "unknown";
     fallbackReason = error instanceof Error && ["missing_api_key", "unpinned_model", "malformed_output"].includes(error.message) ? error.message : reason;
   }
-  recordDecision({ actor: context.actor, channel: context.channel, requestedModel: config.model,
+  const projection = result && !fallbackReason ? projectPolicy(context, result) : undefined;
+  (deps.emit ?? recordDecision)({ actor: context.actor, channel: context.channel, requestedModel: config.model,
     returnedModel: result && !fallbackReason ? result.model : undefined, policyVersion: config.policyVersion,
     latencyMs: Date.now() - started, usage: result && !fallbackReason ? result.usage : undefined,
     answers: result && !fallbackReason ? result.answers : undefined, fallbackReason,
-    proposedRoute: result && !fallbackReason ? proposedRoute(result) : undefined });
+    proposedRoute: projection?.proposedRoute, currentRoute: "existing_gpt",
+    proposedToolFamily: projection?.proposedToolFamily, confirmationCandidate: projection?.confirmationCandidate,
+    vetoReasons: projection?.vetoReasons });
 }
 export function validResult(result: unknown): result is JevResult {
   if (!result || typeof result !== "object") return false;

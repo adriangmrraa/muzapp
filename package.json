@@ -14,7 +14,7 @@
     "db:seed": "npx tsx src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test src/lib/jev/*.test.ts src/lib/agent-policy/*.test.ts",
+    "test": "node --import tsx --test src/lib/jev/*.test.ts src/lib/jev/policy/*.test.ts src/lib/agent-policy/*.test.ts",
     "eval:jev": "node --import tsx evals/jev/run-jev.ts",
     "eval:agent-policy": "node --import tsx evals/jev/run-policy.ts"
   },

@@ -5,6 +5,8 @@ export type DecisionTelemetry = {
   returnedModel?: string; policyVersion: string; questionSetVersion: string;
   thresholdVersion: string; latencyMs: number; usage?: JevResult["usage"];
   answers?: JevResult["answers"]; mode: "shadow"; fallbackReason?: string; proposedRoute?: string;
+  currentRoute: "existing_gpt"; proposedToolFamily?: string | null;
+  confirmationCandidate?: boolean; vetoReasons?: string[];
 };
 export function recordDecision(event: Omit<DecisionTelemetry, "timestamp" | "questionSetVersion" | "thresholdVersion" | "mode">) {
   // Structured metadata only: no raw state, phone, address, secrets or model reasoning.

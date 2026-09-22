@@ -78,3 +78,31 @@ test("SDK timeout is per attempt and does not reach GPT breaker", async () => {
     new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))) });
   await assert.rejects(client.systemOne({ state: "hola", questions: preflightQuestions, model: "jev-1.13.0" }, { timeout: 15, retry: { maxRetries: 0 } }), (error: Error) => error.name === "APITimeoutError");
 });
+
+test("shadow logs fallback without blocking when transport times out, rate limits or returns malformed data", async () => {
+  const { CircuitBreaker } = await import("../infra/circuit-breaker");
+  const state = decisionContext({ actor: "customer", channel: "whatsapp", message: "hola" });
+  const prior = [process.env.JEV_ENABLED, process.env.JEV_SHADOW_MODE];
+  process.env.JEV_ENABLED = "true";
+  process.env.JEV_SHADOW_MODE = "true";
+  try {
+    for (const cause of ["APITimeoutError", "RateLimitError", "malformed_output"]) {
+      const events: Array<{ fallbackReason?: string; proposedRoute?: string; currentRoute?: string }> = [];
+      await observeJevShadow(state, {
+        breaker: new CircuitBreaker(),
+        request: async () => {
+          if (cause === "malformed_output") return { model: "jev-1.13.0", answers: {}, usage: { input_tokens: 1 } };
+          throw Object.assign(new Error(cause), { name: cause });
+        },
+        emit: (event) => { events.push(event); },
+      });
+      assert.equal(events.length, 1);
+      assert.equal(events[0].fallbackReason, cause);
+      assert.equal(events[0].proposedRoute, undefined);
+      assert.equal(events[0].currentRoute, "existing_gpt");
+    }
+  } finally {
+    if (prior[0] === undefined) delete process.env.JEV_ENABLED; else process.env.JEV_ENABLED = prior[0];
+    if (prior[1] === undefined) delete process.env.JEV_SHADOW_MODE; else process.env.JEV_SHADOW_MODE = prior[1];
+  }
+});

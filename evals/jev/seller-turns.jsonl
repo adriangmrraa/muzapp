@@ -1,4 +1,4 @@
 {"id":"seller-paid-retract","source":"agente-interno-nova-level","actor":"seller","message":"Marcalo como pago… no, pará","conversation":{},"expected":{"paymentSensitive":true,"actionRequested":false}}
-{"id":"seller-broadcast-retract","source":"agente-interno-nova-level","actor":"seller","message":"Mandales a todos… bueno mejor no","conversation":{},"expected":{"actionRequested":false,"primaryIntent":"outbound_message"}}
+{"id":"seller-broadcast-retract","source":"agente-interno-nova-level","actor":"seller","message":"Mandales a todos… bueno mejor no","conversation":{},"expected":{"actionRequested":false,"primaryIntent":"outbound_message"},"expectedPolicy":{"confirmationCandidate":false}}
 {"id":"seller-query","source":"agente-interno-nova-level","actor":"seller","message":"Cuántos pedidos hubo hoy?","conversation":{},"expected":{"primaryIntent":"internal_query"}}
 {"id":"seller-write","source":"agente-interno-nova-level","actor":"seller","message":"Cargá 2 bookbinder para Juan","conversation":{},"expected":{"primaryIntent":"internal_write","actionRequested":true}}
