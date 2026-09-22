@@ -6,6 +6,10 @@
 2. Configurar `CRON_SECRET` y programar solamente `GET /api/cron/followup?key=...` como owner. El webhook ya no ejecuta follow-ups. El claim atómico por pedido evita solapamientos ordinarios; una caída después del envío y antes de guardar `followupSent` puede reintentar pasado el lease de cinco minutos. Investigar idempotencia del proveedor antes de prometer entrega exactamente una vez.
 3. Configurar `TYPESAFE_API_KEY` sólo en servidor. El SDK oficial instalado es `@typesafe-ai/sdk@0.6.0` (Node 20+). El cliente fija `logLevel: "off"` para evitar registrar el state o la clave.
 
+### Obtener acceso a TypeSafe
+
+Entrar a [console.typesafe.ai/login](https://console.typesafe.ai/login) y registrarse con Google o correo. Crear una API key desde la consola y guardarla exclusivamente como secreto del entorno servidor (`TYPESAFE_API_KEY`); no pegarla en issues, chats ni commits. Si la consola no permite crear claves, solicitar habilitación a [hello@typesafe.ai](mailto:hello@typesafe.ai) indicando el correo de la cuenta, que se quiere evaluar `@typesafe-ai/sdk` con SystemOne/Jev en español argentino y que se necesita acceso al modelo pinneado `jev-1.13.0` o información sobre la versión disponible. No activar observación en producción antes de ejecutar la eval real y verificar cuota/modelo concedido.
+
 | Variable | Valor inicial | Uso |
 | --- | --- | --- |
 | `JEV_ENABLED` | `false` | Interruptor general de observación |
@@ -22,14 +26,14 @@ Con ambos interruptores activos, Jev observa turnos WhatsApp customer/seller y T
 
 ## Evals y pruebas
 
-- `npm run eval:agent-policy`: ejecuta fixtures locales y permisos del manifiesto, sin credenciales.
+- `npm run eval:agent-policy`: ejecuta fixtures locales, una **proyección de policy sobre respuestas Jev simuladas** y permisos del manifiesto, sin credenciales. Sus métricas no miden precisión de Jev.
 - `npm run eval:jev`: valida 32 fixtures del dominio y, si hay `TYPESAFE_API_KEY`, consulta el modelo fijado y calcula precision, recall, FP y FN por señal. Sin clave informa `SKIPPED`, no inventa scores.
 - `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` verifican la rama. Lint global contiene deuda previa; mirar también lint focalizado.
 - Ejecutar el conjunto real en español argentino antes de fijar thresholds o activar canary. Priorizar los falsos positivos de `explicitOrderConfirmation` y los falsos negativos de `explicitHumanRequest`. Los umbrales actuales son exploratorios y sólo se usan en métricas/ruta hipotética.
 
 ## Lectura de eventos
 
-Buscar `[jev:shadow]` en logs. Cada evento trae `timestamp`, actor, canal, `requestedModel`, `returnedModel`, versiones de policy/question set/threshold, `latencyMs`, `usage`, answers (probabilidades y confidencias), `proposedRoute`, `mode` y `fallbackReason`. No se registra el state completo ni razonamiento interno. `fallbackReason` indica timeout, 429, respuesta inválida, circuit breaker o falta de clave; el agente existente continúa. No tratar `proposedRoute` como acción ejecutada.
+Buscar `[jev:shadow]` en logs. Cada evento trae `timestamp`, actor, canal, `requestedModel`, `returnedModel`, versiones de policy/question set/threshold, `latencyMs`, `usage`, answers (probabilidades y confidencias), `currentRoute`, `proposedRoute`, `proposedToolFamily`, `confirmationCandidate`, `vetoReasons`, `mode` y `fallbackReason`. No se registra el state completo ni razonamiento interno. `fallbackReason` indica timeout, 429, respuesta inválida, circuit breaker o falta de clave; el agente existente continúa. Ningún campo `proposed*` habilita o ejecuta acciones.
 
 ## Siguiente fase
 
