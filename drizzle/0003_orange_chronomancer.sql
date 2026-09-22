@@ -1,0 +1,1 @@
+ALTER TABLE "orders" ADD COLUMN "followup_claimed_at" timestamp with time zone;

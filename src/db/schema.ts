@@ -272,6 +272,7 @@ export const orders = pgTable("orders", {
     .defaultNow(),
   deliveredAt: timestamp("delivered_at", { withTimezone: true }),
   followupSent: boolean("followup_sent").notNull().default(false),
+  followupClaimedAt: timestamp("followup_claimed_at", { withTimezone: true }),
 });
 
 // ─── Order Context (items temporales del pedido actual) ─────────────────────────

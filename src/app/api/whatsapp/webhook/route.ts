@@ -8,17 +8,18 @@ import {
   isMessageDuplicate,
   getConversationMessages,
   notifyCustomerDeliveryArrived,
-  forwardLocationToDelivery,
-  sendPendingFollowups,
   type MediaAttachment,
 } from "@/lib/channels/router";
 import { captureLeadIfNew } from "@/lib/whatsapp/lead-capture";
-import { runWhatsAppAgent, type PendingMedia } from "@/lib/whatsapp/agent";
+import { runWhatsAppAgent } from "@/lib/whatsapp/agent";
 import { sendImage } from "@/lib/ycloud";
 import { db } from "@/db";
 import { agentConfig, conversations, leads, addresses } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { normalizePhone } from "@/lib/phone-utils";
+import { normalizePhone, phoneMatches, phoneInList } from "@/lib/phone-utils";
+import { whatsappActor } from "@/lib/agent-policy/roles";
+import { mergeBufferedTurn } from "@/lib/whatsapp/buffered-history";
+import { observeWhatsAppShadow } from "@/lib/jev/state";
 import { downloadYCloudMedia, saveMediaLocally } from "@/lib/media/downloader";
 import { transcribeAudio } from "@/lib/media/transcription";
 import { analyzeVideo } from "@/lib/media/video";
@@ -107,8 +108,6 @@ async function handleEcho(
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
-    // Normalizar teléfono para operaciones DB (findOrCreateConversation normaliza internamente)
-    const phone = normalizePhone(customerPhone);
 
     // 3. Extraer el contenido del mensaje
     const msgType = (msg.type as string) || "text";
@@ -257,13 +256,13 @@ async function handleEcho(
                           .limit(1);
 
                         if (stored?.contentAttributes) {
-                          const attrs = stored.contentAttributes as any[];
+                          const attrs = stored.contentAttributes as MediaAttachment[];
                           if (attrs.length > 0) attrs[0].transcription = transcription;
                           await db
                             .update(cmTable)
                             .set({
                               content: `[Audio]: ${transcription}`,
-                              contentAttributes: attrs as any,
+                              contentAttributes: attrs,
                             })
                             .where(eq(cmTable.id, storedMsgId));
                         }
@@ -461,8 +460,7 @@ export async function POST(request: NextRequest) {
     //     tratar como notificación de delivery, no como mensaje de cliente.
     const deliveryPhoneRaw = config.deliveryPhoneNumber?.trim();
     const deliveryPhoneNormalized = deliveryPhoneRaw ? normalizePhone(deliveryPhoneRaw) : "";
-    const customerPhoneClean = normalizePhone(customerPhone);
-    if (deliveryPhoneNormalized && customerPhoneClean === deliveryPhoneNormalized) {
+    if (deliveryPhoneNormalized && phoneMatches(customerPhone, deliveryPhoneRaw!)) {
       return handleDeliveryNotification(payload, config);
     }
 
@@ -478,7 +476,8 @@ export async function POST(request: NextRequest) {
     //     pero con un callback que ejecuta el sistema de Telegram en lugar de Karen.
     //     El buffer acumula mensajes por ~11s y los procesa todos juntos.
     const sellerIds = (config.sellerPhoneIds ?? []) as { name: string; phone: string }[];
-    const isSeller = sellerIds.some((entry) => normalizePhone(entry.phone) === customerPhoneClean);
+    const actor = whatsappActor(customerPhone, sellerIds);
+    const isSeller = actor === "seller";
     if (isSeller) {
       console.log(`[webhook:wa] SELLER DETECTED — ${customerPhone}, will use seller buffer callback`);
       // No hacemos return — el flujo sigue abajo y el mensaje se encola en el buffer
@@ -487,7 +486,7 @@ export async function POST(request: NextRequest) {
 
     // 4e. Check if customer phone is in allowed IDs list
     const allowedIds = (config.allowedPhoneIds ?? []) as { name: string; phone: string }[];
-    if (allowedIds.length > 0 && !allowedIds.some((entry) => entry.phone === customerPhone)) {
+    if (allowedIds.length > 0 && !phoneInList(customerPhone, allowedIds)) {
       console.log(`[webhook:wa] BLOCKED — phone ${customerPhone} not in allowedPhoneIds`);
       return NextResponse.json({ ok: true }, { status: 200 });
     }
@@ -507,7 +506,7 @@ export async function POST(request: NextRequest) {
 
     // 7. Capture lead if first contact
     const textForLead = msgType === "text" ? (message.text?.body as string) || "" : "";
-    await captureLeadIfNew(customerPhone, customerName, textForLead);
+    if (actor === "customer") await captureLeadIfNew(customerPhone, customerName, textForLead);
 
     // 8. Auto-reply for new conversations (solo si la AI está habilitada)
     if (isAiEnabled && autoReplyEnabled && autoReplyMessage && isNew) {
@@ -774,25 +773,25 @@ export async function POST(request: NextRequest) {
       // VENDEDOR: solo los últimos 4 mensajes para contexto mínimo
       // (evita que historial viejo contamine la conversación actual)
       if (isSeller) {
-        const combinedText = bufferedMessages.map((m) => m.content).join("\n");
         const history = await getConversationMessages(conversationId, 4);
         const aiMessages = history
           .filter((m) => m.role === "user" || m.role === "assistant" || m.role === "system")
           .map((m) => ({
             role: (m.role === "system" ? "system" : m.role) as "user" | "assistant" | "system",
             content: m.content,
+            platformMessageId: m.platformMessageId,
           }));
-        // Si hay mensajes acumulados en el buffer, usarlos como un solo mensaje
-        if (bufferedMessages.length > 0) {
-          aiMessages.push({ role: "user" as const, content: combinedText });
-        }
+        const sellerMessages = mergeBufferedTurn(aiMessages, bufferedMessages.map((m) => ({ content: m.content, messageId: m.messageId })));
+
+        await observeWhatsAppShadow("seller", conversationId, phone, bufferedMessages.map((m) => m.content).join("\n"),
+          { kind: (bufferedMessages.at(-1)?.contentAttributes?.[0] as MediaAttachment | undefined)?.type ?? "none" });
 
         const SELLER_MODEL = "gpt-5.4-mini";
         console.log(`[webhook:wa] Seller agent using model: ${SELLER_MODEL} (parallelToolCalls:false)`);
         const result = await generateText({
           model: openai.chat(SELLER_MODEL),
           system: await buildSellerPrompt(),
-          messages: aiMessages,
+          messages: sellerMessages,
           tools: internalSellerTools,
           providerOptions: {
             openai: {
@@ -841,8 +840,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Concatenate all buffered messages into a single context for the agent
-      const combinedText = bufferedMessages.map((m) => m.content).join("\n");
-
       // Get fresh conversation history for AI context (last 20 messages)
       const history = await getConversationMessages(conversationId, 20);
       const aiMessages = history
@@ -850,22 +847,15 @@ export async function POST(request: NextRequest) {
         .map((m) => {
           // Mapear roles para OpenAI: system se mantiene como system, human → assistant
           if (m.role === "system") {
-            return { role: "system" as const, content: m.content };
+            return { role: "system" as const, content: m.content, platformMessageId: m.platformMessageId };
           }
           return {
             role: (m.role === "human" ? "assistant" : m.role) as "user" | "assistant",
-            content: m.content,
+            content: m.content, platformMessageId: m.platformMessageId,
           };
         });
 
-      // If the buffer had multiple messages, add the combined view as the last user turn
-      if (bufferedMessages.length >= 1) {
-        const lastUserIdx = [...aiMessages].reverse().findIndex((m) => m.role === "user");
-        if (lastUserIdx !== -1) {
-          const realIdx = aiMessages.length - 1 - lastUserIdx;
-          aiMessages[realIdx] = { role: "user", content: combinedText };
-        }
-      }
+      const customerMessages = mergeBufferedTurn(aiMessages, bufferedMessages.map((m) => ({ content: m.content, messageId: m.messageId })));
 
       console.log(`[webhook:wa] Running agent with ${aiMessages.length} history messages`);
 
@@ -873,11 +863,14 @@ export async function POST(request: NextRequest) {
       // ya se carga DENTRO de runWhatsAppAgent() → buildSystemPrompt().
       // NO inyectar nada como role:"user" — eso contamina la línea temporal.
 
+      await observeWhatsAppShadow("customer", conversationId, phone, bufferedMessages.map((m) => m.content).join("\n"),
+          { kind: (bufferedMessages.at(-1)?.contentAttributes?.[0] as MediaAttachment | undefined)?.type ?? "none" });
+
       // Run agent with combined context
       const { text: responseText, pendingMedia } = await runWhatsAppAgent({
         conversationId,
         customerPhone,
-        messages: aiMessages,
+        messages: customerMessages,
       });
 
       console.log(`[webhook:wa] Agent response: ${responseText.slice(0, 100)}... (${pendingMedia.length} media pending)`);
@@ -942,12 +935,6 @@ export async function POST(request: NextRequest) {
     // Always return 200 after signature verification passes
     // to prevent YCloud from retrying
   }
-
-  // ─── Post-delivery followup check ──────────────────────────────────────
-  // Fire-and-forget: busca pedidos entregados hace >30min sin followup
-  sendPendingFollowups().then((n) => {
-    if (n > 0) console.log(`[webhook] Followups sent: ${n}`);
-  }).catch((err) => console.warn("[webhook] Followup check failed:", err));
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

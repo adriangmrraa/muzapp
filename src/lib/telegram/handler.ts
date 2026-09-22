@@ -13,6 +13,8 @@ import { transcribeAudio } from "@/lib/media/transcription";
 import { processImageWithVision } from "@/lib/media/vision";
 import { findOrCreateConversation, insertMessage } from "@/lib/channels/router";
 import type { MediaAttachment } from "@/lib/channels/router";
+import { decisionContext } from "@/lib/jev/context";
+import { observeJevShadow } from "@/lib/jev/shadow";
 
 export type HandleResult =
   | { ok: true; replied: boolean; replyText?: string }
@@ -198,6 +200,12 @@ export async function handleTelegramUpdate(
 
   // Agregar mensaje actual al final del historial
   conversationMessages.push({ role: "user", content: text });
+
+  // Shadow observation only: result cannot affect Telegram agent tools or reply.
+  await observeJevShadow(decisionContext({ actor: "admin", channel: "telegram", message: text,
+    conversation: { hasActiveOrder: false, hasCartItems: false },
+    media: { kind: voiceOrAudio ? "audio" : message.photo ? "image" : message.document ? "document" : "none" },
+  }));
 
   try {
     const result = await generateText({
