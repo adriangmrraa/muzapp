@@ -1079,7 +1079,7 @@ export const deleteLeadTool = tool({
       if (!lead) return `No encontre un lead con ID ${id}.`;
       await db.delete(orders).where(eq(orders.leadId, id));
       await db.delete(leads).where(eq(leads.id, id));
-      return `✅ Lead #${id} (${lead.name || "sin nombre"} eliminado.`;
+      return `✅ Lead #${id} (${lead.name || "sin nombre"}) eliminado.`;
     } catch (e) {
       return `Error al eliminar: ${e instanceof Error ? e.message : "desconocido"}`;
     }

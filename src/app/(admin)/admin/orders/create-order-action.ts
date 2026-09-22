@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
-import { resolveItems } from "@/lib/order-utils";
+import { resolveItems, validateResolvedOrderItems } from "@/lib/order-utils";
 import { normalizePhone } from "@/lib/phone-utils";
 
 export async function createManualOrder(
@@ -30,6 +30,8 @@ export async function createManualOrder(
     const hasPhone = data.customerPhone && data.customerPhone.trim().length > 0;
     const phone = hasPhone ? normalizePhone(data.customerPhone) : `sin-telefono-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     const resolvedItems = await resolveItems(data.items);
+    const itemError = validateResolvedOrderItems(resolvedItems);
+    if (itemError) return { success: false, error: itemError };
     const subtotal = resolvedItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
     const delivery = data.deliveryFee || 0;
     const total = subtotal + delivery;

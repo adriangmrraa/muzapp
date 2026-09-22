@@ -31,4 +31,4 @@ export { createSendImageTool, createSendDocumentTool } from "./send-media-tools"
 export { getActivePromosTool } from "./product-tools";
 
 // Grupo H: Order Context (memoria del pedido actual)
-export { createAddOrderItemTool, createGetOrderSummaryTool, createConfirmOrderTool, createGetAddressesTool } from "./order-context-tools";
+export { createAddOrderItemTool, createGetOrderSummaryTool, createGetAddressesTool } from "./order-context-tools";

@@ -1,11 +1,12 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { orders, leads, products } from "@/db/schema";
-import { eq, or, ilike, asc, sql } from "drizzle-orm";
-import { resolveItems } from "@/lib/order-utils";
+import { orders, leads } from "@/db/schema";
+import { eq, ilike, sql } from "drizzle-orm";
+import { resolveItems, validateResolvedOrderItems } from "@/lib/order-utils";
 import { normalizePhone, isValidPhone } from "@/lib/phone-utils";
 import { resolveClientName } from "@/lib/lead-utils";
+import { isSafeCustomerNameMatch } from "./customer-match";
 
 
 // ─── manageOrder: Herramientas de gestión de pedidos
@@ -15,7 +16,7 @@ export const createOrder = tool({
   description:
     "CREAR un nuevo pedido. Busca el lead por teléfono primero, después por nombre. SI NO ENCUENTRA, CREA EL LEAD AUTOMÁTICAMENTE. NO necesita que el lead exista primero. El teléfono es OPCIONAL — si no se pasa, se crea un lead sin teléfono (para casos de Instagram, Facebook, clientes del local sin número). PREGUNTAS: 'creá un pedido para Juan, 2 Genesis', 'nuevo pedido para María, 1 Deli Deli', 'cargá pedido para floricienta, 1 Toro Asado'. SIEMPRE intentá con esta tool primero cuando te pidan crear un pedido.",
   inputSchema: z.object({
-    customerName: z.string().describe("Nombre del cliente. Si no se pasa el teléfono, se busca al lead por este nombre."),
+    customerName: z.string().trim().min(1).describe("Nombre del cliente. Si no se pasa el teléfono, se busca al lead por este nombre."),
     phone: z.string().optional().describe("Teléfono del cliente (OPCIONAL si ya existe un lead con ese nombre). Si no se pasa, se busca por nombre."),
     orderType: z
       .enum(["hamburguesas", "pan_mayorista"])
@@ -24,20 +25,25 @@ export const createOrder = tool({
       .array(
         z.object({
           name: z.string(),
-          quantity: z.number(),
-      price: z.number().optional(),
+          quantity: z.number().int().positive(),
     }))
     .describe("Items del pedido"),
-    deliveryFee: z.number().min(0).optional().describe("Costo de delivery (0 si no aplica)"),
+    deliveryFee: z.number().min(0).optional().describe("Costo de delivery solo si el admin indicó el monto (0 si no aplica)"),
+    address: z.string().optional().describe("Dirección de entrega si el cliente indicó delivery"),
     paymentStatus: z.enum(["pending", "paid"]).optional().describe("Estado de pago: pending (pendiente), paid (pagado). Default: pending"),
     paymentMethod: z.string().optional().describe("Método de pago: efectivo, alias, etc."),
     notes: z.string().optional().describe("Notas especiales"),
   }),
-  execute: async ({ customerName, phone, orderType, items, deliveryFee, paymentStatus, paymentMethod, notes }) => {
+  execute: async ({ customerName, phone, orderType, items, deliveryFee, address, paymentStatus, paymentMethod, notes }) => {
     // Normalizar items contra productos reales de la DB
     const resolvedItems = await resolveItems(items);
+    const itemError = validateResolvedOrderItems(resolvedItems);
+    if (itemError) return { success: false, message: itemError };
 
     let cleanedPhone = phone ? normalizePhone(phone) : "";
+    if (cleanedPhone && !isValidPhone(cleanedPhone)) {
+      return { success: false, message: `El teléfono "${phone}" no es válido. Corregilo o creá el pedido sin teléfono.` };
+    }
     let existingLead: { id: number; status: string | null; name: string | null } | undefined;
 
     if (cleanedPhone && customerName) {
@@ -50,13 +56,11 @@ export const createOrder = tool({
 
       if (leadByPhone) {
         // Si encontramos un lead por teléfono, verificar que el nombre sea similar
-        const nameMatch = leadByPhone.name?.toLowerCase().includes(customerName.toLowerCase())
-          || customerName.toLowerCase().includes(leadByPhone.name?.toLowerCase() || "");
+        const nameMatch = !leadByPhone.name || isSafeCustomerNameMatch(customerName, leadByPhone.name);
         if (nameMatch) {
           existingLead = leadByPhone;
         } else {
-          // El teléfono no coincide con el nombre — buscar por nombre mejor
-          cleanedPhone = "";
+          return { success: false, message: `El teléfono ${cleanedPhone} corresponde a otro cliente. Verificá el número antes de crear el pedido.` };
         }
       }
     }
@@ -85,12 +89,14 @@ export const createOrder = tool({
       }
 
       if (nameMatches.length === 0) {
-        // No se encontró por nombre — pedir más datos
-        return {
-          success: false,
-          message: `No encontré ningún cliente con el nombre "${customerName}". ¿Podés pasar el número de teléfono para crearlo?`,
-        };
+        // Nuevo cliente: la inserción posterior crea el lead con o sin teléfono.
       } else if (nameMatches.length === 1) {
+        if (!isSafeCustomerNameMatch(customerName, nameMatches[0].name)) {
+          return { success: false, message: `Encontré a ${nameMatches[0].name} como coincidencia aproximada (ID ${nameMatches[0].id}). Confirmá la identidad antes de vincular el pedido, o indicá un nombre nuevo más preciso.` };
+        }
+        if (cleanedPhone && nameMatches[0].phone && !nameMatches[0].phone.startsWith("sin-telefono-") && nameMatches[0].phone !== cleanedPhone) {
+          return { success: false, message: `Ya existe ${nameMatches[0].name} con otro teléfono. Confirmá cuál cliente corresponde antes de crear el pedido.` };
+        }
         // Un solo match → usarlo
         existingLead = nameMatches[0];
         cleanedPhone = nameMatches[0].phone ?? cleanedPhone;
@@ -121,9 +127,6 @@ export const createOrder = tool({
           })
           .returning({ id: leads.id, status: leads.status, name: leads.name });
         existingLead = newLead;
-      } else if (!isValidPhone(cleanedPhone)) {
-        // Teléfono inválido
-        return { success: false, message: `El teléfono "${phone}" no es válido. El formato debe ser código de área + número sin 15. Ej: 5493704123456. Si no tenés el número, crealo sin teléfono.` };
       } else {
         // Crear lead automáticamente si hay teléfono válido y no existe
         const [newLead] = await db
@@ -145,10 +148,7 @@ export const createOrder = tool({
     if (existingLead.status === "new" || existingLead.status === "contacted") {
       await db.update(leads).set({ status: "converted" }).where(eq(leads.id, existingLead.id));
     }
-    // Actualizar nombre si corresponde
-    if (customerName && customerName !== existingLead.name) {
-      await db.update(leads).set({ name: customerName }).where(eq(leads.id, existingLead.id));
-    }
+    // A shorthand in an order must not overwrite an existing customer's full name.
 
     // Calcular total
     let subtotal = 0;
@@ -163,9 +163,10 @@ export const createOrder = tool({
       .values({
         leadId: leadId ?? undefined,
         phoneNumber: cleanedPhone,
-        customerName,
+        customerName: leadName,
         orderType,
         items: resolvedItems,
+        address: address || null,
         deliveryFee: delivery ? String(delivery) : "0",
         paymentStatus: paymentStatus || "pending",
         paymentMethod: paymentMethod || null,
@@ -179,7 +180,7 @@ export const createOrder = tool({
       const { notifyNewOrder } = await import("@/lib/telegram/notifier");
       notifyNewOrder({
         id: created.id,
-        customerName: customerName || cleanedPhone,
+        customerName: leadName || cleanedPhone,
         orderType,
         items: resolvedItems,
         total,
@@ -195,7 +196,7 @@ export const createOrder = tool({
       success: true,
       id: created.id,
       total,
-      message: `✅ Pedido #${created.id} creado para ${customerName || phone}. Total: $${total} (${itemSummary})`,
+      message: `✅ Pedido #${created.id} creado para ${leadName || phone}. Total: $${total} (${itemSummary})`,
     };
   },
 });
@@ -208,8 +209,7 @@ export const addItemToOrder = tool({
     orderId: z.number().describe("ID del pedido"),
     item: z.object({
       name: z.string().describe("Nombre del producto"),
-      quantity: z.number().describe("Cantidad"),
-      price: z.number().optional().describe("Precio unitario"),
+      quantity: z.number().int().positive().describe("Cantidad"),
     }),
   }),
   execute: async ({ orderId, item }) => {
@@ -217,6 +217,8 @@ export const addItemToOrder = tool({
     const resolvedItems = await resolveItems([item]);
     const resolved = resolvedItems[0];
     if (!resolved) return { success: false, message: "Item inválido" };
+    const itemError = validateResolvedOrderItems(resolvedItems);
+    if (itemError) return { success: false, message: itemError };
 
     // Verificar que el pedido exista y no esté terminado
     const [existing] = await db
@@ -545,13 +547,12 @@ export const createDeliveredOrder = tool({
   description:
     "CARGAR un pedido que YA FUE ENTREGADO (backfill). Para cuando el admin olvidó registrar un pedido. El método de pago NO es necesario para crear el pedido, se puede registrar después. Crea el lead si no existe. El teléfono es OPCIONAL — si no se pasa, se crea un lead sin teléfono. NO envía notificaciones. IMPORTANTE: Ejecutá esta tool apenas tengas nombre y productos. PREGUNTAS: 'cargá un pedido de ayer', 'subí un pedido viejo de Juan', 'registrá un pedido que ya entregamos el lunes'",
   inputSchema: z.object({
-    customerName: z.string().describe("Nombre del cliente"),
-    customerPhone: z.string().describe("Teléfono del cliente (con código de país)"),
+    customerName: z.string().trim().min(1).describe("Nombre del cliente"),
+    customerPhone: z.string().optional().describe("Teléfono del cliente (opcional, con código de país)"),
     orderType: z.enum(["hamburguesas", "pan_mayorista"]).describe("Tipo de pedido"),
     items: z.array(z.object({
       name: z.string(),
-      quantity: z.number(),
-      price: z.number().optional(),
+      quantity: z.number().int().positive(),
     })).describe("Items del pedido"),
     deliveryFee: z.number().min(0).optional().describe("Costo de delivery (0 si no aplica)"),
     paymentStatus: z.enum(["pending", "paid"]).optional().describe("Default: paid (ya está pagado porque fue entregado)"),
@@ -562,6 +563,8 @@ export const createDeliveredOrder = tool({
   execute: async ({ customerName, customerPhone, orderType, items, deliveryFee, paymentStatus, paymentMethod, notes, deliveredAt }) => {
     // Normalizar items contra productos reales de la DB
     const resolvedItems = await resolveItems(items);
+    const itemError = validateResolvedOrderItems(resolvedItems);
+    if (itemError) return { success: false, message: itemError };
 
     // Validar y limpiar teléfono
     const cleanedPhone = customerPhone ? normalizePhone(customerPhone) : "";
@@ -573,11 +576,11 @@ export const createDeliveredOrder = tool({
     let leadId: number | null = null;
     let leadName = customerName;
 
-    const [existingLead] = await db
+    const [existingLead] = cleanedPhone ? await db
       .select({ id: leads.id, status: leads.status, name: leads.name })
       .from(leads)
       .where(eq(leads.phone, cleanedPhone))
-      .limit(1);
+      .limit(1) : [];
 
     if (existingLead) {
       leadId = existingLead.id;

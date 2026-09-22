@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { products, agentConfig } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { products, promotions } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 
 /**
  * Construye el system prompt del bot de Telegram con datos vivos de la DB:
@@ -44,11 +44,12 @@ export async function buildTelegramPrompt(): Promise<string> {
 
   // ── Promociones activas ──
   try {
-    const config = await db.query.agentConfig.findFirst({
-      where: (c) => eq(c.id, 1),
-    });
-    if (config?.whatsappPromociones && config.whatsappPromociones.trim()) {
-      sections.push(`═══ PROMOCIONES ACTIVAS ═══\n${config.whatsappPromociones.trim()}`);
+    const active = await db.select({ name: promotions.name, description: promotions.description, customPrice: promotions.customPrice })
+      .from(promotions).where(eq(promotions.active, true)).orderBy(desc(promotions.createdAt));
+    if (active.length) {
+      sections.push(`═══ PROMOCIONES ACTIVAS ═══\n${active.map((promo) =>
+        `${promo.name}${promo.customPrice ? ` — $${Number(promo.customPrice).toLocaleString("es-AR")}` : ""}${promo.description ? `: ${promo.description}` : ""}`
+      ).join("\n")}`);
     }
   } catch {
     // non-fatal

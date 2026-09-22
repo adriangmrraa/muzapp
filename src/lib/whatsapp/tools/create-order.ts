@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { orders, leads, agentConfig, addresses, orderContextItems } from "@/db/schema";
 import { eq, desc, and, gt, asc, inArray } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
-import { resolveItems } from "@/lib/order-utils";
+import { resolveItems, validateResolvedOrderItems } from "@/lib/order-utils";
 import { normalizePhone } from "@/lib/phone-utils";
 import { isActiveStatus, ORDER_STATUS_INFO } from "@/lib/whatsapp/status-utils";
 
@@ -65,8 +65,7 @@ export function createCreateOrderTool(conversationId: number) {
     items: z.array(z.object({
       name: z.string(),
       quantity: z.number().int().positive(),
-      unitPrice: z.number().positive(),
-    })).optional().describe("Items del pedido (Opcional — el tool auto- Lee del carrito si no se pasan)"),
+    })).optional().describe("Items del pedido (opcional; el precio se resuelve desde la DB, nunca lo inventes)"),
     customerPhone: z.string().describe("Teléfono del cliente"),
     address: z.string().optional().describe("Dirección de entrega (si es delivery)"),
     deliveryFee: z.number().min(0).optional().describe("Costo de delivery (0 si no aplica)"),
@@ -138,7 +137,6 @@ export function createCreateOrderTool(conversationId: number) {
           items = cartItems.map((ci) => ({
             name: ci.productName,
             quantity: ci.quantity,
-            unitPrice: Number(ci.productPrice || 0),
           }));
           console.log(`[createOrder] Auto-read ${items.length} items from carrito (conversation ${conversationId})`);
         }
@@ -154,6 +152,8 @@ export function createCreateOrderTool(conversationId: number) {
 
     // Resolver items contra productos reales de la DB
     const resolvedItems = await resolveItems(items);
+    const itemError = validateResolvedOrderItems(resolvedItems);
+    if (itemError) return itemError;
     const subtotal = resolvedItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
     const delivery = deliveryFee || 0;
     const total = subtotal + delivery;
@@ -223,7 +223,7 @@ export function createCreateOrderTool(conversationId: number) {
 
     const typeLabel = orderType === "hamburguesas" ? "🍔 Hamburguesas" : "🍞 Pan Mayorista";
 
-    return `✅ Pedido #${order.id} registrado (${typeLabel}).\n👤 Cliente: ${customerName}\n💰 Total: $${total.toFixed(2)}\n⏱ Estimado: 30-40 minutos.`;
+    return `✅ Pedido #${order.id} registrado (${typeLabel}).\n👤 Cliente: ${customerName}\n💰 Total: $${total.toFixed(2)}.`;
   },
 });
 }

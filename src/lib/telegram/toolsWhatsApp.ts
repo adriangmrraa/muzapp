@@ -5,6 +5,7 @@ import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { broadcastText, getBroadcastRecipients } from "@/lib/whatsapp/broadcast";
 import type { BroadcastFilter } from "@/lib/whatsapp/broadcast";
+import { normalizePhone, isValidPhone } from "@/lib/phone-utils";
 
 // ─── WhatsApp Tools ──────────────────────────────────────────────────────
 
@@ -17,7 +18,10 @@ export const sendWhatsAppMessage = tool({
     message: z.string().describe("Texto del mensaje a enviar"),
   }),
   execute: async ({ to, message }) => {
-    const phone = to.startsWith("+") ? to : `+${to}`;
+    const normalized = normalizePhone(to);
+    if (!isValidPhone(normalized)) return `No envié el WhatsApp: el teléfono ${to} no tiene un formato argentino válido.`;
+    if (!message.trim()) return "No envié el WhatsApp: el mensaje está vacío.";
+    const phone = `+${normalized}`;
 
     // Enviar WhatsApp
     const { sendText } = await import("@/lib/ycloud");

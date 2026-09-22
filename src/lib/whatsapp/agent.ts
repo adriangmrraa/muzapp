@@ -33,7 +33,6 @@ import {
   createAddOrderItemTool,
   createCreateOrderTool,
   createGetOrderSummaryTool,
-  createConfirmOrderTool,
   createGetAddressesTool,
   getActivePromosTool,
 } from "./tools";
@@ -371,7 +370,6 @@ export async function runWhatsAppAgent({
     // Grupo H: Order Context (memoria del pedido)
     addOrderItem: createAddOrderItemTool(conversationId, customerPhone),
     getOrderSummary: createGetOrderSummaryTool(conversationId),
-    confirmOrder: createConfirmOrderTool(conversationId, customerPhone),
     getAddresses: createGetAddressesTool(customerPhone),
     // Grupo I: Promos (2)
     getActivePromos: getActivePromosTool,

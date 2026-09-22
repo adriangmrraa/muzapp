@@ -98,21 +98,6 @@ export async function getOrderContextSummary(
 }
 
 /**
- * Marca todos los items activos como "ordered" (después de crear el pedido).
- */
-export async function confirmOrderContext(conversationId: number): Promise<void> {
-  await db
-    .update(orderContextItems)
-    .set({ status: "ordered" })
-    .where(
-      and(
-        eq(orderContextItems.conversationId, conversationId),
-        eq(orderContextItems.status, "active"),
-      )
-    );
-}
-
-/**
  * Limpia items expirados.
  */
 async function cleanExpiredItems(conversationId: number): Promise<void> {

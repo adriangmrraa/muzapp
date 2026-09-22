@@ -1,10 +1,30 @@
 import { db } from "@/db";
 import { products, promotions } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { normalizePhone, isValidPhone as normalizedIsValid } from "@/lib/phone-utils";
 
 type InputItem = { name: string; quantity: number; price?: number; unitPrice?: number };
 type ResolvedItem = { name: string; quantity: number; price: number; unitPrice: number };
+
+/** Reject invalid or unpriced items before writing an order or modifying its cart. */
+export function validateResolvedOrderItems(items: ResolvedItem[]): string | null {
+  if (!items.length) return "El pedido necesita al menos un producto.";
+  const invalidQuantity = items.find((item) => !Number.isSafeInteger(item.quantity) || item.quantity <= 0);
+  if (invalidQuantity) return `Cantidad inválida para ${invalidQuantity.name}.`;
+  const unpriced = items.find((item) => !Number.isFinite(item.unitPrice) || item.unitPrice <= 0);
+  if (unpriced) return `No encontré un precio válido para ${unpriced.name}. Verificá el producto en la base de datos antes de crear el pedido.`;
+  return null;
+}
+
+export function matchCatalog<T extends { name: string }>(input: string, catalog: T[]): T | undefined {
+  if (!input) return undefined;
+  const canonical = (name: string) => name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const exact = catalog.find((entry) => canonical(entry.name) === input);
+  if (exact) return exact;
+  if (input.length < 3) return undefined;
+  const candidates = catalog.filter((entry) => canonical(entry.name).includes(input) || input.includes(canonical(entry.name)));
+  return candidates.length === 1 ? candidates[0] : undefined;
+}
 
 // FIX CRITICAL: resolveItems() IGNORA item.price e item.unitPrice del LLM.
 // Solo usa precios reales de la DB. Si no hay match en DB, unitPrice = 0.
@@ -37,7 +57,7 @@ export async function resolveItems(items: InputItem[]): Promise<ResolvedItem[]> 
     const dbProducts = await db
       .select({ name: products.name, price: products.price })
       .from(products)
-      .where(eq(products.available, true));
+      .where(and(eq(products.available, true), eq(products.comingSoon, false)));
 
     const dbPromotions = await db
       .select({ name: promotions.name, customPrice: promotions.customPrice })
@@ -48,10 +68,7 @@ export async function resolveItems(items: InputItem[]): Promise<ResolvedItem[]> 
       const input = item.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
       
       // 1. Buscar en productos
-      const productMatch = dbProducts.find((p) => {
-        const pName = p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-        return pName === input || pName.includes(input) || input.includes(pName);
-      });
+      const productMatch = matchCatalog(input, dbProducts);
 
       if (productMatch) {
         const realPrice = Number(productMatch.price);
@@ -64,10 +81,7 @@ export async function resolveItems(items: InputItem[]): Promise<ResolvedItem[]> 
       }
 
       // 2. Si no hay match en productos, buscar en promociones
-      const promoMatch = dbPromotions.find((p) => {
-        const pName = p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-        return pName === input || pName.includes(input) || input.includes(pName);
-      });
+      const promoMatch = matchCatalog(input, dbPromotions);
 
       if (promoMatch) {
         const promoPrice = Number(promoMatch.customPrice);
