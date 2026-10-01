@@ -41,7 +41,7 @@ Este documento audita el cambio local preparado para las pantallas públicas, la
 1. **Probar el recorrido con infraestructura real.** Ejecutar carta → `POST /api/checkout` → fila visible en admin → apertura de WhatsApp → envío real → webhook → `WhatsApp verificado` → respuesta del agente. Incluir un reintento del mismo request, dos requests concurrentes y un mensaje desde un número diferente.
 2. **Definir el momento comercial del alta.** Hoy el pedido queda en admin al pulsar “Confirmar y abrir WhatsApp”, antes de que la persona toque “Enviar” en WhatsApp. Una URL `wa.me` no informa si el mensaje fue enviado. Si el requisito exacto es cargarlo recién al enviar, hace falta persistir primero un intento de checkout y convertirlo a pedido cuando el webhook reciba la referencia. Si se conserva el alta temprana, el admin debe diferenciar claramente `Pendiente de WhatsApp` de `WhatsApp verificado` y prever limpieza/cancelación de abandonados.
 3. **Agregar pruebas de integración del servicio.** Las pruebas actuales cubren normalización, extracción de referencia, precio confiable, promociones/stock y líneas repetidas. Falta cubrir transacción/idempotencia, fingerprint incompatible, coincidencia de teléfono, marcado `WhatsApp verificado`, fallo de base y bloqueo de `createOrder` con pedido web.
-4. **Verificar configuración de producción.** Confirmar `DATABASE_URL`, número destino de WhatsApp y Upstash. Sin Upstash el límite es memoria local por instancia y no protege de forma uniforme un despliegue distribuido.
+4. **Verificar configuración de producción.** Confirmar `DATABASE_URL`, número destino de WhatsApp y Upstash. El checkout ya acepta el origen público reconstruido por `X-Forwarded-Host`/`X-Forwarded-Proto` de Render; falta confirmar el recorrido real en el deployment. Sin Upstash el límite es memoria local por instancia y no protege de forma uniforme un despliegue distribuido.
 
 ### P1 — completar el alcance visual solicitado
 
@@ -65,7 +65,7 @@ Este documento audita el cambio local preparado para las pantallas públicas, la
 - La identificación depende de que la persona use el mismo número declarado en la carta. El flujo actual rechaza la referencia si escribe desde otro teléfono y no crea un duplicado.
 - El pedido se guarda sin `leadId`; la asociación funcional existe por teléfono y referencia, pero la relación de datos con el lead todavía no queda materializada.
 - La consulta inicial de catálogo del checkout carga productos y promociones completos. Es correcta funcionalmente para el volumen actual, pero conviene seleccionar únicamente las filas requeridas si el catálogo crece.
-- La política CORS basada en `Origin` funciona con el formulario del mismo sitio, pero debe probarse detrás del proxy/CDN del despliegue real.
+- La validación de origen acepta el dominio interno de Next, los dominios configurados y el origen público reconstruido por el proxy de Render. Debe probarse una vez en el deployment real junto con el checkout completo.
 - Las etiquetas internas se ocultan en la tarjeta del admin, pero siguen almacenadas en `orders.tags`; cualquier otra exportación o vista debe aplicar el mismo criterio.
 
 ## Validaciones ejecutadas en este corte
@@ -75,7 +75,7 @@ Este documento audita el cambio local preparado para las pantallas públicas, la
 | `npm run typecheck` | Pasa |
 | `npm run build` | Pasa; Next 16.2.4 compiló y generó 39 páginas/rutas, incluida `/api/checkout` |
 | `git diff --check` | Pasa |
-| `node --import tsx --test src/lib/checkout/contract.test.ts` | 5/5 pruebas pasan |
+| `node --import tsx --test src/lib/checkout/*.test.ts` | 7/7 pruebas pasan, incluidas las cabeceras de proxy de Render |
 | ESLint dirigido de carta, API checkout, contrato/servicio, imágenes, productos, storefront y Tragos V.I.P. | Pasa después de corregir la restauración de `localStorage` |
 | ESLint ampliado incluyendo `whatsapp/agent.ts` | Conserva cinco `no-explicit-any` y warnings preexistentes en ese archivo; es deuda separada del nuevo checkout visual |
 | Recorrido real con base, admin y webhook | No ejecutado |

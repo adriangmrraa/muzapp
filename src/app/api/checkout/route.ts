@@ -2,10 +2,10 @@ import { revalidatePath } from "next/cache";
 import { checkoutSchema } from "@/lib/checkout/contract";
 import { CheckoutError, submitCheckout } from "@/lib/checkout/service";
 import { checkRateLimit } from "@/lib/infra/rate-limit";
+import { isAllowedCheckoutOrigin } from "@/lib/checkout/origin";
 
 export async function POST(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin || origin !== new URL(request.url).origin) return Response.json({ error: "Origen no permitido." }, { status: 403 });
+  if (!isAllowedCheckoutOrigin(request)) return Response.json({ error: "Origen no permitido." }, { status: 403 });
   if (!request.headers.get("content-type")?.includes("application/json")) return Response.json({ error: "Formato no válido." }, { status: 415 });
   try {
     const limit = await checkRateLimit(`checkout:${request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"}`);
