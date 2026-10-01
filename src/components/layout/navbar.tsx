@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
@@ -21,6 +22,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const { itemCount } = useCart();
+  const pathname = usePathname();
   const { scrollY } = useScroll();
   const bgColor = useTransform(
     scrollY,
@@ -33,9 +35,9 @@ export function Navbar() {
       className="fixed top-0 left-0 right-0 z-50"
       style={{
         background: bgColor,
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        borderBottom: "1px solid rgba(212,160,23,0.25)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.1)",
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,21 +63,27 @@ export function Navbar() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-1" aria-label="Navegación principal">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="relative text-sm font-medium text-white/80 hover:text-amber-400 transition-colors duration-200 group"
+                className="relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-200"
+                style={{
+                  color: pathname === link.href ? "#f8d582" : "rgba(255,255,255,0.7)",
+                  background: pathname === link.href ? "rgba(212,160,23,0.12)" : "transparent",
+                }}
               >
                 {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-amber-400 transition-all duration-300 group-hover:w-full" />
               </Link>
             ))}
           </nav>
 
           <div className="flex items-center gap-3">
             {/* Cart button */}
+            <Link href="/carta-digital" className="hidden lg:inline-flex rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-[#151006] transition-transform hover:scale-[1.03]" style={{ background: "#D4A017" }}>
+              Pedir ahora
+            </Link>
             <button
               onClick={() => setCartOpen(true)}
               className="relative p-2 text-white/80 hover:text-amber-400 transition-colors bg-transparent border-none cursor-pointer"
@@ -131,8 +139,11 @@ export function Navbar() {
                         key={link.href}
                         href={link.href}
                         onClick={() => setOpen(false)}
-                        className="text-base font-medium text-white/80 hover:text-amber-400 transition-colors py-1 border-b"
-                        style={{ borderColor: "rgba(212,160,23,0.15)" }}
+                        className="rounded-lg px-3 py-2 text-base font-semibold transition-colors"
+                        style={{
+                          color: pathname === link.href ? "#f8d582" : "rgba(255,255,255,0.78)",
+                          background: pathname === link.href ? "rgba(212,160,23,0.12)" : "transparent",
+                        }}
                       >
                         {link.label}
                       </Link>

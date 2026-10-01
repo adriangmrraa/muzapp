@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { heroEntrance } from "@/lib/animation-variants";
 
@@ -11,6 +11,7 @@ interface PageHeroProps {
 }
 
 export function PageHero({ backgroundImage, children }: PageHeroProps) {
+  const reduced = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -27,7 +28,7 @@ export function PageHero({ backgroundImage, children }: PageHeroProps) {
     >
       <motion.div
         className="absolute inset-x-0"
-        style={{ y, top: "-10%", bottom: "-10%", height: "120%", position: "absolute" }}
+        style={{ y: reduced ? 0 : y, top: "-10%", bottom: "-10%", height: "120%", position: "absolute" }}
       >
         <Image
           src={backgroundImage}
@@ -61,7 +62,7 @@ export function PageHero({ backgroundImage, children }: PageHeroProps) {
         variants={heroEntrance}
         initial="hidden"
         animate="visible"
-        style={{ opacity }}
+        style={{ opacity: reduced ? 1 : opacity }}
       >
         {children}
       </motion.div>

@@ -54,7 +54,7 @@ export default function ProductDetailPage() {
   const { addItem } = useCart();
 
   function handleAddToCart(p: ProductFromAPI) {
-    const price = p.price ? parseFloat(p.price.replace(/[^0-9]/g, "")) : 0;
+    const price = p.price ? Number(p.price) : 0;
     addItem({
       id: String(p.id),
       name: p.name,
@@ -94,7 +94,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 pb-20">
+    <div className="min-h-screen bg-[#151513] px-5 sm:px-10 pt-28 pb-20">
       <ProductDetail product={product} onAddToCart={handleAddToCart} />
     </div>
   );

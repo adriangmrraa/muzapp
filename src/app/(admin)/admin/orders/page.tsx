@@ -36,7 +36,7 @@ export default async function OrdersPage({ searchParams }: Props) {
             Pedidos / Cocina
           </h1>
           <p className="text-sm text-muted-foreground">
-            Pedidos registrados por el agente de WhatsApp
+            Pedidos de la carta digital y WhatsApp · actualización cada 15 segundos
           </p>
         </div>
         <CreateOrderModalWrapper />

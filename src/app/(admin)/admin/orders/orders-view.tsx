@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
@@ -142,7 +142,7 @@ function OrderCard({
       {/* Tags */}
       {Array.isArray(order.tags) && order.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          {order.tags.map((tag) => (
+          {order.tags.filter(tag => !tag.startsWith("web-checkout:") && !tag.startsWith("web-payload:")).map((tag) => (
             <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
               {tag}
             </Badge>
@@ -313,6 +313,12 @@ export function OrdersView({
 }) {
   const router = useRouter();
   const [search, setSearch] = useState(currentSearch);
+  useEffect(() => {
+    const refresh = () => { if (document.visibilityState === "visible") router.refresh(); };
+    const interval = window.setInterval(refresh, 15000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { window.clearInterval(interval); document.removeEventListener("visibilitychange", refresh); };
+  }, [router]);
 
   const allStatuses = ["", "pending", "preparing", "ready", "delivered", "cancelled"];
 

@@ -1,8 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { orders, leads, agentConfig, addresses, orderContextItems } from "@/db/schema";
-import { eq, desc, and, gt, asc, inArray } from "drizzle-orm";
+import { orders, leads, agentConfig, addresses, orderContextItems, conversations } from "@/db/schema";
+import { eq, desc, and, gt, asc, inArray, or, sql } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 import { resolveItems, validateResolvedOrderItems } from "@/lib/order-utils";
 import { normalizePhone } from "@/lib/phone-utils";
@@ -56,7 +56,7 @@ async function notifyDeliveryOrder(
   }
 }
 
-export function createCreateOrderTool(conversationId: number) {
+export function createCreateOrderTool(conversationId: number, referencedWebOrderId?: number) {
   return tool({
   description: "Crea un pedido una vez que el cliente confirmó los items. AUTO-LEE el carrito de la conversación. SIEMPRE confirmar con el cliente antes de usar esta herramienta. Preguntá el nombre al cliente si no lo sabés.",
   inputSchema: z.object({
@@ -74,8 +74,11 @@ export function createCreateOrderTool(conversationId: number) {
     notes: z.string().optional().describe("Notas adicionales del pedido"),
   }),
   execute: async ({ customerName, orderType, items: explicitItems, customerPhone, address, deliveryFee, paymentStatus, paymentMethod, notes }) => {
-    // Normalizar teléfono antes de cualquier operación
-    customerPhone = normalizePhone(customerPhone);
+    if (referencedWebOrderId) return `El pedido web #${referencedWebOrderId} ya está registrado. Continuá sobre ese mismo pedido; no lo dupliques.`;
+    // Bind creation to the actual conversation, never an LLM-supplied identity.
+    const [conversation] = await db.select({ phone: conversations.customerPhone }).from(conversations).where(eq(conversations.id, conversationId)).limit(1);
+    if (!conversation?.phone) return "No pude verificar el remitente. No creé el pedido.";
+    customerPhone = normalizePhone(conversation.phone);
 
     // ─── ACTIVE ORDER GUARD: genérico para TODOS los tipos de pedido ──────
     // Verifica si el cliente ya tiene un pedido activo (pending/preparing/ready)
@@ -91,7 +94,7 @@ export function createCreateOrderTool(conversationId: number) {
           and(
             eq(orders.phoneNumber, customerPhone),
             inArray(orders.status, activeStatuses),
-            gt(orders.createdAt, activeThreshold),
+            or(gt(orders.createdAt, activeThreshold), sql`${orders.tags} @> ${JSON.stringify(["Carta digital"])}::jsonb`),
           )
         )
         .orderBy(desc(orders.createdAt))
@@ -100,7 +103,7 @@ export function createCreateOrderTool(conversationId: number) {
         const statusLabel = ORDER_STATUS_INFO[activeOrder.status as keyof typeof ORDER_STATUS_INFO]?.label || activeOrder.status;
         return `Ya tenés un pedido activo (#${activeOrder.id}) en estado ${statusLabel}. No puedo crear otro. Si querés modificar algo, decime.`;
       }
-    } catch { /* non-fatal */ }
+    } catch { return "No pude verificar si ya existe un pedido. Reintentá en un momento para evitar duplicados."; }
 
     // ─── Verificar si hay stock de hamburguesas ──────────────────────────
     if (orderType === "hamburguesas") {

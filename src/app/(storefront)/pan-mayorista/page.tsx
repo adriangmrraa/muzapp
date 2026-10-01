@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import { CatalogImage } from "@/components/products/catalog-image";
 import { motion } from "framer-motion";
 import {
   fadeUp,
@@ -13,6 +13,7 @@ import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
 import { PageHero } from "@/components/layout/page-hero";
 import { ParallaxDivider } from "@/components/layout/parallax-divider";
 import { SellerBadge } from "@/components/ui/seller-badge";
+import { resolveCatalogImageUrl } from "@/lib/catalog-images";
 
 type ProductFromAPI = {
   id: number;
@@ -28,13 +29,13 @@ type ProductFromAPI = {
 };
 
 const BREAD_IMAGES: Record<string, string> = {
-  "pan-brioche":
+  "pan brioche":
     "/assets/images/pan-mayorista/097707a3-f17b-4399-a6d0-66f6457ee64a.jpg",
-  "pan-semillas":
+  "pan con semillas":
     "/assets/images/pan-mayorista/5ee3b05e-fb3b-4bbc-a17f-67ceaeb509eb.jpg",
-  "pan-integral":
+  "pan integral":
     "/assets/images/pan-mayorista/4f61b737-04bf-42d9-b033-a958cd791f6a.jpg",
-  "pan-papa":
+  "pan de papa":
     "/assets/images/pan-mayorista/5c80c0c3-b27e-4b30-94a2-88a6f2981bca.jpg",
 };
 
@@ -228,53 +229,17 @@ export default function PanMayoristaPage() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {products.map((bread) => (
+            {products.map((bread) => {
+              const imageSrc = resolveCatalogImageUrl(bread.imageUrl) ?? BREAD_IMAGES[bread.name.trim().toLowerCase()];
+              return (
               <motion.div
                 key={bread.id}
                 variants={cardEntrance}
-                whileHover={{
-                  scale: 1.03,
-                  boxShadow: "0 0 24px rgba(212,160,23,0.2)",
-                }}
-                className="flex flex-col rounded-2xl overflow-hidden"
-                style={{
-                  background: "rgba(0,0,0,0.5)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                  border: "1px solid rgba(212,160,23,0.3)",
-                }}
+                className="public-product-card"
               >
                 {/* Real bread image */}
                 <div className="relative w-full aspect-[4/3] overflow-hidden">
-                  {BREAD_IMAGES[bread.id] ? (
-                    <Image
-                      src={BREAD_IMAGES[bread.id]}
-                      alt={bread.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    />
-                  ) : (
-                    <div
-                      className="w-full h-full flex items-center justify-center text-5xl"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(212,160,23,0.12) 0%, rgba(232,113,42,0.07) 100%)",
-                      }}
-                    >
-                      <span role="img" aria-label={bread.name}>
-                        🍞
-                      </span>
-                    </div>
-                  )}
-                  {/* Overlay gradient */}
-                  <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background:
-                        "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)",
-                    }}
-                  />
+                  <CatalogImage src={imageSrc} alt={bread.name} sizes="(max-width: 640px) 100vw, 33vw" />
                 </div>
 
                 <div className="flex flex-col gap-2 p-5">
@@ -300,7 +265,8 @@ export default function PanMayoristaPage() {
                   />
                 </div>
               </motion.div>
-            ))}
+              );
+            })}
           </motion.div>
         </div>
       </section>

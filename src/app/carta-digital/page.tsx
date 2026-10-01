@@ -24,15 +24,10 @@ export default async function CartaDigitalPage() {
     .from(promotions)
     .where(eq(promotions.active, true));
 
-  const whatsappPhone = process.env.WHATSAPP_PHONE_NUMBER
-    ? process.env.WHATSAPP_PHONE_NUMBER.replace(/[+\s]/g, "")
-    : "5493705241065";
-
   return (
     <MenuDigitalClient
       products={items}
       promos={activePromos}
-      whatsappPhone={whatsappPhone}
     />
   );
 }

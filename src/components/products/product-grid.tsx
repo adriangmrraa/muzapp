@@ -5,27 +5,47 @@ import { ProductCard } from "./product-card";
 import { motion } from "framer-motion";
 import { staggerContainer } from "@/lib/animation-variants";
 
+type ApiProduct = {
+  id: number | string;
+  name: string;
+  price: string | number | null;
+  description?: string | null;
+  isPromo?: boolean;
+  promoPrice?: string | null;
+  imageUrl?: string | null;
+  comingSoon?: boolean;
+  discountPercentage?: number;
+  originalPrice?: number;
+  hasFreeShipping?: boolean;
+  soldCount?: number;
+};
+
 interface ProductGridProps {
-  products: Product[] | any[];
+  products: Array<Product | ApiProduct>;
 }
 
 export function ProductGrid({ products }: ProductGridProps) {
-  // Normalize products from API or constants format
-  const normalized = products.map((p, i) => {
-    // If has 'price' as number, convert to string for ProductCard
-    if (typeof p.price === "number") {
-      return {
-        id: String(p.id),
-        name: p.name,
-        price: p.price,
-        ingredients: p.description || "",
-        emoji: "🍔",
-        imageUrl: p.imageUrl || null,
-        comingSoon: p.comingSoon,
-      };
-    }
-    // Already in Product format
-    return p;
+  // Las páginas públicas reciben productos desde dos fuentes: constantes locales
+  // y la API (donde numeric llega como string). ProductCard necesita un formato único.
+  const normalized: Product[] = products.map((product) => {
+    const rawPrice = "isPromo" in product && product.isPromo && product.promoPrice != null ? product.promoPrice : product.price;
+    const parsedPrice = typeof rawPrice === "number" ? rawPrice : Number.parseFloat(rawPrice ?? "");
+    return {
+      id: String(product.id),
+      name: product.name,
+      price: Number.isFinite(parsedPrice) ? parsedPrice : null,
+      ingredients:
+        ("ingredients" in product ? product.ingredients : undefined) ||
+        ("description" in product ? product.description : undefined) ||
+        "",
+      emoji: ("emoji" in product ? product.emoji : undefined) || "🍔",
+      imageUrl: product.imageUrl || null,
+      comingSoon: Boolean(product.comingSoon),
+      discountPercentage: product.discountPercentage,
+      originalPrice: product.originalPrice,
+      hasFreeShipping: product.hasFreeShipping,
+      soldCount: product.soldCount,
+    };
   });
 
   return (

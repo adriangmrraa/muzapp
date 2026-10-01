@@ -1,3 +1,4 @@
+import { StorefrontMotion } from "@/components/storefront/motion-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppFAB } from "@/components/layout/whatsapp-fab";
@@ -10,12 +11,12 @@ export default function StorefrontLayout({
   children: React.ReactNode;
 }) {
   return (
-    <CartProvider>
+    <StorefrontMotion><CartProvider>
       <Navbar />
       <UTMCaptureScript />
       <main className="flex-1 overflow-x-hidden">{children}</main>
       <Footer />
       <WhatsAppFAB />
-    </CartProvider>
+    </CartProvider></StorefrontMotion>
   );
 }

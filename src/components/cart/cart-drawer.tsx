@@ -1,9 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { useCart } from "@/lib/cart/cart-context"
-import { buildOrderMessage } from "@/lib/cart/build-order-message"
-import { getWhatsAppNumber } from "@/lib/whatsapp/get-number"
+import { CheckoutForm } from "./checkout-form"
 import {
   Sheet,
   SheetContent,
@@ -17,10 +15,8 @@ import {
   Plus,
   Minus,
   Trash2,
-  ArrowRight,
 } from "lucide-react"
 
-const FALLBACK_NUMBER = "5493705115020"
 
 type CartDrawerProps = {
   open: boolean
@@ -30,31 +26,9 @@ type CartDrawerProps = {
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, total, itemCount, updateQuantity, removeItem, clearCart } =
     useCart()
-  const [whatsappNumber, setWhatsappNumber] = useState(FALLBACK_NUMBER)
-
-  // Cargar el número desde la DB (admin UI) al montar
-  useEffect(() => {
-    getWhatsAppNumber().then(setWhatsappNumber).catch(() => {
-      // fallback silencioso
-    })
-  }, [])
-
-  function handleWhatsApp() {
-    const message = buildOrderMessage(
-      items.map((i) => ({
-        name: i.product.name,
-        quantity: i.quantity,
-        price: i.product.price,
-      })),
-    )
-    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
-    window.open(url, "_blank")
-    onClose()
-  }
-
   return (
     <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="flex w-full flex-col sm:max-w-md">
+      <SheetContent side="right" className="flex w-full flex-col overflow-y-auto p-5 sm:max-w-md">
         <SheetHeader className="flex-row items-center justify-between gap-0">
           <SheetTitle className="flex items-center gap-2 text-lg">
             <ShoppingCart className="size-5" />
@@ -101,7 +75,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         updateQuantity(item.product.id, item.quantity - 1)
                       }
                     >
-                      <Minus className="size-3" />
+                      <Minus className="size-3" aria-label="Quitar una unidad" />
                     </Button>
                     <span className="w-6 text-center text-sm tabular-nums">
                       {item.quantity}
@@ -113,7 +87,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         updateQuantity(item.product.id, item.quantity + 1)
                       }
                     >
-                      <Plus className="size-3" />
+                      <Plus className="size-3" aria-label="Agregar una unidad" />
                     </Button>
                   </div>
 
@@ -125,7 +99,8 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                     variant="ghost"
                     size="icon-xs"
                     onClick={() => removeItem(item.product.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Eliminar ${item.product.name}`}
+                    className="opacity-70 hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="size-3 text-destructive" />
                   </Button>
@@ -147,14 +122,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                 </div>
               </div>
 
-              <Button
-                variant="premium"
-                className="w-full gap-2 py-5 text-base"
-                onClick={handleWhatsApp}
-              >
-                Enviar pedido por WhatsApp
-                <ArrowRight className="size-4" />
-              </Button>
+              <CheckoutForm key={items.map(i => `${i.product.id}:${i.quantity}`).join(",")} items={items.map(i => ({ type: "product", id: Number(i.product.id), quantity: i.quantity }))} />
 
               <div className="flex justify-center">
                 <button

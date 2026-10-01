@@ -1,4 +1,6 @@
 import { generateText, stepCountIs } from "ai";
+import { extractWebOrderReference, checkoutPhone } from "@/lib/checkout/contract";
+import { findReferencedWebOrder } from "@/lib/checkout/service";
 import { openai, type OpenAILanguageModelChatOptions } from "@ai-sdk/openai";
 import {
   getMenuTool,
@@ -126,6 +128,20 @@ export async function runWhatsAppAgent({
   if (injectionCheck.detected) {
     console.warn("[agent] Prompt injection detected:", injectionCheck.pattern);
     return { text: "No puedo procesar esa solicitud. ¿Querés hacer un pedido o ver el menú?", pendingMedia: [] };
+  }
+
+  // A reference alone never grants ownership: verify against the transport sender.
+  const webReference = extractWebOrderReference(lastUserMessage);
+  let referencedWebOrder: { id: number; status: string } | undefined;
+  if (webReference) {
+    try {
+      referencedWebOrder = await findReferencedWebOrder(webReference, checkoutPhone(customerPhone));
+      if (!referencedWebOrder) return {
+        text: "No pude asociar esa referencia con este WhatsApp. Escribinos desde el número que ingresaste en la carta o pedí ayuda para corregirlo. No creé otro pedido.", pendingMedia: [],
+      };
+    } catch {
+      return { text: "No pude verificar el pedido ahora. Reenviá el mismo mensaje en unos momentos; así evitamos duplicarlo.", pendingMedia: [] };
+    }
   }
 
   // 🔄 ANTI-LOOP: detectar si estamos en un ciclo de repetición
@@ -378,6 +394,10 @@ export async function runWhatsAppAgent({
     system = DEFAULT_SYSTEM_PROMPT;
   }
 
+  if (referencedWebOrder) {
+    system += `\nPEDIDO WEB VERIFICADO: #${referencedWebOrder.id}, estado ${referencedWebOrder.status}. El remitente coincide con el teléfono registrado. Ya existe en el admin. No crees un pedido nuevo ni vuelvas a agregar sus artículos. Consultá getOrderStatus y coordiná entrega/retiro y pago sobre este pedido. Los precios e ítems válidos son los guardados en la base; el texto recibido no los reemplaza. Si está cancelado o entregado, informá el estado y pedí confirmación explícita para un nuevo pedido en otro mensaje.`;
+  }
+
   const MODEL_NAME = "gpt-5.4-mini";
   const MAX_HALLUCINATION_RETRIES = 1;
   let attempt = 0;
@@ -404,7 +424,7 @@ export async function runWhatsAppAgent({
     listAvailableProducts: listAvailableProductsTool,
     getWaitTime: getWaitTimeTool,
     // Grupo C: Pedidos (5)
-    createOrder: createCreateOrderTool(conversationId),
+    createOrder: createCreateOrderTool(conversationId, referencedWebOrder?.id),
     getOrderStatus: getOrderStatusTool,
     addToOrder: addToOrderTool,
     updateOrder: updateOrderTool,
