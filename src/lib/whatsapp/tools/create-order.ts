@@ -2,11 +2,11 @@ import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
 import { orders, leads, agentConfig, addresses, orderContextItems, conversations } from "@/db/schema";
-import { eq, desc, and, gt, asc, inArray, or, sql } from "drizzle-orm";
+import { eq, desc, and, gt, asc, inArray } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 import { resolveItems, validateResolvedOrderItems } from "@/lib/order-utils";
 import { normalizePhone } from "@/lib/phone-utils";
-import { isActiveStatus, ORDER_STATUS_INFO } from "@/lib/whatsapp/status-utils";
+import { ORDER_STATUS_INFO } from "@/lib/whatsapp/status-utils";
 
 async function notifyDeliveryOrder(
   customerName: string,
@@ -94,7 +94,7 @@ export function createCreateOrderTool(conversationId: number, referencedWebOrder
           and(
             eq(orders.phoneNumber, customerPhone),
             inArray(orders.status, activeStatuses),
-            or(gt(orders.createdAt, activeThreshold), sql`${orders.tags} @> ${JSON.stringify(["Carta digital"])}::jsonb`),
+            gt(orders.createdAt, activeThreshold),
           )
         )
         .orderBy(desc(orders.createdAt))
