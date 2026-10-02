@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { fadeUp, staggerContainer } from "@/lib/animation-variants";
+import { fadeUp, staggerContainer, clipReveal } from "@/lib/animation-variants";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { reducedMotionVariant } from "@/lib/animation-variants";
 import { WhatsAppCTA } from "@/components/attribution/whatsapp-cta";
@@ -23,6 +23,10 @@ export function BreadShowcase() {
   const itemVariants = prefersReduced
     ? reducedMotionVariant(fadeUp)
     : fadeUp;
+
+  const imageVariants = prefersReduced
+    ? reducedMotionVariant(clipReveal)
+    : clipReveal;
 
   return (
     <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
@@ -106,7 +110,7 @@ export function BreadShowcase() {
         >
           {/* Main image */}
           <motion.div
-            variants={itemVariants}
+            variants={imageVariants}
             className="col-span-2 relative aspect-[4/3] md:absolute md:inset-x-0 md:top-0 md:max-h-[340px] rounded-2xl overflow-hidden"
             style={{
               border: "1px solid rgba(212,160,23,0.3)",
@@ -132,7 +136,7 @@ export function BreadShowcase() {
 
           {/* Smaller image */}
           <motion.div
-            variants={itemVariants}
+            variants={imageVariants}
             className="relative aspect-square md:absolute md:bottom-0 md:right-0 md:w-48 rounded-2xl overflow-hidden"
             style={{
               border: "1px solid rgba(212,160,23,0.4)",
@@ -159,7 +163,7 @@ export function BreadShowcase() {
 
           {/* Small accent image */}
           <motion.div
-            variants={itemVariants}
+            variants={imageVariants}
             className="relative aspect-[3/2] md:absolute md:bottom-8 md:left-0 md:w-36 rounded-2xl overflow-hidden"
             style={{
               border: "1px solid rgba(212,160,23,0.35)",

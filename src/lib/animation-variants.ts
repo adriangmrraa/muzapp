@@ -73,3 +73,51 @@ export const heroChild: Variants = {
     transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] },
   },
 };
+
+/* ─── Premium variants ─── */
+
+export const blurIn: Variants = {
+  hidden: { opacity: 0, filter: "blur(10px)", y: 16 },
+  visible: {
+    opacity: 1,
+    filter: "blur(0px)",
+    y: 0,
+    transition: { duration: 0.7, ease: [0.25, 0.1, 0.25, 1] },
+  },
+};
+
+export const clipReveal: Variants = {
+  hidden: { opacity: 0, clipPath: "inset(12% 6% 12% 6% round 16px)", scale: 0.97 },
+  visible: {
+    opacity: 1,
+    clipPath: "inset(0% 0% 0% 0% round 16px)",
+    scale: 1,
+    transition: { duration: 0.7, ease: [0.33, 1, 0.68, 1] },
+  },
+};
+
+export const wordRevealContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.09, delayChildren: 0.1 },
+  },
+};
+
+export const wordReveal: Variants = {
+  hidden: { y: "115%", rotate: 4 },
+  visible: {
+    y: "0%",
+    rotate: 0,
+    transition: { duration: 0.65, ease: [0.33, 1, 0.68, 1] },
+  },
+};
+
+export const pageEnter: Variants = {
+  hidden: { opacity: 0, y: 14, filter: "blur(6px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
+  },
+};

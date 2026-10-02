@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useScroll, useTransform, motion } from "framer-motion";
+import { useRef, useState } from "react";
+import {
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useMotionValueEvent,
+  motion,
+} from "framer-motion";
 import { usePathname } from "next/navigation";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
@@ -21,6 +28,9 @@ const NAV_LINKS = [
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const prevY = useRef(0);
+  const prefersReduced = useReducedMotion();
   const { itemCount } = useCart();
   const pathname = usePathname();
   const { scrollY } = useScroll();
@@ -30,9 +40,19 @@ export function Navbar() {
     ["rgba(0,0,0,0.7)", "rgba(0,0,0,0.95)"]
   );
 
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const prev = prevY.current;
+    prevY.current = latest;
+    if (latest > prev && latest > 140) setHidden(true);
+    else if (latest < prev) setHidden(false);
+  });
+
   return (
     <><motion.header
       className="fixed top-0 left-0 right-0 z-50"
+      initial={false}
+      animate={prefersReduced ? {} : { y: hidden ? "-100%" : "0%" }}
+      transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
       style={{
         background: bgColor,
         backdropFilter: "blur(20px)",
@@ -90,13 +110,21 @@ export function Navbar() {
               aria-label="Abrir carrito"
             >
               <ShoppingBag className="h-5 w-5" />
-              {itemCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold rounded-full"
-                  style={{ background: "#D4A017", color: "#0a0a0a" }}
-                >
-                  {itemCount > 9 ? "9+" : itemCount}
-                </span>
-              )}
+              <AnimatePresence mode="popLayout">
+                {itemCount > 0 && (
+                  <motion.span
+                    key={itemCount}
+                    initial={prefersReduced ? {} : { scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                    className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold rounded-full"
+                    style={{ background: "#D4A017", color: "#0a0a0a" }}
+                  >
+                    {itemCount > 9 ? "9+" : itemCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
           </div>
 

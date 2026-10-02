@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/footer";
 import { WhatsAppFAB } from "@/components/layout/whatsapp-fab";
 import { UTMCaptureScript } from "@/components/attribution/utm-capture-script";
 import { CartProvider } from "@/lib/cart/cart-context";
+import { ScrollProgress } from "@/components/motion/scroll-progress";
 
 export default function StorefrontLayout({
   children,
@@ -12,6 +13,7 @@ export default function StorefrontLayout({
 }) {
   return (
     <StorefrontMotion><CartProvider>
+      <ScrollProgress />
       <Navbar />
       <UTMCaptureScript />
       <main className="flex-1 overflow-x-hidden">{children}</main>

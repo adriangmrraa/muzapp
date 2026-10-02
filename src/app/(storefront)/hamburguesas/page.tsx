@@ -85,15 +85,8 @@ export default function HamburguesasPage() {
           </motion.span>
           <motion.h1
             variants={heroChild}
-            className="text-4xl sm:text-5xl font-black"
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              background:
-                "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
+            className="text-gold-shimmer text-4xl sm:text-5xl font-black"
+            style={{ fontFamily: "var(--font-playfair), serif" }}
           >
             Nuestras Hamburguesas
           </motion.h1>

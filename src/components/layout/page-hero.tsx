@@ -29,6 +29,9 @@ export function PageHero({ backgroundImage, children }: PageHeroProps) {
       <motion.div
         className="absolute inset-x-0"
         style={{ y: reduced ? 0 : y, top: "-10%", bottom: "-10%", height: "120%", position: "absolute" }}
+        initial={reduced ? false : { opacity: 0, scale: 1.08 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1] }}
       >
         <Image
           src={backgroundImage}

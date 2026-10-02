@@ -105,15 +105,8 @@ export default function PanMayoristaPage() {
 
         <motion.h1
           variants={heroChild}
-          className="text-4xl sm:text-6xl font-black leading-tight"
-          style={{
-            fontFamily: "var(--font-playfair), serif",
-            background:
-              "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
+          className="text-gold-shimmer text-4xl sm:text-6xl font-black leading-tight"
+          style={{ fontFamily: "var(--font-playfair), serif" }}
         >
           Pan Artesanal
           <br />
@@ -171,7 +164,7 @@ export default function PanMayoristaPage() {
                   scale: 1.03,
                   boxShadow: "0 0 24px rgba(212,160,23,0.2)",
                 }}
-                className="flex flex-col gap-3 p-6 rounded-2xl transition-colors duration-300 cursor-default"
+                className="shine-sweep flex flex-col gap-3 p-6 rounded-2xl transition-colors duration-300 cursor-default"
                 style={{
                   background: "rgba(0,0,0,0.5)",
                   backdropFilter: "blur(12px)",
@@ -235,7 +228,7 @@ export default function PanMayoristaPage() {
               <motion.div
                 key={bread.id}
                 variants={cardEntrance}
-                className="public-product-card"
+                className="public-product-card shine-sweep"
               >
                 {/* Real bread image */}
                 <div className="relative w-full aspect-[4/3] overflow-hidden">

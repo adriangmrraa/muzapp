@@ -24,6 +24,13 @@ export function ParallaxDivider({
   });
 
   const y = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
+  const contentY = useTransform(scrollYProgress, [0, 0.5, 1], [50, 0, -50]);
+  const contentOpacity = useTransform(
+    scrollYProgress,
+    [0, 0.35, 0.65, 1],
+    [0, 1, 1, 0]
+  );
+  const contentScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.92, 1, 0.92]);
 
   return (
     <div
@@ -52,9 +59,12 @@ export function ParallaxDivider({
       />
 
       {children && (
-        <div className="relative z-10 flex items-center justify-center h-full px-4">
+        <motion.div
+          className="relative z-10 flex items-center justify-center h-full px-4"
+          style={{ y: contentY, opacity: contentOpacity, scale: contentScale }}
+        >
           {children}
-        </div>
+        </motion.div>
       )}
     </div>
   );

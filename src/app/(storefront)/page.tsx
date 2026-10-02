@@ -11,6 +11,16 @@ import { ClientGallery } from "@/components/home/client-gallery";
 import { BreadShowcase } from "@/components/home/bread-showcase";
 import { DeliveryCTA } from "@/components/home/delivery-cta";
 import { ParallaxDivider } from "@/components/layout/parallax-divider";
+import { Marquee } from "@/components/motion/marquee";
+
+const MARQUEE_ITEMS = [
+  "Hamburguesas artesanales",
+  "Pan de elaboración propia",
+  "Ingredientes frescos",
+  "Hecho al momento",
+  "Envío a domicilio",
+  "Formosa Capital",
+];
 
 const STATS = [
   { value: "100%", label: "Ingredientes frescos" },
@@ -23,6 +33,8 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
+
+      <Marquee items={MARQUEE_ITEMS} />
 
       <FeaturedProductsSection />
 
@@ -72,13 +84,13 @@ export default function HomePage() {
                 <div className="flex gap-4 mt-2">
                   <Link
                     href="/hamburguesas"
-                    className="btn-gold inline-flex items-center justify-center px-6 py-3 text-sm font-bold uppercase tracking-widest"
+                    className="btn-gold shine-sweep inline-flex items-center justify-center px-6 py-3 text-sm font-bold uppercase tracking-widest"
                   >
                     Ver Menú
                   </Link>
                   <Link
                     href="/pan-mayorista"
-                    className="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105"
+                    className="shine-sweep inline-flex items-center justify-center px-6 py-3 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105"
                     style={{
                       background: "rgba(212,160,23,0.08)",
                       border: "1px solid rgba(212,160,23,0.3)",
@@ -146,7 +158,7 @@ export default function HomePage() {
               Deslizá todos nuestros productos, armá tu pedido y enviá directo por WhatsApp. Rápido y sin vueltas.
             </p>
             <a href="/carta-digital"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105"
+              className="shine-sweep inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105"
               style={{
                 background: "linear-gradient(135deg, #D4A017, #F5A623)",
                 color: "#000",

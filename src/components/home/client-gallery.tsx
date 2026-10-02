@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { staggerContainer, cardEntrance } from "@/lib/animation-variants";
+import { staggerContainer, clipReveal, blurIn } from "@/lib/animation-variants";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { reducedMotionVariant } from "@/lib/animation-variants";
 
@@ -41,8 +41,12 @@ export function ClientGallery() {
     : staggerContainer;
 
   const itemVariants = prefersReduced
-    ? reducedMotionVariant(cardEntrance)
-    : cardEntrance;
+    ? reducedMotionVariant(clipReveal)
+    : clipReveal;
+
+  const headingVariants = prefersReduced
+    ? reducedMotionVariant(blurIn)
+    : blurIn;
 
   return (
     <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
@@ -56,7 +60,7 @@ export function ClientGallery() {
           variants={containerVariants}
         >
           <motion.h2
-            variants={itemVariants}
+            variants={headingVariants}
             className="text-4xl sm:text-5xl font-black leading-tight mb-4"
             style={{
               fontFamily: "var(--font-playfair), serif",
@@ -69,7 +73,7 @@ export function ClientGallery() {
             Nuestros Clientes Disfrutan
           </motion.h2>
           <motion.p
-            variants={itemVariants}
+            variants={headingVariants}
             className="text-white/60 text-lg font-light"
           >
             Lo que dicen en Instagram

@@ -53,6 +53,8 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
         <motion.div
           variants={heroChild}
           whileHover={{ scale: 1.08, rotate: 3 }}
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
           className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl cursor-default"
           style={{
             background:
