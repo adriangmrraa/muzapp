@@ -28,23 +28,14 @@ export function MetaConnectButton({ isConnected, businessName, onDisconnect }: P
 
   async function handleConnect() {
     setConnecting(true);
-    const state = await generateMetaOAuthState();
-    if (!state) {
+    // The server builds the OAuth URL from the configured Meta App ID
+    // (DB via /admin/agent or env) — the client never sees app credentials.
+    const oauth = await generateMetaOAuthState();
+    if (!oauth?.authUrl) {
       setConnecting(false);
       return;
     }
-    const redirectUri = `${window.location.origin}/api/meta/callback`;
-
-    const params = new URLSearchParams({
-      client_id: process.env.NEXT_PUBLIC_META_APP_ID || "",
-      redirect_uri: redirectUri,
-      scope: "whatsapp_business_management,whatsapp_business_messaging",
-      response_type: "code",
-      state,
-    });
-
-    const url = `https://www.facebook.com/v22.0/dialog/oauth?${params}`;
-    window.open(url, "meta-oauth", "width=600,height=700,scrollbars=yes");
+    window.open(oauth.authUrl, "meta-oauth", "width=600,height=700,scrollbars=yes");
   }
 
   if (isConnected) {

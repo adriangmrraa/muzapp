@@ -4,8 +4,9 @@ import { findOrCreateConversation, insertMessage } from "@/lib/channels/router";
 
 // Meta signs webhook payloads with X-Hub-Signature-256: sha256=<hmac>
 // computed over the raw body using the app secret.
-function verifyMetaSignature(rawBody: string, header: string | null): boolean {
-  const secret = process.env.META_APP_SECRET;
+async function verifyMetaSignature(rawBody: string, header: string | null): Promise<boolean> {
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const secret = (await getIntegrationSecrets()).metaAppSecret;
   if (!secret || !header?.startsWith("sha256=")) return false;
   const expected = `sha256=${createHmac("sha256", secret).update(rawBody).digest("hex")}`;
   const a = Buffer.from(expected);
@@ -18,7 +19,8 @@ export async function GET(req: NextRequest) {
   const mode = req.nextUrl.searchParams.get("hub.mode");
   const token = req.nextUrl.searchParams.get("hub.verify_token");
   const challenge = req.nextUrl.searchParams.get("hub.challenge");
-  const expected = process.env.META_WEBHOOK_VERIFY_TOKEN;
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const expected = (await getIntegrationSecrets()).metaWebhookVerifyToken;
 
   // Fail closed when the verify token is unset or empty — an empty env would
   // otherwise match an empty query param and confirm subscriptions for anyone.
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
 // POST: Incoming messages from Meta
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
-  if (!verifyMetaSignature(rawBody, req.headers.get("x-hub-signature-256"))) {
+  if (!(await verifyMetaSignature(rawBody, req.headers.get("x-hub-signature-256")))) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 

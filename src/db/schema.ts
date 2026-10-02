@@ -170,6 +170,17 @@ export const agentConfig = pgTable("agent_config", {
   aiModel: varchar("ai_model", { length: 120 }),
   aiModelFast: varchar("ai_model_fast", { length: 120 }),
   aiModelVision: varchar("ai_model_vision", { length: 120 }),
+  // ─── Integration secrets (editable desde admin, write-only en UI) ──────────
+  ycloudWebhookSecret: text("ycloud_webhook_secret"),
+  cloudinaryCloudName: varchar("cloudinary_cloud_name", { length: 120 }),
+  cloudinaryApiKey: varchar("cloudinary_api_key", { length: 120 }),
+  cloudinaryApiSecret: text("cloudinary_api_secret"),
+  metaAppId: varchar("meta_app_id", { length: 80 }),
+  metaAppSecret: text("meta_app_secret"),
+  metaWebhookVerifyToken: varchar("meta_webhook_verify_token", { length: 200 }),
+  telegramNotifyChatId: varchar("telegram_notify_chat_id", { length: 50 }),
+  cronSecret: varchar("cron_secret", { length: 200 }),
+  escalationEmail: varchar("escalation_email", { length: 200 }),
   // ───────────────────────────────────────────────────────────────────────────
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

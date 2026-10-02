@@ -94,6 +94,17 @@ export type AgentConfigFormData = {
   aiModel: string;
   aiModelFast: string;
   aiModelVision: string;
+  // ─── Integrations — secrets arrive only as …Set flags, never raw ───────
+  ycloudWebhookSecretSet: boolean;
+  cloudinaryCloudName: string;
+  cloudinaryApiKey: string;
+  cloudinaryApiSecretSet: boolean;
+  metaAppId: string;
+  metaAppSecretSet: boolean;
+  metaWebhookVerifyTokenSet: boolean;
+  telegramNotifyChatId: string;
+  cronSecretSet: boolean;
+  escalationEmail: string;
 };
 
 const initialState: AgentConfigState = {
@@ -550,6 +561,151 @@ export default function AgentConfigForm({
                     name="aiModelVision"
                     placeholder="gpt-4o"
                     defaultValue={config.aiModelVision}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ═════════════════════════════════════════════════════════════════════
+           3d. Integraciones — secrets write-only (vacío = conservar, CLEAR = borrar)
+           ═════════════════════════════════════════════════════════════════════ */}
+        <motion.div variants={fadeUpSmall}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Integraciones</CardTitle>
+              <CardDescription>
+                Credenciales de servicios externos. Los campos de secreto nunca
+                muestran el valor guardado: dejá vacío para conservarlo,
+                escribí uno nuevo para reemplazarlo o <code>CLEAR</code> para
+                borrarlo. Si no se cargan acá, se usan las variables de entorno.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              {/* YCloud */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="ycloudWebhookSecret">YCloud — Webhook Secret</Label>
+                <Input
+                  id="ycloudWebhookSecret"
+                  name="ycloudWebhookSecret"
+                  type="password"
+                  autoComplete="off"
+                  placeholder={
+                    config.ycloudWebhookSecretSet
+                      ? "•••••••• (guardado)"
+                      : "Secret de firma del webhook de YCloud"
+                  }
+                />
+              </div>
+
+              {/* Cloudinary */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="cloudinaryCloudName">Cloudinary — Cloud name</Label>
+                  <Input
+                    id="cloudinaryCloudName"
+                    name="cloudinaryCloudName"
+                    defaultValue={config.cloudinaryCloudName}
+                    placeholder="mi-cloud"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="cloudinaryApiKey">Cloudinary — API key</Label>
+                  <Input
+                    id="cloudinaryApiKey"
+                    name="cloudinaryApiKey"
+                    defaultValue={config.cloudinaryApiKey}
+                    placeholder="123456789"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="cloudinaryApiSecret">Cloudinary — API secret</Label>
+                  <Input
+                    id="cloudinaryApiSecret"
+                    name="cloudinaryApiSecret"
+                    type="password"
+                    autoComplete="off"
+                    placeholder={
+                      config.cloudinaryApiSecretSet ? "•••••••• (guardado)" : "Secret"
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Meta */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="metaAppId">Meta — App ID</Label>
+                  <Input
+                    id="metaAppId"
+                    name="metaAppId"
+                    defaultValue={config.metaAppId}
+                    placeholder="1234567890"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="metaAppSecret">Meta — App secret</Label>
+                  <Input
+                    id="metaAppSecret"
+                    name="metaAppSecret"
+                    type="password"
+                    autoComplete="off"
+                    placeholder={
+                      config.metaAppSecretSet ? "•••••••• (guardado)" : "App secret"
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="metaWebhookVerifyToken">Meta — Webhook verify token</Label>
+                  <Input
+                    id="metaWebhookVerifyToken"
+                    name="metaWebhookVerifyToken"
+                    type="password"
+                    autoComplete="off"
+                    placeholder={
+                      config.metaWebhookVerifyTokenSet
+                        ? "•••••••• (guardado)"
+                        : "Token aleatorio que inventás"
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Ops */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="telegramNotifyChatId">Telegram — Chat ID de avisos</Label>
+                  <Input
+                    id="telegramNotifyChatId"
+                    name="telegramNotifyChatId"
+                    defaultValue={config.telegramNotifyChatId}
+                    placeholder="1991128737"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Recibe avisos de pedidos mayoristas y derivaciones.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="cronSecret">Cron — Secret</Label>
+                  <Input
+                    id="cronSecret"
+                    name="cronSecret"
+                    type="password"
+                    autoComplete="off"
+                    placeholder={
+                      config.cronSecretSet ? "•••••••• (guardado)" : "Token para /api/cron/*"
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="escalationEmail">Email de derivaciones</Label>
+                  <Input
+                    id="escalationEmail"
+                    name="escalationEmail"
+                    type="email"
+                    defaultValue={config.escalationEmail}
+                    placeholder="dueño@tunegocio.com"
                   />
                 </div>
               </div>

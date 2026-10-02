@@ -56,6 +56,16 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   aiModel: "",
   aiModelFast: "",
   aiModelVision: "",
+  ycloudWebhookSecretSet: false,
+  cloudinaryCloudName: "",
+  cloudinaryApiKey: "",
+  cloudinaryApiSecretSet: false,
+  metaAppId: "",
+  metaAppSecretSet: false,
+  metaWebhookVerifyTokenSet: false,
+  telegramNotifyChatId: "",
+  cronSecretSet: false,
+  escalationEmail: "",
 };
 
 export default async function AgentPage() {
@@ -119,6 +129,17 @@ export default async function AgentPage() {
         aiModel: (row.aiModel as string) ?? "",
         aiModelFast: (row.aiModelFast as string) ?? "",
         aiModelVision: (row.aiModelVision as string) ?? "",
+        // Integration secrets — only the "is it configured?" flag leaves the server.
+        ycloudWebhookSecretSet: Boolean(row.ycloudWebhookSecret),
+        cloudinaryCloudName: (row.cloudinaryCloudName as string) ?? "",
+        cloudinaryApiKey: (row.cloudinaryApiKey as string) ?? "",
+        cloudinaryApiSecretSet: Boolean(row.cloudinaryApiSecret),
+        metaAppId: (row.metaAppId as string) ?? "",
+        metaAppSecretSet: Boolean(row.metaAppSecret),
+        metaWebhookVerifyTokenSet: Boolean(row.metaWebhookVerifyToken),
+        telegramNotifyChatId: (row.telegramNotifyChatId as string) ?? "",
+        cronSecretSet: Boolean(row.cronSecret),
+        escalationEmail: (row.escalationEmail as string) ?? "",
       }
     : DEFAULT_CONFIG;
 

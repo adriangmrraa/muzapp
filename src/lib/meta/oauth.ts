@@ -5,9 +5,11 @@ const META_GRAPH_VERSION = "v22.0";
 // Cookie holding the CSRF nonce between the OAuth request and its callback.
 export const META_OAUTH_STATE_COOKIE = "meta_oauth_state";
 
-export function buildMetaOAuthUrl(redirectUri: string, state: string): string {
+export async function buildMetaOAuthUrl(redirectUri: string, state: string): Promise<string> {
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const { metaAppId } = await getIntegrationSecrets();
   const params = new URLSearchParams({
-    client_id: process.env.META_APP_ID || "",
+    client_id: metaAppId,
     redirect_uri: redirectUri,
     scope: "whatsapp_business_management,whatsapp_business_messaging",
     response_type: "code",
@@ -20,9 +22,11 @@ export async function exchangeCodeForToken(
   code: string,
   redirectUri: string
 ): Promise<{ accessToken: string; expiresIn: number }> {
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const secrets = await getIntegrationSecrets();
   const params = new URLSearchParams({
-    client_id: process.env.META_APP_ID || "",
-    client_secret: process.env.META_APP_SECRET || "",
+    client_id: secrets.metaAppId,
+    client_secret: secrets.metaAppSecret,
     code,
     redirect_uri: redirectUri,
   });

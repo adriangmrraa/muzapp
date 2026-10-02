@@ -16,9 +16,11 @@ export interface MetaConfig {
   hasPixel: boolean;
 }
 
-export function getMetaConfig(): MetaConfig {
-  const appId = process.env.META_APP_ID;
-  const appSecret = process.env.META_APP_SECRET;
+export async function getMetaConfig(): Promise<MetaConfig> {
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const secrets = await getIntegrationSecrets();
+  const appId = secrets.metaAppId || undefined;
+  const appSecret = secrets.metaAppSecret || undefined;
   const pixelId =
     typeof process.env.NEXT_PUBLIC_META_PIXEL_ID === "string" &&
     process.env.NEXT_PUBLIC_META_PIXEL_ID.length > 0
@@ -45,8 +47,8 @@ export function getMetaConfig(): MetaConfig {
  * el Client OAuth flow (appId + appSecret).
  * Útil para hacer llamadas a la Conversion API.
  */
-export function getMetaAccessToken(): string | null {
-  const cfg = getMetaConfig();
+export async function getMetaAccessToken(): Promise<string | null> {
+  const cfg = await getMetaConfig();
   if (!cfg.hasServerConfig) return null;
   // Meta Access Token = appId|appSecret (client credentials grant)
   return `${cfg.appId}|${cfg.appSecret}`;

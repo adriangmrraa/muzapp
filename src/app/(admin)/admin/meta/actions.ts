@@ -35,7 +35,7 @@ export type WebhookConfig = {
  * Lo persiste en una cookie httpOnly firmada por el servidor para que el
  * callback pueda verificar que la redirección corresponde a ESTA sesión.
  */
-export async function generateMetaOAuthState(): Promise<string | null> {
+export async function generateMetaOAuthState(): Promise<{ state: string; authUrl: string } | null> {
   if (!(await requireAdmin())) return null;
 
   const state = randomBytes(24).toString("hex");
@@ -47,7 +47,18 @@ export async function generateMetaOAuthState(): Promise<string | null> {
     path: "/api/meta",
     maxAge: 600, // 10 min — el flujo OAuth completo tarda mucho menos
   });
-  return state;
+
+  const host =
+    process.env.AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.RENDER_EXTERNAL_URL
+      ? `https://${process.env.RENDER_EXTERNAL_URL.replace(/^https?:\/\//, "")}`
+      : null);
+  if (!host) return null;
+
+  const { buildMetaOAuthUrl } = await import("@/lib/meta/oauth");
+  const authUrl = await buildMetaOAuthUrl(`${host}/api/meta/callback`, state);
+  return { state, authUrl };
 }
 
 /**
@@ -64,7 +75,7 @@ export async function getMetaStatus(): Promise<MetaConnectionStatus> {
     };
   }
 
-  const cfg = getMetaConfig();
+  const cfg = await getMetaConfig();
   return {
     pixelConfigured: cfg.hasPixel,
     serverConfigured: cfg.hasServerConfig,
@@ -89,9 +100,17 @@ export async function getWebhookConfig(): Promise<WebhookConfig> {
     };
   }
 
-  const secret = process.env.YCLOUD_WEBHOOK_SECRET;
-  const apiKey = process.env.YCLOUD_API_KEY;
-  const phone = process.env.WHATSAPP_PHONE_NUMBER;
+  // Secrets can come from the admin UI (DB) or env — DB wins.
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const secrets = await getIntegrationSecrets();
+  const cfgRows = await db
+    .select({ ycloudApiKey: agentConfig.ycloudApiKey, phoneNumber: agentConfig.phoneNumber })
+    .from(agentConfig)
+    .where(eq(agentConfig.id, 1))
+    .limit(1);
+  const secret = secrets.ycloudWebhookSecret;
+  const apiKey = cfgRows[0]?.ycloudApiKey || process.env.YCLOUD_API_KEY;
+  const phone = cfgRows[0]?.phoneNumber || process.env.WHATSAPP_PHONE_NUMBER;
 
   // Detectar la URL base desde el entorno — sin fallback hardcodeado.
   const host =
@@ -118,7 +137,7 @@ export async function testMetaConnection(): Promise<MetaConfigState> {
     return { success: false, message: "No autorizado" };
   }
 
-  const cfg = getMetaConfig();
+  const cfg = await getMetaConfig();
 
   if (!cfg.hasServerConfig) {
     return {
@@ -138,7 +157,7 @@ export async function testMetaConnection(): Promise<MetaConfigState> {
 
   try {
     // Probar la conexión haciendo un request a la Graph API de Meta
-    const token = getMetaAccessToken();
+    const token = await getMetaAccessToken();
     const res = await fetch(
       `https://graph.facebook.com/v22.0/${cfg.appId}/ads?access_token=${token}&limit=1`,
       { method: "GET", signal: AbortSignal.timeout(10000) }

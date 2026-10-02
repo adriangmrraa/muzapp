@@ -19,18 +19,26 @@ function matchesMagic(buffer: Buffer, mime: string): boolean {
   return sigs.some((sig) => sig.every((b, i) => buffer[i] === b));
 }
 
-// ─── Cloudinary config ─────────────────────────────────────────────────────────
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
 const CLOUDINARY_FOLDER = "muzapp";
 
 export async function POST(request: NextRequest) {
   if (!(await requireAdmin())) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  // Cloudinary credentials: DB (admin UI) first, env fallback.
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const secrets = await getIntegrationSecrets();
+  cloudinary.config({
+    cloud_name: secrets.cloudinaryCloudName,
+    api_key: secrets.cloudinaryApiKey,
+    api_secret: secrets.cloudinaryApiSecret,
+  });
+  if (!secrets.cloudinaryCloudName || !secrets.cloudinaryApiKey || !secrets.cloudinaryApiSecret) {
+    return NextResponse.json(
+      { error: "Cloudinary no está configurado. Cargá las credenciales en /admin/agent o en las env vars." },
+      { status: 503 }
+    );
   }
 
   try {

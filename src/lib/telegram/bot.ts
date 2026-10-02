@@ -238,7 +238,10 @@ export async function getTelegramConfigFromDB(): Promise<TelegramConfig> {
     const config = rows[0];
     if (config?.telegramBotToken) {
       const decryptedToken = decrypt(config.telegramBotToken);
-      const webhookToken = config.telegramWebhookToken || "muzapp-telegram-default";
+      // No default: an empty webhook token disables the route (401 on every
+      // request) rather than leaving a publicly guessable one.
+      const webhookToken =
+        config.telegramWebhookToken || process.env.TELEGRAM_WEBHOOK_TOKEN || "";
       // Soporta múltiples IDs separados por coma: "123456, 789012, 345678"
       const allowedChatIds = config.telegramChatId
         ? config.telegramChatId

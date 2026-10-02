@@ -148,20 +148,26 @@ function buildEscalationHTML(data: EscalationData, businessName: string): string
  * For now, we use a simple fetch to an email API.
  */
 export async function sendEscalationEmail(data: EscalationData): Promise<{ ok: boolean; error?: string }> {
-  const to = process.env.ESCALATION_EMAIL;
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const secrets = await getIntegrationSecrets();
+  const to = secrets.escalationEmail;
   if (!to) {
-    console.warn("[escalation] ESCALATION_EMAIL not set — skipping email");
-    return { ok: false, error: "ESCALATION_EMAIL not configured" };
+    console.warn("[escalation] escalationEmail not set — skipping email");
+    return { ok: false, error: "Escalation email not configured" };
   }
 
   const biz = await getBusinessInfo();
   const html = buildEscalationHTML(data, biz.name);
   const subject = `[${biz.name}] Derivación: ${data.category} — ${data.customerName}`;
 
-  // Try Telegram notification as primary channel (always available)
+  // Try Telegram notification as primary channel (DB-configured bot first)
   try {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_ALLOWED_CHAT_IDS?.split(",")[0]?.trim();
+    const { getTelegramConfigFromDB } = await import("@/lib/telegram/bot");
+    const tg = await getTelegramConfigFromDB();
+    const botToken = tg.botToken || process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = secrets.telegramNotifyChatId
+      || tg.allowedChatIds[0]
+      || process.env.TELEGRAM_ALLOWED_CHAT_IDS?.split(",")[0]?.trim();
 
     if (botToken && chatId) {
       // Plain text, no parse_mode — customer-controlled fields must not be

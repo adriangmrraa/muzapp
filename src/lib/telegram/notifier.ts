@@ -1,4 +1,4 @@
-import { getTelegramConfigFromEnv, sendTelegramMessage } from "./bot";
+import { getTelegramConfigFromDB, sendTelegramMessage } from "./bot";
 import { resolveClientName } from "@/lib/lead-utils";
 
 interface OrderNotification {
@@ -13,7 +13,7 @@ interface OrderNotification {
 }
 
 export async function notifyNewOrder(order: OrderNotification): Promise<void> {
-  const config = getTelegramConfigFromEnv();
+  const config = await getTelegramConfigFromDB();
   if (!config.enabled || config.allowedChatIds.length === 0) return;
 
   const items = Array.isArray(order.items) 
@@ -29,9 +29,10 @@ export async function notifyNewOrder(order: OrderNotification): Promise<void> {
     await sendTelegramMessage(config.botToken, chatId, message, "Markdown");
   }
 
-  // ─── Notificación ESPECÍFICA a Lichas para pan mayorista ──────────────
+  // ─── Notificación específica para pan mayorista ─────────────────────
   if (order.orderType === "pan_mayorista") {
-    const lichasChatId = process.env.TELEGRAM_LICHAS_CHAT_ID;
+    const { getIntegrationSecrets } = await import("@/lib/integrations");
+    const lichasChatId = (await getIntegrationSecrets()).telegramNotifyChatId;
     if (lichasChatId) {
       const lichasResolvedName = await resolveClientName(order.phoneNumber || "", order.customerName || "Desconocido");
       const lichasMessage = [

@@ -83,6 +83,17 @@ const agentConfigSchema = z.object({
   aiModel: z.string().max(120).optional(),
   aiModelFast: z.string().max(120).optional(),
   aiModelVision: z.string().max(120).optional(),
+  // ─── Integration secrets — empty means "keep existing", "CLEAR" wipes ──
+  ycloudWebhookSecret: z.string().max(500).optional(),
+  cloudinaryCloudName: z.string().max(120).optional(),
+  cloudinaryApiKey: z.string().max(120).optional(),
+  cloudinaryApiSecret: z.string().max(500).optional(),
+  metaAppId: z.string().max(80).optional(),
+  metaAppSecret: z.string().max(500).optional(),
+  metaWebhookVerifyToken: z.string().max(200).optional(),
+  telegramNotifyChatId: z.string().max(50).optional(),
+  cronSecret: z.string().max(200).optional(),
+  escalationEmail: z.string().email("Email inválido").max(200).optional().or(z.literal("")),
 });
 
 // ─── Actions ────────────────────────────────────────────────────────────────────
@@ -193,6 +204,16 @@ export async function saveAgentConfig(
     aiModel: formData.get("aiModel") || undefined,
     aiModelFast: formData.get("aiModelFast") || undefined,
     aiModelVision: formData.get("aiModelVision") || undefined,
+    ycloudWebhookSecret: formData.get("ycloudWebhookSecret") || undefined,
+    cloudinaryCloudName: formData.get("cloudinaryCloudName") || undefined,
+    cloudinaryApiKey: formData.get("cloudinaryApiKey") || undefined,
+    cloudinaryApiSecret: formData.get("cloudinaryApiSecret") || undefined,
+    metaAppId: formData.get("metaAppId") || undefined,
+    metaAppSecret: formData.get("metaAppSecret") || undefined,
+    metaWebhookVerifyToken: formData.get("metaWebhookVerifyToken") || undefined,
+    telegramNotifyChatId: formData.get("telegramNotifyChatId") || undefined,
+    cronSecret: formData.get("cronSecret") || undefined,
+    escalationEmail: formData.get("escalationEmail") || undefined,
   };
 
   const parsed = agentConfigSchema.safeParse(raw);
@@ -210,6 +231,11 @@ export async function saveAgentConfig(
         id: agentConfig.id,
         aiApiKey: agentConfig.aiApiKey,
         ycloudApiKey: agentConfig.ycloudApiKey,
+        ycloudWebhookSecret: agentConfig.ycloudWebhookSecret,
+        cloudinaryApiSecret: agentConfig.cloudinaryApiSecret,
+        metaAppSecret: agentConfig.metaAppSecret,
+        metaWebhookVerifyToken: agentConfig.metaWebhookVerifyToken,
+        cronSecret: agentConfig.cronSecret,
       })
       .from(agentConfig)
       .where(eq(agentConfig.id, 1))
@@ -264,6 +290,32 @@ export async function saveAgentConfig(
       aiModel: parsed.data.aiModel ?? null,
       aiModelFast: parsed.data.aiModelFast ?? null,
       aiModelVision: parsed.data.aiModelVision ?? null,
+      // Integration secrets — same write-only pattern as aiApiKey/ycloudApiKey.
+      ycloudWebhookSecret:
+        parsed.data.ycloudWebhookSecret === "CLEAR"
+          ? null
+          : parsed.data.ycloudWebhookSecret || existing[0]?.ycloudWebhookSecret || null,
+      cloudinaryCloudName: parsed.data.cloudinaryCloudName ?? null,
+      cloudinaryApiKey: parsed.data.cloudinaryApiKey ?? null,
+      cloudinaryApiSecret:
+        parsed.data.cloudinaryApiSecret === "CLEAR"
+          ? null
+          : parsed.data.cloudinaryApiSecret || existing[0]?.cloudinaryApiSecret || null,
+      metaAppId: parsed.data.metaAppId ?? null,
+      metaAppSecret:
+        parsed.data.metaAppSecret === "CLEAR"
+          ? null
+          : parsed.data.metaAppSecret || existing[0]?.metaAppSecret || null,
+      metaWebhookVerifyToken:
+        parsed.data.metaWebhookVerifyToken === "CLEAR"
+          ? null
+          : parsed.data.metaWebhookVerifyToken || existing[0]?.metaWebhookVerifyToken || null,
+      telegramNotifyChatId: parsed.data.telegramNotifyChatId ?? null,
+      cronSecret:
+        parsed.data.cronSecret === "CLEAR"
+          ? null
+          : parsed.data.cronSecret || existing[0]?.cronSecret || null,
+      escalationEmail: parsed.data.escalationEmail ?? null,
       updatedAt: new Date(),
     };
 

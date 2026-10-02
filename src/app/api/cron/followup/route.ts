@@ -22,8 +22,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const key = searchParams.get("key");
 
-  // Fail closed: without CRON_SECRET configured, nobody gets in.
-  const secret = process.env.CRON_SECRET;
+  // Fail closed: without a cron secret configured (DB or env), nobody gets in.
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const secret = (await getIntegrationSecrets()).cronSecret;
   const a = Buffer.from(key ?? "");
   const b = Buffer.from(secret ?? "");
   if (!secret || a.length !== b.length || !timingSafeEqual(a, b)) {

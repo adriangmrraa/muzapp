@@ -35,13 +35,14 @@ npm install
 cp .env.example .env.local   # fill in DATABASE_URL + AUTH_SECRET at minimum
 
 npm run db:push              # create schema
-ADMIN_EMAIL=you@example.com ADMIN_PASSWORD="strong-password" npm run db:seed
-npm run dev                  # http://localhost:3000 — admin at /login
+npm run dev                  # http://localhost:3000
 ```
 
-Then open `/admin/agent` and configure your business: name, WhatsApp number, YCloud key, AI provider key/models, hours, delivery zones, prompts.
+**First access:** open `/setup` — it creates the first admin account. The page only works while the `users` table is empty, then locks itself permanently. `/login` redirects to `/setup` automatically on a fresh database.
 
-> The seed **never creates default credentials** — `ADMIN_EMAIL` and `ADMIN_PASSWORD` are required. Add `SEED_DEMO=1` if you want the demo catalog.
+Then `/admin/agent` covers everything else: business identity, WhatsApp number, YCloud key, AI provider key/models, integration secrets, hours, delivery zones, prompts.
+
+> Alternative for scripted setups: `ADMIN_EMAIL=you@example.com ADMIN_PASSWORD="strong-password" npm run db:seed`. The seed **never creates default credentials**. Add `SEED_DEMO=1` for the demo catalog.
 
 ## Deploy to Render
 
@@ -64,37 +65,38 @@ Then open `/admin/agent` and configure your business: name, WhatsApp number, YCl
 
 ### 3. Bootstrap the first admin
 
-Render shell (or locally against the production `DATABASE_URL`):
+No shell needed — after the deploy is live, open **`https://your-app.onrender.com/setup`** and create your admin account. The page exists only while the `users` table is empty (race-safe via an advisory lock), then it redirects to `/login` forever.
 
-```bash
-npm run db:push
-ADMIN_EMAIL=you@example.com ADMIN_PASSWORD="strong-password" npm run db:seed
-```
+> Scripted alternative: `npm run db:push` then `ADMIN_EMAIL=you@example.com ADMIN_PASSWORD="..." npm run db:seed` from a Render shell.
 
 ### 4. Configure everything from the UI
 
-Log in at `/login`, then `/admin/agent` covers: business identity (name, tagline, address, phone, Instagram, website, description), YCloud API key, bot number, prompts, hours, delivery zones, payment aliases, and **AI provider credentials** (API key, base URL, main/fast/vision models).
+Log in at `/login`, then `/admin/agent` covers: business identity (name, tagline, address, phone, Instagram, website, description), YCloud API key + webhook secret, bot number, prompts, hours, delivery zones, payment aliases, **AI provider credentials** (API key, base URL, main/fast/vision models), and the **Integraciones** card (Cloudinary, Meta app creds, Telegram notify chat, cron secret, escalation email).
 
 Secrets are write-only: fields show whether a key is configured, an empty submit keeps the stored value, and `CLEAR` removes it. Values never return to the browser.
 
 ### 5. Optional integrations (env or UI)
 
-| Integration | Vars |
-|---|---|
-| YCloud / WhatsApp | `YCLOUD_API_KEY`, `YCLOUD_WEBHOOK_SECRET`, `WHATSAPP_PHONE_NUMBER` (env = bootstrap fallback; DB config wins) |
-| AI provider | `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `AI_MODEL`, `AI_MODEL_FAST`, `AI_MODEL_VISION` (env = fallback; `/admin/agent` wins) |
-| Cloudinary | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — needed for admin image uploads |
-| Telegram | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_TOKEN`, `TELEGRAM_ALLOWED_CHAT_IDS`, `TELEGRAM_LICHAS_CHAT_ID` |
-| Meta | `META_APP_ID`, `META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN`, `NEXT_PUBLIC_META_APP_ID`, `NEXT_PUBLIC_META_PIXEL_ID` |
-| Redis | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
-| Cron | `CRON_SECRET` for `/api/cron/followup` |
+Everything below can be set in `/admin/agent` → Integraciones — env vars are only a bootstrap fallback (DB wins). `NEXT_PUBLIC_*` vars are the exception: they're compiled into the client bundle at build time and must be env vars.
+
+| Integration | Vars | UI-configurable |
+|---|---|---|
+| YCloud / WhatsApp | `YCLOUD_API_KEY`, `YCLOUD_WEBHOOK_SECRET`, `WHATSAPP_PHONE_NUMBER` | ✅ all |
+| AI provider | `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `AI_MODEL`, `AI_MODEL_FAST`, `AI_MODEL_VISION` | ✅ all |
+| Cloudinary | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — needed for admin image uploads | ✅ all |
+| Telegram | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_CHAT_IDS` (also via `/admin/telegram`), `TELEGRAM_LICHAS_CHAT_ID` → "Chat ID de avisos" | ✅ all |
+| Meta | `META_APP_ID`, `META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN` | ✅ all |
+| Meta pixel | `NEXT_PUBLIC_META_PIXEL_ID` | ❌ build-time only |
+| Redis | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | ❌ infra — env only |
+| Cron | `CRON_SECRET` for `/api/cron/followup` | ✅ yes |
+| Escalations | `ESCALATION_EMAIL` | ✅ yes |
 
 ### 6. Webhooks
 
 | Provider | URL |
 |---|---|
 | YCloud | `https://your-app.onrender.com/api/whatsapp/webhook` (also accepts legacy `/api/webhook/whatsapp`) |
-| Telegram | `https://your-app.onrender.com/api/telegram/webhook/<TELEGRAM_WEBHOOK_TOKEN>` |
+| Telegram | `https://your-app.onrender.com/api/telegram/webhook/<token>` — the token is auto-generated and shown in `/admin/telegram` (or set `TELEGRAM_WEBHOOK_TOKEN`) |
 | Meta | `https://your-app.onrender.com/api/meta/webhook` (verify token = `META_WEBHOOK_VERIFY_TOKEN`) |
 
 ### 7. Custom domain

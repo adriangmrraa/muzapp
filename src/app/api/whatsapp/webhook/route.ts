@@ -460,7 +460,8 @@ async function deliverWebhookHandoff(input: {
 
   // 1. Verify webhook signature (header: ycloud-signature)
   const signature = request.headers.get("ycloud-signature") || "";
-  const secret = process.env.YCLOUD_WEBHOOK_SECRET;
+  const { getIntegrationSecrets } = await import("@/lib/integrations");
+  const secret = (await getIntegrationSecrets()).ycloudWebhookSecret;
 
   if (!secret) {
     console.error("[webhook:wa] YCLOUD_WEBHOOK_SECRET not set — rejecting");

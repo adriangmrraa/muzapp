@@ -1,7 +1,7 @@
 "use server";
 
-import { auth } from "@/auth";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { randomBytes } from "crypto";
 import {
   getTelegramConfigFromDB,
   getMe,
@@ -12,7 +12,7 @@ import {
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import { agentConfig } from "@/db/schema";
-import { encrypt, maskToken as maskTokenUtil } from "@/lib/encryption";
+import { maskToken as maskTokenUtil } from "@/lib/encryption";
 
 export type TelegramStatus = {
   configured: boolean;
@@ -37,9 +37,17 @@ export type TelegramActionState = {
 /**
  * Obtiene el estado actual de la configuración de Telegram
  */
+function getPublicHost(): string | null {
+  const raw =
+    process.env.AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.RENDER_EXTERNAL_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+  return raw ? raw.replace(/\/$/, "") : null;
+}
+
 export async function getTelegramStatus(): Promise<TelegramStatus> {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return {
       configured: false,
       botUsername: null,
@@ -53,16 +61,20 @@ export async function getTelegramStatus(): Promise<TelegramStatus> {
 
   // Get from DB first, fallback to env
   const config = await getTelegramConfigFromDB();
-  
-  // Get the correct host for webhook URL
-  const host = process.env.RENDER_EXTERNAL_URL || 
-    process.env.VERCEL_URL ? 
-    `https://${process.env.VERCEL_URL}` : 
-    "https://muzapp.onrender.com";
-  
-  // Always show the webhook URL (even without token configured)
-  const webhookToken = config.webhookToken || "YOUR_WEBHOOK_TOKEN";
-  const webhookUrl = `${host}/api/telegram/webhook/${webhookToken}`;
+
+  // Lazily generate + persist a webhook token so the admin always sees a
+  // real URL — and no deployment ever ships a guessable one.
+  let webhookToken = config.webhookToken;
+  if (!webhookToken) {
+    webhookToken = randomBytes(24).toString("hex");
+    await db
+      .update(agentConfig)
+      .set({ telegramWebhookToken: webhookToken, updatedAt: new Date() })
+      .where(eq(agentConfig.id, 1));
+  }
+
+  const host = getPublicHost();
+  const webhookUrl = host ? `${host}/api/telegram/webhook/${webhookToken}` : "— configurá AUTH_URL —";
 
   // Intentar obtener info del bot
   let botUsername: string | null = null;
@@ -97,14 +109,11 @@ export async function setTelegramWebhookAction(): Promise<TelegramActionState> {
     return {
       success: false,
       message:
-        "TELEGRAM_BOT_TOKEN no está configurado. Agregalo en las variables de entorno.",
+        "El bot token no está configurado. Guardalo desde esta pantalla o en TELEGRAM_BOT_TOKEN.",
     };
   }
 
-  const host =
-    process.env.AUTH_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.RENDER_EXTERNAL_URL;
+  const host = getPublicHost();
   if (!host) {
     return {
       success: false,
@@ -112,7 +121,16 @@ export async function setTelegramWebhookAction(): Promise<TelegramActionState> {
         "Configurá AUTH_URL (o NEXT_PUBLIC_APP_URL) con la URL pública del deploy para poder registrar el webhook.",
     };
   }
-  const webhookUrl = `${host}/api/telegram/webhook/${config.webhookToken}`;
+
+  let webhookToken = config.webhookToken;
+  if (!webhookToken) {
+    webhookToken = randomBytes(24).toString("hex");
+    await db
+      .update(agentConfig)
+      .set({ telegramWebhookToken: webhookToken, updatedAt: new Date() })
+      .where(eq(agentConfig.id, 1));
+  }
+  const webhookUrl = `${host}/api/telegram/webhook/${webhookToken}`;
 
   const result = await setTelegramWebhook(config.botToken, webhookUrl);
   if (!result.ok) {
@@ -158,14 +176,13 @@ export async function deleteTelegramWebhookAction(): Promise<TelegramActionState
 export async function getTelegramWebhookInfoAction(): Promise<
   WebhookInfo | TelegramActionState
 > {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { success: false, message: "No autorizado" };
   }
 
   const config = await getTelegramConfigFromDB();
   if (!config.botToken) {
-    return { success: false, message: "TELEGRAM_BOT_TOKEN no está configurado." };
+    return { success: false, message: "El bot token no está configurado." };
   }
 
   const info = await getTelegramWebhookInfo(config.botToken);
@@ -182,18 +199,14 @@ export async function getTelegramWebhookInfoAction(): Promise<
   };
 }
 
-function maskToken(token: string): string {
-  if (token.length <= 8) return "****";
-  return token.slice(0, 4) + "****" + token.slice(-4);
-}
-
 /**
  * Save Telegram Bot config to DB (encrypted)
  */
 export async function saveTelegramConfigAction(
   botToken: string,
   chatId: string,
-  enabled: boolean
+  enabled: boolean,
+  webhookToken?: string
 ): Promise<TelegramActionState> {
   if (!(await requireAdmin())) {
     return { success: false, message: "No autorizado" };
@@ -204,11 +217,7 @@ export async function saveTelegramConfigAction(
   }
 
   try {
-    // Import DB and encryption
-    const { db } = await import("@/db");
-    const { eq } = await import("drizzle-orm");
-    const { agentConfig } = await import("@/db/schema");
-    const { encrypt, decrypt } = await import("@/lib/encryption");
+    const { encrypt } = await import("@/lib/encryption");
 
     // Verify token works by getting bot info
     const { getMe } = await import("@/lib/telegram/bot");
@@ -217,18 +226,23 @@ export async function saveTelegramConfigAction(
       return { success: false, message: "Token inválido. No se pudo obtener info del bot." };
     }
 
-    // Encrypt token before storing
+    // Encrypt token before storing; keep existing webhook token unless a
+    // replacement was submitted.
     const encryptedToken = encrypt(botToken);
 
-    // Save to DB
+    const update: Record<string, unknown> = {
+      telegramBotToken: encryptedToken,
+      telegramChatId: chatId || null,
+      telegramEnabled: enabled,
+      updatedAt: new Date(),
+    };
+    if (webhookToken?.trim()) {
+      update.telegramWebhookToken = webhookToken.trim();
+    }
+
     await db
       .update(agentConfig)
-      .set({
-        telegramBotToken: encryptedToken,
-        telegramChatId: chatId || null,
-        telegramEnabled: enabled,
-        updatedAt: new Date(),
-      })
+      .set(update)
       .where(eq(agentConfig.id, 1));
 
     return {
