@@ -40,6 +40,7 @@ import {
   loadSessionState,
   persistSessionTransition,
 } from "@/lib/whatsapp/session-store";
+import { checkRateLimit } from "@/lib/infra/rate-limit";
 
 /**
  * GET — Webhook verification (YCloud sends a challenge token)
@@ -524,6 +525,15 @@ async function deliverWebhookHandoff(input: {
   // customerPhone (raw) se usa para enviar mensajes a YCloud
   // phone (normalizado) se usa para buscar en DB
   const phone = normalizePhone(customerPhone);
+
+  // Per-phone rate limit — a spamming customer would otherwise burn OpenAI
+  // tokens through Whisper/vision/agent calls. 200 is returned regardless so
+  // YCloud does not retry-storm dropped messages.
+  const inboundRate = await checkRateLimit(`wa-inbound:${phone}`);
+  if (!inboundRate.success) {
+    console.warn(`[webhook:wa] Rate limited inbound from ${phone}`);
+    return NextResponse.json({ ok: true, rateLimited: true }, { status: 200 });
+  }
 
   try {
     // ─────────────────────────────────────────────────────────────────────────

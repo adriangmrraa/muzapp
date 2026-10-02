@@ -18,8 +18,11 @@ export async function GET(req: NextRequest) {
   const mode = req.nextUrl.searchParams.get("hub.mode");
   const token = req.nextUrl.searchParams.get("hub.verify_token");
   const challenge = req.nextUrl.searchParams.get("hub.challenge");
+  const expected = process.env.META_WEBHOOK_VERIFY_TOKEN;
 
-  if (mode === "subscribe" && token === process.env.META_WEBHOOK_VERIFY_TOKEN) {
+  // Fail closed when the verify token is unset or empty — an empty env would
+  // otherwise match an empty query param and confirm subscriptions for anyone.
+  if (mode === "subscribe" && expected && token === expected) {
     return new NextResponse(challenge, { status: 200 });
   }
 

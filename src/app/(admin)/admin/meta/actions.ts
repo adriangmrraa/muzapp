@@ -162,6 +162,8 @@ export async function testMetaConnection(): Promise<MetaConfigState> {
 }
 
 export async function disconnectMeta(): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session) return { success: false, error: "No autorizado" };
   try {
     await db
       .update(agentConfig)
@@ -187,6 +189,8 @@ export async function getMetaConnectionStatus(): Promise<{
   businessName: string | null;
   expiresAt: Date | null;
 }> {
+  const session = await auth();
+  if (!session) return { connected: false, businessName: null, expiresAt: null };
   const rows = await db
     .select({
       metaConnected: agentConfig.metaConnected,

@@ -539,9 +539,12 @@ export const queryDataTool = tool({
   }),
   execute: async ({ table, filters, orderBy, orderDir, limit }) => {
     try {
-      // Map table names to actual drizzle queries
+      // Map table names to actual drizzle queries.
+      // `users` (password hashes) and `agent_config` (ycloudApiKey,
+      // metaAccessToken) are excluded — the LLM context must never see
+      // credentials even via prompt injection.
       const tableMap: Record<string, any> = {
-        conversations, leads, orders, products, agentConfig, chatMessages, users,
+        conversations, leads, orders, products, chatMessages,
       };
 
       const tbl = tableMap[table];

@@ -84,6 +84,17 @@ export async function POST(
       return NextResponse.json({ ok: true });
     }
 
+    // ── Authorization check FIRST — media processing (Whisper, vision,
+    // conversation creation) costs money and must never run for
+    // unauthorized chats.
+    const chatId = message.chat.id;
+    if (!isChatAuthorized(chatId, config.allowedChatIds)) {
+      const unauthorizedReply =
+        "❌ No autorizado. No tengo instrucciones de responder en este chat.";
+      await sendTelegramMessage(config.botToken, chatId, unauthorizedReply);
+      return NextResponse.json({ ok: true });
+    }
+
     let text = message.text?.trim() || "";
     let contentAttributes: MediaAttachment[] | undefined;
     let isMedia = false;
@@ -171,7 +182,6 @@ export async function POST(
       return NextResponse.json({ ok: true });
     }
 
-    const chatId = message.chat.id;
     const messageId = String(message.message_id);
     const senderName =
       message.from?.first_name ||
@@ -191,14 +201,6 @@ export async function POST(
       chatId,
       text: text.slice(0, 50),
     });
-
-    // ── Authorization check ──
-    if (!isChatAuthorized(chatId, config.allowedChatIds)) {
-      const unauthorizedReply =
-        "❌ No autorizado. No tengo instrucciones de responder en este chat.";
-      await sendTelegramMessage(config.botToken, chatId, unauthorizedReply);
-      return NextResponse.json({ ok: true });
-    }
 
     // ── DB-level deduplication ──
     const duplicate = await isMessageDuplicate(messageId);
