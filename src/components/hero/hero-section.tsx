@@ -7,9 +7,13 @@ import { heroEntrance, heroChild } from "@/lib/animation-variants";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { TextReveal } from "@/components/motion/text-reveal";
 import { Magnetic } from "@/components/motion/magnetic";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 export function HeroSection() {
   const prefersReduced = useReducedMotion();
+  const business = useBusiness();
+  // Break the configured name on the first space ("Mrs Muzzarella" → "Mrs\nMuzzarella").
+  const heroText = (business?.name || "Mi Negocio").replace(" ", "\n");
 
   return (
     <HeroParallax>
@@ -33,7 +37,7 @@ export function HeroSection() {
 
         <TextReveal
           as="h1"
-          text={"Mrs\nMuzzarella"}
+          text={heroText}
           delay={0.35}
           stagger={0.14}
           className="text-5xl sm:text-6xl md:text-8xl font-black leading-none tracking-tight"

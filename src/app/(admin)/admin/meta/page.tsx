@@ -3,7 +3,7 @@ import { MetaConfigClient } from "./meta-config-client";
 import { MetaConnectionSection } from "./meta-connection-section";
 
 export const metadata = {
-  title: "Meta Ads — Mrs Muzzarella Admin",
+  title: "Meta Ads — Admin",
 };
 
 export default async function MetaPage() {

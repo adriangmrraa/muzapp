@@ -5,7 +5,10 @@ import { db } from "@/db";
 import { orders, orderStatusEnum, conversations } from "@/db/schema";
 import { eq, desc, and, count, ilike, or } from "drizzle-orm";
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { resolveClientNamesBatch } from "@/lib/lead-utils";
+import { getBusinessInfo } from "@/lib/business";
+import { getStatusNotificationMessage } from "@/lib/whatsapp/status-utils";
 
 const PAGE_SIZE = 30;
 
@@ -135,30 +138,13 @@ export async function fetchOrders(params: {
 }
 
 // ─── Mensajes profesionales segun estado, tipo y entrega ───────────────
-function buildWhatsAppMessage(status: string, order: OrderRow): string | null {
-  const isDelivery = order.address && order.address.trim().length > 0;
-  const isPan = order.orderType === "pan_mayorista";
-  const orderTag = `Pedido #${order.id}`;
-
-  switch (status) {
-    case "ready":
-      if (isPan) {
-        return `🍞 ${orderTag} — Ya esta tu pedido de pan, retiralo por Neuquen 1245.`;
-      }
-      if (isDelivery) {
-        return `🍔 ${orderTag} — Ya esta tu pedido, en breve el delivery te lo esta llevando.`;
-      }
-      return `🍔 ${orderTag} — Ya esta tu pedido, retiralo por Neuquen 1245.`;
-
-    case "delivered":
-      if (isPan) {
-        return `🍞 ${orderTag} — Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro IG es @mrs_muzzarella.`;
-      }
-      return `🍔 ${orderTag} — Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro IG es @mrs_muzzarella.`;
-
-    default:
-      return null;
-  }
+// Delega al helper compartido; los datos de contacto salen de agent_config.
+async function buildWhatsAppMessage(status: string, order: OrderRow): Promise<string | null> {
+  const biz = await getBusinessInfo();
+  return getStatusNotificationMessage(status, order.id, order.orderType, order.address, {
+    address: biz.address,
+    instagram: biz.instagram,
+  });
 }
 
 /**
@@ -168,8 +154,11 @@ export async function updateOrderStatus(
   orderId: number,
   newStatus: OrderStatus
 ): Promise<{ success: boolean; message: string }> {
-  const session = await auth();
-  if (!session) return { success: false, message: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, message: "No autorizado"  };
+  // Server actions are callable with arbitrary payloads — validate the enum.
+  if (!["pending", "preparing", "ready", "delivered", "cancelled"].includes(newStatus)) {
+    return { success: false, message: "Estado inválido" };
+  }
 
   try {
     // Get order details before updating
@@ -196,7 +185,7 @@ export async function updateOrderStatus(
     }
 
     // Send WhatsApp notification + save to conversation history
-    const message = buildWhatsAppMessage(newStatus, order as OrderRow);
+    const message = await buildWhatsAppMessage(newStatus, order as OrderRow);
     if (message && order.phoneNumber) {
       try {
         const { sendText } = await import("@/lib/ycloud");
@@ -234,8 +223,7 @@ export async function updateOrderStatus(
 export async function notifyCustomer(
   orderId: number
 ): Promise<{ success: boolean; message: string }> {
-  const session = await auth();
-  if (!session) return { success: false, message: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, message: "No autorizado"  };
 
   try {
     const [order] = await db
@@ -247,7 +235,7 @@ export async function notifyCustomer(
     if (!order) return { success: false, message: "Pedido no encontrado" };
     if (!order.phoneNumber) return { success: false, message: "Sin teléfono" };
 
-    const msg = buildWhatsAppMessage(order.status, order as OrderRow);
+    const msg = await buildWhatsAppMessage(order.status, order as OrderRow);
     if (!msg) return { success: false, message: "No hay mensaje para este estado" };
 
     const { sendText } = await import("@/lib/ycloud");
@@ -279,16 +267,13 @@ export async function getOrderCounts(): Promise<Record<string, number>> {
   const session = await auth();
   if (!session) return {};
 
-  const allStatuses = ["pending", "preparing", "ready", "delivered", "cancelled"] as const;
-  const counts: Record<string, number> = {};
+  const grouped = await db
+    .select({ status: orders.status, n: count() })
+    .from(orders)
+    .groupBy(orders.status);
 
-  for (const s of allStatuses) {
-    const [result] = await db
-      .select({ n: count() })
-      .from(orders)
-      .where(eq(orders.status, s));
-    counts[s] = result.n;
-  }
+  const counts: Record<string, number> = { pending: 0, preparing: 0, ready: 0, delivered: 0, cancelled: 0 };
+  for (const row of grouped) counts[row.status] = row.n;
   counts["total"] = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return counts;
@@ -300,8 +285,7 @@ export async function getOrderCounts(): Promise<Record<string, number>> {
 export async function markPaidAndDelivered(
   orderId: number
 ): Promise<{ success: boolean; message: string }> {
-  const session = await auth();
-  if (!session) return { success: false, message: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, message: "No autorizado"  };
 
   try {
     const [order] = await db
@@ -337,8 +321,7 @@ export async function markPaidAndDelivered(
 export async function deleteOrder(
   orderId: number
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado"  };
 
   try {
     await db.delete(orders).where(eq(orders.id, orderId));
@@ -366,8 +349,7 @@ export const updateOrder = async (
     paymentMethod?: string | null;
   }
 ): Promise<{ success: boolean; error?: string }> => {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado"  };
 
   try {
     const updates: Record<string, unknown> = { updatedAt: new Date() };

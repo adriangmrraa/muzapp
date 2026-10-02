@@ -1,10 +1,14 @@
-import { WHATSAPP_NUMBER } from "./constants";
 import { appendRefToMessage } from "./attribution";
 
-export function buildWhatsAppURL(message: string, refCode?: string): string {
+/**
+ * Builds a wa.me deep link. The destination number comes from the business
+ * config (agent_config.phoneNumber, exposed via GET /api/business) — never
+ * hardcode a number here.
+ */
+export function buildWhatsAppURL(message: string, refCode: string | undefined, phone: string): string {
   const finalMessage = refCode ? appendRefToMessage(message, refCode) : message;
   const encoded = encodeURIComponent(finalMessage);
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
+  return `https://wa.me/${phone}?text=${encoded}`;
 }
 
 /**
@@ -18,6 +22,7 @@ export function buildProductWhatsAppURL(
   productName: string,
   productPrice: number,
   quantity: number,
+  phone: string,
 ): string {
   const subtotal = productPrice * quantity;
   const message = [
@@ -27,5 +32,5 @@ export function buildProductWhatsAppURL(
     "",
     "Pedido desde la web",
   ].join("\n");
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }

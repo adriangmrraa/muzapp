@@ -10,6 +10,9 @@ import { eq, and, desc } from "drizzle-orm";
  */
 export async function buildTelegramPrompt(): Promise<string> {
   const { INTERNAL_AGENT_SYSTEM_PROMPT } = await import("./system-prompt");
+  const { getBusinessInfo } = await import("@/lib/business");
+  const biz = await getBusinessInfo();
+  const basePrompt = INTERNAL_AGENT_SYSTEM_PROMPT.replace(/\{\{BUSINESS_NAME\}\}/g, biz.name);
 
   const sections: string[] = [];
 
@@ -88,6 +91,6 @@ export async function buildTelegramPrompt(): Promise<string> {
   }
 
   return sections.length > 0
-    ? `${INTERNAL_AGENT_SYSTEM_PROMPT}\n\n${sections.join("\n\n")}`
-    : INTERNAL_AGENT_SYSTEM_PROMPT;
+    ? `${basePrompt}\n\n${sections.join("\n\n")}`
+    : basePrompt;
 }

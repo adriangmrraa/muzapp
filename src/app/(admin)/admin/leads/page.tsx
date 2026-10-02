@@ -5,7 +5,7 @@ import LeadsTable from "./leads-table";
 import { CreateOrderModalWrapperClient } from "../clients/create-order-modal-wrapper-client";
 
 export const metadata = {
-  title: "Leads — Mrs Muzzarella Admin",
+  title: "Leads — Admin",
 };
 
 const PAGE_SIZE = 20;

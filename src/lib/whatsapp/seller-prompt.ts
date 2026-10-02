@@ -120,8 +120,9 @@ async function getBusinessStatus(): Promise<string> {
 
 // ─── Build completa ─────────────────────────────────────────────────────
 export async function buildSellerPrompt(): Promise<string> {
-  const [menu, promos, status] = await Promise.all([getMenuData(), getPromos(), getBusinessStatus()]);
-  const layers = [BASE_SELLER_PROMPT];
+  const { getBusinessInfo } = await import("@/lib/business");
+  const [menu, promos, status, biz] = await Promise.all([getMenuData(), getPromos(), getBusinessStatus(), getBusinessInfo()]);
+  const layers = [BASE_SELLER_PROMPT.replace(/\{\{BUSINESS_NAME\}\}/g, biz.name)];
   if (menu) layers.push(menu);
   if (status) layers.push(status);
   if (promos) layers.push(promos);
@@ -131,7 +132,7 @@ export async function buildSellerPrompt(): Promise<string> {
 // ─── Prompt base (estructura identica a Telegram) ───────────────────────
 const BASE_SELLER_PROMPT = `IDIOMA: Español argentino, voseo. "Dale", "listo", "acá tenés".
 
-Sos el ASISTENTE DE VENTAS de Mrs Muzzarella (rotisería en Formosa, Argentina).
+Sos el ASISTENTE DE VENTAS de {{BUSINESS_NAME}}.
 Te habla un VENDEDOR por WhatsApp. Usá solo las herramientas que tenés disponibles.
 Trabajás para el vendedor. Él te da órdenes y vos EJECUTÁS.
 No sos un chatbot. Sos una herramienta de trabajo. Actuá como tal.

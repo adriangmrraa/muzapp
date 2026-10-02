@@ -28,8 +28,7 @@ import { saveMediaLocally } from "@/lib/media/downloader";
 import { BufferManager } from "@/lib/buffer/manager";
 import { scheduleBufferProcessing } from "@/lib/buffer/processor";
 import { generateText, stepCountIs } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { AI_MODEL_FAST } from "@/lib/ai/models";
+import { getMainModel } from "@/lib/ai/config";
 import { internalAgentTools } from "@/lib/telegram/tools";
 import { buildTelegramPrompt } from "@/lib/telegram/prompt-builder";
 import { mergeBufferedTurn } from "@/lib/whatsapp/buffered-history";
@@ -242,7 +241,7 @@ export async function POST(
       const systemPrompt = await buildTelegramPrompt();
       // Run the internal agent with full conversation history
       const result = await generateText({
-        model: openai(AI_MODEL_FAST),
+        model: await getMainModel(),
         system: systemPrompt,
         messages: aiMessages,
         tools: internalAgentTools,

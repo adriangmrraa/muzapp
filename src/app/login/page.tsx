@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import LoginShell from "./login-shell";
 
 export const metadata = {
-  title: "Iniciar sesión — Mrs Muzzarella Admin",
+  title: "Iniciar sesión — Admin",
 };
 
 export default async function LoginPage() {

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "@/lib/animation-variants";
 import { buildWhatsAppURL } from "@/lib/whatsapp";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 const GOLD_GRADIENT = {
   background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
@@ -46,7 +47,11 @@ function WhatsAppIcon() {
 }
 
 export function DeliveryCTA() {
-  const whatsappUrl = buildWhatsAppURL("Hola! Quiero hacer un pedido a domicilio");
+  const business = useBusiness();
+  const whatsappUrl = business?.whatsappPhone
+    ? buildWhatsAppURL("Hola! Quiero hacer un pedido a domicilio", undefined, business.whatsappPhone)
+    : null;
+  const instagram = business?.instagram;
 
   return (
     <section
@@ -84,52 +89,60 @@ export function DeliveryCTA() {
         </motion.h2>
 
         {/* Subtitle */}
-        <motion.p
-          variants={fadeUp}
-          className="text-lg"
-          style={{ color: "rgba(255,255,255,0.6)" }}
-        >
-          Formosa Capital y alrededores
-        </motion.p>
+        {business?.tagline && (
+          <motion.p
+            variants={fadeUp}
+            className="text-lg"
+            style={{ color: "rgba(255,255,255,0.6)" }}
+          >
+            {business.tagline}
+          </motion.p>
+        )}
 
         {/* Phone number */}
-        <motion.div
-          variants={fadeUp}
-          className="flex items-center gap-3"
-          style={{ color: "rgba(255,255,255,0.9)" }}
-        >
-          <PhoneIcon />
-          <span className="text-2xl font-bold tracking-wide">3705-115020</span>
-        </motion.div>
+        {business?.phoneDisplay && (
+          <motion.div
+            variants={fadeUp}
+            className="flex items-center gap-3"
+            style={{ color: "rgba(255,255,255,0.9)" }}
+          >
+            <PhoneIcon />
+            <span className="text-2xl font-bold tracking-wide">{business.phoneDisplay}</span>
+          </motion.div>
+        )}
 
         {/* CTA buttons */}
         <motion.div
           variants={fadeUp}
           className="flex flex-col sm:flex-row items-center gap-4"
         >
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-widest"
-          >
-            <WhatsAppIcon />
-            Pedir por WhatsApp
-          </a>
+          {whatsappUrl && (
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-widest"
+            >
+              <WhatsAppIcon />
+              Pedir por WhatsApp
+            </a>
+          )}
 
-          <a
-            href="https://instagram.com/mrs_mozzarella"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center px-8 py-4 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105"
-            style={{
-              background: "rgba(212,160,23,0.08)",
-              border: "1px solid rgba(212,160,23,0.3)",
-              color: "#D4A017",
-            }}
-          >
-            @mrs_mozzarella
-          </a>
+          {instagram && (
+            <a
+              href={`https://instagram.com/${instagram}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center px-8 py-4 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105"
+              style={{
+                background: "rgba(212,160,23,0.08)",
+                border: "1px solid rgba(212,160,23,0.3)",
+                color: "#D4A017",
+              }}
+            >
+              @{instagram}
+            </a>
+          )}
         </motion.div>
 
         {/* Hours */}

@@ -1,5 +1,3 @@
-export const WHATSAPP_NUMBER = "5493705115020";
-
 // ─── Campaign Registry ────────────────────────────────────────────────────────
 
 export interface Campaign {

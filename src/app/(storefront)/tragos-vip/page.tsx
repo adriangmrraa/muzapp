@@ -7,6 +7,7 @@ import { CatalogImage } from "@/components/products/catalog-image";
 import { EditorialHeading, useEditorialMotion } from "@/components/storefront/motion";
 import { getCatalogProductImage } from "@/lib/catalog-images";
 import { useCart } from "@/lib/cart/cart-context";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 type Product = { id: number; name: string; description: string | null; price: string | null; isPromo?: boolean; promoPrice?: string | null; stock?: number | null; imageUrl: string | null; comingSoon: boolean; variants?: { name: string; priceDelta: number; default?: boolean }[] };
 export default function TragosVIPPage() {
@@ -14,6 +15,7 @@ export default function TragosVIPPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const { addItem } = useCart();
+  const business = useBusiness();
   const { reveal, reduced } = useEditorialMotion();
   useEffect(() => {
     const controller = new AbortController();
@@ -24,7 +26,7 @@ export default function TragosVIPPage() {
   }, []);
   return <div className="min-h-screen bg-[#151513] text-[#f2eee5] px-5 sm:px-10 pt-32 pb-24">
     <header className="max-w-6xl mx-auto border-b border-white/10 pb-14 sm:pb-20">
-      <p className="menu-eyebrow">Mrs Muzzarella / La noche</p>
+      <p className="menu-eyebrow">{business?.name || "La carta"} / La noche</p>
       <h1 className="text-5xl sm:text-8xl tracking-[-.06em] font-normal my-7" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}><EditorialHeading>La noche,</EditorialHeading><EditorialHeading><em className="text-[#d7c198]">a tu gusto.</em></EditorialHeading></h1>
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6"><p className="text-sm text-stone-400 max-w-sm leading-loose">Descubrí nuestra selección de tragos. Elegí tu favorito y sumalo al pedido.</p><Link href="/carta-digital" className="menu-text-link">Explorá la carta completa <ArrowUpRight size={18} /></Link></div>
     </header>

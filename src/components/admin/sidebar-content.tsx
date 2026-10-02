@@ -6,9 +6,11 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { navItems } from "./nav-items";
 import { staggerContainer, fadeUpSmall } from "@/lib/animation-variants";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 export default function AdminSidebarContent() {
   const pathname = usePathname();
+  const business = useBusiness();
 
   return (
     <div
@@ -33,7 +35,7 @@ export default function AdminSidebarContent() {
             transition: { duration: 0.25 },
           }}
         >
-          Mrs Muzzarella
+          {business?.name || "Admin"}
         </motion.span>
       </div>
 

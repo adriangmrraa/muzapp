@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import AgentConfigForm, { type AgentConfigFormData, type BusinessHour } from "./agent-config-form";
 
 export const metadata = {
-  title: "Agente — Mrs Muzzarella Admin",
+  title: "Agente — Admin",
 };
 
 const DEFAULT_BUSINESS_HOURS: BusinessHour[] = [
@@ -22,7 +22,7 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   phoneNumber: "",
   enabled: false,
   businessHours: DEFAULT_BUSINESS_HOURS,
-  ycloudApiKey: "",
+  ycloudApiKeySet: false,
   whatsappBotNumber: "",
   allowedPhoneIds: [],
   sellerPhoneIds: [],
@@ -44,6 +44,18 @@ const DEFAULT_CONFIG: AgentConfigFormData = {
   deliveryEnabled: true,
   deliveryStartHour: "14:00",
   productionHours: "",
+  businessName: "",
+  businessTagline: "",
+  businessAddress: "",
+  businessPhoneDisplay: "",
+  instagramHandle: "",
+  businessWebsite: "",
+  businessDescription: "",
+  aiApiKeySet: false,
+  aiBaseUrl: "",
+  aiModel: "",
+  aiModelFast: "",
+  aiModelVision: "",
 };
 
 export default async function AgentPage() {
@@ -65,7 +77,8 @@ export default async function AgentPage() {
           Array.isArray(row.businessHours) && (row.businessHours as unknown[]).length > 0
             ? (row.businessHours as BusinessHour[])
             : DEFAULT_BUSINESS_HOURS,
-        ycloudApiKey: (row.ycloudApiKey as string) ?? "",
+        // Secret never reaches the client — only whether one exists.
+        ycloudApiKeySet: Boolean(row.ycloudApiKey),
         whatsappBotNumber: (row.whatsappBotNumber as string) ?? "",
         allowedPhoneIds: Array.isArray(row.allowedPhoneIds)
           ? (row.allowedPhoneIds as { name: string; phone: string }[])
@@ -93,6 +106,19 @@ export default async function AgentPage() {
         deliveryEnabled: (row.deliveryEnabled as boolean) ?? true,
         deliveryStartHour: (row.deliveryStartHour as string) ?? "14:00",
         productionHours: (row.productionHours as string) ?? "",
+        businessName: (row.businessName as string) ?? "",
+        businessTagline: (row.businessTagline as string) ?? "",
+        businessAddress: (row.businessAddress as string) ?? "",
+        businessPhoneDisplay: (row.businessPhoneDisplay as string) ?? "",
+        instagramHandle: (row.instagramHandle as string) ?? "",
+        businessWebsite: (row.businessWebsite as string) ?? "",
+        businessDescription: (row.businessDescription as string) ?? "",
+        // Secret fields never reach the client — only whether one exists.
+        aiApiKeySet: Boolean(row.aiApiKey),
+        aiBaseUrl: (row.aiBaseUrl as string) ?? "",
+        aiModel: (row.aiModel as string) ?? "",
+        aiModelFast: (row.aiModelFast as string) ?? "",
+        aiModelVision: (row.aiModelVision as string) ?? "",
       }
     : DEFAULT_CONFIG;
 

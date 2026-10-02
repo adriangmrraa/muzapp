@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { getMetaConfig, getMetaAccessToken } from "@/lib/meta/config";
@@ -35,8 +36,7 @@ export type WebhookConfig = {
  * callback pueda verificar que la redirección corresponde a ESTA sesión.
  */
 export async function generateMetaOAuthState(): Promise<string | null> {
-  const session = await auth();
-  if (!session) return null;
+  if (!(await requireAdmin())) return null;
 
   const state = randomBytes(24).toString("hex");
   const cookieStore = await cookies();
@@ -93,8 +93,13 @@ export async function getWebhookConfig(): Promise<WebhookConfig> {
   const apiKey = process.env.YCLOUD_API_KEY;
   const phone = process.env.WHATSAPP_PHONE_NUMBER;
 
-  // Detectar la URL base desde el entorno
-  const host = process.env.AUTH_URL ?? process.env.RENDER_EXTERNAL_URL ?? "https://muzapp.onrender.com";
+  // Detectar la URL base desde el entorno — sin fallback hardcodeado.
+  const host =
+    process.env.AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.RENDER_EXTERNAL_URL
+      ? `https://${process.env.RENDER_EXTERNAL_URL.replace(/^https?:\/\//, "")}`
+      : "");
 
   return {
     webhookUrl: `${host}/api/whatsapp/webhook`,
@@ -109,8 +114,7 @@ export async function getWebhookConfig(): Promise<WebhookConfig> {
  * Testea la conexión con Meta Conversion API
  */
 export async function testMetaConnection(): Promise<MetaConfigState> {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { success: false, message: "No autorizado" };
   }
 
@@ -162,8 +166,7 @@ export async function testMetaConnection(): Promise<MetaConfigState> {
 }
 
 export async function disconnectMeta(): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado"  };
   try {
     await db
       .update(agentConfig)

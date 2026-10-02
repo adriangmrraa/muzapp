@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export async function GET() {
   try {
     // 1. Auth check
-    const session = await auth();
-    if (!session) {
+    if (!(await requireAdmin())) {
       return NextResponse.json(
         { success: false, message: "No autorizado" },
         { status: 401 }

@@ -571,7 +571,7 @@ export const createDeliveredOrder = tool({
     // Validar y limpiar teléfono
     const cleanedPhone = customerPhone ? normalizePhone(customerPhone) : "";
     if (cleanedPhone && !isValidPhone(cleanedPhone)) {
-      return { success: false, message: `El teléfono "${customerPhone}" no parece válido. Los teléfonos de la zona empiezan con 549370 y tienen 10-12 dígitos. Si no tenés el número, crealo sin teléfono.` };
+      return { success: false, message: `El teléfono "${customerPhone}" no parece válido. Usá el formato internacional con código de país (ej: 549XXXXXXXXXX), 10-15 dígitos. Si no tenés el número, crealo sin teléfono.` };
     }
 
     // 1. Crear o actualizar lead

@@ -7,8 +7,10 @@ import {
   cardEntrance,
 } from "@/lib/animation-variants";
 import LoginForm from "./login-form";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 export default function LoginShell() {
+  const business = useBusiness();
   return (
     <motion.div
       className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden"
@@ -85,7 +87,7 @@ export default function LoginShell() {
               backgroundClip: "text",
             }}
           >
-            Mrs Muzzarella
+            {business?.name || "Admin"}
           </h1>
           <p
             className="mt-2 text-sm uppercase tracking-[0.25em] font-medium"

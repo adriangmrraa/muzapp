@@ -6,6 +6,7 @@ import { products } from "@/db/schema";
 import { productSchema } from "@/lib/validations/product";
 import { eq, asc, sql } from "drizzle-orm";
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 const PAGE_SIZE = 30;
 
@@ -82,8 +83,7 @@ export async function fetchProducts(params: {
 }
 
 export async function createProduct(formData: FormData) {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { error: "No autorizado" };
   }
 
@@ -119,8 +119,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: number, formData: FormData) {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { error: "No autorizado" };
   }
 
@@ -160,8 +159,7 @@ export async function updateProduct(id: number, formData: FormData) {
 }
 
 export async function deleteProduct(id: number) {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { error: "No autorizado" };
   }
 
@@ -172,8 +170,7 @@ export async function deleteProduct(id: number) {
 }
 
 export async function toggleProductAvailability(id: number, available: boolean) {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { error: "No autorizado" };
   }
 

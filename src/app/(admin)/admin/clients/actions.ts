@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { orders, leads } from "@/db/schema";
 import { desc, count, sql, and, or, ilike, eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { normalizePhone } from "@/lib/phone-utils";
 
@@ -136,8 +137,7 @@ export async function updateClient(
   phone: string,
   data: { name?: string; email?: string; address?: string; type?: "b2c" | "b2b" | null; notes?: string; tags?: string[] }
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado"  };
 
   try {
     // Normalizar teléfono para la búsqueda
@@ -187,8 +187,7 @@ export async function updateClient(
 export async function deleteLead(
   phone: string
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado"  };
 
   try {
     // Normalizar teléfono
@@ -202,10 +201,12 @@ export async function deleteLead(
 
     if (!lead) return { success: false, error: "Lead no encontrado" };
 
-    // Eliminar órdenes asociadas
-    await db.delete(orders).where(eq(orders.phoneNumber, phone));
-    // Eliminar lead
-    await db.delete(leads).where(eq(leads.id, lead.id));
+    // Eliminar lead + órdenes asociadas en una sola transacción, buscando por
+    // teléfono normalizado (órdenes) — el lead ya se resolvió por ID arriba.
+    await db.transaction(async (tx) => {
+      await tx.delete(orders).where(eq(orders.phoneNumber, normalizedPhone));
+      await tx.delete(leads).where(eq(leads.id, lead.id));
+    });
 
     return { success: true };
   } catch (e) {

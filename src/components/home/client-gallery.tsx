@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { staggerContainer, clipReveal, blurIn } from "@/lib/animation-variants";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { reducedMotionVariant } from "@/lib/animation-variants";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 const PHOTOS = [
   {
@@ -21,20 +22,22 @@ const PHOTOS = [
   },
   {
     src: "/assets/images/clientes/779de895-c46b-448a-83db-ecf9479af136.jpg",
-    alt: "Foto cliente Mrs Muzzarella",
+    alt: "Foto de cliente",
   },
   {
     src: "/assets/images/clientes/96af04d8-a13d-46dc-92d0-566cb964d641.jpg",
-    alt: "Foto cliente Mrs Muzzarella",
+    alt: "Foto de cliente",
   },
   {
     src: "/assets/images/clientes/ea162775-7a2f-48ac-bdda-183092939f89.jpg",
-    alt: "Foto cliente Mrs Muzzarella",
+    alt: "Foto de cliente",
   },
 ];
 
 export function ClientGallery() {
   const prefersReduced = useReducedMotion();
+  const business = useBusiness();
+  const instagram = business?.instagram || "";
 
   const containerVariants = prefersReduced
     ? reducedMotionVariant(staggerContainer)
@@ -119,9 +122,11 @@ export function ClientGallery() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
               {/* Instagram tag */}
-              <span className="absolute bottom-3 left-3 text-xs text-white/70 font-medium select-none">
-                @mrs_mozzarella
-              </span>
+              {instagram ? (
+                <span className="absolute bottom-3 left-3 text-xs text-white/70 font-medium select-none">
+                  @{instagram.replace(/^@/, "")}
+                </span>
+              ) : null}
             </motion.div>
           ))}
         </motion.div>

@@ -1,7 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 export function Footer() {
+  const business = useBusiness();
+  const brandName = business?.name || "";
+  const instagram = business?.instagram;
   return (
     <footer
       className="border-t py-16 mt-auto"
@@ -13,7 +19,7 @@ export function Footer() {
             <div className="flex items-center gap-3">
               <Image
                 src="/assets/images/logo.png"
-                alt="Mrs Muzzarella"
+                alt={brandName || "Logo"}
                 width={32}
                 height={32}
                 className="object-contain"
@@ -26,11 +32,11 @@ export function Footer() {
                   backgroundClip: "text",
                 }}
               >
-                Mrs Muzzarella
+                {brandName}
               </span>
             </div>
             <p className="text-sm text-white/50 leading-relaxed max-w-md">
-              Hamburguesas artesanales premium y pan mayorista de calidad. Hechos con amor y los mejores ingredientes en Formosa, Argentina.
+              {business?.description || "Hecho con amor y los mejores ingredientes."}
             </p>
           </div>
 
@@ -56,18 +62,26 @@ export function Footer() {
               Seguinos
             </h3>
             <div className="flex flex-col gap-2">
-              <a href="#" className="text-sm text-white/60 hover:text-amber-300 transition-colors">
-                Instagram
-              </a>
-              <a href="#" className="text-sm text-white/60 hover:text-amber-300 transition-colors">
-                Facebook
-              </a>
-              <a href="#" className="text-sm text-white/60 hover:text-amber-300 transition-colors">
-                TikTok
-              </a>
-              <a href="#" className="text-sm text-white/60 hover:text-amber-300 transition-colors">
-                WhatsApp
-              </a>
+              {instagram ? (
+                <a
+                  href={`https://instagram.com/${instagram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-white/60 hover:text-amber-300 transition-colors"
+                >
+                  Instagram
+                </a>
+              ) : null}
+              {business?.whatsappPhone ? (
+                <a
+                  href={`https://wa.me/${business.whatsappPhone}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-white/60 hover:text-amber-300 transition-colors"
+                >
+                  WhatsApp
+                </a>
+              ) : null}
             </div>
           </div>
         </div>
@@ -77,7 +91,7 @@ export function Footer() {
           style={{ borderColor: "rgba(212,160,23,0.15)" }}
         >
           <p className="text-xs text-white/40">
-            © {new Date().getFullYear()} Mrs Muzzarella. Todos los derechos reservados.
+            © {new Date().getFullYear()} {brandName}. Todos los derechos reservados.
           </p>
           <p className="text-xs text-white/40">
             Hecho con amor en Argentina

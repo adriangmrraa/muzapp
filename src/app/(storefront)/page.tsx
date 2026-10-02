@@ -12,6 +12,7 @@ import { BreadShowcase } from "@/components/home/bread-showcase";
 import { DeliveryCTA } from "@/components/home/delivery-cta";
 import { ParallaxDivider } from "@/components/layout/parallax-divider";
 import { Marquee } from "@/components/motion/marquee";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 const MARQUEE_ITEMS = [
   "Hamburguesas artesanales",
@@ -19,7 +20,6 @@ const MARQUEE_ITEMS = [
   "Ingredientes frescos",
   "Hecho al momento",
   "Envío a domicilio",
-  "Formosa Capital",
 ];
 
 const STATS = [
@@ -30,11 +30,15 @@ const STATS = [
 ];
 
 export default function HomePage() {
+  const business = useBusiness();
+  const marqueeItems = business?.tagline
+    ? [...MARQUEE_ITEMS, business.tagline]
+    : MARQUEE_ITEMS;
   return (
     <>
       <HeroSection />
 
-      <Marquee items={MARQUEE_ITEMS} />
+      <Marquee items={marqueeItems} />
 
       <FeaturedProductsSection />
 
@@ -76,7 +80,8 @@ export default function HomePage() {
                   </span>
                 </h2>
                 <p className="text-white/65 leading-relaxed">
-                  En Mrs Muzzarella creemos que cada ingrediente importa. Trabajamos con productores locales, elaboramos nuestro propio pan y preparamos cada hamburguesa al momento. Sin compromiso. Sin atajos.
+                  {business?.description ||
+                    `En ${business?.name ?? "nuestra cocina"} creemos que cada ingrediente importa. Trabajamos con productores locales, elaboramos nuestro propio pan y preparamos cada hamburguesa al momento. Sin compromiso. Sin atajos.`}
                 </p>
                 <p className="text-white/65 leading-relaxed">
                   También proveemos pan artesanal a restaurantes y cocinas que, como nosotros, no se conforman con lo mediocre.

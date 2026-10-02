@@ -4,6 +4,8 @@
  * Uses ESCALATION_EMAIL env var as the recipient.
  */
 
+import { getBusinessInfo } from "@/lib/business";
+
 export interface EscalationData {
   customerName: string;
   customerPhone: string;
@@ -13,10 +15,31 @@ export interface EscalationData {
   lastMessages: string[];
 }
 
-function buildEscalationHTML(data: EscalationData): string {
+// Customer-controlled strings (WhatsApp profile name, message text, LLM
+// summaries) must never reach an HTML document unescaped — otherwise the
+// escalation email becomes an injection/phishing vector into the business
+// inbox.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildEscalationHTML(data: EscalationData, businessName: string): string {
   const messagesHTML = data.lastMessages
-    .map((msg) => `<li style="margin-bottom:6px;color:#333;">${msg}</li>`)
+    .map((msg) => `<li style="margin-bottom:6px;color:#333;">${escapeHtml(msg)}</li>`)
     .join("\n");
+  const safe = {
+    category: escapeHtml(data.category),
+    customerName: escapeHtml(data.customerName),
+    customerPhone: escapeHtml(data.customerPhone),
+    phoneDigits: data.customerPhone.replace(/[^0-9]/g, ""),
+    reason: escapeHtml(data.reason),
+    conversationSummary: escapeHtml(data.conversationSummary),
+  };
 
   return `<!DOCTYPE html>
 <html>
@@ -29,7 +52,7 @@ function buildEscalationHTML(data: EscalationData): string {
         <!-- Header -->
         <tr>
           <td style="background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%);padding:28px 32px;text-align:center;">
-            <h1 style="margin:0;color:#D4A017;font-size:22px;letter-spacing:1px;">Mrs Muzzarella</h1>
+            <h1 style="margin:0;color:#D4A017;font-size:22px;letter-spacing:1px;">${escapeHtml(businessName)}</h1>
             <p style="margin:6px 0 0;color:#ccc;font-size:13px;">Derivación de atención al cliente</p>
           </td>
         </tr>
@@ -41,7 +64,7 @@ function buildEscalationHTML(data: EscalationData): string {
               <tr>
                 <td style="background:#FFF3CD;border:1px solid #FFD700;border-radius:8px;padding:14px 18px;">
                   <p style="margin:0;color:#856404;font-size:14px;font-weight:600;">
-                    Categoría: ${data.category}
+                    Categoría: ${safe.category}
                   </p>
                 </td>
               </tr>
@@ -55,12 +78,12 @@ function buildEscalationHTML(data: EscalationData): string {
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f8f8;border-radius:8px;padding:16px;">
               <tr>
                 <td style="padding:4px 0;font-size:14px;color:#666;">Cliente</td>
-                <td style="padding:4px 0;font-size:14px;color:#1a1a1a;font-weight:600;text-align:right;">${data.customerName}</td>
+                <td style="padding:4px 0;font-size:14px;color:#1a1a1a;font-weight:600;text-align:right;">${safe.customerName}</td>
               </tr>
               <tr>
                 <td style="padding:4px 0;font-size:14px;color:#666;">Teléfono</td>
                 <td style="padding:4px 0;font-size:14px;color:#1a1a1a;font-weight:600;text-align:right;">
-                  <a href="https://wa.me/${data.customerPhone.replace(/[^0-9]/g, "")}" style="color:#25D366;text-decoration:none;">${data.customerPhone}</a>
+                  <a href="https://wa.me/${safe.phoneDigits}" style="color:#25D366;text-decoration:none;">${safe.customerPhone}</a>
                 </td>
               </tr>
             </table>
@@ -71,7 +94,7 @@ function buildEscalationHTML(data: EscalationData): string {
         <tr>
           <td style="padding:0 32px 16px;">
             <h3 style="margin:0 0 8px;color:#1a1a1a;font-size:15px;">Motivo de la derivación</h3>
-            <p style="margin:0;color:#444;font-size:14px;line-height:1.5;">${data.reason}</p>
+            <p style="margin:0;color:#444;font-size:14px;line-height:1.5;">${safe.reason}</p>
           </td>
         </tr>
 
@@ -89,14 +112,14 @@ function buildEscalationHTML(data: EscalationData): string {
         <tr>
           <td style="padding:0 32px 24px;">
             <h3 style="margin:0 0 8px;color:#1a1a1a;font-size:15px;">Resumen del agente</h3>
-            <p style="margin:0;color:#444;font-size:14px;line-height:1.5;background:#f0f0f0;padding:12px;border-radius:6px;font-style:italic;">${data.conversationSummary}</p>
+            <p style="margin:0;color:#444;font-size:14px;line-height:1.5;background:#f0f0f0;padding:12px;border-radius:6px;font-style:italic;">${safe.conversationSummary}</p>
           </td>
         </tr>
 
         <!-- CTA -->
         <tr>
           <td style="padding:0 32px 28px;text-align:center;">
-            <a href="https://wa.me/${data.customerPhone.replace(/[^0-9]/g, "")}"
+            <a href="https://wa.me/${safe.phoneDigits}"
                style="display:inline-block;background:#25D366;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
               Responder por WhatsApp
             </a>
@@ -107,7 +130,7 @@ function buildEscalationHTML(data: EscalationData): string {
         <tr>
           <td style="background:#f5f5f0;padding:16px 32px;text-align:center;">
             <p style="margin:0;color:#999;font-size:11px;">
-              Mrs Muzzarella — Rotisería Premium, Formosa
+              ${escapeHtml(businessName)}
             </p>
           </td>
         </tr>
@@ -131,8 +154,9 @@ export async function sendEscalationEmail(data: EscalationData): Promise<{ ok: b
     return { ok: false, error: "ESCALATION_EMAIL not configured" };
   }
 
-  const html = buildEscalationHTML(data);
-  const subject = `[Mrs Muzzarella] Derivación: ${data.category} — ${data.customerName}`;
+  const biz = await getBusinessInfo();
+  const html = buildEscalationHTML(data, biz.name);
+  const subject = `[${biz.name}] Derivación: ${data.category} — ${data.customerName}`;
 
   // Try Telegram notification as primary channel (always available)
   try {
@@ -140,18 +164,20 @@ export async function sendEscalationEmail(data: EscalationData): Promise<{ ok: b
     const chatId = process.env.TELEGRAM_ALLOWED_CHAT_IDS?.split(",")[0]?.trim();
 
     if (botToken && chatId) {
+      // Plain text, no parse_mode — customer-controlled fields must not be
+      // interpreted as Telegram markdown (link/format injection).
       const telegramText = [
-        `🔔 *DERIVACIÓN*`,
+        `🔔 DERIVACIÓN`,
         ``,
-        `*Cliente*: ${data.customerName}`,
-        `*Tel*: ${data.customerPhone}`,
-        `*Categoría*: ${data.category}`,
-        `*Motivo*: ${data.reason}`,
+        `Cliente: ${data.customerName}`,
+        `Tel: ${data.customerPhone}`,
+        `Categoría: ${data.category}`,
+        `Motivo: ${data.reason}`,
         ``,
-        `*Últimos mensajes:*`,
+        `Últimos mensajes:`,
         ...data.lastMessages.slice(-5).map((m) => `> ${m}`),
         ``,
-        `*Resumen*: ${data.conversationSummary}`,
+        `Resumen: ${data.conversationSummary}`,
       ].join("\n");
 
       await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -160,7 +186,6 @@ export async function sendEscalationEmail(data: EscalationData): Promise<{ ok: b
         body: JSON.stringify({
           chat_id: Number(chatId),
           text: telegramText,
-          parse_mode: "Markdown",
         }),
         signal: AbortSignal.timeout(10_000),
       });

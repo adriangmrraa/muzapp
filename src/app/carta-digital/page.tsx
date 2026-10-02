@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { MenuDigitalClient } from "./menu-digital-client";
 
 export const metadata = {
-  title: "Carta Digital — Mrs Muzzarella",
+  title: "Carta Digital",
   description: "Explorá nuestro menú, armá tu pedido y pedilo por WhatsApp",
 };
 

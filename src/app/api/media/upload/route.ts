@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { v2 as cloudinary } from "cloudinary";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+// file.type is client-controlled — verify magic bytes before trusting it.
+const MAGIC: Record<string, number[][]> = {
+  "image/jpeg": [[0xff, 0xd8, 0xff]],
+  "image/png": [[0x89, 0x50, 0x4e, 0x47]],
+  "image/webp": [[0x52, 0x49, 0x46, 0x46]], // RIFF....WEBP
+  "image/gif": [[0x47, 0x49, 0x46, 0x38]], // GIF8
+};
+
+function matchesMagic(buffer: Buffer, mime: string): boolean {
+  const sigs = MAGIC[mime];
+  if (!sigs) return false;
+  return sigs.some((sig) => sig.every((b, i) => buffer[i] === b));
+}
 
 // ─── Cloudinary config ─────────────────────────────────────────────────────────
 cloudinary.config({
@@ -15,8 +29,7 @@ cloudinary.config({
 const CLOUDINARY_FOLDER = "muzapp";
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -46,6 +59,12 @@ export async function POST(request: NextRequest) {
 
     // ─── Upload to Cloudinary ────────────────────────────────────────────────
     const buffer = Buffer.from(await file.arrayBuffer());
+    if (!matchesMagic(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "El contenido del archivo no coincide con su tipo." },
+        { status: 400 }
+      );
+    }
     const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
 
     const result = await cloudinary.uploader.upload(base64, {

@@ -16,6 +16,7 @@ import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
 import { CartDrawer } from "@/components/cart/cart-drawer";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -32,6 +33,8 @@ export function Navbar() {
   const prevY = useRef(0);
   const prefersReduced = useReducedMotion();
   const { itemCount } = useCart();
+  const business = useBusiness();
+  const brandName = business?.name || "";
   const pathname = usePathname();
   const { scrollY } = useScroll();
   const bgColor = useTransform(
@@ -65,7 +68,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center gap-3">
             <Image
               src="/assets/images/logo.png"
-              alt="Mrs Muzzarella"
+              alt={brandName || "Logo"}
               width={36}
               height={36}
               className="object-contain"
@@ -79,7 +82,7 @@ export function Navbar() {
                 backgroundClip: "text",
               }}
             >
-              Mrs Muzzarella
+              {brandName}
             </span>
           </Link>
 
@@ -149,7 +152,7 @@ export function Navbar() {
               >
                 <div className="pt-8 flex flex-col gap-6">
                   <div className="flex items-center gap-3">
-                    <Image src="/assets/images/logo.png" alt="Mrs Muzzarella" width={28} height={28} className="object-contain" />
+                    <Image src="/assets/images/logo.png" alt={brandName || "Logo"} width={28} height={28} className="object-contain" />
                     <span className="text-lg font-black"
                       style={{
                         background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
@@ -158,7 +161,7 @@ export function Navbar() {
                         backgroundClip: "text",
                       }}
                     >
-                      Mrs Muzzarella
+                      {brandName}
                     </span>
                   </div>
                   <nav className="flex flex-col gap-4">

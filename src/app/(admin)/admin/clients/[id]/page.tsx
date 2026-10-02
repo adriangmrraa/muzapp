@@ -11,7 +11,7 @@ import { CreateOrderModalWrapperClient } from "../create-order-modal-wrapper-cli
 import { ClientEditForm } from "./client-edit-form";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Ficha de Cliente — Mrs Muzzarella Admin" };
+export const metadata = { title: "Ficha de Cliente — Admin" };
 
 interface Props {
   params: Promise<{ id: string }>;

@@ -27,7 +27,13 @@ export function isAllowedCheckoutOrigin(request: Request): boolean {
   const forwardedHost = firstHeaderValue(request.headers.get("x-forwarded-host"));
   const forwardedProto = firstHeaderValue(request.headers.get("x-forwarded-proto"));
   if (forwardedHost && (forwardedProto === "https" || forwardedProto === "http")) {
-    allowed.add(`${forwardedProto}://${forwardedHost}`);
+    // x-forwarded-* is client-supplied unless a trusted proxy (Render) is in
+    // front. When explicit origins are configured, the forwarded host must
+    // match one of them; with none configured we accept it (Render case).
+    const forwardedOrigin = `${forwardedProto}://${forwardedHost}`;
+    if (allowed.size > 1 ? [...allowed].includes(forwardedOrigin) : true) {
+      allowed.add(forwardedOrigin);
+    }
   }
 
   return allowed.has(origin);

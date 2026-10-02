@@ -156,6 +156,21 @@ export const agentConfig = pgTable("agent_config", {
   metaPhoneNumberId: varchar("meta_phone_number_id", { length: 50 }),
   metaConnected: boolean("meta_connected").notNull().default(false),
   // ───────────────────────────────────────────────────────────────────────────
+  // ─── Business Identity (agnostic storefront — editable desde admin) ────────
+  businessName: varchar("business_name", { length: 160 }),
+  businessTagline: varchar("business_tagline", { length: 255 }),
+  businessAddress: varchar("business_address", { length: 255 }),
+  businessPhoneDisplay: varchar("business_phone_display", { length: 50 }),
+  instagramHandle: varchar("instagram_handle", { length: 100 }),
+  businessWebsite: text("business_website"),
+  businessDescription: text("business_description"),
+  // ─── AI Provider (OpenAI-compatible — editable desde admin) ────────────────
+  aiApiKey: text("ai_api_key"),
+  aiBaseUrl: text("ai_base_url"),
+  aiModel: varchar("ai_model", { length: 120 }),
+  aiModelFast: varchar("ai_model_fast", { length: 120 }),
+  aiModelVision: varchar("ai_model_vision", { length: 120 }),
+  // ───────────────────────────────────────────────────────────────────────────
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 

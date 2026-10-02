@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import dns from "dns/promises";
 
 interface OgData {
@@ -31,8 +31,7 @@ async function isSafeTarget(hostname: string): Promise<boolean> {
  * Requires an authenticated admin session — it is a server-side fetch (SSRF surface).
  */
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

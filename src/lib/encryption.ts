@@ -15,7 +15,11 @@ import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypt
 const ALGORITHM = "aes-256-gcm";
 
 function getKey(salt: Buffer): Buffer {
-  const secret = process.env.AUTH_SECRET || "default-secret-change-me";
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    // Sin secret real, encriptar con uno conocido es peor que fallar.
+    throw new Error("AUTH_SECRET is required to encrypt/decrypt credentials");
+  }
   return scryptSync(secret, salt, 32);
 }
 

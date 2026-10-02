@@ -7,6 +7,7 @@ import { buildWhatsAppURL } from "@/lib/whatsapp";
 import { buildRefCode, parseUTMParams } from "@/lib/attribution";
 import { getStoredUTM } from "@/lib/attribution/utm-capture";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 const WHATSAPP_ICON = (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-7 h-7">
@@ -29,8 +30,13 @@ function FABInner() {
     source: utms.source ?? undefined,
     content: utms.content ?? undefined,
   });
-  const url = buildWhatsAppURL("Hola! Me gustaría hacer un pedido", refCode);
+  const business = useBusiness();
+  const phone = business?.whatsappPhone;
+  const url = phone ? buildWhatsAppURL("Hola! Me gustaría hacer un pedido", refCode, phone) : null;
   const prefersReduced = useReducedMotion();
+
+  // No configured number → hide the FAB entirely (better than a broken link).
+  if (!url) return null;
 
   return (
     <motion.a
@@ -53,20 +59,7 @@ function FABInner() {
 
 export function WhatsAppFAB() {
   return (
-    <Suspense
-      fallback={
-        <a
-          href="https://wa.me/5493705115020?text=Hola!%20Me%20gustar%C3%ADa%20hacer%20un%20pedido"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-xl"
-          style={{ background: "#25D366" }}
-          aria-label="Contactar por WhatsApp"
-        >
-          {WHATSAPP_ICON}
-        </a>
-      }
-    >
+    <Suspense fallback={null}>
       <FABInner />
     </Suspense>
   );

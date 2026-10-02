@@ -9,6 +9,7 @@ import { CatalogDialog } from "@/components/storefront/catalog-dialog";
 import { EditorialHeading, editorialEase, editorialSpring, useEditorialMotion } from "@/components/storefront/motion";
 import { CheckoutForm } from "@/components/cart/checkout-form";
 import { getCatalogProductImage } from "@/lib/catalog-images";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 type Product = { id: number; name: string; price: string | null; promoPrice?: string | null; isPromo?: boolean; imageUrl: string | null; category: string; description: string | null; comingSoon?: boolean; stock?: number | null };
 type Promo = { id: number; name: string; description: string | null; imageUrl: string | null; customPrice: string | null; items: { productId: number; productName: string; quantity: number }[] | null };
@@ -43,6 +44,9 @@ function QuantityControl({ quantity, onAdd, onRemove, max = 99 }: { quantity: nu
 
 export function MenuDigitalClient({ products, promos }: { products: Product[]; promos: Promo[] }) {
   const { reduced, reveal } = useEditorialMotion();
+  const business = useBusiness();
+  const brandName = business?.name || "";
+  const brandTagline = business?.tagline || "cocina propia";
   const [activeCategory, setActiveCategory] = useState(promos.length ? "promos" : products[0]?.category ?? "hamburguesa");
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -88,7 +92,7 @@ export function MenuDigitalClient({ products, promos }: { products: Product[]; p
   return <LayoutGroup id="digital-menu"><div className="digital-menu">
     <header className="digital-menu-header">
       <Link href="/" className="menu-back-link" aria-label="Volver al sitio principal"><ArrowLeft size={18} /><span>Inicio</span></Link>
-      <Link href="/" className="menu-brand">Mrs Muzzarella<small>Formosa · cocina propia</small></Link>
+      <Link href="/" className="menu-brand">{brandName}<small>{brandTagline}</small></Link>
       <button type="button" className="menu-cart-icon" onClick={() => setCartOpen(true)} aria-label={`Ver pedido, ${count} productos`}><ShoppingBag size={20} />{count > 0 && <b>{count}</b>}</button>
     </header>
     <main>
@@ -122,7 +126,7 @@ export function MenuDigitalClient({ products, promos }: { products: Product[]; p
         </AnimatePresence>
         {!visible.length && <div className="menu-empty"><p>{query ? "No encontramos esa opción." : "Estamos preparando nuevas opciones."}</p>{query && <button className="menu-text-link" onClick={() => setQuery("")}>Volver a la carta</button>}</div>}
       </section>
-      <footer className="menu-editorial-footer"><span>Mrs Muzzarella</span><p>Cocina propia. Formosa Capital.</p><Link href="/">Conocé nuestros espacios <ArrowUpRight size={16} /></Link></footer>
+      <footer className="menu-editorial-footer"><span>{brandName}</span><p>{brandTagline}</p><Link href="/">Conocé nuestros espacios <ArrowUpRight size={16} /></Link></footer>
     </main>
     <AnimatePresence>{count > 0 && <motion.button type="button" className="menu-floating-cart" onClick={() => setCartOpen(true)} initial={{ opacity: 0, y: reduced ? 0 : 80 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduced ? 0 : 80 }} transition={reduced ? { duration: 0 } : editorialSpring}><span><ShoppingBag size={19} />Tu pedido <b>{count}</b></span><strong>{money(total)}</strong><ArrowUpRight size={20} /></motion.button>}</AnimatePresence>
     <AnimatePresence>{detail && <CatalogDialog key="detail" title={detail.data.name} onDismiss={() => setDetail(null)} wide>

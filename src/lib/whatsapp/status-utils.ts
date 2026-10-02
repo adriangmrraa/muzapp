@@ -12,34 +12,44 @@ export const ORDER_STATUS_INFO = {
 
 export type OrderStatus = keyof typeof ORDER_STATUS_INFO;
 
+export interface BusinessContact {
+  address: string;
+  instagram: string;
+}
+
 /**
  * Reconstruye el mensaje de notificación EXACTO que se envió al cliente
- * cuando se actualizó el estado del pedido. Espejo de buildWhatsAppMessage
- * en src/app/(admin)/admin/orders/actions.ts:138-162
+ * cuando se actualizó el estado del pedido. Fuente única del texto —
+ * orders/actions.ts delega acá para que ambos caminos generen lo mismo.
+ * `biz` trae address/instagram del negocio (agent_config); si falta, las
+ * líneas específicas se omiten en vez de inventar datos.
  */
 export function getStatusNotificationMessage(
   status: string,
   orderId: number,
   orderType?: string | null,
   address?: string | null,
+  biz?: BusinessContact,
 ): string | null {
   const isDelivery = !!address && address.trim().length > 0;
   const isPan = orderType === "pan_mayorista";
   const orderTag = `Pedido #${orderId}`;
+  const pickup = biz?.address ? `retiralo por ${biz.address}` : "ya podés retirarlo";
 
   switch (status) {
     case "ready":
       if (isPan) {
-        return `🍞 ${orderTag} — Ya esta tu pedido de pan, retiralo por Neuquen 1245.`;
+        return `🍞 ${orderTag} — Ya esta tu pedido de pan, ${pickup}.`;
       }
       if (isDelivery) {
         return `🍔 ${orderTag} — Ya esta tu pedido, en breve el delivery te lo esta llevando.`;
       }
-      return `🍔 ${orderTag} — Ya esta tu pedido, retiralo por Neuquen 1245.`;
+      return `🍔 ${orderTag} — Ya esta tu pedido, ${pickup}.`;
 
     case "delivered": {
       const emoji = isPan ? "🍞" : "🍔";
-      return `${emoji} ${orderTag} — Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas. Nuestro IG es @mrs_muzzarella.`;
+      const ig = biz?.instagram ? ` Nuestro IG es @${biz.instagram}.` : "";
+      return `${emoji} ${orderTag} — Gracias por elegirnos! Si nos compartis en tus historias participas por hamburguesas todas las semanas.${ig}`;
     }
 
     default:
@@ -56,6 +66,7 @@ export function getStatusSemantic(
   orderType?: string | null,
   address?: string | null,
   orderId?: number,
+  biz?: BusinessContact,
 ): string {
   switch (status) {
     case "pending":
@@ -66,7 +77,7 @@ export function getStatusSemantic(
 
     case "ready": {
       const notif = orderId
-        ? getStatusNotificationMessage("ready", orderId, orderType, address)
+        ? getStatusNotificationMessage("ready", orderId, orderType, address, biz)
         : null;
       if (notif) {
         return `📦 Pedido LISTO — se notificó al cliente: '${notif}'. Si el cliente responde a esto, NO es un pedido nuevo.`;
@@ -76,7 +87,7 @@ export function getStatusSemantic(
 
     case "delivered": {
       const notif = orderId
-        ? getStatusNotificationMessage("delivered", orderId, orderType, address)
+        ? getStatusNotificationMessage("delivered", orderId, orderType, address, biz)
         : null;
       if (notif) {
         return `✅ Pedido ENTREGADO — se notificó al cliente: '${notif}'. No es un pedido activo.`;

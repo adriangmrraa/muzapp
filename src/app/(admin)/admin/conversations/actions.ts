@@ -5,12 +5,13 @@ import { db } from "@/db";
 import { conversations, chatMessages, leads, orders } from "@/db/schema";
 import { eq, desc, and, ilike, or, sql, count } from "drizzle-orm";
 import { resolveClientNamesBatch } from "@/lib/lead-utils";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 const PAGE_SIZE = 50;
 
-// Server actions are public POST endpoints — every action must verify the
-// admin session before touching conversation data or sending messages.
-async function requireAdmin() {
+// Server actions are public POST endpoints — reads require a session
+// (viewer role is read-only); mutations require the admin role.
+async function requireSession() {
   const session = await auth();
   if (!session) throw new Error("No autorizado");
 }
@@ -39,7 +40,7 @@ export type GetConversationsResult = {
 export async function getConversations(
   params: GetConversationsParams
 ): Promise<GetConversationsResult> {
-  await requireAdmin();
+  await requireSession();
   const { page = 1, channel, status, search } = params;
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -114,7 +115,7 @@ export async function getMessages(
   limit = 100,
   offset = 0
 ) {
-  await requireAdmin();
+  await requireSession();
   return db
     .select()
     .from(chatMessages)
@@ -132,11 +133,14 @@ export async function sendReply(
   conversationId: number,
   content: string
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado" };
+  const trimmed = (content ?? "").trim();
+  if (!trimmed) return { success: false, error: "Mensaje vacío" };
+  // WhatsApp API rejects oversized payloads; cap well below the hard limit.
+  if (trimmed.length > 4000) return { success: false, error: "Mensaje demasiado largo" };
   try {
     const { sendOutboundMessage } = await import("@/lib/channels/router");
-    await sendOutboundMessage(conversationId, content, "human");
+    await sendOutboundMessage(conversationId, trimmed, "human");
     return { success: true };
   } catch (error) {
     console.error("[sendReply] Error:", error);
@@ -151,8 +155,8 @@ export async function updateConversationStatus(
   conversationId: number,
   status: "active" | "closed" | "archived"
 ): Promise<{ success: boolean }> {
-  const session = await auth();
-  if (!session) return { success: false };
+  if (!(await requireAdmin())) return { success: false };
+  if (!["active", "closed", "archived"].includes(status)) return { success: false };
   try {
     await db
       .update(conversations)
@@ -173,8 +177,7 @@ export async function toggleHumanOverride(
   conversationId: number,
   enabled: boolean
 ): Promise<{ success: boolean }> {
-  const session = await auth();
-  if (!session) return { success: false };
+  if (!(await requireAdmin())) return { success: false };
   try {
     const until = enabled
       ? new Date(Date.now() + 24 * 60 * 60 * 1000) // +24h desde ahora
@@ -198,7 +201,7 @@ export async function toggleHumanOverride(
 export async function getConversation(
   conversationId: number
 ): Promise<(typeof conversations.$inferSelect) | null> {
-  await requireAdmin();
+  await requireSession();
   const [conv] = await db
     .select()
     .from(conversations)
@@ -211,7 +214,7 @@ export async function getConversation(
  * Obtiene el lead vinculado a una conversación.
  */
 export async function getLeadByConversation(conversationId: number) {
-  await requireAdmin();
+  await requireSession();
   const [lead] = await db
     .select()
     .from(leads)
@@ -224,7 +227,7 @@ export async function getLeadByConversation(conversationId: number) {
  * Obtiene las órdenes de un lead.
  */
 export async function getOrdersByLead(leadId: number) {
-  await requireAdmin();
+  await requireSession();
   return db
     .select()
     .from(orders)

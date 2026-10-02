@@ -1,6 +1,6 @@
 import { generateText, stepCountIs } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { AI_MODEL_FAST } from "@/lib/ai/models";
+import { getFastModel } from "@/lib/ai/config";
+import { getBusinessInfo } from "@/lib/business";
 import type { ModelMessage } from "ai";
 import { db } from "@/db";
 import { agentConfig, products } from "@/db/schema";
@@ -56,8 +56,9 @@ export async function processMessage({
       loadMenuItems(),
     ]);
 
+    const biz = await getBusinessInfo();
     const systemPrompt = buildSystemPrompt(
-      "Mrs Muzzarella",
+      biz.name,
       menuItems,
       config?.systemPrompt
     );
@@ -68,7 +69,7 @@ export async function processMessage({
     ];
 
     const result = await generateText({
-      model: openai.chat(AI_MODEL_FAST),
+      model: await getFastModel(),
       system: systemPrompt,
       messages,
       tools: {

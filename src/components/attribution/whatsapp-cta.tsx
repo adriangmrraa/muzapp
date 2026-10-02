@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { buildWhatsAppURL } from "@/lib/whatsapp";
 import { buildRefCode, parseUTMParams } from "@/lib/attribution";
 import { getStoredUTM } from "@/lib/attribution/utm-capture";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 interface WhatsAppCTAProps {
   /** Fallback campaign slug when no UTMs are present */
@@ -40,7 +41,10 @@ function WhatsAppCTAInner({
     content: utms.content ?? undefined,
   });
 
-  const url = buildWhatsAppURL(message, refCode);
+  const business = useBusiness();
+  const url = business?.whatsappPhone
+    ? buildWhatsAppURL(message, refCode, business.whatsappPhone)
+    : null;
 
   const btnRef = useRef<HTMLAnchorElement>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -60,6 +64,9 @@ function WhatsAppCTAInner({
   const onMouseLeave = useCallback(() => {
     setOffset({ x: 0, y: 0 });
   }, []);
+
+  // Without a configured number the CTA would point at wa.me/ — hide it.
+  if (!url) return null;
 
   return (
     <a
@@ -93,21 +100,7 @@ function WhatsAppCTAInner({
 
 export function WhatsAppCTA(props: WhatsAppCTAProps) {
   return (
-    <Suspense
-      fallback={
-        <a
-          href={`https://wa.me/5493705115020`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={
-            props.className ??
-            "btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-widest"
-          }
-        >
-          {props.label ?? "Hacer Pedido"}
-        </a>
-      }
-    >
+    <Suspense fallback={null}>
       <WhatsAppCTAInner {...props} />
     </Suspense>
   );

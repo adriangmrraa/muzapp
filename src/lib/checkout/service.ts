@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import { db } from "@/db";
-import { WHATSAPP_NUMBER } from "@/lib/constants";
 import { agentConfig, orders, products, promotions } from "@/db/schema";
 import { and, eq, like, sql } from "drizzle-orm";
 import { type CheckoutInput, type CheckoutReceipt, type PricedItem, priceCheckout, WEB_ORDER_TAG, webOrderKey } from "./contract";
@@ -28,7 +27,7 @@ export async function submitCheckout(input: CheckoutInput): Promise<CheckoutRece
     const [stockConfig] = await db.select({ noBurgers: agentConfig.hamburguesasSinStock }).from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
     noBurgers = stockConfig?.noBurgers ?? false;
   } catch { /* older deployments do not yet have this optional column */ }
-  const destination = (cfgPhone || process.env.WHATSAPP_PHONE_NUMBER || WHATSAPP_NUMBER).replace(/\D/g, "");
+  const destination = (cfgPhone || process.env.WHATSAPP_PHONE_NUMBER || "").replace(/\D/g, "");
   if (!/^\d{10,15}$/.test(destination)) throw new CheckoutError("No podemos abrir WhatsApp en este momento. Intentá nuevamente más tarde.", 503);
   // `notes` exists in every production version of orders. The old deployment did
   // not reliably have the later `tags` column, which made a valid checkout fail

@@ -3,7 +3,7 @@ import { ClientsView } from "./clients-view";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Clientes — Mrs Muzzarella Admin",
+  title: "Clientes — Admin",
 };
 
 interface Props {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { leads } from "@/db/schema";
@@ -18,8 +18,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

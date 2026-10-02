@@ -3,7 +3,7 @@ import { OrdersView } from "./orders-view";
 import { CreateOrderModalWrapper } from "./create-order-modal-wrapper";
 
 export const metadata = {
-  title: "Pedidos / Cocina — Mrs Muzzarella Admin",
+  title: "Pedidos / Cocina — Admin",
 };
 
 interface Props {

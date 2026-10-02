@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { encodeRefCode, buildWhatsAppLink } from "@/lib/attribution/ref-code";
+import { buildWhatsAppLink } from "@/lib/attribution/ref-code";
 import { ClipboardCopyIcon, CheckIcon, LinkIcon } from "lucide-react";
 import {
   staggerContainer,
@@ -115,32 +115,49 @@ export default function LinkGeneratorPage() {
   const [campaign, setCampaign] = useState("");
   const [adset, setAdset] = useState("");
   const [ad, setAd] = useState("");
-  const [phone, setPhone] = useState("5493705115020");
+  const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  // Prefill with the business WhatsApp number from agent_config.
+  useEffect(() => {
+    fetch("/api/business")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((b) => {
+        if (b?.whatsappPhone) setPhone((v) => v || b.whatsappPhone);
+      })
+      .catch(() => {});
+  }, []);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   function validatePhone(value: string): boolean {
     if (!PHONE_REGEX.test(value)) {
-      setPhoneError("Número inválido. Incluí código de país (ej: 5493704...)");
+      setPhoneError("Número inválido. Incluí código de país (ej: 549XXX...)");
       return false;
     }
     setPhoneError(null);
     return true;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!campaign.trim()) return;
     if (!validatePhone(phone)) return;
 
-    const refCode = encodeRefCode({
-      campaignId: campaign.trim(),
-      adsetId: adset.trim() || "general",
-      adId: ad.trim() || "general",
-      timestamp: Date.now(),
+    // Signed ref codes are minted server-side — the HMAC secret never
+    // reaches the client bundle.
+    const res = await fetch("/api/admin/ref-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        campaignId: campaign.trim(),
+        adsetId: adset.trim() || "general",
+        adId: ad.trim() || "general",
+      }),
     });
+    if (!res.ok) return;
 
+    const { code: refCode } = await res.json();
     const url = buildWhatsAppLink(phone.trim(), refCode);
     setGeneratedUrl(url);
     setCopied(false);
@@ -245,7 +262,7 @@ export default function LinkGeneratorPage() {
                 Teléfono <span className="text-destructive">*</span>
               </>
             }
-            placeholder="5493705115020"
+            placeholder="549XXXXXXXXXX"
             value={phone}
             onChange={(v) => {
               setPhone(v);
@@ -253,7 +270,7 @@ export default function LinkGeneratorPage() {
             }}
             onBlur={(e) => validatePhone(e.target.value)}
             error={phoneError}
-            hint="Incluí código de país sin el + (ej: 5493705115020)"
+            hint="Incluí código de país sin el + (ej: 549XXXXXXXXXX)"
           />
 
           <motion.div variants={fadeUpSmall}>

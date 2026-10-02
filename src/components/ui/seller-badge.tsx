@@ -1,8 +1,10 @@
 "use client";
 
 import { Star } from "lucide-react";
+import { useBusiness } from "@/lib/hooks/use-business";
 
 export function SellerBadge() {
+  const business = useBusiness();
   return (
     <div
       className="flex items-center gap-3 p-3 rounded-xl w-fit"
@@ -32,10 +34,10 @@ export function SellerBadge() {
             backgroundClip: "text",
           }}
         >
-          Mrs Muzzarella
+          {business?.name || "Tienda"}
         </p>
         <p className="text-[11px] text-white/50 leading-tight">
-          Rotisería Premium en Formosa
+          {business?.tagline || "Pedidos online"}
         </p>
         <div className="flex items-center gap-1 mt-0.5">
           <span className="text-xs font-bold text-white mr-1">5.0</span>

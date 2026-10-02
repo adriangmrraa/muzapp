@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import {
   getTelegramConfigFromDB,
   getMe,
@@ -87,8 +88,7 @@ export async function getTelegramStatus(): Promise<TelegramStatus> {
  * Configura el webhook en Telegram
  */
 export async function setTelegramWebhookAction(): Promise<TelegramActionState> {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { success: false, message: "No autorizado" };
   }
 
@@ -103,8 +103,15 @@ export async function setTelegramWebhookAction(): Promise<TelegramActionState> {
 
   const host =
     process.env.AUTH_URL ??
-    process.env.RENDER_EXTERNAL_URL ??
-    "https://muzzarella.onrender.com";
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.RENDER_EXTERNAL_URL;
+  if (!host) {
+    return {
+      success: false,
+      message:
+        "Configurá AUTH_URL (o NEXT_PUBLIC_APP_URL) con la URL pública del deploy para poder registrar el webhook.",
+    };
+  }
   const webhookUrl = `${host}/api/telegram/webhook/${config.webhookToken}`;
 
   const result = await setTelegramWebhook(config.botToken, webhookUrl);
@@ -125,8 +132,7 @@ export async function setTelegramWebhookAction(): Promise<TelegramActionState> {
  * Elimina el webhook de Telegram
  */
 export async function deleteTelegramWebhookAction(): Promise<TelegramActionState> {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { success: false, message: "No autorizado" };
   }
 
@@ -189,8 +195,7 @@ export async function saveTelegramConfigAction(
   chatId: string,
   enabled: boolean
 ): Promise<TelegramActionState> {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { success: false, message: "No autorizado" };
   }
 

@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { orders, leads } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { revalidatePath } from "next/cache";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
 import { resolveItems, validateResolvedOrderItems, decrementStockBestEffort } from "@/lib/order-utils";
@@ -22,8 +23,7 @@ export async function createManualOrder(
     paymentMethod?: string;
   }
 ): Promise<{ success: boolean; orderId?: number; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado"  };
 
   try {
     // Si no hay teléfono, generar un placeholder único para poder crear el lead igual

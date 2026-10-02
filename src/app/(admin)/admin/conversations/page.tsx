@@ -5,7 +5,7 @@ import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { ConversationSummary } from "@/types/chat";
 
-export const metadata = { title: "Mensajes — Mrs Muzzarella Admin" };
+export const metadata = { title: "Mensajes — Admin" };
 
 export default async function ConversationsPage() {
   const result = await getConversations({ page: 1 });

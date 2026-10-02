@@ -6,6 +6,7 @@ import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,20 @@ const agentConfigSchema = z.object({
   deliveryEnabled: z.boolean().optional().default(true),
   deliveryStartHour: z.string().optional(),
   productionHours: z.string().optional(),
+  // ─── Business identity ───────────────────────────────────────────────────
+  businessName: z.string().max(160).optional(),
+  businessTagline: z.string().max(255).optional(),
+  businessAddress: z.string().max(255).optional(),
+  businessPhoneDisplay: z.string().max(50).optional(),
+  instagramHandle: z.string().max(100).optional(),
+  businessWebsite: z.string().max(500).optional(),
+  businessDescription: z.string().max(2000).optional(),
+  // ─── AI provider — aiApiKey empty means "keep existing" ──────────────────
+  aiApiKey: z.string().max(500).optional(),
+  aiBaseUrl: z.string().max(500).optional(),
+  aiModel: z.string().max(120).optional(),
+  aiModelFast: z.string().max(120).optional(),
+  aiModelVision: z.string().max(120).optional(),
 });
 
 // ─── Actions ────────────────────────────────────────────────────────────────────
@@ -76,8 +91,7 @@ export async function saveAgentConfig(
   _prevState: AgentConfigState,
   formData: FormData
 ): Promise<AgentConfigState> {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { success: false, message: "No autorizado" };
   }
 
@@ -167,6 +181,18 @@ export async function saveAgentConfig(
     deliveryEnabled: formData.get("deliveryEnabled") === "true",
     deliveryStartHour: formData.get("deliveryStartHour") || undefined,
     productionHours: formData.get("productionHours") || undefined,
+    businessName: formData.get("businessName") || undefined,
+    businessTagline: formData.get("businessTagline") || undefined,
+    businessAddress: formData.get("businessAddress") || undefined,
+    businessPhoneDisplay: formData.get("businessPhoneDisplay") || undefined,
+    instagramHandle: (formData.get("instagramHandle") as string | null)?.replace(/^@/, "") || undefined,
+    businessWebsite: formData.get("businessWebsite") || undefined,
+    businessDescription: formData.get("businessDescription") || undefined,
+    aiApiKey: formData.get("aiApiKey") || undefined,
+    aiBaseUrl: formData.get("aiBaseUrl") || undefined,
+    aiModel: formData.get("aiModel") || undefined,
+    aiModelFast: formData.get("aiModelFast") || undefined,
+    aiModelVision: formData.get("aiModelVision") || undefined,
   };
 
   const parsed = agentConfigSchema.safeParse(raw);
@@ -180,7 +206,11 @@ export async function saveAgentConfig(
 
   try {
     const existing = await db
-      .select({ id: agentConfig.id })
+      .select({
+        id: agentConfig.id,
+        aiApiKey: agentConfig.aiApiKey,
+        ycloudApiKey: agentConfig.ycloudApiKey,
+      })
       .from(agentConfig)
       .where(eq(agentConfig.id, 1))
       .limit(1);
@@ -190,7 +220,11 @@ export async function saveAgentConfig(
       phoneNumber: parsed.data.phoneNumber,
       enabled: parsed.data.enabled,
       businessHours: parsed.data.businessHours,
-      ycloudApiKey: parsed.data.ycloudApiKey ?? null,
+      // Secret write pattern: empty = keep stored key, "CLEAR" = wipe it.
+      ycloudApiKey:
+        parsed.data.ycloudApiKey === "CLEAR"
+          ? null
+          : parsed.data.ycloudApiKey || existing[0]?.ycloudApiKey || null,
       whatsappBotNumber: parsed.data.whatsappBotNumber ?? null,
       allowedPhoneIds: parsed.data.allowedPhoneIds,
       sellerPhoneIds: parsed.data.sellerPhoneIds,
@@ -213,6 +247,23 @@ export async function saveAgentConfig(
       deliveryEnabled: parsed.data.deliveryEnabled ?? true,
       deliveryStartHour: parsed.data.deliveryStartHour ?? null,
       productionHours: parsed.data.productionHours ?? null,
+      businessName: parsed.data.businessName ?? null,
+      businessTagline: parsed.data.businessTagline ?? null,
+      businessAddress: parsed.data.businessAddress ?? null,
+      businessPhoneDisplay: parsed.data.businessPhoneDisplay ?? null,
+      instagramHandle: parsed.data.instagramHandle ?? null,
+      businessWebsite: parsed.data.businessWebsite ?? null,
+      businessDescription: parsed.data.businessDescription ?? null,
+      // Secret write pattern: an empty field keeps the stored key. To clear it
+      // deliberately the admin sends the literal string "CLEAR".
+      aiApiKey:
+        parsed.data.aiApiKey === "CLEAR"
+          ? null
+          : parsed.data.aiApiKey || existing[0]?.aiApiKey || null,
+      aiBaseUrl: parsed.data.aiBaseUrl ?? null,
+      aiModel: parsed.data.aiModel ?? null,
+      aiModelFast: parsed.data.aiModelFast ?? null,
+      aiModelVision: parsed.data.aiModelVision ?? null,
       updatedAt: new Date(),
     };
 
@@ -240,8 +291,7 @@ export async function testAgentConnection(): Promise<{
   success: boolean;
   message: string;
 }> {
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return { success: false, message: "No autorizado" };
   }
 

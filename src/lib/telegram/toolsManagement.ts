@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/db";
-import { leads, orders, agentConfig, conversations, chatMessages, products, users } from "@/db/schema";
+import { leads, orders, agentConfig, conversations, chatMessages, products } from "@/db/schema";
 import { eq, desc, ilike, or, gte, lte, count, and, asc, sql } from "drizzle-orm";
 import { normalizePhone } from "@/lib/phone-utils";
 import { getArgentinaDayIndex } from "@/lib/argentina-time";
@@ -524,9 +524,9 @@ export const updateAgentConfigTool = tool({
 // con filtros inteligentes. El LLM decide qué tabla, columnas y filtros usar.
 export const queryDataTool = tool({
   description:
-    "META-TOOL: consultar CUALQUIER tabla de la base de datos. Sirve para TODO lo que no cubren las otras tools específicas: filtrar pedidos por fecha, buscar productos por precio, contar registros, etc. Tablas: conversations (chats), leads (clientes), orders (pedidos), products (productos), agent_config (config), chat_messages (mensajes), users (admins), attachments (archivos). USAR cuando: 'mostrame los pedidos de la semana', 'cuántos leads nuevos hoy', 'qué productos cuestan menos de 5000'.",
+    "META-TOOL: consultar tablas de la base de datos. Sirve para TODO lo que no cubren las otras tools específicas: filtrar pedidos por fecha, buscar productos por precio, contar registros, etc. Tablas: conversations (chats), leads (clientes), orders (pedidos), products (productos), chat_messages (mensajes). USAR cuando: 'mostrame los pedidos de la semana', 'cuántos leads nuevos hoy', 'qué productos cuestan menos de 5000'.",
   inputSchema: z.object({
-    table: z.enum(["conversations", "leads", "orders", "products", "agent_config", "chat_messages", "users", "attachments"])
+    table: z.enum(["conversations", "leads", "orders", "products", "chat_messages"])
       .describe("Nombre de la tabla a consultar"),
     filters: z.array(z.object({
       column: z.string().describe("Nombre de la columna. Ej: 'id', 'name', 'phone', 'status', 'customerName', 'orderType'"),

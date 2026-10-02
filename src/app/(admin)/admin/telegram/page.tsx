@@ -2,7 +2,7 @@ import { getTelegramStatus } from "./actions";
 import { TelegramConfigClient } from "./telegram-config";
 
 export const metadata = {
-  title: "Telegram Bot — Mrs Muzzarella Admin",
+  title: "Telegram Bot — Admin",
 };
 
 export default async function TelegramPage() {

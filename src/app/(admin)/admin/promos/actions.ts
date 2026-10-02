@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { promotions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export type PromoRow = {
   id: number;
@@ -45,8 +46,7 @@ export async function createPromo(data: {
   items?: { productId: number; productName: string; quantity: number }[];
   customPrice?: number;
 }): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado"  };
 
   try {
     await db.insert(promotions).values({
@@ -75,8 +75,7 @@ export async function updatePromo(
     active?: boolean;
   }
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado"  };
 
   try {
     const updates: Record<string, unknown> = { updatedAt: new Date() };
@@ -98,8 +97,7 @@ export async function updatePromo(
 export async function deletePromo(
   id: number
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth();
-  if (!session) return { success: false, error: "No autorizado" };
+  if (!(await requireAdmin())) return { success: false, error: "No autorizado"  };
 
   try {
     await db.delete(promotions).where(eq(promotions.id, id));

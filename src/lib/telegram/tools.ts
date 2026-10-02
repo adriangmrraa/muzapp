@@ -153,7 +153,7 @@ export const toolGroups = {
 };
 
 console.log(
-  "[Mrs Muzzarella] Agente Interno cargado con",
+  "[internal-agent] Loaded with",
   Object.keys(internalAgentTools).length,
   "tools"
 );

@@ -2,7 +2,7 @@ import { fetchProducts } from "./actions";
 import ProductsTable from "./products-table";
 
 export const metadata = {
-  title: "Productos — Mrs Muzzarella Admin",
+  title: "Productos — Admin",
 };
 
 export default async function ProductsPage(props: {

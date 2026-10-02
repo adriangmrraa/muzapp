@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { MetaPixelProvider } from "@/components/meta/meta-pixel-provider";
+import { getBusinessInfo } from "@/lib/business";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -22,11 +23,18 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Mrs Muzzarella — Hamburguesas Artesanales",
-  description:
-    "Hamburguesas artesanales premium y pan mayorista. Sabor auténtico, hecho con amor en Argentina.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const biz = await getBusinessInfo();
+  return {
+    title: {
+      default: biz.name,
+      template: `%s — ${biz.name}`,
+    },
+    description:
+      biz.description ||
+      `${biz.name} — pedidos online por WhatsApp.`,
+  };
+}
 
 export default function RootLayout({
   children,

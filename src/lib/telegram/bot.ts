@@ -196,7 +196,9 @@ export async function getMe(
 
 export function getTelegramConfigFromEnv(): TelegramConfig {
   const botToken = process.env.TELEGRAM_BOT_TOKEN ?? "";
-  const webhookToken = process.env.TELEGRAM_WEBHOOK_TOKEN ?? "muzapp-telegram-default";
+  // No default — an empty token disables the webhook rather than leaving a
+  // publicly guessable one.
+  const webhookToken = process.env.TELEGRAM_WEBHOOK_TOKEN ?? "";
   const rawIds = process.env.TELEGRAM_ALLOWED_CHAT_IDS ?? "";
   const allowedChatIds = rawIds
     .split(",")

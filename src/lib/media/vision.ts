@@ -1,7 +1,8 @@
 import { db } from "@/db";
 import { attachments } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { AI_BASE_URL, AI_MODEL_VISION } from "@/lib/ai/models";
+import { getAIConfig } from "@/lib/ai/config";
+import { getBusinessInfo } from "@/lib/business";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -18,7 +19,8 @@ const RACE_TIMEOUT_MS = 15_000;
 const FALLBACK_DESCRIPTION = "[Imagen sin descripción]";
 const PROCESSING_PLACEHOLDER = "[Imagen enviada, procesando...]";
 
-const VISION_PROMPT = `Sos un asistente de una rotisería premium argentina (Mrs Muzzarella) que analiza imágenes enviadas por clientes por WhatsApp.
+function buildVisionPrompt(businessName: string): string {
+  return `Sos un asistente de ${businessName} que analiza imágenes enviadas por clientes por WhatsApp.
 
 Describí brevemente qué ves en la imagen en 1-2 oraciones. Sé conciso y directo.
 
@@ -33,6 +35,7 @@ Clasificá la imagen en una de estas categorías:
 Respondé SOLO con este formato exacto (sin markdown):
 CATEGORIA: [categoría]
 DESCRIPCION: [descripción breve]`;
+}
 
 // ─── Core: analyzeImage ──────────────────────────────────────────────────────
 
@@ -53,18 +56,20 @@ export async function analyzeImage(
       ? `Contexto adicional: ${context}\n\nAnalizá esta imagen.`
       : "Analizá esta imagen.";
 
+    const [ai, biz] = await Promise.all([getAIConfig(), getBusinessInfo()]);
+
     const response = await fetch(
-      `${AI_BASE_URL}/chat/completions`,
+      `${ai.baseUrl}/chat/completions`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${ai.apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: AI_MODEL_VISION,
+          model: ai.modelVision,
           messages: [
-            { role: "system", content: VISION_PROMPT },
+            { role: "system", content: buildVisionPrompt(biz.name) },
             {
               role: "user",
               content: [

@@ -16,32 +16,57 @@ const TRAGOS_VIP = [
   { name: "Mixtos (Durazno y Frutilla)", price: 6500, sort: 4 },
 ];
 
+/**
+ * Seed mínimo seguro:
+ *   ADMIN_EMAIL + ADMIN_PASSWORD   → crea el primer usuario admin (obligatorio)
+ *   SEED_DEMO=1                    → además carga productos de ejemplo
+ *
+ * Nunca escribe credenciales ni API keys — todo lo sensible se carga después
+ * desde /admin/agent.
+ */
 async function main() {
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const seedDemo = process.env.SEED_DEMO === "1";
+
+  if (!adminEmail || !adminPassword) {
+    console.error(
+      "Faltan ADMIN_EMAIL y/o ADMIN_PASSWORD.\n" +
+        "El seed nunca crea credenciales por defecto — pasá las tuyas:\n" +
+        '  ADMIN_EMAIL=you@example.com ADMIN_PASSWORD="clave-segura" npm run db:seed'
+    );
+    process.exit(1);
+  }
+
+  if (adminPassword.length < 8) {
+    console.error("ADMIN_PASSWORD debe tener al menos 8 caracteres.");
+    process.exit(1);
+  }
+
   console.log("Seeding database...");
 
   // ── Admin user ──────────────────────────────────────────────────────────────
-  const hashedPassword = await bcrypt.hash("changeme123", 12);
+  const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
   await db
     .insert(users)
     .values({
-      email: "admin@mrsmuzzarella.com",
+      email: adminEmail,
       hashedPassword,
       name: "Admin",
       role: "admin",
     })
     .onConflictDoNothing({ target: users.email });
 
-  console.log("✓ Admin user created");
+  console.log(`✓ Admin user ready (${adminEmail})`);
 
-  // ── Agent config ─────────────────────────────────────────────────────────────
+  // ── Agent config (id=1 row so the admin UI has something to update) ─────────
   await db
     .insert(agentConfig)
     .values({
+      id: 1,
       systemPrompt:
-        "Sos el asistente virtual de Mrs. Muzzarella. Ayudás a los clientes con información sobre nuestros productos y pedidos.",
-      phoneNumber: "+54911XXXXXXXX",
-      ycloudApiKey: "placeholder-api-key",
+        "Sos el asistente virtual del negocio. Ayudás a los clientes con información sobre los productos y pedidos.",
       enabled: false,
       businessHours: {
         monday: { open: "10:00", close: "22:00" },
@@ -52,11 +77,17 @@ async function main() {
         saturday: { open: "11:00", close: "23:00" },
         sunday: { open: "11:00", close: "22:00" },
       },
-    });
+    })
+    .onConflictDoNothing();
 
-  console.log("✓ Agent config created");
+  console.log("✓ Agent config ready (id=1)");
 
-  // ── Products (LINEA_POLLO) ───────────────────────────────────────────────────
+  if (!seedDemo) {
+    console.log("Seed complete. (Pasá SEED_DEMO=1 para cargar productos de ejemplo)");
+    process.exit(0);
+  }
+
+  // ── Demo catalog (opt-in, replaceable from /admin/products) ─────────────────
   const polloRows = LINEA_POLLO.map((p, index) => ({
     name: p.name,
     description: p.ingredients,
@@ -69,9 +100,8 @@ async function main() {
   }));
 
   await db.insert(products).values(polloRows).onConflictDoNothing();
-  console.log(`✓ ${polloRows.length} products seeded (LINEA_POLLO)`);
+  console.log(`✓ ${polloRows.length} demo products seeded (LINEA_POLLO)`);
 
-  // ── Coca-Cola (Bebidas) ────────────────────────────────────────────────────
   await db
     .insert(products)
     .values({
@@ -86,7 +116,6 @@ async function main() {
     .onConflictDoNothing();
   console.log("✓ Coca-Cola seeded");
 
-  // ── Tragos V.I.P ───────────────────────────────────────────────────────────
   for (const t of TRAGOS_VIP) {
     await db
       .insert(products)

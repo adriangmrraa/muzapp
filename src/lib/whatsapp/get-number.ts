@@ -10,7 +10,7 @@ import { eq } from "drizzle-orm";
  * 1. agentConfig.phoneNumber (campo principal del admin)
  * 2. agentConfig.whatsappBotNumber (número del bot)
  * 3. process.env.WHATSAPP_PHONE_NUMBER (variable de entorno)
- * 4. Fallback estático (constants.ts)
+ * Devuelve "" si nada está configurado — el caller decide cómo degradar.
  */
 export async function getWhatsAppNumber(): Promise<string> {
   try {
@@ -24,10 +24,10 @@ export async function getWhatsAppNumber(): Promise<string> {
       config?.phoneNumber ||
       config?.whatsappBotNumber ||
       process.env.WHATSAPP_PHONE_NUMBER ||
-      "5493705115020"
+      ""
     );
   } catch (error) {
     console.error("[getWhatsAppNumber] Error reading from DB:", error);
-    return process.env.WHATSAPP_PHONE_NUMBER || "5493705115020";
+    return process.env.WHATSAPP_PHONE_NUMBER || "";
   }
 }

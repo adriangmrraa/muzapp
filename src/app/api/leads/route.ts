@@ -6,24 +6,25 @@ import { db } from "@/db";
 import { leads } from "@/db/schema";
 import { extractRefCode } from "@/lib/attribution";
 import { decodeRefCode } from "@/lib/attribution/ref-code";
+import { verifyRefCodeSignature } from "@/lib/attribution/ref-code-sign";
 import { z } from "zod";
 import { normalizePhone } from "@/lib/phone-utils";
 
 // ─── POST /api/leads ──────────────────────────────────────────────────────────
 
 const CreateLeadSchema = z.object({
-  phone: z.string().min(1, "phone is required"),
-  name: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  firstMessage: z.string().optional(),
-  utmSource: z.string().optional(),
-  utmMedium: z.string().optional(),
-  utmCampaign: z.string().optional(),
-  utmContent: z.string().optional(),
-  platform: z.string().optional(),
-  adId: z.string().optional(),
-  campaignId: z.string().optional(),
-  adsetId: z.string().optional(),
+  phone: z.string().min(1, "phone is required").max(30),
+  name: z.string().max(120).optional(),
+  email: z.string().email().max(200).optional().or(z.literal("")),
+  firstMessage: z.string().max(2000).optional(),
+  utmSource: z.string().max(120).optional(),
+  utmMedium: z.string().max(120).optional(),
+  utmCampaign: z.string().max(120).optional(),
+  utmContent: z.string().max(120).optional(),
+  platform: z.string().max(40).optional(),
+  adId: z.string().max(120).optional(),
+  campaignId: z.string().max(120).optional(),
+  adsetId: z.string().max(120).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -38,6 +39,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
+    // Reject oversized bodies before parsing — the endpoint is public.
+    if (Number(req.headers.get("content-length")) > 8000) {
+      return NextResponse.json({ error: "Payload demasiado grande" }, { status: 413 });
+    }
     const body = await req.json();
     const parsed = CreateLeadSchema.safeParse(body);
 
@@ -62,7 +67,11 @@ export async function POST(req: NextRequest) {
     if (refCode) {
       try {
         const decoded = decodeRefCode(refCode);
-        if (decoded) {
+        // Signed codes: reject attribution when the HMAC doesn't check out.
+        // Legacy unsigned codes (already published in live ads) still decode.
+        if (decoded && decoded.signed && !verifyRefCodeSignature(refCode)) {
+          console.warn("[POST /api/leads] refCode signature invalid — dropping attribution");
+        } else if (decoded) {
           resolvedCampaignId = decoded.campaignId;
           resolvedAdsetId = decoded.adsetId;
           resolvedAdId = decoded.adId;

@@ -52,7 +52,8 @@ export type AgentConfigFormData = {
   enabled: boolean;
   businessHours: BusinessHour[];
   // ─── Nuevos campos ────────────────────────────────────────────────────────
-  ycloudApiKey: string;
+  // Secret never reaches the client — only whether one is configured.
+  ycloudApiKeySet: boolean;
   whatsappBotNumber: string;
   allowedPhoneIds: PhoneIdEntry[];
   sellerPhoneIds: PhoneIdEntry[];
@@ -79,6 +80,20 @@ export type AgentConfigFormData = {
   deliveryStartHour: string;
   // ─── Production ────────────────────────────────────────────────────────
   productionHours: string;
+  // ─── Business identity ─────────────────────────────────────────────────
+  businessName: string;
+  businessTagline: string;
+  businessAddress: string;
+  businessPhoneDisplay: string;
+  instagramHandle: string;
+  businessWebsite: string;
+  businessDescription: string;
+  // ─── AI provider — the key itself is never sent back to the browser ────
+  aiApiKeySet: boolean;
+  aiBaseUrl: string;
+  aiModel: string;
+  aiModelFast: string;
+  aiModelVision: string;
 };
 
 const initialState: AgentConfigState = {
@@ -308,7 +323,7 @@ export default function AgentConfigForm({
                   id="systemPrompt"
                   name="systemPrompt"
                   rows={8}
-                  placeholder="Sos el asistente virtual de Mrs Muzzarella..."
+                  placeholder="Sos el asistente virtual de este negocio..."
                   defaultValue={config.systemPrompt}
                   className="resize-none"
                   onChange={(e) => setSystemPrompt(e.target.value)}
@@ -339,8 +354,11 @@ export default function AgentConfigForm({
                     id="ycloudApiKey"
                     name="ycloudApiKey"
                     type={showApiKey ? "text" : "password"}
-                    placeholder="sk_..."
-                    defaultValue={config.ycloudApiKey}
+                    placeholder={
+                      config.ycloudApiKeySet
+                        ? "•••••••• (configurada — dejá vacío para conservar)"
+                        : "sk_..."
+                    }
                     className="pr-10"
                   />
                   <button
@@ -354,6 +372,11 @@ export default function AgentConfigForm({
                     {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {config.ycloudApiKeySet
+                    ? "Hay una key guardada. Vacío = conservar, \"CLEAR\" = borrar."
+                    : "Pegá tu API key de YCloud. También puede venir de YCLOUD_API_KEY en el servidor."}
+                </p>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="whatsappBotNumber">
@@ -365,6 +388,170 @@ export default function AgentConfigForm({
                   placeholder="+5491100000000"
                   defaultValue={config.whatsappBotNumber}
                 />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ═════════════════════════════════════════════════════════════════════
+           3b. Identidad del negocio — lo que ven los clientes
+           ═════════════════════════════════════════════════════════════════════ */}
+        <motion.div variants={fadeUpSmall}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Negocio</CardTitle>
+              <CardDescription>
+                Nombre, dirección y redes — se usa en la tienda, los mensajes y
+                los prompts del agente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="businessName">Nombre del negocio</Label>
+                <Input
+                  id="businessName"
+                  name="businessName"
+                  placeholder="Mi Negocio"
+                  defaultValue={config.businessName}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="businessTagline">Ubicación / tagline</Label>
+                <Input
+                  id="businessTagline"
+                  name="businessTagline"
+                  placeholder="Ej: Formosa Capital y alrededores"
+                  defaultValue={config.businessTagline}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="businessAddress">Dirección de retiro</Label>
+                <Input
+                  id="businessAddress"
+                  name="businessAddress"
+                  placeholder="Ej: Calle 123, Centro"
+                  defaultValue={config.businessAddress}
+                />
+                <p className="text-xs text-muted-foreground">
+                  El agente la usa cuando un cliente pide retirar.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="businessPhoneDisplay">Teléfono (visible)</Label>
+                  <Input
+                    id="businessPhoneDisplay"
+                    name="businessPhoneDisplay"
+                    placeholder="Ej: 3705-115020"
+                    defaultValue={config.businessPhoneDisplay}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="instagramHandle">Instagram (sin @)</Label>
+                  <Input
+                    id="instagramHandle"
+                    name="instagramHandle"
+                    placeholder="mi.negocio"
+                    defaultValue={config.instagramHandle}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="businessWebsite">Sitio web (opcional)</Label>
+                <Input
+                  id="businessWebsite"
+                  name="businessWebsite"
+                  placeholder="https://..."
+                  defaultValue={config.businessWebsite}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="businessDescription">Descripción breve (opcional)</Label>
+                <Textarea
+                  id="businessDescription"
+                  name="businessDescription"
+                  rows={2}
+                  placeholder="Ej: Rotisería artesanal — hamburguesas, pan mayorista y tragos."
+                  defaultValue={config.businessDescription}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ═════════════════════════════════════════════════════════════════════
+           3c. Proveedor de IA — cualquier endpoint compatible con OpenAI
+           ═════════════════════════════════════════════════════════════════════ */}
+        <motion.div variants={fadeUpSmall}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Proveedor de IA</CardTitle>
+              <CardDescription>
+                API key y modelos del agente. Funciona con OpenAI, OpenRouter,
+                DeepSeek, Groq, Together u otro endpoint compatible. Si lo dejás
+                vacío se usan las variables de entorno del servidor.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="aiApiKey">API Key del proveedor</Label>
+                <Input
+                  id="aiApiKey"
+                  name="aiApiKey"
+                  type="password"
+                  autoComplete="off"
+                  placeholder={
+                    config.aiApiKeySet
+                      ? "•••••••• (guardada — dejar vacío para conservar, 'CLEAR' para borrar)"
+                      : "sk-... — queda vacío si usás OPENAI_API_KEY del servidor"
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Nunca se muestra la clave guardada. Escribí una nueva para
+                  reemplazarla o <code>CLEAR</code> para borrarla.
+                </p>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="aiBaseUrl">Base URL (opcional)</Label>
+                <Input
+                  id="aiBaseUrl"
+                  name="aiBaseUrl"
+                  placeholder="https://api.openai.com/v1"
+                  defaultValue={config.aiBaseUrl}
+                />
+                <p className="text-xs text-muted-foreground">
+                  OpenRouter: https://openrouter.ai/api/v1 · DeepSeek:
+                  https://api.deepseek.com/v1 · Groq: https://api.groq.com/openai/v1
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="aiModel">Modelo principal</Label>
+                  <Input
+                    id="aiModel"
+                    name="aiModel"
+                    placeholder="gpt-5.4-mini"
+                    defaultValue={config.aiModel}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="aiModelFast">Modelo rápido</Label>
+                  <Input
+                    id="aiModelFast"
+                    name="aiModelFast"
+                    placeholder="gpt-5-mini"
+                    defaultValue={config.aiModelFast}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="aiModelVision">Modelo de visión</Label>
+                  <Input
+                    id="aiModelVision"
+                    name="aiModelVision"
+                    placeholder="gpt-4o"
+                    defaultValue={config.aiModelVision}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -658,7 +845,7 @@ export default function AgentConfigForm({
                     id="autoReply24hMessage"
                     name="autoReply24hMessage"
                     rows={3}
-                    placeholder="¡Hola! Gracias por contactarte con Mrs Muzzarella. Actualmente no estamos en horario de atención, pero tu mensaje será respondido a la brevedad."
+                    placeholder="¡Hola! Gracias por contactarte. Actualmente no estamos en horario de atención, pero tu mensaje será respondido a la brevedad."
                     defaultValue={config.autoReply24hMessage}
                     className="resize-none"
                   />
@@ -1158,11 +1345,11 @@ export default function AgentConfigForm({
                   id="deliveryPhoneNumber"
                   name="deliveryPhoneNumber"
                   defaultValue={config.deliveryPhoneNumber ?? ""}
-                  placeholder="5493705115020"
+                  placeholder="549XXXXXXXXXX"
                   className="font-mono"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Sin +, sin espacios. Ej: 5493705115020
+                  Sin +, sin espacios. Ej: 549XXXXXXXXXX
                 </p>
               </div>
             </CardContent>

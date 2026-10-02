@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { cookies } from "next/headers";
 import { timingSafeEqual } from "crypto";
 import { exchangeCodeForToken, getMetaBusinessInfo, encryptToken } from "@/lib/meta/oauth";
@@ -11,8 +11,7 @@ import { META_OAUTH_STATE_COOKIE } from "@/lib/meta/oauth";
 export async function GET(req: NextRequest) {
   // Only an authenticated admin may connect a Meta account — this route writes
   // the access token into agent_config.
-  const session = await auth();
-  if (!session) {
+  if (!(await requireAdmin())) {
     return new NextResponse(
       buildClosingHtml("error", "No autorizado — iniciá sesión en el admin"),
       { status: 401, headers: { "Content-Type": "text/html" } }

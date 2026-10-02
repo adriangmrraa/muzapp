@@ -1,3 +1,5 @@
+import { getAIConfig } from "@/lib/ai/config";
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -9,11 +11,16 @@ export async function transcribeAudio(
   filename: string,
   mimeType?: string
 ): Promise<string | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  // Transcription needs a Whisper-compatible endpoint on the configured
+  // provider. If the deployment uses a provider without /audio/transcriptions
+  // this returns null and the agent falls back to asking for text.
+  const ai = await getAIConfig();
+  const apiKey = ai.apiKey;
   if (!apiKey) {
-    console.error("[transcription] OPENAI_API_KEY not set");
+    console.error("[transcription] No AI API key configured (DB or OPENAI_API_KEY)");
     return null;
   }
+  const transcriptionsUrl = `${ai.baseUrl}/audio/transcriptions`;
 
   // Whisper tiene un límite de 25 MB por archivo
   if (audioBuffer.length > MAX_FILE_SIZE) {
@@ -38,7 +45,7 @@ export async function transcribeAudio(
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60_000);
 
-      const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+      const response = await fetch(transcriptionsUrl, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
