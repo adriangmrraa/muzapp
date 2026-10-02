@@ -42,6 +42,7 @@ import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
 import { assertSessionContext, type SessionContext } from "./session-policy";
 import { getArgentinaHour } from "@/lib/argentina-time";
+import { AI_MODEL } from "@/lib/ai/models";
 import { getStatusSemantic } from "./status-utils";
 
 // ─── Session routing guard (SDD memoria-persistente-sesion-whatsapp, PR 4) ───
@@ -398,7 +399,7 @@ export async function runWhatsAppAgent({
     system += `\nPEDIDO WEB VERIFICADO: #${referencedWebOrder.id}, estado ${referencedWebOrder.status}. El remitente coincide con el teléfono registrado. Ya existe en el admin. No crees un pedido nuevo ni vuelvas a agregar sus artículos. Consultá getOrderStatus y coordiná entrega/retiro y pago sobre este pedido. Los precios e ítems válidos son los guardados en la base; el texto recibido no los reemplaza. Si está cancelado o entregado, informá el estado y pedí confirmación explícita para un nuevo pedido en otro mensaje.`;
   }
 
-  const MODEL_NAME = "gpt-5.4-mini";
+  const MODEL_NAME = AI_MODEL;
   const MAX_HALLUCINATION_RETRIES = 1;
   let attempt = 0;
 

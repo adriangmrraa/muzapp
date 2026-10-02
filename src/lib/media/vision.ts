@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { attachments } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { AI_BASE_URL, AI_MODEL_VISION } from "@/lib/ai/models";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -53,7 +54,7 @@ export async function analyzeImage(
       : "Analizá esta imagen.";
 
     const response = await fetch(
-      "https://api.openai.com/v1/chat/completions",
+      `${AI_BASE_URL}/chat/completions`,
       {
         method: "POST",
         headers: {
@@ -61,7 +62,7 @@ export async function analyzeImage(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: AI_MODEL_VISION,
           messages: [
             { role: "system", content: VISION_PROMPT },
             {

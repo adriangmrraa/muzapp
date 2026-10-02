@@ -1,5 +1,6 @@
 import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { AI_MODEL_FAST } from "@/lib/ai/models";
 import {
   sendTelegramMessage,
   downloadTelegramFile,
@@ -211,7 +212,7 @@ export async function handleTelegramUpdate(
 
   try {
     const result = await generateText({
-      model: openai.chat("gpt-5-mini"),
+      model: openai.chat(AI_MODEL_FAST),
       system: await buildTelegramPrompt(),
       messages: conversationMessages,
       tools: internalAgentTools,
