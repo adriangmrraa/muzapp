@@ -1,10 +1,10 @@
 import { db } from "@/db";
 import { products, promotions } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { normalizePhone, isValidPhone as normalizedIsValid } from "@/lib/phone-utils";
 
 type InputItem = { name: string; quantity: number; price?: number; unitPrice?: number };
-type ResolvedItem = { name: string; quantity: number; price: number; unitPrice: number };
+export type ResolvedItem = { name: string; quantity: number; price: number; unitPrice: number; productId?: number };
 
 /** Reject invalid or unpriced items before writing an order or modifying its cart. */
 export function validateResolvedOrderItems(items: ResolvedItem[]): string | null {
@@ -55,7 +55,7 @@ export function isValidPhone(phone: string): boolean {
 export async function resolveItems(items: InputItem[]): Promise<ResolvedItem[]> {
   try {
     const dbProducts = await db
-      .select({ name: products.name, price: products.price })
+      .select({ id: products.id, name: products.name, price: products.price })
       .from(products)
       .where(and(eq(products.available, true), eq(products.comingSoon, false)));
 
@@ -77,6 +77,7 @@ export async function resolveItems(items: InputItem[]): Promise<ResolvedItem[]> 
           quantity: item.quantity,
           price: realPrice,       // ✅ SIEMPRE precio real de DB
           unitPrice: realPrice,   // ✅ IGNORA item.unitPrice del LLM
+          productId: productMatch.id,
         };
       }
 
@@ -108,5 +109,24 @@ export async function resolveItems(items: InputItem[]): Promise<ResolvedItem[]> 
       price: 0,                   // DB caída → 0 (admin lo corrige)
       unitPrice: 0,
     }));
+  }
+}
+
+/**
+ * Best-effort stock decrement after an order is created outside the web
+ * checkout transaction (agent/admin/telegram paths). GREATEST clamps at 0 so
+ * concurrent orders never drive stock negative; NULL stock means unlimited.
+ * Never throws — a stock bookkeeping failure must not fail a created order.
+ */
+export async function decrementStockBestEffort(items: { productId?: number; quantity: number }[]): Promise<void> {
+  try {
+    for (const item of items) {
+      if (!item.productId || !Number.isSafeInteger(item.quantity) || item.quantity <= 0) continue;
+      await db.execute(
+        sql`UPDATE products SET stock = GREATEST(stock - ${item.quantity}, 0) WHERE id = ${item.productId} AND stock IS NOT NULL`,
+      );
+    }
+  } catch (err) {
+    console.warn("[decrementStock] Failed (non-fatal):", err);
   }
 }

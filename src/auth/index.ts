@@ -12,6 +12,23 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+// Strict per-email login limiter — the generic API limiter (20/min) is too
+// permissive for credential brute-forcing. 5 attempts per 10 minutes.
+const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 5;
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function isLoginRateLimited(email: string): boolean {
+  const now = Date.now();
+  const entry = loginAttempts.get(email.toLowerCase());
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(email.toLowerCase(), { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > LOGIN_MAX_ATTEMPTS;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   pages: {
@@ -28,6 +45,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+
+        if (isLoginRateLimited(email)) return null;
 
         const [user] = await db
           .select()
@@ -48,10 +67,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       },
     }),
-    Facebook({
-      clientId: process.env.FACEBOOK_CLIENT_ID ?? "",
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? "",
-    }),
+    // Facebook OAuth only registers when credentials are configured — empty
+    // strings create a broken provider that fails at use.
+    ...(process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET
+      ? [
+          Facebook({
+            clientId: process.env.FACEBOOK_CLIENT_ID,
+            clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+          }),
+        ]
+      : []),
   ],
   callbacks: {
     async jwt({ token, user }) {

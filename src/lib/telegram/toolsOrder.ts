@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { orders, leads } from "@/db/schema";
 import { eq, ilike, sql } from "drizzle-orm";
-import { resolveItems, validateResolvedOrderItems } from "@/lib/order-utils";
+import { resolveItems, validateResolvedOrderItems, decrementStockBestEffort } from "@/lib/order-utils";
 import { normalizePhone, isValidPhone } from "@/lib/phone-utils";
 import { resolveClientName } from "@/lib/lead-utils";
 import { isSafeCustomerNameMatch } from "./customer-match";
@@ -174,6 +174,8 @@ export const createOrder = tool({
         status: "pending",
       })
       .returning({ id: orders.id });
+
+    await decrementStockBestEffort(resolvedItems);
 
     // Notificar
     try {
@@ -651,6 +653,8 @@ export const createDeliveredOrder = tool({
       deliveredAt: deliveredTimestamp,
       followupSent: true, // ya se entregó, no mandar followup
     }).returning({ id: orders.id });
+
+    await decrementStockBestEffort(resolvedItems);
 
     const dateStr = deliveredTimestamp.toLocaleDateString("es-AR", {
       day: "2-digit", month: "2-digit",

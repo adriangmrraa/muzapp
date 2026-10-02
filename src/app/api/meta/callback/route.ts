@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { cookies } from "next/headers";
+import { timingSafeEqual } from "crypto";
 import { exchangeCodeForToken, getMetaBusinessInfo, encryptToken } from "@/lib/meta/oauth";
 import { db } from "@/db";
 import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { META_OAUTH_STATE_COOKIE } from "@/lib/meta/oauth";
 
 export async function GET(req: NextRequest) {
   // Only an authenticated admin may connect a Meta account — this route writes
@@ -19,6 +22,20 @@ export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
   const error = req.nextUrl.searchParams.get("error");
+
+  // CSRF check: the state in the URL must match the nonce cookie issued by the
+  // admin session that started the OAuth flow. One-shot — clear it on use.
+  const cookieStore = await cookies();
+  const expectedState = cookieStore.get(META_OAUTH_STATE_COOKIE)?.value ?? "";
+  cookieStore.delete(META_OAUTH_STATE_COOKIE);
+  const a = Buffer.from(state ?? "");
+  const b = Buffer.from(expectedState);
+  if (!expectedState || a.length !== b.length || !timingSafeEqual(a, b)) {
+    return new NextResponse(
+      buildClosingHtml("error", "Estado OAuth inválido — reintentá la conexión"),
+      { status: 403, headers: { "Content-Type": "text/html" } }
+    );
+  }
 
   // Handle error from Meta
   if (error) {

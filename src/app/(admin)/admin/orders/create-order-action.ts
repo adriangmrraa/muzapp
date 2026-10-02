@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
-import { resolveItems, validateResolvedOrderItems } from "@/lib/order-utils";
+import { resolveItems, validateResolvedOrderItems, decrementStockBestEffort } from "@/lib/order-utils";
 import { normalizePhone } from "@/lib/phone-utils";
 
 export async function createManualOrder(
@@ -88,6 +88,8 @@ export async function createManualOrder(
         status: "pending",
       })
       .returning({ id: orders.id });
+
+    await decrementStockBestEffort(resolvedItems);
 
     // Notificar a Telegram
     notifyNewOrder({

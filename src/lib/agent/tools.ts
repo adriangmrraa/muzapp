@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { orders, products } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { resolveItems, decrementStockBestEffort } from "@/lib/order-utils";
 
 // ─── checkHours ───────────────────────────────────────────────────────────────
 
@@ -153,6 +154,11 @@ export function makeCaptureOrder(phoneNumber: string) {
           notes: customerNotes ?? null,
           status: "pending",
         });
+
+        const resolved = await resolveItems(
+          items.map((i) => ({ name: i.productName, quantity: i.quantity })),
+        );
+        await decrementStockBestEffort(resolved);
 
         const itemsSummary = items
           .map((i) => `${i.quantity}x ${i.productName}`)

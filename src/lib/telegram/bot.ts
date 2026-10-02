@@ -264,5 +264,7 @@ export function isChatAuthorized(
   chatId: number,
   allowedChatIds: number[]
 ): boolean {
-  return allowedChatIds.length === 0 || allowedChatIds.includes(chatId);
+  // Fail closed: an empty allowlist must NOT let the internal ops bot answer
+  // strangers — it exposes admin tools (orders, client history, metrics).
+  return allowedChatIds.length > 0 && allowedChatIds.includes(chatId);
 }

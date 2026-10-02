@@ -2,6 +2,9 @@ import { encrypt, decrypt } from "@/lib/encryption";
 
 const META_GRAPH_VERSION = "v22.0";
 
+// Cookie holding the CSRF nonce between the OAuth request and its callback.
+export const META_OAUTH_STATE_COOKIE = "meta_oauth_state";
+
 export function buildMetaOAuthUrl(redirectUri: string, state: string): string {
   const params = new URLSearchParams({
     client_id: process.env.META_APP_ID || "",

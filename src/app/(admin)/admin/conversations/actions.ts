@@ -1,11 +1,19 @@
 "use server";
 
+import { auth } from "@/auth";
 import { db } from "@/db";
 import { conversations, chatMessages, leads, orders } from "@/db/schema";
 import { eq, desc, and, ilike, or, sql, count } from "drizzle-orm";
-import { resolveClientName } from "@/lib/lead-utils";
+import { resolveClientNamesBatch } from "@/lib/lead-utils";
 
 const PAGE_SIZE = 50;
+
+// Server actions are public POST endpoints — every action must verify the
+// admin session before touching conversation data or sending messages.
+async function requireAdmin() {
+  const session = await auth();
+  if (!session) throw new Error("No autorizado");
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +39,7 @@ export type GetConversationsResult = {
 export async function getConversations(
   params: GetConversationsParams
 ): Promise<GetConversationsResult> {
+  await requireAdmin();
   const { page = 1, channel, status, search } = params;
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -74,21 +83,20 @@ export async function getConversations(
     db.select({ count: count() }).from(conversations).where(where),
   ]);
 
-  // Enriquecer con el nombre del lead (el de la DB, no el de WhatsApp)
-  const enriched = await Promise.all(rows.map(async (conv) => {
-    if (conv.customerPhone) {
-      try {
-        const resolvedName = await resolveClientName(
-          conv.customerPhone,
-          conv.customerName ?? ""
-        );
-        if (resolvedName !== conv.customerName) {
-          return { ...conv, customerName: resolvedName };
-        }
-      } catch {}
-    }
-    return conv;
-  }));
+  // Enriquecer con el nombre del lead (el de la DB, no el de WhatsApp) — batch
+  // query to avoid an N+1 (2 extra queries per row → 2 queries total per page).
+  let resolvedNames = new Map<string, string>();
+  try {
+    resolvedNames = await resolveClientNamesBatch(
+      rows.map((c) => c.customerPhone).filter((p): p is string => Boolean(p))
+    );
+  } catch {}
+  const enriched = rows.map((conv) => {
+    const resolvedName = conv.customerPhone ? resolvedNames.get(conv.customerPhone) : undefined;
+    return resolvedName && resolvedName !== conv.customerName
+      ? { ...conv, customerName: resolvedName }
+      : conv;
+  });
 
   return {
     conversations: enriched,
@@ -106,6 +114,7 @@ export async function getMessages(
   limit = 100,
   offset = 0
 ) {
+  await requireAdmin();
   return db
     .select()
     .from(chatMessages)
@@ -123,6 +132,8 @@ export async function sendReply(
   conversationId: number,
   content: string
 ): Promise<{ success: boolean; error?: string }> {
+  const session = await auth();
+  if (!session) return { success: false, error: "No autorizado" };
   try {
     const { sendOutboundMessage } = await import("@/lib/channels/router");
     await sendOutboundMessage(conversationId, content, "human");
@@ -140,6 +151,8 @@ export async function updateConversationStatus(
   conversationId: number,
   status: "active" | "closed" | "archived"
 ): Promise<{ success: boolean }> {
+  const session = await auth();
+  if (!session) return { success: false };
   try {
     await db
       .update(conversations)
@@ -160,6 +173,8 @@ export async function toggleHumanOverride(
   conversationId: number,
   enabled: boolean
 ): Promise<{ success: boolean }> {
+  const session = await auth();
+  if (!session) return { success: false };
   try {
     const until = enabled
       ? new Date(Date.now() + 24 * 60 * 60 * 1000) // +24h desde ahora
@@ -183,6 +198,7 @@ export async function toggleHumanOverride(
 export async function getConversation(
   conversationId: number
 ): Promise<(typeof conversations.$inferSelect) | null> {
+  await requireAdmin();
   const [conv] = await db
     .select()
     .from(conversations)
@@ -195,6 +211,7 @@ export async function getConversation(
  * Obtiene el lead vinculado a una conversación.
  */
 export async function getLeadByConversation(conversationId: number) {
+  await requireAdmin();
   const [lead] = await db
     .select()
     .from(leads)
@@ -207,6 +224,7 @@ export async function getLeadByConversation(conversationId: number) {
  * Obtiene las órdenes de un lead.
  */
 export async function getOrdersByLead(leadId: number) {
+  await requireAdmin();
   return db
     .select()
     .from(orders)

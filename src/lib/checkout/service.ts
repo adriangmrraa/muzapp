@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { db } from "@/db";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
 import { agentConfig, orders, products, promotions } from "@/db/schema";
-import { and, eq, like } from "drizzle-orm";
+import { and, eq, like, sql } from "drizzle-orm";
 import { type CheckoutInput, type CheckoutReceipt, type PricedItem, priceCheckout, WEB_ORDER_TAG, webOrderKey } from "./contract";
 
 export class CheckoutError extends Error { constructor(message: string, public status = 409) { super(message); } }
@@ -35,20 +35,50 @@ export async function submitCheckout(input: CheckoutInput): Promise<CheckoutRece
   // before it could be stored. Keep the durable correlation reference here.
   const reference = webReference(input.requestId);
   const matchReference = and(eq(orders.phoneNumber, input.phone), like(orders.notes, `%${reference}%`));
-  let [order] = await db.select({
-    id: orders.id,
-    phoneNumber: orders.phoneNumber,
-    customerName: orders.customerName,
-    items: orders.items,
-    notes: orders.notes,
-  }).from(orders).where(matchReference).limit(1);
-  if (!order) {
-    const [catalog, offers] = await Promise.all([db.select().from(products), db.select().from(promotions)]);
+
+  // Advisory lock on the requestId: a concurrent duplicate submission waits for
+  // the first transaction to commit, then sees the already-inserted order
+  // instead of inserting a second one.
+  const lockKey = `web:${input.requestId}`;
+  const order = await db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`);
+
+    const [existing] = await tx.select({
+      id: orders.id,
+      phoneNumber: orders.phoneNumber,
+      customerName: orders.customerName,
+      items: orders.items,
+      notes: orders.notes,
+    }).from(orders).where(matchReference).limit(1);
+    if (existing) return existing;
+
+    const [catalog, offers] = await Promise.all([tx.select().from(products), tx.select().from(promotions)]);
     let priced: ReturnType<typeof priceCheckout>;
     try { priced = priceCheckout(input.items, catalog, offers, noBurgers); }
     catch (error) { throw new CheckoutError(error instanceof Error ? error.message : "Revisá los productos."); }
+
+    // Atomic stock decrement inside the same transaction — a concurrent order
+    // for the same product cannot oversell: `stock >= qty` fails under
+    // contention and the whole order rolls back. NULL stock means unlimited.
+    for (const [productId, qty] of priced.demand) {
+      const updated = await tx.execute(sql`
+        UPDATE products SET stock = stock - ${qty}
+        WHERE id = ${productId} AND stock IS NOT NULL AND stock >= ${qty}
+      `);
+      if (updated.rowCount === 0) {
+        const [p] = await tx
+          .select({ name: products.name, stock: products.stock })
+          .from(products)
+          .where(eq(products.id, productId))
+          .limit(1);
+        if (p && p.stock !== null) {
+          throw new CheckoutError(`${p.name} no tiene disponibilidad para esa cantidad.`, 409);
+        }
+      }
+    }
+
     const notes = `Pedido web (${WEB_ORDER_TAG}; ${key}; ${fingerprint}). ${reference}. Coordinar entrega y pago por WhatsApp.`;
-    [order] = await db.insert(orders).values({
+    const [created] = await tx.insert(orders).values({
       phoneNumber: input.phone,
       customerName: input.customerName,
       orderType: priced.orderType,
@@ -62,7 +92,8 @@ export async function submitCheckout(input: CheckoutInput): Promise<CheckoutRece
       items: orders.items,
       notes: orders.notes,
     });
-  }
+    return created;
+  });
   if (!order || !order.notes?.includes(fingerprint) || order.phoneNumber !== input.phone) throw new CheckoutError("Esta confirmación ya fue usada para otro pedido. Volvé a revisar tu carrito.");
   const items = order.items as PricedItem[];
   const total = items.reduce((sum, item) => sum + Math.round(item.unitPrice * 100) * item.quantity, 0) / 100;

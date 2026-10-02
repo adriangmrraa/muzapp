@@ -70,7 +70,11 @@ export async function resolveClientNamesBatch(
   const orderCountMap = new Map(
     orderCounts.map((o) => [o.phone, o.count])
   );
-  const leadNameMap = new Map(leadRows.map((l) => [l.phone, l.name]));
+  // First row per phone wins — matches resolveClientName's ORDER BY id ASC LIMIT 1
+  const leadNameMap = new Map<string, string | null>();
+  for (const l of leadRows) {
+    if (!leadNameMap.has(l.phone)) leadNameMap.set(l.phone, l.name);
+  }
   const result = new Map<string, string>();
 
   for (const phone of uniquePhones) {

@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { orders, leads, agentConfig, addresses, orderContextItems, conversations } from "@/db/schema";
 import { eq, desc, and, gt, asc, inArray } from "drizzle-orm";
 import { notifyNewOrder } from "@/lib/telegram/notifier";
-import { resolveItems, validateResolvedOrderItems } from "@/lib/order-utils";
+import { resolveItems, validateResolvedOrderItems, decrementStockBestEffort } from "@/lib/order-utils";
 import { normalizePhone } from "@/lib/phone-utils";
 import { ORDER_STATUS_INFO } from "@/lib/whatsapp/status-utils";
 
@@ -216,6 +216,10 @@ export function createCreateOrderTool(conversationId: number, referencedWebOrder
     } catch {
       // non-fatal
     }
+
+    // Best-effort stock decrement — the agent already validates availability via
+    // checkStock before creating the order. Never fails the order.
+    await decrementStockBestEffort(resolvedItems);
 
     notifyNewOrder({ id: order.id, customerName, orderType, items: resolvedItems, total, status: "pending", phoneNumber: customerPhone, notes });
 

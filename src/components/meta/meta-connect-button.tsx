@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { generateMetaOAuthState } from "@/app/(admin)/admin/meta/actions";
 
 interface Props {
   isConnected: boolean;
@@ -25,10 +26,14 @@ export function MetaConnectButton({ isConnected, businessName, onDisconnect }: P
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  function handleConnect() {
+  async function handleConnect() {
     setConnecting(true);
+    const state = await generateMetaOAuthState();
+    if (!state) {
+      setConnecting(false);
+      return;
+    }
     const redirectUri = `${window.location.origin}/api/meta/callback`;
-    const state = Math.random().toString(36).slice(2);
 
     const params = new URLSearchParams({
       client_id: process.env.NEXT_PUBLIC_META_APP_ID || "",

@@ -1,7 +1,10 @@
 "use server";
 
 import { auth } from "@/auth";
+import { cookies } from "next/headers";
+import { randomBytes } from "crypto";
 import { getMetaConfig, getMetaAccessToken } from "@/lib/meta/config";
+import { META_OAUTH_STATE_COOKIE } from "@/lib/meta/oauth";
 import { db } from "@/db";
 import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -25,6 +28,27 @@ export type WebhookConfig = {
   hasPhoneNumber: boolean;
   phoneNumber: string | null;
 };
+
+/**
+ * Genera el nonce CSRF para el flujo OAuth de Meta.
+ * Lo persiste en una cookie httpOnly firmada por el servidor para que el
+ * callback pueda verificar que la redirección corresponde a ESTA sesión.
+ */
+export async function generateMetaOAuthState(): Promise<string | null> {
+  const session = await auth();
+  if (!session) return null;
+
+  const state = randomBytes(24).toString("hex");
+  const cookieStore = await cookies();
+  cookieStore.set(META_OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/api/meta",
+    maxAge: 600, // 10 min — el flujo OAuth completo tarda mucho menos
+  });
+  return state;
+}
 
 /**
  * Obtiene el estado actual de la conexión Meta

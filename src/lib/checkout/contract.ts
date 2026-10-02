@@ -61,5 +61,9 @@ export function priceCheckout(lines: CheckoutLine[], products: Product[], promos
     }
     categories.add(p.category);
   }
-  return { items, orderType: categories.size === 1 && categories.has("pan_mayorista") ? "pan_mayorista" as const : "hamburguesas" as const };
+  return {
+    items,
+    demand,
+    orderType: categories.size === 1 && categories.has("pan_mayorista") ? "pan_mayorista" as const : "hamburguesas" as const,
+  };
 }
