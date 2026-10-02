@@ -51,6 +51,11 @@ export default function HamburguesasPage() {
     fetchProducts();
   }, []);
 
+  const lineOptions = [
+    { id: "pollo", label: "Línea Pollo" },
+    { id: "carne", label: "Línea Carne" },
+  ].filter((o) => products.some((p) => p.line === o.id));
+
   const filteredProducts = useMemo(() => {
     let result = products;
     if (linea !== "todas") {
@@ -98,7 +103,7 @@ export default function HamburguesasPage() {
           </motion.p>
 
           <motion.div variants={heroChild} className="mt-4">
-            <ProductToggle value={linea} onChange={setLinea} showAll />
+            <ProductToggle value={linea} onChange={setLinea} showAll options={lineOptions} />
           </motion.div>
         </motion.div>
       </PageHero>

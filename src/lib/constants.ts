@@ -152,7 +152,6 @@ export const BG_IMAGES = [
   "/assets/images/background/b4.png",
 ];
 
-export const FEATURED_PRODUCT_IDS = ["genesis", "deli-deli", "mamita", "bookbinder"];
 
 export const BREAD_PRODUCTS = [
   {

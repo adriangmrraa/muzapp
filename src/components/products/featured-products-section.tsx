@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductToggle } from "@/components/products/product-toggle";
-import { LINEA_POLLO, LINEA_CARNE, FEATURED_PRODUCT_IDS } from "@/lib/constants";
+import { LINEA_POLLO, LINEA_CARNE } from "@/lib/constants";
 import { fadeUp } from "@/lib/animation-variants";
 
 type ProductFromAPI = {
@@ -58,11 +58,15 @@ export function FeaturedProductsSection() {
     fetchProducts();
   }, [linea]);
 
-  // Filter featured for pollo line
-  const featuredIds = FEATURED_PRODUCT_IDS;
-  const filteredProducts = linea === "pollo"
-    ? products.filter((p) => featuredIds.includes(p.id.toString()) || p.sortOrder < 4)
-    : products;
+  // Admin is the source of truth: featured only ever shows burgers, and the
+  // line tabs only offer lines that actually have products loaded.
+  const burgers = products.filter((p) => p.category === "hamburguesa");
+  const lineOptions = [
+    { id: "pollo", label: "Línea Pollo" },
+    { id: "carne", label: "Línea Carne" },
+  ].filter((o) => burgers.some((p) => p.line === o.id));
+  const activeLinea = lineOptions.some((o) => o.id === linea) ? linea : lineOptions[0]?.id;
+  const filteredProducts = burgers.filter((p) => p.line === activeLinea);
 
   return (
     <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
@@ -96,7 +100,9 @@ export function FeaturedProductsSection() {
             Las hamburguesas que el ama de casa (nuestra mejor jueza) recomienda.
           </p>
           <div className="mt-2">
-            <ProductToggle value={linea} onChange={(v) => setLinea(v as "pollo" | "carne")} />
+            {lineOptions.length > 1 && (
+              <ProductToggle value={activeLinea ?? linea} onChange={(v) => setLinea(v as "pollo" | "carne")} options={lineOptions} />
+            )}
           </div>
         </motion.div>
 

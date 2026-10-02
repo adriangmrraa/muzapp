@@ -6,13 +6,18 @@ interface ProductToggleProps {
   value: string;
   onChange: (value: string) => void;
   showAll?: boolean;
+  options?: { id: string; label: string }[];
 }
 
-export function ProductToggle({ value, onChange, showAll = false }: ProductToggleProps) {
+const DEFAULT_OPTIONS = [
+  { id: "pollo", label: "Línea Pollo" },
+  { id: "carne", label: "Línea Carne" },
+];
+
+export function ProductToggle({ value, onChange, showAll = false, options }: ProductToggleProps) {
   const TABS = [
     ...(showAll ? [{ id: "todas" as const, label: "Todas" }] : []),
-    { id: "pollo" as string, label: "Línea Pollo" },
-    { id: "carne" as string, label: "Línea Carne" },
+    ...(options ?? DEFAULT_OPTIONS),
   ];
 
   return (
