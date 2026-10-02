@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { getDLQMessages, clearDLQ } from "@/lib/queue/dlq";
 
+async function requireAdmin() {
+  const session = await auth();
+  return session ?? null;
+}
+
 export async function GET() {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   try {
     const messages = await getDLQMessages();
     return NextResponse.json({
@@ -18,6 +28,10 @@ export async function GET() {
 }
 
 export async function DELETE() {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   try {
     await clearDLQ();
     return NextResponse.json({ success: true });

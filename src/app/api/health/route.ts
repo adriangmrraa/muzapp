@@ -14,11 +14,12 @@ export async function GET() {
       db: "connected",
     });
   } catch (error) {
+    console.error("[api/health] DB check failed:", error);
     return NextResponse.json(
       {
         status: "error",
         timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : "Unknown error",
+        db: "unreachable",
       },
       { status: 500 }
     );

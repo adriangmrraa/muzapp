@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { eq, desc } from "drizzle-orm";
 import { db } from "@/db";
 import { promotions } from "@/db/schema";
@@ -8,6 +9,15 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
     const activeOnly = searchParams.get("active") === "true";
+
+    // Listing inactive promotions is admin-only — the public surface must not
+    // enumerate promos that were intentionally hidden.
+    if (!activeOnly) {
+      const session = await auth();
+      if (!session) {
+        return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+      }
+    }
 
     const rows = await db
       .select({

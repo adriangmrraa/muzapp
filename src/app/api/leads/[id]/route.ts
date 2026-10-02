@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { leads } from "@/db/schema";
@@ -17,6 +18,11 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
     const leadId = parseInt(id, 10);

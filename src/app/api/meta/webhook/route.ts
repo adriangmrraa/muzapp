@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHmac, timingSafeEqual } from "crypto";
 import { findOrCreateConversation, insertMessage } from "@/lib/channels/router";
+
+// Meta signs webhook payloads with X-Hub-Signature-256: sha256=<hmac>
+// computed over the raw body using the app secret.
+function verifyMetaSignature(rawBody: string, header: string | null): boolean {
+  const secret = process.env.META_APP_SECRET;
+  if (!secret || !header?.startsWith("sha256=")) return false;
+  const expected = `sha256=${createHmac("sha256", secret).update(rawBody).digest("hex")}`;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(header);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 // GET: Webhook verification
 export async function GET(req: NextRequest) {
@@ -16,8 +28,13 @@ export async function GET(req: NextRequest) {
 
 // POST: Incoming messages from Meta
 export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
+  if (!verifyMetaSignature(rawBody, req.headers.get("x-hub-signature-256"))) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
   try {
-    const body = await req.json();
+    const body = JSON.parse(rawBody);
 
     // Meta sends entries with changes
     const entries = body?.entry || [];

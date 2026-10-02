@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import {
   getTelegramConfigFromDB,
   type TelegramUpdate,
@@ -44,7 +45,9 @@ export async function POST(
 
     // ── Get config from DB first, fallback to env ──
     const config = await getTelegramConfigFromDB();
-    if (token !== config.webhookToken) {
+    const a = Buffer.from(token);
+    const b = Buffer.from(config.webhookToken ?? "");
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
       return NextResponse.json(
         { ok: false, error: "Invalid token" },
         { status: 401 }

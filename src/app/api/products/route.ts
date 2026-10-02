@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { products } from "@/db/schema";
@@ -10,6 +11,15 @@ export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
     const category = searchParams.get("category") as string | null;
     const available = searchParams.get("available");
+
+    // Requesting hidden products requires an admin session — the public
+    // storefront must not be able to enumerate inactive items.
+    if (available === "false") {
+      const session = await auth();
+      if (!session) {
+        return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+      }
+    }
 
     const conditions = [];
 

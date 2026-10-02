@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { checkRateLimit } from "@/lib/infra/rate-limit";
 import { eq, and, gte, lte, desc, or, ilike, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { leads } from "@/db/schema";
@@ -26,6 +28,16 @@ const CreateLeadSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Public lead-capture endpoint — rate limited to prevent spam floods
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
+    const rate = await checkRateLimit(`leads:${ip}`);
+    if (!rate.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const body = await req.json();
     const parsed = CreateLeadSchema.safeParse(body);
 
@@ -97,6 +109,11 @@ export async function POST(req: NextRequest) {
 // ─── GET /api/leads ───────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = req.nextUrl;
 

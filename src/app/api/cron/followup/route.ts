@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { db } from "@/db";
 import { orders, conversations } from "@/db/schema";
 import { eq, and, lte } from "drizzle-orm";
@@ -21,8 +22,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const key = searchParams.get("key");
 
-  // Protección simple con secret
-  if (key !== process.env.CRON_SECRET && process.env.NODE_ENV === "production") {
+  // Fail closed: without CRON_SECRET configured, nobody gets in.
+  const secret = process.env.CRON_SECRET;
+  const a = Buffer.from(key ?? "");
+  const b = Buffer.from(secret ?? "");
+  if (!secret || a.length !== b.length || !timingSafeEqual(a, b)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

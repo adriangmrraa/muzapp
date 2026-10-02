@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { sql, count } from "drizzle-orm";
 import { db } from "@/db";
 import { leads } from "@/db/schema";
@@ -6,6 +7,11 @@ import { leads } from "@/db/schema";
 // ─── GET /api/leads/stats ─────────────────────────────────────────────────────
 
 export async function GET() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   try {
     // Total count
     const [totalRow] = await db.select({ total: count() }).from(leads);
