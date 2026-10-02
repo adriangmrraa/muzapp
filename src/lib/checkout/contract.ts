@@ -41,9 +41,11 @@ export function priceCheckout(lines: CheckoutLine[], products: Product[], promos
       addDemand(product.id, line.quantity);
     } else {
       const promo = promos.find(p => p.id === line.id && p.active);
-      if (!promo?.items?.length) throw new Error("Una promoción ya no está disponible. Actualizá la carta.");
+      if (!promo) throw new Error("Una promoción ya no está disponible. Actualizá la carta.");
       name = promo.name; rawPrice = promo.customPrice;
-      for (const part of promo.items) {
+      // Component items only drive stock demand — a priced promo without them
+      // is still orderable, matching the storefront's availability check.
+      for (const part of promo.items ?? []) {
         if (!Number.isSafeInteger(part.quantity) || part.quantity <= 0) throw new Error("La promoción necesita revisión. Consultanos por WhatsApp.");
         addDemand(part.productId, part.quantity * line.quantity);
       }

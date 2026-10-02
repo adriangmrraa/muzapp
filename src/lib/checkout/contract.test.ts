@@ -36,6 +36,26 @@ test("expands promotion demand and rejects insufficient stock", () => {
   );
 });
 
+test("prices a promotion without component items like the storefront allows", () => {
+  const result = priceCheckout(
+    [{ type: "promo", id: 8, quantity: 2 }],
+    products,
+    [{ id: 8, name: "Promo noche", customPrice: "15000", active: true, items: null }],
+  );
+  assert.deepEqual(result.items, [{ name: "Promo noche", quantity: 2, price: 15000, unitPrice: 15000 }]);
+});
+
+test("rejects promotions that are inactive or unknown", () => {
+  assert.throws(
+    () => priceCheckout(
+      [{ type: "promo", id: 9, quantity: 1 }],
+      products,
+      [{ id: 9, name: "Promo vieja", customPrice: "15000", active: false, items: null }],
+    ),
+    /ya no está disponible/,
+  );
+});
+
 test("rejects repeated lines so quantities cannot bypass validation", () => {
   assert.throws(
     () => priceCheckout([
