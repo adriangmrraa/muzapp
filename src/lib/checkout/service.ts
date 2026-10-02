@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { db } from "@/db";
+import { WHATSAPP_NUMBER } from "@/lib/constants";
 import { agentConfig, orders, products, promotions } from "@/db/schema";
 import { and, eq, like } from "drizzle-orm";
 import { type CheckoutInput, type CheckoutReceipt, type PricedItem, priceCheckout, WEB_ORDER_TAG, webOrderKey } from "./contract";
@@ -13,7 +14,13 @@ function webReference(requestId: string) {
 export async function submitCheckout(input: CheckoutInput): Promise<CheckoutReceipt> {
   const key = webOrderKey(input.requestId);
   const fingerprint = `web-payload:${createHash("sha256").update(JSON.stringify({ ...input, items: [...input.items].sort((a, b) => `${a.type}:${a.id}`.localeCompare(`${b.type}:${b.id}`)) })).digest("hex")}`;
-  const [cfg] = await db.select({ phone: agentConfig.phoneNumber }).from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
+  // agent_config was introduced by the WhatsApp agent, which some deployments
+  // never provisioned. Its absence must not block checkout — fall back to env.
+  let cfgPhone: string | null = null;
+  try {
+    const [cfg] = await db.select({ phone: agentConfig.phoneNumber }).from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
+    cfgPhone = cfg?.phone ?? null;
+  } catch { /* older deployments do not have this optional table */ }
   // Stock controls were added after the original database schema. Their absence
   // must never prevent a customer from registering a valid order.
   let noBurgers = false;
@@ -21,7 +28,7 @@ export async function submitCheckout(input: CheckoutInput): Promise<CheckoutRece
     const [stockConfig] = await db.select({ noBurgers: agentConfig.hamburguesasSinStock }).from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
     noBurgers = stockConfig?.noBurgers ?? false;
   } catch { /* older deployments do not yet have this optional column */ }
-  const destination = (cfg?.phone || process.env.WHATSAPP_PHONE_NUMBER || "").replace(/\D/g, "");
+  const destination = (cfgPhone || process.env.WHATSAPP_PHONE_NUMBER || WHATSAPP_NUMBER).replace(/\D/g, "");
   if (!/^\d{10,15}$/.test(destination)) throw new CheckoutError("No podemos abrir WhatsApp en este momento. Intentá nuevamente más tarde.", 503);
   // `notes` exists in every production version of orders. The old deployment did
   // not reliably have the later `tags` column, which made a valid checkout fail
