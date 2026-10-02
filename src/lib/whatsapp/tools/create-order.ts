@@ -22,7 +22,8 @@ async function notifyDeliveryOrder(
     if (!deliveryPhone) return;
 
     const { sendWhatsAppMessage } = await import("@/lib/whatsapp/ycloud-client");
-    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const { decryptIfEncrypted } = await import("@/lib/encryption");
+    const apiKey = decryptIfEncrypted(cfg?.ycloudApiKey) || process.env.YCLOUD_API_KEY || "";
     const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
     if (!apiKey || !from) return;
 

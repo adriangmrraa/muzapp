@@ -48,7 +48,8 @@ export async function triggerAgentForConversation(
       .where(eq(agentConfig.id, 1))
       .limit(1);
 
-    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const { decryptIfEncrypted } = await import("@/lib/encryption");
+    const apiKey = decryptIfEncrypted(cfg?.ycloudApiKey) || process.env.YCLOUD_API_KEY || "";
     const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
     if (!apiKey || !from) {
       return { success: false, message: "WhatsApp no configurado (falta API key)" };

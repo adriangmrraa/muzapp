@@ -12,6 +12,7 @@ import type { OpenAIProvider } from "@ai-sdk/openai";
 import { db } from "@/db";
 import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { decryptIfEncrypted } from "@/lib/encryption";
 import { AI_BASE_URL, AI_MODEL, AI_MODEL_FAST, AI_MODEL_VISION } from "./models";
 
 export interface AIConfig {
@@ -50,7 +51,8 @@ export async function getAIConfig(): Promise<AIConfig> {
       .where(eq(agentConfig.id, 1))
       .limit(1);
     const value: AIConfig = {
-      apiKey: cfg?.aiApiKey?.trim() || ENV_CONFIG.apiKey,
+      // Stored AES-256-GCM encrypted; tolerant of legacy plaintext rows.
+      apiKey: decryptIfEncrypted(cfg?.aiApiKey?.trim() || "") || ENV_CONFIG.apiKey,
       baseUrl: (cfg?.aiBaseUrl?.trim() || ENV_CONFIG.baseUrl).replace(/\/+$/, ""),
       model: cfg?.aiModel?.trim() || ENV_CONFIG.model,
       modelFast: cfg?.aiModelFast?.trim() || ENV_CONFIG.modelFast,

@@ -5,6 +5,17 @@ export type SendTextResult =
   | { ok: true; wamid?: string }
   | { ok: false; error: string };
 
+/** Credentials: DB (admin UI, encrypted at rest) first, env fallback. */
+async function getYCloudCreds(): Promise<{ apiKey: string; from: string }> {
+  const { getYCloudApiKey } = await import("@/lib/integrations");
+  const { getBusinessInfo } = await import("@/lib/business");
+  const [apiKey, biz] = await Promise.all([getYCloudApiKey(), getBusinessInfo()]);
+  return {
+    apiKey,
+    from: biz.whatsappPhone || process.env.WHATSAPP_PHONE_NUMBER || "",
+  };
+}
+
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -13,8 +24,7 @@ export async function sendText(
   to: string,
   text: string
 ): Promise<SendTextResult> {
-  const apiKey = process.env.YCLOUD_API_KEY;
-  const from = process.env.WHATSAPP_PHONE_NUMBER;
+  const { apiKey, from } = await getYCloudCreds();
 
   if (!apiKey || !from) {
     return { ok: false, error: "Missing YCLOUD_API_KEY or WHATSAPP_PHONE_NUMBER" };
@@ -83,8 +93,7 @@ export async function sendImage(
   imageUrl: string,
   caption?: string
 ): Promise<SendTextResult> {
-  const apiKey = process.env.YCLOUD_API_KEY;
-  const from = process.env.WHATSAPP_PHONE_NUMBER;
+  const { apiKey, from } = await getYCloudCreds();
 
   if (!apiKey || !from) {
     return { ok: false, error: "Missing YCLOUD_API_KEY or WHATSAPP_PHONE_NUMBER" };
@@ -145,8 +154,7 @@ export async function sendDocument(
   caption?: string,
   fileName?: string
 ): Promise<SendTextResult> {
-  const apiKey = process.env.YCLOUD_API_KEY;
-  const from = process.env.WHATSAPP_PHONE_NUMBER;
+  const { apiKey, from } = await getYCloudCreds();
 
   if (!apiKey || !from) {
     return { ok: false, error: "Missing YCLOUD_API_KEY or WHATSAPP_PHONE_NUMBER" };

@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { agentConfig } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { decryptIfEncrypted } from "@/lib/encryption";
 
 /**
  * Integration credentials — DB (agent_config id=1) first, env fallback.
@@ -58,8 +59,10 @@ export async function getIntegrationSecrets(): Promise<IntegrationSecrets> {
       .limit(1);
 
     const env = fromEnv();
+    // Secrets are stored AES-256-GCM encrypted; decryptIfEncrypted is tolerant
+    // to legacy plaintext rows (they re-encrypt on the next admin save).
     const pick = (dbVal: string | null | undefined, envVal: string) =>
-      dbVal?.trim() || envVal;
+      decryptIfEncrypted(dbVal?.trim() || "") || envVal;
 
     const value: IntegrationSecrets = cfg
       ? {
@@ -80,5 +83,23 @@ export async function getIntegrationSecrets(): Promise<IntegrationSecrets> {
   } catch {
     // Columns may not exist on older deployments — env is the fallback.
     return fromEnv();
+  }
+}
+
+/**
+ * YCloud API key — stored encrypted in agent_config (admin UI), env fallback.
+ * Centralizes what used to be `process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey`
+ * scattered across ~10 call sites.
+ */
+export async function getYCloudApiKey(): Promise<string> {
+  try {
+    const [cfg] = await db
+      .select({ ycloudApiKey: agentConfig.ycloudApiKey })
+      .from(agentConfig)
+      .where(eq(agentConfig.id, 1))
+      .limit(1);
+    return decryptIfEncrypted(cfg?.ycloudApiKey?.trim() || "") || process.env.YCLOUD_API_KEY || "";
+  } catch {
+    return process.env.YCLOUD_API_KEY || "";
   }
 }

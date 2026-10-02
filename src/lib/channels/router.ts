@@ -324,7 +324,8 @@ export async function sendOutboundMessage(
     const { agentConfig } = await import("@/db/schema");
     const config = await db.select().from(agentConfig).limit(1);
     const cfg = config[0];
-    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const { decryptIfEncrypted } = await import("@/lib/encryption");
+    const apiKey = decryptIfEncrypted(cfg?.ycloudApiKey) || process.env.YCLOUD_API_KEY || "";
     const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
     const to = conv.customerPhone ?? conv.externalUserId ?? "";
 
@@ -401,7 +402,8 @@ export async function notifyCustomerDeliveryArrived(
       // No hay pedidos pendientes — avisar al delivery
       const { sendWhatsAppMessage } = await import("@/lib/whatsapp/ycloud-client");
       const [cfg] = await db.select().from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
-      const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+      const { decryptIfEncrypted } = await import("@/lib/encryption");
+      const apiKey = decryptIfEncrypted(cfg?.ycloudApiKey) || process.env.YCLOUD_API_KEY || "";
       const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
       if (apiKey && from) {
         await sendWhatsAppMessage({ to: deliveryPhone, body: "Gracias, no hay pedidos pendientes.", apiKey, from });
@@ -412,7 +414,8 @@ export async function notifyCustomerDeliveryArrived(
     // Enviar WhatsApp al cliente
     const { sendWhatsAppMessage } = await import("@/lib/whatsapp/ycloud-client");
     const [cfg] = await db.select().from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
-    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const { decryptIfEncrypted } = await import("@/lib/encryption");
+    const apiKey = decryptIfEncrypted(cfg?.ycloudApiKey) || process.env.YCLOUD_API_KEY || "";
     const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
     
     const customerMsg = `¡Hola ${order.customerName || ""}! El delivery ya está afuera con tu pedido. Que lo disfrutes 🍔`.trim();
@@ -449,7 +452,8 @@ export async function forwardLocationToDelivery(
     const { sendWhatsAppMessage } = await import("@/lib/whatsapp/ycloud-client");
     const { agentConfig } = await import("@/db/schema");
     const [cfg] = await db.select().from(agentConfig).where(eq(agentConfig.id, 1)).limit(1);
-    const apiKey = process.env.YCLOUD_API_KEY || cfg?.ycloudApiKey || "";
+    const { decryptIfEncrypted } = await import("@/lib/encryption");
+    const apiKey = decryptIfEncrypted(cfg?.ycloudApiKey) || process.env.YCLOUD_API_KEY || "";
     const from = process.env.WHATSAPP_PHONE_NUMBER || cfg?.phoneNumber || "";
 
     if (!apiKey || !from || !deliveryPhone) return false;

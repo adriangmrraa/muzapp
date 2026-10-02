@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { encrypt } from "@/lib/encryption";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -247,10 +248,13 @@ export async function saveAgentConfig(
       enabled: parsed.data.enabled,
       businessHours: parsed.data.businessHours,
       // Secret write pattern: empty = keep stored key, "CLEAR" = wipe it.
+      // New values are stored AES-256-GCM encrypted at rest.
       ycloudApiKey:
         parsed.data.ycloudApiKey === "CLEAR"
           ? null
-          : parsed.data.ycloudApiKey || existing[0]?.ycloudApiKey || null,
+          : parsed.data.ycloudApiKey
+            ? encrypt(parsed.data.ycloudApiKey)
+            : existing[0]?.ycloudApiKey || null,
       whatsappBotNumber: parsed.data.whatsappBotNumber ?? null,
       allowedPhoneIds: parsed.data.allowedPhoneIds,
       sellerPhoneIds: parsed.data.sellerPhoneIds,
@@ -285,36 +289,48 @@ export async function saveAgentConfig(
       aiApiKey:
         parsed.data.aiApiKey === "CLEAR"
           ? null
-          : parsed.data.aiApiKey || existing[0]?.aiApiKey || null,
+          : parsed.data.aiApiKey
+            ? encrypt(parsed.data.aiApiKey)
+            : existing[0]?.aiApiKey || null,
       aiBaseUrl: parsed.data.aiBaseUrl ?? null,
       aiModel: parsed.data.aiModel ?? null,
       aiModelFast: parsed.data.aiModelFast ?? null,
       aiModelVision: parsed.data.aiModelVision ?? null,
-      // Integration secrets — same write-only pattern as aiApiKey/ycloudApiKey.
+      // Integration secrets — encrypted at rest, write-only in the UI.
       ycloudWebhookSecret:
         parsed.data.ycloudWebhookSecret === "CLEAR"
           ? null
-          : parsed.data.ycloudWebhookSecret || existing[0]?.ycloudWebhookSecret || null,
+          : parsed.data.ycloudWebhookSecret
+            ? encrypt(parsed.data.ycloudWebhookSecret)
+            : existing[0]?.ycloudWebhookSecret || null,
       cloudinaryCloudName: parsed.data.cloudinaryCloudName ?? null,
       cloudinaryApiKey: parsed.data.cloudinaryApiKey ?? null,
       cloudinaryApiSecret:
         parsed.data.cloudinaryApiSecret === "CLEAR"
           ? null
-          : parsed.data.cloudinaryApiSecret || existing[0]?.cloudinaryApiSecret || null,
+          : parsed.data.cloudinaryApiSecret
+            ? encrypt(parsed.data.cloudinaryApiSecret)
+            : existing[0]?.cloudinaryApiSecret || null,
       metaAppId: parsed.data.metaAppId ?? null,
       metaAppSecret:
         parsed.data.metaAppSecret === "CLEAR"
           ? null
-          : parsed.data.metaAppSecret || existing[0]?.metaAppSecret || null,
+          : parsed.data.metaAppSecret
+            ? encrypt(parsed.data.metaAppSecret)
+            : existing[0]?.metaAppSecret || null,
       metaWebhookVerifyToken:
         parsed.data.metaWebhookVerifyToken === "CLEAR"
           ? null
-          : parsed.data.metaWebhookVerifyToken || existing[0]?.metaWebhookVerifyToken || null,
+          : parsed.data.metaWebhookVerifyToken
+            ? encrypt(parsed.data.metaWebhookVerifyToken)
+            : existing[0]?.metaWebhookVerifyToken || null,
       telegramNotifyChatId: parsed.data.telegramNotifyChatId ?? null,
       cronSecret:
         parsed.data.cronSecret === "CLEAR"
           ? null
-          : parsed.data.cronSecret || existing[0]?.cronSecret || null,
+          : parsed.data.cronSecret
+            ? encrypt(parsed.data.cronSecret)
+            : existing[0]?.cronSecret || null,
       escalationEmail: parsed.data.escalationEmail ?? null,
       updatedAt: new Date(),
     };

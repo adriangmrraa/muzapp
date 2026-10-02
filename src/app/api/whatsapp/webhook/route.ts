@@ -235,10 +235,12 @@ async function handleEcho(
               .where(eq(agentConfig.id, 1))
               .limit(1);
 
-            if (acConfig?.apiKey) {
+            const { decryptIfEncrypted } = await import("@/lib/encryption");
+            const mediaApiKey = decryptIfEncrypted(acConfig?.apiKey);
+            if (mediaApiKey) {
               const { buffer, mimeType, filename } = await downloadYCloudMedia(
                 mediaObj.id as string,
-                acConfig.apiKey
+                mediaApiKey
               );
               const mediaUrl = await saveMediaLocally(buffer, conversationId, filename, mimeType);
 
@@ -552,6 +554,9 @@ async function deliverWebhookHandoff(input: {
       console.error("[webhook:wa] No agent config found — is DB initialized?");
       return NextResponse.json({ ok: true }, { status: 200 });
     }
+    // Stored encrypted at rest — decrypt once for every downstream use.
+    const { decryptIfEncrypted } = await import("@/lib/encryption");
+    config.ycloudApiKey = decryptIfEncrypted(config.ycloudApiKey);
     console.log(`[webhook:wa] Config loaded — enabled:${config.enabled} phone:${config.phoneNumber || "N/A"}`);
 
     // 4b. DELIVERY DETECTION: si el mensaje es del número del delivery,

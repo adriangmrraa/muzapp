@@ -109,7 +109,8 @@ export async function getWebhookConfig(): Promise<WebhookConfig> {
     .where(eq(agentConfig.id, 1))
     .limit(1);
   const secret = secrets.ycloudWebhookSecret;
-  const apiKey = cfgRows[0]?.ycloudApiKey || process.env.YCLOUD_API_KEY;
+  const { decryptIfEncrypted } = await import("@/lib/encryption");
+  const apiKey = decryptIfEncrypted(cfgRows[0]?.ycloudApiKey) || process.env.YCLOUD_API_KEY;
   const phone = cfgRows[0]?.phoneNumber || process.env.WHATSAPP_PHONE_NUMBER;
 
   // Detectar la URL base desde el entorno — sin fallback hardcodeado.

@@ -73,7 +73,7 @@ No shell needed — after the deploy is live, open **`https://your-app.onrender.
 
 Log in at `/login`, then `/admin/agent` covers: business identity (name, tagline, address, phone, Instagram, website, description), YCloud API key + webhook secret, bot number, prompts, hours, delivery zones, payment aliases, **AI provider credentials** (API key, base URL, main/fast/vision models), and the **Integraciones** card (Cloudinary, Meta app creds, Telegram notify chat, cron secret, escalation email).
 
-Secrets are write-only: fields show whether a key is configured, an empty submit keeps the stored value, and `CLEAR` removes it. Values never return to the browser.
+Secrets are write-only: fields show whether a key is configured, an empty submit keeps the stored value, and `CLEAR` removes it. Values never return to the browser and are stored **AES-256-GCM encrypted** (key derived from `AUTH_SECRET`) — a database dump alone doesn't leak credentials.
 
 ### 5. Optional integrations (env or UI)
 

@@ -37,7 +37,8 @@ export async function GET() {
     }
 
     // 3. Run checks
-    const apiKey = config.ycloudApiKey || process.env.YCLOUD_API_KEY || "";
+    const { decryptIfEncrypted } = await import("@/lib/encryption");
+    const apiKey = decryptIfEncrypted(config.ycloudApiKey) || process.env.YCLOUD_API_KEY || "";
     const checks = {
       hasConfig: true,
       hasApiKey: apiKey.length > 0,

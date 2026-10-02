@@ -64,6 +64,23 @@ export function decrypt(encryptedText: string): string {
   }
 }
 
+const ENCRYPTED_PATTERN = /^[0-9a-f]{32}:[0-9a-f]{24}:[0-9a-f]{32}:[0-9a-f]+$/i;
+
+/** True if the value looks like our `salt:iv:authTag:ciphertext` format. */
+export function isEncrypted(value: string | null | undefined): boolean {
+  return !!value && ENCRYPTED_PATTERN.test(value);
+}
+
+/**
+ * Decrypts an encrypted value; returns plaintext values unchanged.
+ * Tolerant for migration: rows written before encryption was applied still
+ * resolve correctly, and get encrypted on the next save.
+ */
+export function decryptIfEncrypted(value: string | null | undefined): string {
+  if (!value) return "";
+  return isEncrypted(value) ? decrypt(value) : value;
+}
+
 export function maskToken(token: string): string {
   if (!token || token.length < 8) return "••••••••";
   return token.slice(0, 4) + "••••••••" + token.slice(-4);
