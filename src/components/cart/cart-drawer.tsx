@@ -26,6 +26,12 @@ type CartDrawerProps = {
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, total, itemCount, updateQuantity, removeItem, clearCart } =
     useCart()
+  // Checkout only accepts catalog ids — drop stale entries persisted before
+  // items were stored with real product ids.
+  const checkoutable = items.filter((i) =>
+    Number.isSafeInteger(Number(i.product.id)) && Number(i.product.id) > 0,
+  )
+  const hasStale = checkoutable.length !== items.length
   return (
     <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="flex w-full flex-col overflow-y-auto p-5 sm:max-w-md">
@@ -122,7 +128,25 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                 </div>
               </div>
 
-              <CheckoutForm key={items.map(i => `${i.product.id}:${i.quantity}`).join(",")} items={items.map(i => ({ type: "product", id: Number(i.product.id), quantity: i.quantity }))} />
+              {hasStale && (
+                <p role="alert" className="checkout-error">
+                  Hay productos que ya no están disponibles.{" "}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      items
+                        .filter((i) => !checkoutable.includes(i))
+                        .forEach((i) => removeItem(i.product.id))
+                    }
+                  >
+                    Quitarlos del pedido
+                  </button>
+                </p>
+              )}
+
+              {!hasStale && (
+                <CheckoutForm key={items.map(i => `${i.product.id}:${i.quantity}`).join(",")} items={checkoutable.map(i => ({ type: "product", id: Number(i.product.id), quantity: i.quantity }))} />
+              )}
 
               <div className="flex justify-center">
                 <button

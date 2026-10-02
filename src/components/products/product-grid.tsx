@@ -12,6 +12,7 @@ type ApiProduct = {
   description?: string | null;
   isPromo?: boolean;
   promoPrice?: string | null;
+  stock?: number | null;
   imageUrl?: string | null;
   comingSoon?: boolean;
   discountPercentage?: number;
@@ -41,6 +42,7 @@ export function ProductGrid({ products }: ProductGridProps) {
       emoji: ("emoji" in product ? product.emoji : undefined) || "🍔",
       imageUrl: product.imageUrl || null,
       comingSoon: Boolean(product.comingSoon),
+      stock: "stock" in product ? product.stock ?? null : null,
       discountPercentage: product.discountPercentage,
       originalPrice: product.originalPrice,
       hasFreeShipping: product.hasFreeShipping,

@@ -8,7 +8,7 @@ import { EditorialHeading, useEditorialMotion } from "@/components/storefront/mo
 import { getCatalogProductImage } from "@/lib/catalog-images";
 import { useCart } from "@/lib/cart/cart-context";
 
-type Product = { id: number; name: string; description: string | null; price: string | null; imageUrl: string | null; comingSoon: boolean; variants?: { name: string; priceDelta: number; default?: boolean }[] };
+type Product = { id: number; name: string; description: string | null; price: string | null; isPromo?: boolean; promoPrice?: string | null; stock?: number | null; imageUrl: string | null; comingSoon: boolean; variants?: { name: string; priceDelta: number; default?: boolean }[] };
 export default function TragosVIPPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,12 +31,12 @@ export default function TragosVIPPage() {
     <section className="max-w-6xl mx-auto pt-12" aria-label="Tragos V.I.P.">
       {error ? <p role="alert" className="menu-empty">No pudimos cargar los tragos. <button onClick={() => window.location.reload()} className="menu-add-button">Reintentar</button></p> : loading ? <div className="grid sm:grid-cols-3 gap-8" role="status" aria-label="Cargando tragos">{[0,1,2].map(i => <div key={i} className="aspect-[3/4] bg-white/5 motion-safe:animate-pulse" />)}</div> : !products.length ? <p className="menu-empty">Pronto, nuevas opciones para tu noche.</p> : <motion.div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: reduced ? 0 : .07 } } }}>
         {products.map(product => {
-          const price = Number(product.price);
+          const price = Number(product.isPromo && product.promoPrice != null ? product.promoPrice : product.price);
           return <motion.article key={product.id} variants={reveal} className="public-product-card">
             <div className="relative aspect-[4/5] overflow-hidden"><CatalogImage src={getCatalogProductImage(product)} alt={product.name} contain sizes="(max-width:640px) 100vw, 33vw" /></div>
             <div className="menu-item-body"><div><h3>{product.name}</h3><p>{product.description}</p></div>
               {product.variants?.length ? <p className="menu-includes">{product.variants.map(v => `${v.name}${v.priceDelta > 0 ? ` (+$${v.priceDelta.toLocaleString("es-AR")})` : ""}`).join(" · ")}. Variantes a coordinar por WhatsApp.</p> : null}
-              <div className="menu-item-action"><strong>{price > 0 ? `$${price.toLocaleString("es-AR")}` : "Consultar"}</strong>{price > 0 && !product.comingSoon && <button className="menu-add-button" onClick={() => addItem({ id: String(product.id), name: product.name, price, emoji: "🍸" })}><Plus size={16} />Agregar</button>}</div>
+              <div className="menu-item-action"><strong>{price > 0 ? `$${price.toLocaleString("es-AR")}` : "Consultar"}</strong>{price > 0 && !product.comingSoon && product.stock !== 0 && <button className="menu-add-button" onClick={() => addItem({ id: String(product.id), name: product.name, price, emoji: "🍸" })}><Plus size={16} />Agregar</button>}</div>
             </div>
           </motion.article>;
         })}

@@ -7,6 +7,31 @@ import { useCart } from "@/lib/cart/cart-context";
 
 const STORAGE_KEY = "muzapp-upsell-shown";
 
+type ApiProduct = {
+  id: number;
+  name: string;
+  price: string | null;
+  isPromo?: boolean;
+  promoPrice?: string | null;
+  stock?: number | null;
+  category: string;
+  comingSoon?: boolean;
+};
+
+const SUGGESTED_CATEGORIES = ["acompanamiento", "bebidas"] as const;
+const CATEGORY_EMOJI: Record<string, string> = {
+  acompanamiento: "🍟",
+  bebidas: "🥤",
+};
+
+function effectivePrice(p: ApiProduct) {
+  return Number(p.isPromo && p.promoPrice != null ? p.promoPrice : p.price);
+}
+
+function orderable(p: ApiProduct) {
+  return effectivePrice(p) > 0 && !p.comingSoon && p.stock !== 0;
+}
+
 interface UpsellModalProps {
   /** Función para scrollear/highlight la sección de papas */
   onNavigateToPapas?: () => void;
@@ -14,35 +39,48 @@ interface UpsellModalProps {
 
 export function UpsellModal({ onNavigateToPapas }: UpsellModalProps) {
   const [show, setShow] = useState(false);
+  const [suggestions, setSuggestions] = useState<ApiProduct[]>([]);
   const { addItem } = useCart();
 
   useEffect(() => {
-    // Mostrar después de 5 segundos si no se mostró ya en esta sesión
     if (typeof window === "undefined") return;
     if (sessionStorage.getItem(STORAGE_KEY)) return;
 
-    const timer = setTimeout(() => {
-      setShow(true);
-      sessionStorage.setItem(STORAGE_KEY, "1");
-    }, 5000);
+    let timer: number | undefined;
+    fetch("/api/products?available=true")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: ApiProduct[]) => {
+        const picks = SUGGESTED_CATEGORIES
+          .map((cat) => data.find((p) => p.category === cat && orderable(p)))
+          .filter((p): p is ApiProduct => Boolean(p));
+        if (!picks.length) return;
+        setSuggestions(picks);
+        timer = window.setTimeout(() => {
+          setShow(true);
+          sessionStorage.setItem(STORAGE_KEY, "1");
+        }, 5000);
+      })
+      .catch(() => {});
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
-  const handleAddCoca = () => {
-    addItem({ id: "coca-cola", name: "Coca-Cola", price: 1500, emoji: "🥤" });
+  const handleAdd = (product: ApiProduct) => {
+    addItem({
+      id: String(product.id),
+      name: product.name,
+      price: effectivePrice(product),
+      emoji: CATEGORY_EMOJI[product.category] ?? "⭐",
+    });
     setShow(false);
-  };
-
-  const handleAddPapas = () => {
-    addItem({ id: "papas-fritas", name: "Papas Fritas", price: 2800, emoji: "🍟" });
-    setShow(false);
-    onNavigateToPapas?.();
+    if (product.category === "acompanamiento") onNavigateToPapas?.();
   };
 
   return (
     <AnimatePresence>
-      {show && (
+      {show && suggestions.length > 0 && (
         <>
           {/* Overlay */}
           <motion.div
@@ -80,35 +118,25 @@ export function UpsellModal({ onNavigateToPapas }: UpsellModalProps) {
               Añade el toque final a tu pedido
             </p>
 
-            {/* Options */}
+            {/* Options — real orderable products from the admin catalog */}
             <div className="flex gap-3">
-              {/* Coca-Cola */}
-              <button
-                onClick={handleAddCoca}
-                className="flex-1 flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:border-[#D4A017]/40 hover:bg-white/[0.06] transition-all group"
-              >
-                <span className="text-3xl">🥤</span>
-                <span className="text-xs font-medium text-neutral-200">Coca-Cola</span>
-                <span className="text-xs text-[#D4A017] font-semibold">$1.500</span>
-                <span className="flex items-center gap-1 text-[10px] text-[#D4A017]/70 group-hover:text-[#D4A017] transition-colors">
-                  <ShoppingCart className="h-3 w-3" />
-                  Añadir
-                </span>
-              </button>
-
-              {/* Papas Fritas */}
-              <button
-                onClick={handleAddPapas}
-                className="flex-1 flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:border-[#D4A017]/40 hover:bg-white/[0.06] transition-all group"
-              >
-                <span className="text-3xl">🍟</span>
-                <span className="text-xs font-medium text-neutral-200">Papas Fritas</span>
-                <span className="text-xs text-[#D4A017] font-semibold">$2.800</span>
-                <span className="flex items-center gap-1 text-[10px] text-[#D4A017]/70 group-hover:text-[#D4A017] transition-colors">
-                  <ShoppingCart className="h-3 w-3" />
-                  Añadir
-                </span>
-              </button>
+              {suggestions.map((product) => (
+                <button
+                  key={product.id}
+                  onClick={() => handleAdd(product)}
+                  className="flex-1 flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:border-[#D4A017]/40 hover:bg-white/[0.06] transition-all group"
+                >
+                  <span className="text-3xl">{CATEGORY_EMOJI[product.category] ?? "⭐"}</span>
+                  <span className="text-xs font-medium text-neutral-200">{product.name}</span>
+                  <span className="text-xs text-[#D4A017] font-semibold">
+                    ${effectivePrice(product).toLocaleString("es-AR")}
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-[#D4A017]/70 group-hover:text-[#D4A017] transition-colors">
+                    <ShoppingCart className="h-3 w-3" />
+                    Añadir
+                  </span>
+                </button>
+              ))}
             </div>
 
             {/* Skip */}

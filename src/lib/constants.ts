@@ -50,6 +50,7 @@ export interface Product {
   emoji: string;
   imageUrl?: string | null;
   comingSoon?: boolean;
+  stock?: number | null;
   discountPercentage?: number;
   hasFreeShipping?: boolean;
   soldCount?: number;

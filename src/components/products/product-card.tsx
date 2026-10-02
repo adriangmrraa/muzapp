@@ -11,7 +11,7 @@ import { useEditorialMotion } from "@/components/storefront/motion";
 export function ProductCard({ product }: { product: Product; index?: number }) {
   const { addItem } = useCart();
   const { reveal } = useEditorialMotion();
-  const canOrder = !product.comingSoon && product.price !== null && product.price > 0;
+  const canOrder = !product.comingSoon && product.price !== null && product.price > 0 && product.stock !== 0;
   return <motion.article variants={reveal} className="public-product-card">
     <Link href={`/hamburguesas/${product.id}`} className="menu-item-preview" aria-label={`Ver ${product.name}`}>
       <CatalogImage src={getCatalogProductImage(product)} alt={product.name} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
@@ -20,6 +20,7 @@ export function ProductCard({ product }: { product: Product; index?: number }) {
     <div className="menu-item-body">
       <div><h3><Link href={`/hamburguesas/${product.id}`}>{product.name}</Link></h3><p>{product.ingredients}</p></div>
       {product.comingSoon && <span className="menu-unavailable">Próximamente</span>}
+      {product.stock === 0 && <span className="menu-unavailable">Sin stock</span>}
       <div className="menu-item-action">
         <div>{product.originalPrice && product.originalPrice > (product.price ?? Infinity) ? <del className="block text-xs text-white/40">${product.originalPrice.toLocaleString("es-AR")}</del> : null}<strong>{product.price && product.price > 0 ? `$${product.price.toLocaleString("es-AR")}` : "Consultar"}</strong></div>
         {canOrder && <button type="button" className="menu-add-button" onClick={() => addItem({ id: product.id, name: product.name, price: product.price!, emoji: product.emoji })}><Plus size={16} />Agregar</button>}

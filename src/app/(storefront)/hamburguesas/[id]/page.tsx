@@ -10,6 +10,9 @@ type ProductFromAPI = {
   name: string;
   description: string | null;
   price: string | null;
+  isPromo?: boolean;
+  promoPrice?: string | null;
+  stock?: number | null;
   category: string;
   line: string;
   imageUrl: string | null;
