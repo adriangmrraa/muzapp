@@ -10,6 +10,7 @@ import Link from "next/link";
 import { ClientGallery } from "@/components/home/client-gallery";
 import { BreadShowcase } from "@/components/home/bread-showcase";
 import { DeliveryCTA } from "@/components/home/delivery-cta";
+import { EmpanadasShowcase } from "@/components/home/empanadas-showcase";
 import { ParallaxDivider } from "@/components/layout/parallax-divider";
 import { Marquee } from "@/components/motion/marquee";
 import { useBusiness } from "@/lib/hooks/use-business";
@@ -129,6 +130,7 @@ export default function HomePage() {
 
       <ClientGallery />
       <BreadShowcase />
+      <EmpanadasShowcase />
 
       {/* Digital Menu CTA */}
       <section className="py-16 px-4 bg-[#0a0a0a] relative overflow-hidden">

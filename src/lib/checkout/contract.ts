@@ -3,6 +3,7 @@ import { z } from "zod";
 export function checkoutPhone(value: string) {
   const digits = value.replace(/\D/g, "");
   if (digits.length === 10) return `549${digits}`;
+  if (digits.startsWith("549") && digits.length === 13) return digits;
   if (digits.startsWith("54") && digits.length === 12) return `549${digits.slice(2)}`;
   return digits;
 }

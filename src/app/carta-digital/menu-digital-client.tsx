@@ -67,6 +67,12 @@ export function MenuDigitalClient({ products, promos }: { products: Product[]; p
   useEffect(() => { if (hydrated) { try { localStorage.setItem("muzapp-digital-cart", JSON.stringify(cart)); } catch { /* usable without storage */ } } }, [cart, hydrated]);
   const selections = useMemo<Selection[]>(() => [...promos.map(data => ({ type: "promo" as const, data })), ...products.map(data => ({ type: "product" as const, data }))], [products, promos]);
   const categories = CATEGORIES.filter(c => c.key === "promos" ? promos.length : products.some(p => p.category === c.key));
+  useEffect(() => {
+    const requestedCategory = new URLSearchParams(window.location.search).get("category");
+    if (requestedCategory && categories.some(category => category.key === requestedCategory)) {
+      setActiveCategory(requestedCategory);
+    }
+  }, [categories]);
   const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const visible = selections.filter(item => query.trim() ? normalize(`${item.data.name} ${item.data.description ?? ""}`).includes(normalize(query.trim())) : item.type === "promo" ? activeCategory === "promos" : item.data.category === activeCategory);
   const resolvedCart = cart.flatMap(line => {
