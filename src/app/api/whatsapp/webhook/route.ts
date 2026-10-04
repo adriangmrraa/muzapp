@@ -980,8 +980,11 @@ async function deliverWebhookHandoff(input: {
     });
 
     // Capture config values for the closure
-    const apiKey = process.env.YCLOUD_API_KEY || config.ycloudApiKey || "";
-    const botNumber = process.env.WHATSAPP_PHONE_NUMBER || config.phoneNumber || "";
+    // UI-managed key (agent_config, already decrypted above) takes precedence
+    // over the env var — a stale YCLOUD_API_KEY in the environment must not
+    // shadow the valid key saved from the admin panel.
+    const apiKey = config.ycloudApiKey || process.env.YCLOUD_API_KEY || "";
+    const botNumber = config.phoneNumber || process.env.WHATSAPP_PHONE_NUMBER || "";
     const systemPrompt = config.systemPrompt || "";
 
     console.log(`[webhook:wa] Config for agent — apiKey:${apiKey ? "SET" : "EMPTY"} botNumber:${botNumber || "EMPTY"} prompt:${systemPrompt ? "SET" : "EMPTY"}`);
