@@ -42,7 +42,7 @@ import { detectInjection } from "./tools/prompt-security";
 import { buildSystemPrompt, DEFAULT_SYSTEM_PROMPT } from "./prompt-builder";
 import { assertSessionContext, type SessionContext } from "./session-policy";
 import { getArgentinaHour } from "@/lib/argentina-time";
-import { getAIConfig, getMainChatModel } from "@/lib/ai/config";
+import { getAIConfig, getMainChatModel, isOpenAIBaseUrl } from "@/lib/ai/config";
 import { getStatusSemantic } from "./status-utils";
 
 // ─── Session routing guard (SDD memoria-persistente-sesion-whatsapp, PR 4) ───
@@ -400,7 +400,19 @@ export async function runWhatsAppAgent({
   }
 
   const aiModel = await getMainChatModel();
-  const MODEL_NAME = (await getAIConfig()).model;
+  const aiConfig = await getAIConfig();
+  const MODEL_NAME = aiConfig.model;
+  // OpenAI-only request options (developer system role, parallel_tool_calls)
+  // break other OpenAI-compatible providers (e.g. DeepSeek rejects the
+  // "developer" role). Only send them when actually talking to OpenAI.
+  const openaiProviderOptions = isOpenAIBaseUrl(aiConfig.baseUrl)
+    ? {
+        openai: {
+          systemMessageMode: "developer",
+          parallelToolCalls: false,
+        } satisfies OpenAILanguageModelChatOptions,
+      }
+    : undefined;
   const MAX_HALLUCINATION_RETRIES = 1;
   let attempt = 0;
 
@@ -486,12 +498,7 @@ export async function runWhatsAppAgent({
         model: aiModel,
         system,
         messages: retryMessages,
-        providerOptions: {
-          openai: {
-            systemMessageMode: "developer",
-            parallelToolCalls: false,
-          } satisfies OpenAILanguageModelChatOptions,
-        },
+        providerOptions: openaiProviderOptions,
         tools: agentTools,
       stopWhen: stepCountIs(10),
       toolChoice: attempt > 1 || !isNonCommercial ? "required" : "auto",
@@ -591,12 +598,7 @@ const isHallucination = isHallucinationA || isHallucinationB || isHallucinationC
             model: aiModel,
             system,
             messages: allMessages,
-            providerOptions: {
-              openai: {
-                systemMessageMode: "developer",
-                parallelToolCalls: false,
-              } satisfies OpenAILanguageModelChatOptions,
-            },
+            providerOptions: openaiProviderOptions,
             tools: agentTools,
             stopWhen: stepCountIs(10),
             toolChoice: "auto",

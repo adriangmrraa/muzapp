@@ -84,17 +84,24 @@ if (typeof setInterval !== "undefined") {
 
 export async function checkRateLimit(key: string): Promise<RateLimitResult> {
   if (redis && userRatelimit && globalRatelimit) {
-    const user = await userRatelimit.limit(key);
-    if (!user.success) {
-      return { success: false, remaining: 0, limit: USER_LIMIT };
-    }
+    try {
+      const user = await userRatelimit.limit(key);
+      if (!user.success) {
+        return { success: false, remaining: 0, limit: USER_LIMIT };
+      }
 
-    const global = await globalRatelimit.limit("global");
-    return {
-      success: global.success,
-      remaining: global.success ? user.remaining : 0,
-      limit: GLOBAL_LIMIT,
-    };
+      const global = await globalRatelimit.limit("global");
+      return {
+        success: global.success,
+        remaining: global.success ? user.remaining : 0,
+        limit: GLOBAL_LIMIT,
+      };
+    } catch (err) {
+      // A Redis outage must degrade to the in-memory limiter, never drop the
+      // request — callers fail closed on thrown errors and inbound messages
+      // would silently stop being processed.
+      console.warn("[rate-limit] Upstash check failed — using in-memory fallback", err);
+    }
   }
 
   const user = checkWindow(userMap, key, USER_LIMIT);

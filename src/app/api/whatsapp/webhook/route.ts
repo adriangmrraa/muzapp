@@ -606,9 +606,16 @@ async function deliverWebhookHandoff(input: {
     //    per-branch insertMessage calls below still guard races via
     //    wasDuplicate. No second lookup here by design.
 
-    // 7. Capture lead if first contact
+    // 7. Capture lead if first contact — a lead-capture failure must never
+    //    kill the inbound pipeline (message persistence + agent reply).
     const textForLead = msgType === "text" ? (message.text?.body as string) || "" : "";
-    if (shouldCaptureLead(actor)) await captureLeadIfNew(customerPhone, customerName, textForLead);
+    if (shouldCaptureLead(actor)) {
+      try {
+        await captureLeadIfNew(customerPhone, customerName, textForLead);
+      } catch (leadError) {
+        console.error("[webhook:wa] Lead capture failed — continuing pipeline", leadError);
+      }
+    }
 
     // 8. Auto-reply for new conversations (solo si la AI está habilitada)
     if (

@@ -72,13 +72,51 @@ export async function getAIConfig(): Promise<AIConfig> {
 }
 
 /**
+ * DeepSeek models default to "thinking" mode, which rejects
+ * tool_choice:"required" with HTTP 400 and requires reasoning_content to be
+ * passed back on tool-carrying turns (the AI SDK does not resend it → 400).
+ * Disable thinking at the transport layer so the OpenAI-compatible path works.
+ */
+const deepseekNonThinkingFetch: typeof fetch = (input, init) => {
+  if (init?.body && typeof init.body === "string") {
+    try {
+      const body = JSON.parse(init.body) as Record<string, unknown>;
+      const url = String(typeof input === "string" ? input : input instanceof URL ? input : input.url);
+      if (url.includes("/responses")) {
+        body.reasoning = { effort: "none" };
+      } else {
+        body.thinking = { type: "disabled" };
+      }
+      init = { ...init, body: JSON.stringify(body) };
+    } catch {
+      // non-JSON body — pass through untouched
+    }
+  }
+  return fetch(input, init);
+};
+
+/** True when the configured base URL points at a DeepSeek API host. */
+export function isDeepSeekBaseUrl(baseUrl: string): boolean {
+  return baseUrl.includes("deepseek.com");
+}
+
+/** True when the configured base URL points at OpenAI's own API host. */
+export function isOpenAIBaseUrl(baseUrl: string): boolean {
+  return baseUrl.includes("api.openai.com");
+}
+
+/**
  * Returns an OpenAI-compatible provider bound to the resolved credentials.
  * Falls back to the default env-driven provider when the DB has no key.
  */
 export async function getAIProvider(): Promise<OpenAIProvider> {
   const cfg = await getAIConfig();
   if (!cfg.apiKey) return defaultOpenai; // lets the SDK surface its own missing-key error
-  return createOpenAI({ apiKey: cfg.apiKey, baseURL: cfg.baseUrl });
+  return createOpenAI({
+    apiKey: cfg.apiKey,
+    baseURL: cfg.baseUrl,
+    fetch: isDeepSeekBaseUrl(cfg.baseUrl) ? deepseekNonThinkingFetch : undefined,
+  });
 }
 
 /** Main conversational model (WhatsApp sales agent). */
