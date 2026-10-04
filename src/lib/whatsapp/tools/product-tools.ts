@@ -5,6 +5,10 @@ import { products, promotions } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { PRODUCT_IMAGE_BY_NAME } from "@/lib/constants";
 
+function formatProductPrice(price: string | null) {
+  return price === null ? "Precio a consultar" : `$${price}`;
+}
+
 // getProductDetails - Ver detalles de un producto
 export const getProductDetailsTool = tool({
   description: "Obtiene los detalles completos de un producto específico: nombre, descripción, precio, línea, categoría",
@@ -59,7 +63,7 @@ export const getProductDetailsTool = tool({
 
     return `🍔 ${found.name}
 ${found.description || "Sin descripción"}
-💰 $${found.price}
+💰 ${formatProductPrice(found.price)}
 📦 Categoría: ${categoryLabel[found.category ?? ""] ?? found.category}
 🐔 Línea: ${lineLabel[found.line ?? ""] ?? found.line}`;
   },
@@ -88,7 +92,7 @@ export const getProductPriceTool = tool({
       return `${found.name} está agotado por ahora. ¿Querés ver otras opciones?`;
     }
 
-    return `💰 ${found.name}: $${found.price}`;
+    return `💰 ${found.name}: ${formatProductPrice(found.price)}`;
   },
 });
 
@@ -209,7 +213,7 @@ export const searchProductsTool = tool({
     const results = filtered.slice(0, 5);
 
     return results
-      .map((p) => `• ${p.name} - $${p.price}${p.description ? ` — ${p.description}` : ""}${p.stock !== null ? ` (stock: ${p.stock})` : ""}`)
+      .map((p) => `• ${p.name} - ${formatProductPrice(p.price)}${p.description ? ` — ${p.description}` : ""}${p.stock !== null ? ` (stock: ${p.stock})` : ""}`)
       .join("\n");
   },
 });

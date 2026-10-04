@@ -18,6 +18,7 @@ type CartLine = { type: "product" | "promo"; id: number; quantity: number };
 const CATEGORIES = [
   { key: "promos", label: "Promociones" }, { key: "hamburguesa", label: "Hamburguesas" },
   { key: "acompanamiento", label: "Para acompañar" }, { key: "bebidas", label: "Bebidas" },
+  { key: "alcohol", label: "Alcohol" }, { key: "empanadas", label: "Empanadas" },
   { key: "tragos_vip", label: "Tragos V.I.P." }, { key: "pan_mayorista", label: "Pan mayorista" },
 ];
 const money = (value: number) => `$${value.toLocaleString("es-AR")}`;

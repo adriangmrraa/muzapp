@@ -25,6 +25,8 @@ export const productCategoryEnum = pgEnum("product_category", [
   "pan_mayorista",
   "tragos_vip",
   "bebidas",
+  "alcohol",
+  "empanadas",
 ]);
 
 export const productLineEnum = pgEnum("product_line", [
@@ -34,6 +36,8 @@ export const productLineEnum = pgEnum("product_line", [
   "pan",
   "tragos",
   "bebidas",
+  "alcohol",
+  "empanadas",
 ]);
 
 export const conversationStatusEnum = pgEnum("conversation_status", [
