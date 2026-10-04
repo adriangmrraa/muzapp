@@ -204,13 +204,13 @@ test("classifier and state machine keep commercial access conservative", () => {
   assert.equal(ambiguous.kind, "fixed_clarification");
   assert.equal(ambiguous.state.clarificationSent, true);
   assert.equal(personal.kind, "fixed_ack");
-  assert.equal(recurrence.kind, "handoff");
+  assert.equal(recurrence.kind, "allow_agent");
   assert.equal(override.kind, "blocked");
   assert.equal(override.reason, "override");
   assert.equal(override.state.mode, "commercial");
 });
 
-test("ambiguous input receives one clarification before a deterministic handoff", () => {
+test("ambiguous input receives one clarification, then the agent answers", () => {
   const initial = createInitialSessionState(12);
   const clarification = transitionSession(initial, { signal: "ambiguous", messageId: "ambiguous-12-1" });
 
@@ -218,12 +218,12 @@ test("ambiguous input receives one clarification before a deterministic handoff"
   assert.equal(clarification.state.clarificationSent, true);
   assert.equal(clarification.state.mode, "commercial");
 
-  const handoff = transitionSession(clarification.state, { signal: "ambiguous", messageId: "ambiguous-12-2" });
-  assert.equal(handoff.kind, "handoff");
-  assert.equal(handoff.state.mode, "handed_off");
+  const followUp = transitionSession(clarification.state, { signal: "ambiguous", messageId: "ambiguous-12-2" });
+  assert.equal(followUp.kind, "allow_agent");
+  assert.equal(followUp.state.mode, "commercial");
 });
 
-test("commercial input resets the episode flags without releasing an existing handoff", () => {
+test("commercial input resets the episode flags and revives handed_off conversations", () => {
   const personal = transitionSession(createInitialSessionState(13), { signal: "personal", messageId: "personal-13-1" });
   const resumed = transitionSession(personal.state, { signal: "commercial", messageId: "commercial-13-1" });
   const laterPersonal = transitionSession(resumed.state, { signal: "personal", messageId: "personal-13-2" });
@@ -232,10 +232,14 @@ test("commercial input resets the episode flags without releasing an existing ha
   assert.equal(resumed.state.clarificationSent, false);
   assert.equal(laterPersonal.kind, "fixed_ack");
 
-  const held = transitionSession(personal.state, { signal: "personal", messageId: "personal-13-3" });
-  const blocked = transitionSession(held.state, { signal: "commercial", messageId: "commercial-13-2" });
-  assert.equal(blocked.kind, "blocked");
-  assert.equal(blocked.state.mode, "handed_off");
+  const followUp = transitionSession(personal.state, { signal: "personal", messageId: "personal-13-3" });
+  assert.equal(followUp.kind, "allow_agent");
+  const revived = transitionSession(
+    { ...createInitialSessionState(14), mode: "handed_off" },
+    { signal: "commercial", messageId: "commercial-13-2" }
+  );
+  assert.equal(revived.kind, "allow_agent");
+  assert.equal(revived.state.mode, "commercial");
 });
 
 test("session context accepts bounded commercial facts and rejects PII or payloads", () => {
@@ -724,7 +728,7 @@ test("handoff claims persist while customer delivery is suppressed when AI is di
   assert.equal(resolveHandoffDelivery({ aiEnabled: false, replyClaimed: false }), false);
 });
 
-test("session policy claims handoff effects once and suppresses duplicate retries", async () => {
+test("session policy sends non-commercial follow-ups to the agent and suppresses duplicate retries", async () => {
   const saved: string[] = [];
   const seen = new Set<string>();
   let stored = createInitialSessionState(706);
@@ -768,25 +772,15 @@ test("session policy claims handoff effects once and suppresses duplicate retrie
   assert.equal(first.kind, "fixed_ack");
   assert.equal(claims.length, 0);
 
-  const handoff = await service.decide(706, { signal: "personal", messageId: "handoff-706" });
-  assert.equal(handoff.kind, "handoff");
-  if (handoff.kind !== "handoff") throw new Error("expected handoff decision");
-  assert.equal(handoff.notifyClaim, true);
-  assert.equal(handoff.replyClaim, true);
-  assert.equal(handoff.delivery, "allowed");
-  assert.equal(claims.length, 1);
-  assert.deepEqual(claims[0], {
-    conversationId: 706,
-    episode: handoff.state.episode,
-    inboundMessageId: "handoff-706",
-    aiEnabled: true,
-  });
-  assert.equal(saved.filter((id) => id === "handoff-706").length, 1);
+  const followUp = await service.decide(706, { signal: "personal", messageId: "followup-706" });
+  assert.equal(followUp.kind, "allow_agent");
+  assert.equal(claims.length, 0);
+  assert.equal(saved.filter((id) => id === "followup-706").length, 1);
 
-  const retry = await service.decide(706, { signal: "personal", messageId: "handoff-706" });
+  const retry = await service.decide(706, { signal: "personal", messageId: "followup-706" });
   assert.equal(retry.kind, "duplicate");
-  assert.equal(claims.length, 1);
-  assert.equal(saved.filter((id) => id === "handoff-706").length, 1);
+  assert.equal(claims.length, 0);
+  assert.equal(saved.filter((id) => id === "followup-706").length, 1);
 
   const blocked = await service.decide(706, {
     signal: "commercial",
@@ -794,26 +788,20 @@ test("session policy claims handoff effects once and suppresses duplicate retrie
     hasHumanOverride: true,
   });
   assert.equal(blocked.kind, "blocked");
-  assert.equal(claims.length, 1);
+  assert.equal(claims.length, 0);
 });
 
-test("handoff decision suppresses customer delivery while AI is disabled", () => {
+test("non-commercial follow-ups route to the agent regardless of delivery", () => {
   const ack = transitionSession(createInitialSessionState(707), { signal: "personal", messageId: "ack-707" });
   const disabled = transitionSession(ack.state, {
     signal: "personal",
-    messageId: "handoff-707",
+    messageId: "followup-707",
     delivery: "suppressed",
   });
-  assert.equal(disabled.kind, "handoff");
-  if (disabled.kind !== "handoff") throw new Error("expected handoff decision");
-  assert.equal(disabled.delivery, "suppressed");
-  assert.equal(disabled.notifyClaim, false);
-  assert.equal(disabled.replyClaim, false);
+  assert.equal(disabled.kind, "allow_agent");
 
-  const allowed = transitionSession(ack.state, { signal: "personal", messageId: "handoff-707b" });
-  assert.equal(allowed.kind, "handoff");
-  if (allowed.kind !== "handoff") throw new Error("expected handoff decision");
-  assert.equal(allowed.delivery, "allowed");
+  const allowed = transitionSession(ack.state, { signal: "personal", messageId: "followup-707b" });
+  assert.equal(allowed.kind, "allow_agent");
 });
 
 test("transfer tool delegates effects to the shared handoff service", () => {
@@ -1007,15 +995,18 @@ test("N4 post-delivery reply clarifies instead of opening an order", () => {
   assert.match(getStatusSemantic("ready", "hamburguesas", null, 45), /LISTO/);
 });
 
-test("N5 post-handoff input stays blocked without LLM or tools", () => {
+test("N5 non-commercial follow-ups reach the agent; only override blocks", () => {
   const acknowledged = transitionSession(createInitialSessionState(805), { signal: "personal", messageId: "n5-1" });
-  const handoff = transitionSession(acknowledged.state, { signal: "personal", messageId: "n5-2" });
-  assert.equal(handoff.kind, "handoff");
+  const followUp = transitionSession(acknowledged.state, { signal: "personal", messageId: "n5-2" });
+  assert.equal(followUp.kind, "allow_agent");
 
-  const blocked = transitionSession(handoff.state, { signal: "commercial", messageId: "n5-3" });
-  assert.equal(blocked.kind, "blocked");
-  if (blocked.kind !== "blocked") throw new Error("expected blocked");
-  assert.equal(blocked.reason, "handed_off");
+  const commercial = transitionSession(followUp.state, { signal: "commercial", messageId: "n5-3" });
+  assert.equal(commercial.kind, "allow_agent");
+
+  const overridden = transitionSession(followUp.state, { signal: "commercial", messageId: "n5-4", hasHumanOverride: true });
+  assert.equal(overridden.kind, "blocked");
+  if (overridden.kind !== "blocked") throw new Error("expected blocked");
+  assert.equal(overridden.reason, "override");
 
   const routing = resolveAgentRouting("blocked");
   assert.equal(routing.invokeLLM, false);

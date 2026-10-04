@@ -132,8 +132,9 @@ function nextState(state: ConversationSessionState, changes: Partial<Conversatio
 
 export function transitionSession(state: ConversationSessionState, input: SessionPolicyInput): RoutingDecision {
   if (input.hasHumanOverride) return { kind: "blocked", reason: "override", state, eventType: "handoff_requested" };
-  if (state.mode === "handed_off") return { kind: "blocked", reason: "handed_off", state, eventType: "handoff_requested" };
 
+  // Commercial intent always reaches the agent — even in legacy handed_off
+  // conversations, which revive on their next message instead of staying dead.
   if (input.signal === "commercial") {
     const updated = nextState(applyCommercialFacts(state, input.commercialFacts), {
       mode: "commercial", ackSent: false, clarificationSent: false, episode: state.episode + (state.ackSent || state.clarificationSent ? 1 : 0),
@@ -149,7 +150,9 @@ export function transitionSession(state: ConversationSessionState, input: Sessio
     return { kind: "fixed_clarification", delivery, state: nextState(state, { clarificationSent: true }), eventType: "ambiguous_clarified" };
   }
 
-  return { kind: "handoff", delivery, state: nextState(state, { mode: "handed_off" }), eventType: "handoff_requested", notifyClaim: false, replyClaim: false };
+  // Non-commercial follow-ups go to the agent — it should always answer rather
+  // than permanently handing the conversation off to a human.
+  return { kind: "allow_agent", state: nextState(state, { mode: "commercial" }), eventType: "commercial_detected" };
 }
 
 export type SessionPolicyRepository = {
