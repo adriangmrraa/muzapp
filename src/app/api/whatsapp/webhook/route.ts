@@ -212,8 +212,8 @@ async function handleEcho(
       // Es eco de nuestra propia respuesta AI → solo dedup, NO setear override
       console.log(`[webhook:echo] Own AI echo ${echoMsgId} — no human override needed`);
     } else {
-      // Un humano respondió desde WhatsApp Business App → override 24h
-      const overrideUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      // Un humano respondió desde WhatsApp Business App → override 2h
+      const overrideUntil = new Date(Date.now() + 2 * 60 * 60 * 1000);
       await db
         .update(conversations)
         .set({ humanOverrideUntil: overrideUntil, updatedAt: new Date() })
@@ -430,7 +430,7 @@ async function deliverWebhookHandoff(input: {
     try {
       await db
         .update(conversations)
-        .set({ humanOverrideUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) })
+        .set({ humanOverrideUntil: new Date(Date.now() + 2 * 60 * 60 * 1000) })
         .where(eq(conversations.id, input.conversationId));
     } catch (overrideError) {
       console.error("[webhook:wa] Handoff override write failed — claim already durable", overrideError);

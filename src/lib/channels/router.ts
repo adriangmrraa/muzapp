@@ -359,7 +359,7 @@ export async function sendOutboundMessage(
 
   // If a human sent this from the admin panel, set humanOverrideUntil
   if (role === "human") {
-    const overrideUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const overrideUntil = new Date(Date.now() + 2 * 60 * 60 * 1000);
     await db
       .update(conversations)
       .set({ humanOverrideUntil: overrideUntil, updatedAt: new Date() })
