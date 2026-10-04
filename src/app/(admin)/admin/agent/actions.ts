@@ -8,6 +8,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { encrypt } from "@/lib/encryption";
+import { invalidateAIConfigCache } from "@/lib/ai/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -53,6 +54,8 @@ const agentConfigSchema = z.object({
   sellerPhoneIds: z.array(phoneIdSchema),
   autoReply24h: z.boolean(),
   autoReply24hMessage: z.string().optional(),
+  webOrderRedirectEnabled: z.boolean(),
+  webOrderRedirectMessage: z.string().max(1000).optional(),
   trainBotContext: z.string().optional(),
   whatsappSystemPrompt: z.string().optional(),
   whatsappInstrucciones: z.string().optional(),
@@ -176,6 +179,8 @@ export async function saveAgentConfig(
     sellerPhoneIds,
     autoReply24h: formData.get("autoReply24h") === "true",
     autoReply24hMessage: formData.get("autoReply24hMessage") || undefined,
+    webOrderRedirectEnabled: formData.get("webOrderRedirectEnabled") === "true",
+    webOrderRedirectMessage: formData.get("webOrderRedirectMessage") || undefined,
     trainBotContext: formData.get("trainBotContext") || undefined,
     whatsappSystemPrompt: formData.get("whatsappSystemPrompt") || undefined,
     whatsappInstrucciones: formData.get("whatsappInstrucciones") || undefined,
@@ -260,6 +265,8 @@ export async function saveAgentConfig(
       sellerPhoneIds: parsed.data.sellerPhoneIds,
       autoReply24h: parsed.data.autoReply24h,
       autoReply24hMessage: parsed.data.autoReply24hMessage ?? null,
+      webOrderRedirectEnabled: parsed.data.webOrderRedirectEnabled,
+      webOrderRedirectMessage: parsed.data.webOrderRedirectMessage ?? null,
       trainBotContext: parsed.data.trainBotContext ?? null,
       whatsappSystemPrompt: parsed.data.whatsappSystemPrompt ?? null,
       whatsappInstructions: parsed.data.whatsappInstrucciones ?? null,
@@ -347,6 +354,7 @@ export async function saveAgentConfig(
       });
     }
 
+    invalidateAIConfigCache();
     revalidatePath("/admin/agent");
     return { success: true, message: "Configuración guardada" };
   } catch (e) {

@@ -41,6 +41,7 @@ import {
   persistSessionTransition,
 } from "@/lib/whatsapp/session-store";
 import { checkRateLimit } from "@/lib/infra/rate-limit";
+import { buildWebOrderRedirectMessage } from "@/lib/whatsapp/web-order-redirect";
 
 /**
  * GET — Webhook verification (YCloud sends a challenge token)
@@ -598,6 +599,7 @@ async function deliverWebhookHandoff(input: {
     // 4f. Auto-reply when outside 24h window
     const autoReplyEnabled = config.autoReply24h === true;
     const autoReplyMessage = config.autoReply24hMessage?.trim();
+    const webOrderRedirectEnabled = config.webOrderRedirectEnabled === true;
     const isAiEnabled = config.enabled === true;
 
     // 6. Deduplication already enforced before conversation lookup (see 3b);
@@ -609,7 +611,14 @@ async function deliverWebhookHandoff(input: {
     if (shouldCaptureLead(actor)) await captureLeadIfNew(customerPhone, customerName, textForLead);
 
     // 8. Auto-reply for new conversations (solo si la AI está habilitada)
-    if (actor === "customer" && isAiEnabled && autoReplyEnabled && autoReplyMessage && isNew) {
+    if (
+      actor === "customer" &&
+      isAiEnabled &&
+      autoReplyEnabled &&
+      autoReplyMessage &&
+      isNew &&
+      !webOrderRedirectEnabled
+    ) {
       await sendWhatsAppMessage({
         to: customerPhone,
         body: autoReplyMessage,
@@ -839,6 +848,26 @@ async function deliverWebhookHandoff(input: {
           return NextResponse.json({ ok: true }, { status: 200 });
         }
       }
+    }
+
+    // Optional storefront-first mode: persist the first inbound message, then
+    // send one deterministic redirect instead of invoking the sales agent.
+    // This avoids duplicate operational orders while retaining normal chat for
+    // subsequent questions and preserves the existing behavior when disabled.
+    if (actor === "customer" && isNew && webOrderRedirectEnabled) {
+      const redirectMessage = buildWebOrderRedirectMessage(config);
+      try {
+        await insertMessage(conversationId, "assistant", redirectMessage);
+        await sendWhatsAppBubbles({
+          to: customerPhone,
+          text: redirectMessage,
+          apiKey: config.ycloudApiKey || "",
+          from: config.phoneNumber || "",
+        });
+      } catch (redirectError) {
+        console.error("[webhook:wa] Web-order redirect failed", redirectError);
+      }
+      return NextResponse.json({ ok: true });
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -113,6 +113,9 @@ export const agentConfig = pgTable("agent_config", {
   sellerPhoneIds: jsonb("seller_phone_ids").$type<{ name: string; phone: string }[]>().default([]),
   autoReply24h: boolean("auto_reply_24h").notNull().default(false),
   autoReply24hMessage: text("auto_reply_24h_message"),
+  // Optional first-contact message that routes customers to the public ordering flow.
+  webOrderRedirectEnabled: boolean("web_order_redirect_enabled").notNull().default(false),
+  webOrderRedirectMessage: text("web_order_redirect_message"),
   trainBotContext: text("train_bot_context"),
   // ─── Telegram Bot (CRUD) ────────────────────────────────────────────────
   telegramBotToken: text("telegram_bot_token"), // encrypted

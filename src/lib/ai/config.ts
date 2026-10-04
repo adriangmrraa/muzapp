@@ -36,6 +36,11 @@ const ENV_CONFIG: AIConfig = {
 let cached: { at: number; value: AIConfig } | null = null;
 const CACHE_TTL_MS = 30_000;
 
+/** Applies an admin provider change to the next inbound agent request. */
+export function invalidateAIConfigCache(): void {
+  cached = null;
+}
+
 export async function getAIConfig(): Promise<AIConfig> {
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.value;
   try {

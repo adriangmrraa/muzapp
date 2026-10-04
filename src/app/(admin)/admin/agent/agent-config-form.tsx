@@ -59,6 +59,8 @@ export type AgentConfigFormData = {
   sellerPhoneIds: PhoneIdEntry[];
   autoReply24h: boolean;
   autoReply24hMessage: string;
+  webOrderRedirectEnabled: boolean;
+  webOrderRedirectMessage: string;
   trainBotContext: string;
   // ─── WhatsApp Agent Editor ──────────────────────────────────────────────
   whatsappSystemPrompt: string;
@@ -150,6 +152,9 @@ export default function AgentConfigForm({
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [autoReply24h, setAutoReply24h] = useState(config.autoReply24h);
+  const [webOrderRedirectEnabled, setWebOrderRedirectEnabled] = useState(
+    config.webOrderRedirectEnabled
+  );
   const [showPreview, setShowPreview] = useState(false);
   const [trainBotContext, setTrainBotContext] = useState(config.trainBotContext);
   const [systemPrompt, setSystemPrompt] = useState(config.systemPrompt);
@@ -532,7 +537,7 @@ export default function AgentConfigForm({
                 />
                 <p className="text-xs text-muted-foreground">
                   OpenRouter: https://openrouter.ai/api/v1 · DeepSeek:
-                  https://api.deepseek.com/v1 · Groq: https://api.groq.com/openai/v1
+                  https://api.deepseek.com · Groq: https://api.groq.com/openai/v1
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -541,7 +546,7 @@ export default function AgentConfigForm({
                   <Input
                     id="aiModel"
                     name="aiModel"
-                    placeholder="gpt-5.4-mini"
+                    placeholder="deepseek-flash"
                     defaultValue={config.aiModel}
                   />
                 </div>
@@ -1005,6 +1010,60 @@ export default function AgentConfigForm({
                     defaultValue={config.autoReply24hMessage}
                     className="resize-none"
                   />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ═════════════════════════════════════════════════════════════════════
+           6b. Pedidos por la web
+           ═════════════════════════════════════════════════════════════════════ */}
+        <motion.div variants={fadeUpSmall}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Pedidos por la web</CardTitle>
+              <CardDescription>
+                En el primer mensaje de un cliente nuevo, enviá una respuesta que
+                lo dirija a la carta digital para que el pedido quede registrado
+                en el sistema.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="hidden"
+                  name="webOrderRedirectEnabled"
+                  value={String(webOrderRedirectEnabled)}
+                />
+                <Switch
+                  id="webOrderRedirectEnabled"
+                  checked={webOrderRedirectEnabled}
+                  onCheckedChange={setWebOrderRedirectEnabled}
+                />
+                <Label htmlFor="webOrderRedirectEnabled" className="cursor-pointer">
+                  {webOrderRedirectEnabled
+                    ? "Derivación al sistema activada"
+                    : "Derivación al sistema desactivada"}
+                </Label>
+              </div>
+
+              {webOrderRedirectEnabled && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="webOrderRedirectMessage">
+                    Mensaje automático (opcional)
+                  </Label>
+                  <Textarea
+                    id="webOrderRedirectMessage"
+                    name="webOrderRedirectMessage"
+                    rows={4}
+                    placeholder="¡Hola! Para que tu pedido quede registrado correctamente, hacelo desde nuestra carta digital."
+                    defaultValue={config.webOrderRedirectMessage}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Si lo dejás vacío, se usa un mensaje estándar con el enlace a la carta digital.
+                  </p>
                 </div>
               )}
             </CardContent>

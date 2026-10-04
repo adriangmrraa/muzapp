@@ -50,6 +50,13 @@
       "when": 1791130960000,
       "tag": "0006_catalog_alcohol_empanadas",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791131000000,
+      "tag": "0007_web_order_redirect",
+      "breakpoints": true
     }
   ]
 }
