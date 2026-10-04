@@ -116,13 +116,18 @@ export async function getMessages(
   offset = 0
 ) {
   await requireSession();
-  return db
+  // Fetch the LATEST `limit` messages (DESC) — offset paginates backwards
+  // into older history — then restore chronological order for display.
+  // Ordering ASC + LIMIT would return the first N messages forever, which
+  // breaks the chat view for conversations with more than `limit` messages.
+  const rows = await db
     .select()
     .from(chatMessages)
     .where(eq(chatMessages.conversationId, conversationId))
-    .orderBy(chatMessages.createdAt)
+    .orderBy(desc(chatMessages.createdAt))
     .limit(limit)
     .offset(offset);
+  return rows.reverse();
 }
 
 /**
