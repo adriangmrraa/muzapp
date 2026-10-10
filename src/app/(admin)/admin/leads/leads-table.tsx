@@ -220,7 +220,7 @@ export default function LeadsTable({
               leads.map((lead) => (
                 <TableRow
                   key={lead.id}
-                  className="cursor-pointer hover:bg-white/[0.02] transition-colors"
+                  className="cursor-pointer hover:bg-muted/20 transition-colors"
                   onClick={() => openDetail(lead)}
                 >
                   <TableCell className="font-medium">
@@ -370,7 +370,7 @@ export default function LeadsTable({
                   <div className="pt-2">
                     <button
                       onClick={() => { setSheetOpen(false); setOrderModalOpen(true); }}
-                      className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#D4A017] text-black px-4 py-2.5 text-xs font-semibold hover:bg-[#F5A623] transition-colors"
+                      className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-2.5 text-xs font-semibold hover:bg-gold-bright transition-colors"
                     >
                       <ShoppingBag className="h-3.5 w-3.5" />
                       Convertir a Cliente — Crear Pedido
@@ -398,7 +398,7 @@ export default function LeadsTable({
                       </button>
                       <button
                         onClick={() => setConfirmDelete(false)}
-                        className="rounded-lg bg-white/5 text-white/60 px-4 py-2.5 text-xs hover:bg-white/10 transition-colors"
+                        className="rounded-lg bg-muted/40 text-foreground/60 px-4 py-2.5 text-xs hover:bg-muted transition-colors"
                       >
                         Cancelar
                       </button>
@@ -406,7 +406,7 @@ export default function LeadsTable({
                   ) : (
                     <button
                       onClick={() => setConfirmDelete(true)}
-                      className="w-full rounded-lg bg-white/[0.03] text-red-400/60 px-4 py-2.5 text-xs font-medium hover:bg-red-500/10 hover:text-red-400 transition-colors border border-red-500/10"
+                      className="w-full rounded-lg bg-muted/20 text-red-400/60 px-4 py-2.5 text-xs font-medium hover:bg-red-500/10 hover:text-red-400 transition-colors border border-red-500/10"
                     >
                       🗑️ Eliminar lead
                     </button>

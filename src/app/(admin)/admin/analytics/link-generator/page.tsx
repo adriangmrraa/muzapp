@@ -16,9 +16,6 @@ import {
 
 const PHONE_REGEX = /^[0-9]{10,15}$/;
 
-const GOLD_FOCUS_SHADOW =
-  "0 0 0 2px rgba(212,160,23,0.25), 0 0 12px rgba(212,160,23,0.12)";
-
 // ─── Focusable Input ──────────────────────────────────────────────────────────
 
 interface FocusableInputProps
@@ -27,27 +24,11 @@ interface FocusableInputProps
 }
 
 function FocusableInput({ id, ...props }: FocusableInputProps) {
-  const [focused, setFocused] = useState(false);
-
   return (
     <Input
       id={id}
       {...props}
-      onFocus={(e) => {
-        setFocused(true);
-        props.onFocus?.(e);
-      }}
-      onBlur={(e) => {
-        setFocused(false);
-        props.onBlur?.(e);
-      }}
-      style={{
-        transition: "box-shadow 0.2s ease, border-color 0.2s ease",
-        boxShadow: focused ? GOLD_FOCUS_SHADOW : undefined,
-        borderColor: focused
-          ? "rgba(212,160,23,0.6)"
-          : "rgba(212,160,23,0.15)",
-      }}
+      className="border-primary/15 transition-[box-shadow,border-color] duration-200 focus-visible:border-primary/60 focus-visible:ring-primary/25"
     />
   );
 }
@@ -188,13 +169,7 @@ export default function LinkGeneratorPage() {
         <p className="text-sm text-muted-foreground">
           Creá links de WhatsApp con atribución para tus campañas
         </p>
-        <div
-          className="mt-2 h-px w-16 rounded-full"
-          style={{
-            background: "linear-gradient(135deg, #D4A017, #F5A623)",
-            opacity: 0.6,
-          }}
-        />
+        <div className="mt-2 h-px w-16 rounded-full bg-gradient-to-br from-gold to-gold-bright opacity-60" />
       </motion.div>
 
       {/* Form card */}
@@ -300,21 +275,14 @@ export default function LinkGeneratorPage() {
             exit={{ opacity: 0, y: 8, transition: { duration: 0.2 } }}
             className="glass-card rounded-xl p-6 flex flex-col gap-4"
           >
-            <h2
-              className="text-sm font-semibold"
-              style={{ color: "#D4A017" }}
-            >
+            <h2 className="text-sm font-semibold text-primary">
               Link generado
             </h2>
 
             {/* URL + copy button */}
             <div className="flex items-center gap-2">
               <div
-                className="flex-1 rounded-lg px-3 py-2 text-xs text-foreground break-all font-mono"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(212,160,23,0.2)",
-                }}
+                className="flex-1 rounded-lg px-3 py-2 text-xs text-foreground break-all font-mono bg-muted/40 border border-primary/20"
               >
                 {generatedUrl}
               </div>
@@ -358,30 +326,26 @@ export default function LinkGeneratorPage() {
 
             {/* Attribution preview */}
             <motion.div
-              className="rounded-lg px-4 py-3 text-xs text-muted-foreground"
-              style={{
-                background: "rgba(212,160,23,0.04)",
-                border: "1px solid rgba(212,160,23,0.15)",
-              }}
+              className="rounded-lg px-4 py-3 text-xs text-muted-foreground bg-primary/[0.04] border border-primary/15"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.15 }}
             >
               <span className="font-medium text-foreground">Atribución: </span>
               Campaña:{" "}
-              <span style={{ color: "#D4A017" }}>{campaign}</span>
+              <span className="text-primary">{campaign}</span>
               {adset && (
                 <>
                   {" "}
                   | Adset:{" "}
-                  <span style={{ color: "#D4A017" }}>{adset}</span>
+                  <span className="text-primary">{adset}</span>
                 </>
               )}
               {ad && (
                 <>
                   {" "}
                   | Ad:{" "}
-                  <span style={{ color: "#D4A017" }}>{ad}</span>
+                  <span className="text-primary">{ad}</span>
                 </>
               )}
             </motion.div>

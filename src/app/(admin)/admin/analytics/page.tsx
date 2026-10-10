@@ -25,13 +25,7 @@ export default async function AnalyticsPage() {
         <p className="text-sm text-muted-foreground">
           Rendimiento de campañas y atribución de leads
         </p>
-        <div
-          className="mt-2 h-px w-16 rounded-full"
-          style={{
-            background: "linear-gradient(135deg, #D4A017, #F5A623)",
-            opacity: 0.6,
-          }}
-        />
+        <div className="mt-2 h-px w-16 rounded-full bg-gradient-to-br from-gold to-gold-bright opacity-60" />
       </div>
 
       <SummaryCards data={summaryStats} />

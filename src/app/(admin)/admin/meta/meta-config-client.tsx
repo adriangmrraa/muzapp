@@ -41,14 +41,14 @@ function CopyField({ label, value }: { label: string; value: string }) {
         <Input
           readOnly
           value={value}
-          className="font-mono text-xs bg-white/[0.03] border-white/[0.08] select-all"
+          className="font-mono text-xs bg-muted/40 border-border select-all"
         />
         <Button
           type="button"
           onClick={copy}
           variant="outline"
           size="sm"
-          className="shrink-0 border-white/[0.1] text-xs"
+          className="shrink-0 border-border text-xs"
         >
           {copied ? "¡Copiado!" : "Copiar"}
         </Button>
@@ -90,7 +90,7 @@ export function MetaConfigClient({
           <CardContent className="flex flex-col gap-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Pixel status */}
-              <div className="rounded-lg border p-4 flex items-start gap-3 transition-colors hover:bg-white/[0.02]">
+              <div className="rounded-lg border p-4 flex items-start gap-3 transition-colors hover:bg-muted/20">
                 <StatusDot active={initialStatus.pixelConfigured} />
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-medium">Meta Pixel</span>
@@ -106,7 +106,7 @@ export function MetaConfigClient({
               </div>
 
               {/* Server config status */}
-              <div className="rounded-lg border p-4 flex items-start gap-3 transition-colors hover:bg-white/[0.02]">
+              <div className="rounded-lg border p-4 flex items-start gap-3 transition-colors hover:bg-muted/20">
                 <StatusDot active={initialStatus.serverConfigured} />
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-medium">
@@ -142,7 +142,7 @@ export function MetaConfigClient({
                 type="submit"
                 disabled={isPending}
                 variant="outline"
-                className="border-[#D4A017]/40 text-[#D4A017] hover:bg-[#D4A017]/10 hover:text-[#F5A623]"
+                className="border-primary/40 text-primary hover:bg-primary/10 hover:text-gold-bright"
               >
                 {isPending
                   ? "Probando conexión..."
@@ -183,7 +183,7 @@ export function MetaConfigClient({
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="rounded-lg border p-3 flex items-start gap-2 transition-colors hover:bg-white/[0.02]">
+              <div className="rounded-lg border p-3 flex items-start gap-2 transition-colors hover:bg-muted/20">
                 <StatusDot active={webhookConfig.hasWebhookSecret} />
                 <div className="flex flex-col gap-0.5">
                   <span className="text-xs font-medium">YCLOUD_WEBHOOK_SECRET</span>
@@ -193,7 +193,7 @@ export function MetaConfigClient({
                 </div>
               </div>
 
-              <div className="rounded-lg border p-3 flex items-start gap-2 transition-colors hover:bg-white/[0.02]">
+              <div className="rounded-lg border p-3 flex items-start gap-2 transition-colors hover:bg-muted/20">
                 <StatusDot active={webhookConfig.hasApiKey} />
                 <div className="flex flex-col gap-0.5">
                   <span className="text-xs font-medium">YCLOUD_API_KEY</span>
@@ -203,7 +203,7 @@ export function MetaConfigClient({
                 </div>
               </div>
 
-              <div className="rounded-lg border p-3 flex items-start gap-2 transition-colors hover:bg-white/[0.02]">
+              <div className="rounded-lg border p-3 flex items-start gap-2 transition-colors hover:bg-muted/20">
                 <StatusDot active={webhookConfig.hasPhoneNumber} />
                 <div className="flex flex-col gap-0.5">
                   <span className="text-xs font-medium">WHATSAPP_PHONE_NUMBER</span>
@@ -216,7 +216,7 @@ export function MetaConfigClient({
 
             <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 px-4 py-3 text-xs text-amber-300/80">
               <strong>Pasos en YCloud:</strong> Andá a WhatsApp → Webhook, pega la URL de arriba, ingresá el mismo
-              secret que pusiste en <code className="text-[10px] bg-white/[0.08] px-1 rounded">YCLOUD_WEBHOOK_SECRET</code>,
+              secret que pusiste en <code className="text-[10px] bg-muted px-1 rounded">YCLOUD_WEBHOOK_SECRET</code>,
               y guardá. Después activá los eventos de inbound_message.
             </div>
           </CardContent>
@@ -236,7 +236,7 @@ export function MetaConfigClient({
           <CardContent className="flex flex-col gap-3">
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex items-center gap-2">
-                <code className="rounded bg-white/[0.06] px-2 py-0.5 text-xs font-mono">
+                <code className="rounded bg-muted/60 px-2 py-0.5 text-xs font-mono">
                   NEXT_PUBLIC_META_PIXEL_ID
                 </code>
                 <span className="text-muted-foreground">
@@ -244,7 +244,7 @@ export function MetaConfigClient({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <code className="rounded bg-white/[0.06] px-2 py-0.5 text-xs font-mono">
+                <code className="rounded bg-muted/60 px-2 py-0.5 text-xs font-mono">
                   META_APP_ID
                 </code>
                 <span className="text-muted-foreground">
@@ -252,7 +252,7 @@ export function MetaConfigClient({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <code className="rounded bg-white/[0.06] px-2 py-0.5 text-xs font-mono">
+                <code className="rounded bg-muted/60 px-2 py-0.5 text-xs font-mono">
                   META_APP_SECRET
                 </code>
                 <span className="text-muted-foreground">

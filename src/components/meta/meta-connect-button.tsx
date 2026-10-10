@@ -45,7 +45,7 @@ export function MetaConnectButton({ isConnected, businessName, onDisconnect }: P
         <div className="flex-1">
           <p className="text-sm font-medium text-white">Conectado a Meta Business</p>
           {businessName && (
-            <p className="text-xs text-gray-400">{businessName}</p>
+            <p className="text-xs text-muted-foreground">{businessName}</p>
           )}
         </div>
         {onDisconnect && (
@@ -64,7 +64,7 @@ export function MetaConnectButton({ isConnected, businessName, onDisconnect }: P
     <button
       onClick={handleConnect}
       disabled={connecting}
-      className="w-full rounded-xl bg-gradient-to-r from-[#D4A017] to-[#F5A623] px-6 py-3 text-sm font-semibold text-black transition-all hover:shadow-lg hover:shadow-[#D4A017]/20 disabled:opacity-50"
+      className="w-full rounded-xl bg-gradient-to-r from-gold to-gold-bright px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:shadow-lg hover:shadow-primary/20 disabled:opacity-50"
     >
       {connecting ? "Conectando..." : "Conectar con Meta Business"}
     </button>

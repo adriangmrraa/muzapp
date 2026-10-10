@@ -17,19 +17,19 @@ interface LeadsChartProps {
 // ─── Source colours ───────────────────────────────────────────────────────────
 
 const SOURCE_BG: Record<string, string> = {
-  facebook: "rgba(59,130,246,0.7)",
-  instagram: "rgba(168,85,247,0.7)",
-  whatsapp: "rgba(34,197,94,0.7)",
-  organic: "rgba(52,211,153,0.7)",
-  direct: "rgba(250,204,21,0.7)",
+  facebook: "bg-blue-500/70",
+  instagram: "bg-purple-500/70",
+  whatsapp: "bg-green-500/70",
+  organic: "bg-emerald-400/70",
+  direct: "bg-yellow-400/70",
 };
 
 const SOURCE_BG_HOVER: Record<string, string> = {
-  facebook: "rgba(59,130,246,1)",
-  instagram: "rgba(168,85,247,1)",
-  whatsapp: "rgba(34,197,94,1)",
-  organic: "rgba(52,211,153,1)",
-  direct: "rgba(250,204,21,1)",
+  facebook: "bg-blue-500",
+  instagram: "bg-purple-500",
+  whatsapp: "bg-green-500",
+  organic: "bg-emerald-400",
+  direct: "bg-yellow-400",
 };
 
 const SOURCE_DOT: Record<string, string> = {
@@ -40,8 +40,8 @@ const SOURCE_DOT: Record<string, string> = {
   direct: "bg-yellow-400",
 };
 
-const DEFAULT_BG = "rgba(212,160,23,0.6)";
-const DEFAULT_BG_HOVER = "rgba(212,160,23,1)";
+const DEFAULT_BG = "bg-gold/60";
+const DEFAULT_BG_HOVER = "bg-gold";
 const DEFAULT_DOT = "bg-yellow-500";
 
 function getBarBg(source: string | null, hovered: boolean): string {
@@ -92,12 +92,7 @@ function Bar({ entry, heightPct, index }: BarProps) {
               className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
             >
               <div
-                className="rounded-md px-2 py-1 text-[10px] font-medium whitespace-nowrap"
-                style={{
-                  background: "rgba(0,0,0,0.85)",
-                  border: "1px solid rgba(212,160,23,0.4)",
-                  color: "#D4A017",
-                }}
+                className="rounded-md px-2 py-1 text-[10px] font-medium whitespace-nowrap bg-black/85 border border-primary/40 text-primary"
               >
                 {entry.count} lead{entry.count !== 1 ? "s" : ""}
               </div>
@@ -107,8 +102,7 @@ function Bar({ entry, heightPct, index }: BarProps) {
 
         {/* Animated bar */}
         <motion.div
-          className="w-full rounded-t"
-          style={{ background: bg, transition: "background 0.2s ease" }}
+          className={`w-full rounded-t transition-colors duration-200 ${bg}`}
           initial={{ height: 0 }}
           animate={{
             height: `${Math.max(heightPct, entry.count > 0 ? 4 : 0)}%`,

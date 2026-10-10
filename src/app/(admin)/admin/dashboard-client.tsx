@@ -54,26 +54,14 @@ function StatsCard({ card, index }: { card: DashboardCard; index: number }) {
       initial="hidden"
       animate="visible"
       transition={{ delay: index * 0.08 }}
-      whileHover={{
-        y: -2,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
-        transition: { duration: 0.2 },
-      }}
       className="glass-card card-gold-glow rounded-xl p-5 flex flex-col gap-3 cursor-default"
     >
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-muted-foreground">
           {card.title}
         </span>
-        <div
-          className="size-8 rounded-lg flex items-center justify-center"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(212,160,23,0.18), rgba(232,113,42,0.12))",
-            border: "1px solid rgba(212,160,23,0.25)",
-          }}
-        >
-          <Icon className="size-4" style={{ color: "#D4A017" }} />
+        <div className="size-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/[0.18] to-gold-ember/[0.12] border border-primary/25">
+          <Icon className="size-4 text-primary" />
         </div>
       </div>
 
@@ -110,8 +98,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
   return (
     <motion.li
       variants={fadeUpSmall}
-      className="flex items-center justify-between gap-3 px-6 py-3"
-      style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+      className="flex items-center justify-between gap-3 px-6 py-3 border-b border-border"
     >
       <div className="flex items-center gap-3 min-w-0">
         <Badge
@@ -151,7 +138,7 @@ function OrdersTable({ orders }: { orders: RecentOrder[] }) {
       transition={{ delay: 0.45 }}
     >
       <div className="px-6 pt-5 pb-3">
-        <h2 className="text-base font-semibold" style={{ color: "#D4A017" }}>
+        <h2 className="text-base font-semibold text-primary">
           Pedidos Recientes
         </h2>
       </div>
@@ -165,8 +152,7 @@ function OrdersTable({ orders }: { orders: RecentOrder[] }) {
           <table className="w-full text-sm">
             <thead>
               <tr
-                className="text-left text-xs text-muted-foreground uppercase tracking-wider"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                className="text-left text-xs text-muted-foreground uppercase tracking-wider border-b border-border"
               >
                 <th className="px-6 py-3 font-medium">Cliente</th>
                 <th className="px-6 py-3 font-medium">Teléfono</th>
@@ -191,8 +177,7 @@ function OrdersTable({ orders }: { orders: RecentOrder[] }) {
                     whileInView="visible"
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.03 }}
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
-                    className="hover:bg-white/[0.02] transition-colors"
+                    className="border-b border-border hover:bg-muted/20 transition-colors"
                   >
                     <td className="px-6 py-3 text-foreground">
                       {order.customerName ?? "—"}
@@ -274,8 +259,7 @@ export function DashboardClient({ cards, activity, recentOrders, actionCards }: 
         >
           <div className="px-6 pt-5 pb-3">
             <h2
-              className="text-base font-semibold"
-              style={{ color: "#D4A017" }}
+              className="text-base font-semibold text-primary"
             >
               Actividad Reciente
             </h2>

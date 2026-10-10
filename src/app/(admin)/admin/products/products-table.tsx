@@ -191,11 +191,11 @@ function ProductForm({ product, onClose }: ProductFormProps) {
         <Label>Imagen del producto</Label>
         <input type="hidden" name="imageUrl" value={imageUrlValue} />
         <div className="flex items-start gap-4">
-          <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+          <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted/40 border border-border flex items-center justify-center shrink-0">
             {imagePreview ? (
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-2xl text-white/20">📸</span>
+              <span className="text-2xl text-foreground/20">📸</span>
             )}
           </div>
           <div className="flex flex-col gap-2 flex-1">
@@ -243,14 +243,14 @@ function ProductForm({ product, onClose }: ProductFormProps) {
           Si el producto tiene stock limitado, poné cuántos quedan. Si está vacío, el agente asume que hay disponible.
         </p>
       </div>
-      <div className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-white/[0.02]">
+      <div className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-muted/20">
         <div className="flex flex-col gap-0.5">
           <Label htmlFor="available" className="cursor-pointer">Disponible</Label>
           <span className="text-xs text-muted-foreground">El producto aparece como disponible para la venta</span>
         </div>
         <Switch id="available" checked={available} onCheckedChange={setAvailable} />
       </div>
-      <div className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-white/[0.02]">
+      <div className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-muted/20">
         <div className="flex flex-col gap-0.5">
           <Label htmlFor="comingSoon" className="cursor-pointer">Próximamente</Label>
           <span className="text-xs text-muted-foreground">Muestra el producto como "próximamente disponible"</span>
@@ -285,11 +285,11 @@ function ProductCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-white/[0.06] p-4 flex flex-col gap-3 bg-[#0a0a0a] transition-all duration-200 hover:border-white/20"
+      className="rounded-xl border border-border p-4 flex flex-col gap-3 bg-card transition-all duration-200 hover:border-primary/40"
     >
       {/* Header: Name */}
       <div className="flex flex-col gap-1 min-w-0">
-        <span className="text-sm font-medium text-white/90 truncate">{product.name}</span>
+        <span className="text-sm font-medium text-foreground/90 truncate">{product.name}</span>
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant={CATEGORY_VARIANT[product.category]} className="text-[10px]">
             {CATEGORY_LABEL[product.category]}
@@ -302,7 +302,7 @@ function ProductCard({
 
       {/* Price + Stock */}
       <div className="flex items-center justify-between">
-        <div className="text-base font-semibold text-[#D4A017]">
+        <div className="text-base font-semibold text-primary">
           {product.price != null
             ? `$ ${Number(product.price).toLocaleString("es-AR")}`
             : "—"}
@@ -315,15 +315,15 @@ function ProductCard({
               <span className="text-red-400/80">Sin stock</span>
             )
           ) : (
-            <span className="text-white/30">Stock ilimitado</span>
+            <span className="text-foreground/30">Stock ilimitado</span>
           )}
         </div>
       </div>
 
       {/* Switches */}
-      <div className="flex flex-col gap-2 pt-1 border-t border-white/[0.04]">
+      <div className="flex flex-col gap-2 pt-1 border-t border-border">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-white/50">Disponible</span>
+          <span className="text-xs text-foreground/50">Disponible</span>
           <Switch
             checked={availability}
             disabled={isPending}
@@ -332,7 +332,7 @@ function ProductCard({
           />
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-white/50">Próximamente</span>
+          <span className="text-xs text-foreground/50">Próximamente</span>
           <Switch
             checked={product.comingSoon}
             disabled
@@ -342,12 +342,12 @@ function ProductCard({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-1 border-t border-white/[0.04]">
+      <div className="flex gap-2 pt-1 border-t border-border">
         <Button
           variant="outline"
           size="sm"
           onClick={() => onEdit(product)}
-          className="flex-1 h-8 sm:h-7 text-xs transition-colors hover:border-[#D4A017]/40 hover:text-[#D4A017]"
+          className="flex-1 h-8 sm:h-7 text-xs transition-colors hover:border-primary/40 hover:text-primary"
         >
           ✏️ Editar
         </Button>
@@ -492,7 +492,7 @@ export default function ProductsTable({
         className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"
       >
         {initialProducts.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center py-20 text-white/20">
+          <div className="col-span-full flex flex-col items-center justify-center py-20 text-foreground/20">
             <span className="text-4xl mb-3 opacity-30">📦</span>
             <p className="text-sm">
               {currentCategory !== "all" || currentLine !== "all"
@@ -524,11 +524,11 @@ export default function ProductsTable({
             disabled={currentPage <= 1}
             onClick={() => navigate({ category: categoryFilter, line: lineFilter, page: String(currentPage - 1) })}
             variant="outline"
-            className="h-8 text-xs border-white/[0.08]"
+            className="h-8 text-xs border-border"
           >
             ← Anterior
           </Button>
-          <span className="text-xs text-white/30">
+          <span className="text-xs text-foreground/30">
             {currentPage} / {totalPages}
           </span>
           <Button
@@ -537,7 +537,7 @@ export default function ProductsTable({
             disabled={currentPage >= totalPages}
             onClick={() => navigate({ category: categoryFilter, line: lineFilter, page: String(currentPage + 1) })}
             variant="outline"
-            className="h-8 text-xs border-white/[0.08]"
+            className="h-8 text-xs border-border"
           >
             Siguiente →
           </Button>
@@ -547,7 +547,7 @@ export default function ProductsTable({
       {/* Create / Edit Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={(open) => { if (!open) handleCloseSheet(); }}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
-          <SheetHeader className="border-b border-[#D4A017]/20 pb-4">
+          <SheetHeader className="border-b border-primary/20 pb-4">
             <SheetTitle className="text-gold-gradient">
               {isNewProductOpen ? "Nuevo Producto" : "Editar Producto"}
             </SheetTitle>

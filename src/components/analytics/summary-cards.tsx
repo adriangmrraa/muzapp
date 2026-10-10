@@ -60,26 +60,14 @@ export function SummaryCards({ data }: SummaryCardsProps) {
           <motion.div
             key={card.title}
             variants={cardEntrance}
-            whileHover={{
-              y: -2,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-              transition: { duration: 0.2 },
-            }}
             className="glass-card card-gold-glow rounded-xl p-5 flex flex-col gap-3 cursor-default"
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">
                 {card.title}
               </span>
-              <div
-                className="size-8 rounded-lg flex items-center justify-center"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(212,160,23,0.18), rgba(232,113,42,0.12))",
-                  border: "1px solid rgba(212,160,23,0.25)",
-                }}
-              >
-                <Icon className="size-4" style={{ color: "#D4A017" }} />
+              <div className="size-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/[0.18] to-gold-ember/[0.12] border border-primary/25">
+                <Icon className="size-4 text-primary" />
               </div>
             </div>
 

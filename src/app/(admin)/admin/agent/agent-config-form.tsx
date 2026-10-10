@@ -275,7 +275,7 @@ export default function AgentConfigForm({
           <Card
             className={
               enabled
-                ? "border-[#D4A017]/40 transition-colors"
+                ? "border-primary/40 transition-colors"
                 : "transition-colors"
             }
           >
@@ -283,7 +283,7 @@ export default function AgentConfigForm({
               <CardTitle className="flex items-center gap-2">
                 Estado del agente
                 {enabled && (
-                  <span className="inline-flex h-2 w-2 rounded-full bg-[#D4A017] shadow-[0_0_6px_#D4A017]" />
+                  <span className="inline-flex h-2 w-2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)]" />
                 )}
               </CardTitle>
               <CardDescription>
@@ -300,7 +300,7 @@ export default function AgentConfigForm({
                 />
                 <Label htmlFor="enabled" className="cursor-pointer">
                   {enabled ? (
-                    <span className="font-medium text-[#D4A017]">
+                    <span className="font-medium text-primary">
                       Agente activo
                     </span>
                   ) : (
@@ -793,7 +793,7 @@ export default function AgentConfigForm({
                   {allowedPhoneIds.map((entry) => (
                     <div
                       key={entry.phone}
-                      className="flex items-center justify-between rounded-md border border-[#D4A017]/20 bg-white/[0.02] px-3 py-2"
+                      className="flex items-center justify-between rounded-md border border-primary/20 bg-muted/20 px-3 py-2"
                     >
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">
@@ -909,7 +909,7 @@ export default function AgentConfigForm({
                   {sellerPhoneIds.map((entry) => (
                     <div
                       key={entry.phone}
-                      className="flex items-center justify-between rounded-md border border-[#D4A017]/20 bg-white/[0.02] px-3 py-2"
+                      className="flex items-center justify-between rounded-md border border-primary/20 bg-muted/20 px-3 py-2"
                     >
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">
@@ -1115,7 +1115,7 @@ export default function AgentConfigForm({
                 </button>
 
                 {showPreview && (
-                  <pre className="mt-2 max-h-60 overflow-auto rounded-md border border-white/10 bg-black/40 p-3 text-xs text-muted-foreground whitespace-pre-wrap font-mono">
+                  <pre className="mt-2 max-h-60 overflow-auto rounded-md border border-border bg-muted/60 p-3 text-xs text-muted-foreground whitespace-pre-wrap font-mono">
                     {combinedSystemPrompt}
                   </pre>
                 )}
@@ -1181,7 +1181,7 @@ export default function AgentConfigForm({
                 />
                 <div className="flex flex-col gap-2">
                   {zonasDelivery.map((z, i) => (
-                    <div key={i} className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.02] px-3 py-2">
+                    <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2">
                       <div className="flex-1 grid grid-cols-4 gap-2 text-sm">
                         <Input
                           value={z.zona}
@@ -1408,11 +1408,11 @@ export default function AgentConfigForm({
             <CardContent className="flex flex-col gap-5">
               {/* Menu Hamburguesas */}
               <div className="flex items-start gap-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                <div className="w-24 h-24 rounded-xl overflow-hidden bg-muted/40 border border-border flex items-center justify-center shrink-0">
                   {menuImageHamburguesas ? (
                     <img src={menuImageHamburguesas} alt="Menu hamburguesas" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-3xl text-white/20">🍔</span>
+                    <span className="text-3xl text-foreground/20">🍔</span>
                   )}
                 </div>
                 <div className="flex flex-col gap-2 flex-1">
@@ -1451,11 +1451,11 @@ export default function AgentConfigForm({
 
               {/* Menu Pan */}
               <div className="flex items-start gap-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                <div className="w-24 h-24 rounded-xl overflow-hidden bg-muted/40 border border-border flex items-center justify-center shrink-0">
                   {menuImagePan ? (
                     <img src={menuImagePan} alt="Menu pan" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-3xl text-white/20">🍞</span>
+                    <span className="text-3xl text-foreground/20">🍞</span>
                   )}
                 </div>
                 <div className="flex flex-col gap-2 flex-1">
@@ -1642,7 +1642,7 @@ export default function AgentConfigForm({
       {/* ═════════════════════════════════════════════════════════════════════════
          Submit — sticky bottom bar, always visible
          ═════════════════════════════════════════════════════════════════════════ */}
-      <div className="sticky bottom-0 z-30 -mx-4 mt-4 border-t border-white/10 bg-[#0a0a0a]/95 backdrop-blur-sm px-4 py-3 flex justify-end">
+      <div className="sticky bottom-0 z-30 -mx-4 mt-4 border-t border-border bg-background/95 backdrop-blur-sm px-4 py-3 flex justify-end">
         <Button
           type="submit"
           disabled={isPending}
@@ -1666,7 +1666,7 @@ function BusinessHourRow({
   const [isOpen, setIsOpen] = useState(open);
 
   return (
-    <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 rounded-md border px-3 py-2 transition-colors hover:bg-white/[0.02]">
+    <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 rounded-md border px-3 py-2 transition-colors hover:bg-muted/20">
       <span className="text-sm font-medium">{day}</span>
 
       <div className="flex w-16 justify-center">

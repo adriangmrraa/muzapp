@@ -23,15 +23,15 @@ export function MetaConnectionSection({ isConnected, businessName, expiresAt }: 
   }
 
   return (
-    <section className="rounded-xl border border-white/10 bg-white/[0.02] p-6">
-      <h2 className="text-lg font-semibold text-white mb-4">Conexión Meta Business</h2>
+    <section className="rounded-xl border border-border bg-muted/20 p-6">
+      <h2 className="text-lg font-semibold text-foreground mb-4">Conexión Meta Business</h2>
       <MetaConnectButton
         isConnected={isConnected}
         businessName={businessName}
         onDisconnect={isPending ? undefined : handleDisconnect}
       />
       {expiresAt && (
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           Token expira: {new Date(expiresAt).toLocaleDateString("es-AR")}
         </p>
       )}

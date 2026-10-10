@@ -137,7 +137,7 @@ export function TelegramConfigClient({ initialStatus }: Props) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BotIcon className="h-5 w-5 text-[#D4A017]" />
+              <BotIcon className="h-5 w-5 text-primary" />
               Estado del Bot
             </CardTitle>
             <CardDescription>
@@ -189,7 +189,7 @@ export function TelegramConfigClient({ initialStatus }: Props) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings2Icon className="h-5 w-5 text-[#D4A017]" />
+              <Settings2Icon className="h-5 w-5 text-primary" />
               Configuración
             </CardTitle>
             <CardDescription>
@@ -219,7 +219,7 @@ export function TelegramConfigClient({ initialStatus }: Props) {
               </div>
               <p className="text-xs text-muted-foreground">
                 Token del bot de Telegram. Se obtiene de{" "}
-                <code className="text-[#D4A017]">@BotFather</code>.
+                <code className="text-primary">@BotFather</code>.
               </p>
             </div>
 
@@ -284,7 +284,7 @@ export function TelegramConfigClient({ initialStatus }: Props) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <WebhookIcon className="h-5 w-5 text-[#D4A017]" />
+              <WebhookIcon className="h-5 w-5 text-primary" />
               Webhook
             </CardTitle>
             <CardDescription>
@@ -363,7 +363,7 @@ export function TelegramConfigClient({ initialStatus }: Props) {
 
             {/* Webhook info */}
             {webhookInfo && (
-              <div className="rounded-md border bg-black/20 p-3">
+              <div className="rounded-md border bg-muted/40 p-3">
                 <p className="text-sm font-medium mb-2">
                   Información del webhook
                 </p>

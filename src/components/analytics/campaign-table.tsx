@@ -23,9 +23,9 @@ interface CampaignTableProps {
 }
 
 function rateColor(rate: number): string {
-  if (rate >= 50) return "#4ade80"; // green-400
-  if (rate >= 20) return "#fbbf24"; // amber-400
-  return "rgba(255,255,255,0.4)";  // muted
+  if (rate >= 50) return "text-green-400";
+  if (rate >= 20) return "text-amber-400";
+  return "text-foreground/40";
 }
 
 function CampaignRow({ row, index }: { row: CampaignPerformance; index: number }) {
@@ -35,11 +35,7 @@ function CampaignRow({ row, index }: { row: CampaignPerformance; index: number }
       initial="hidden"
       animate="visible"
       transition={{ delay: index * 0.06 }}
-      whileHover={{
-        backgroundColor: "rgba(212,160,23,0.04)",
-        transition: { duration: 0.15 },
-      }}
-      className="border-border/40 transition-colors"
+      className="border-border/40 transition-colors hover:bg-primary/[0.04]"
     >
       <TableCell className="px-6 font-medium text-foreground">
         {row.campaign}
@@ -52,8 +48,7 @@ function CampaignRow({ row, index }: { row: CampaignPerformance; index: number }
       </TableCell>
       <TableCell className="px-6 text-right">
         <span
-          className="font-medium tabular-nums"
-          style={{ color: rateColor(row.rate) }}
+          className={`font-medium tabular-nums ${rateColor(row.rate)}`}
         >
           {row.rate.toFixed(1)}%
         </span>
@@ -70,10 +65,7 @@ export function CampaignTable({ data }: CampaignTableProps) {
       initial="hidden"
       animate="visible"
     >
-      <div
-        className="px-6 py-4"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-      >
+      <div className="px-6 py-4 border-b border-border">
         <h2 className="text-base font-semibold text-foreground">
           Rendimiento por Campaña
         </h2>
@@ -85,8 +77,7 @@ export function CampaignTable({ data }: CampaignTableProps) {
       <Table>
         <TableHeader>
           <TableRow
-            className="border-border/40 hover:bg-transparent"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            className="border-border/40 hover:bg-transparent border-b border-border"
           >
             <TableHead className="px-6 text-muted-foreground font-medium">
               Campaña
