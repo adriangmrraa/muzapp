@@ -26,7 +26,7 @@ export function ProductToggle({ value, onChange, showAll = false, options }: Pro
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
-          className={`relative px-6 py-2.5 rounded-full text-sm font-semibold transition-colors duration-300 ${
+          className={`relative px-6 py-2.5 rounded-full text-sm font-semibold transition-colors duration-300 active:scale-[0.98] ${
             value === tab.id ? "text-foreground" : "text-foreground/60 hover:text-foreground/80"
           }`}
         >

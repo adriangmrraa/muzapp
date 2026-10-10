@@ -1693,3 +1693,37 @@ test("dashboard quick-actions are single gold style with lucide icons", () => {
   const page = readFileSync("src/app/(admin)/admin/page.tsx", "utf8");
   assert.doesNotMatch(page, /icon:\s*"(🔴|🟠|💬|💵|📥)"/);
 });
+
+// ─── ui-redesign-r2 E: interactive motion + reduced-motion parity ─────────────
+
+test("chip-pop and orb-beam are defined and staggered via --i", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.match(css, /@keyframes chip-pop/);
+  assert.match(css, /@keyframes orb-beam/);
+  const navBtn = css.match(/\.menu-category-nav button\{[^}]*\}/)?.[0] ?? "";
+  assert.match(navBtn, /chip-pop/);
+  assert.match(navBtn, /calc\(var\(--i,\s*0\) \* 38ms \+ 180ms\)/);
+  assert.match(css, /\.orb-float::before/);
+});
+
+test("press-scale covers interactive surfaces and hover feedback lands on item titles", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  for (const sel of [".menu-category-nav button:active", ".orb-chip:active", ".menu-floating-cart:active", ".cta-card:active", ".menu-item-preview:active"]) {
+    assert.ok(css.includes(sel), `missing ${sel}`);
+  }
+  assert.match(css, /\.menu-item-body h3 button:hover\{color:var\(--menu-gold\)\}/);
+  const seg = readFileSync("src/components/ui/segmented-control.tsx", "utf8");
+  assert.match(seg, /active:scale-\[0\.98\]/);
+  const toggle = readFileSync("src/components/products/product-toggle.tsx", "utf8");
+  assert.match(toggle, /active:scale-\[0\.98\]/);
+});
+
+test("every new motion keyframe is honored in both reduced-motion blocks", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const editorialRm = css.match(/@media\(prefers-reduced-motion:reduce\)\{[^}]*\}/)?.[0] ?? "";
+  assert.match(editorialRm, /\.menu-category-nav button/);
+  const globalRm = css.match(/@media \(prefers-reduced-motion: reduce\) \{[^@]*?\}/)?.[0] ?? "";
+  for (const sel of [".orb-float::before", ".cta-card::before", ".cta-card::after", ".cta-card-chevron svg", ".menu-category-nav button"]) {
+    assert.ok(globalRm.includes(sel), `missing ${sel} in global RM block`);
+  }
+});

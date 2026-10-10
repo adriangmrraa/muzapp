@@ -47,7 +47,7 @@ export function SegmentedControl({
             aria-selected={active}
             onClick={() => onChange(option.id)}
             className={cn(
-              "relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200",
+              "relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 active:scale-[0.98]",
               active ? "text-foreground" : "text-foreground/40 hover:text-foreground/70"
             )}
           >
