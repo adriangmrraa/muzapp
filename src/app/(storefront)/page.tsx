@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ChevronRight, Smartphone } from "lucide-react";
 import { HeroSection } from "@/components/hero/hero-section";
 import { FeaturedProductsSection } from "@/components/products/featured-products-section";
 import { GlassPanel } from "@/components/ui/glass-panel";
@@ -118,23 +119,25 @@ export default function HomePage() {
         <div className="orb-glow orb-1" style={{ width: "400px", height: "400px", background: "radial-gradient(circle, rgba(212,160,23,0.07), transparent 70%)", top: "-20%", left: "10%" }} />
         <div className="max-w-3xl mx-auto text-center relative z-10">
           <motion.div
-            className="glass-card rounded-3xl p-10 flex flex-col items-center gap-4"
+            className="flex flex-col items-center gap-4"
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            whileHover={{ boxShadow: "0 0 40px rgba(212,160,23,0.12)" }}
           >
-            <span className="text-5xl">📱</span>
             <h2 className="text-2xl sm:text-3xl font-black font-heading text-gold-gradient">
               Carta <em>Digital</em>
             </h2>
             <p className="text-foreground/60 max-w-md leading-relaxed">
               Deslizá todos nuestros productos, armá tu pedido y enviá directo por WhatsApp. Rápido y sin vueltas.
             </p>
-            <a href="/carta-digital"
-              className="shine-sweep inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 bg-gradient-to-br from-gold to-gold-bright text-primary-foreground">
-              📲 Abrir Carta Digital
+            <a href="/carta-digital" className="cta-card w-full max-w-md text-left">
+              <span className="cta-card-icon"><Smartphone size={20} aria-hidden="true" /></span>
+              <span className="flex-1">
+                <span className="block text-[17px] font-bold leading-tight">Abrir Carta Digital</span>
+                <span className="block text-xs opacity-70">Pedí directo por WhatsApp</span>
+              </span>
+              <span className="cta-card-chevron"><ChevronRight size={20} aria-hidden="true" /></span>
             </a>
           </motion.div>
         </div>

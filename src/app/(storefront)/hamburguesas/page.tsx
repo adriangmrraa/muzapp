@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { ChevronRight, Search, Smartphone } from "lucide-react";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductToggle } from "@/components/products/product-toggle";
 import { UpsellModal } from "@/components/products/upsell-modal";
@@ -137,23 +137,25 @@ export default function HamburguesasPage() {
       <section className="py-12 px-4 bg-background">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
-            className="rounded-2xl p-8 bg-gradient-to-br from-primary/[0.08] to-primary/[0.02] border border-primary/15"
+            className="flex flex-col items-center gap-4"
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
           >
-            <span className="text-3xl block mb-3">📱</span>
-            <h2 className="text-xl font-bold text-foreground mb-2 font-heading">
+            <h2 className="text-xl font-bold text-foreground mb-1 font-heading">
               Pedí directo desde la Carta Digital
             </h2>
-            <p className="text-sm text-foreground/50 mb-5">
+            <p className="text-sm text-foreground/50 mb-3">
               Deslizá productos, armá tu pedido y enviá por WhatsApp al toque
             </p>
-            <a href="/carta-digital"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 bg-gradient-to-br from-gold to-gold-bright text-primary-foreground"
-            >
-              📲 Abrir Carta Digital
+            <a href="/carta-digital" className="cta-card w-full max-w-md text-left">
+              <span className="cta-card-icon"><Smartphone size={20} aria-hidden="true" /></span>
+              <span className="flex-1">
+                <span className="block text-[17px] font-bold leading-tight">Abrir Carta Digital</span>
+                <span className="block text-xs opacity-70">Pedí directo por WhatsApp</span>
+              </span>
+              <span className="cta-card-chevron"><ChevronRight size={20} aria-hidden="true" /></span>
             </a>
           </motion.div>
         </div>

@@ -314,6 +314,93 @@
 }
 .digital-menu .orb-float { --oc: #d7c198; }
 
+/* ─── Gradient CTA card (demobondisok replica, gold-adapted) ───
+   .cta-card = superficie gradiente oro + anatomía icon-tile/chevron-circle.
+   Halo breathe = pseudo-element opacity-only (D3); sheen = translateX+skew. */
+.cta-card {
+  --cta: #D4A017;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 58px;
+  padding: 0.75rem;
+  border-radius: 24px;
+  color: #0a0a0a;
+  background:
+    radial-gradient(120% 60% at 50% -20%, rgba(255, 255, 255, 0.16), transparent 50%),
+    linear-gradient(135deg, #D4A017 0%, #F5A623 45%, #E8712A 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 10px 22px -11px color-mix(in srgb, var(--cta) 62%, transparent),
+    0 3px 7px -3px color-mix(in srgb, var(--cta) 48%, transparent);
+  transition: transform 0.15s ease;
+}
+.cta-card:active { transform: scale(0.98); }
+.cta-card::before {
+  /* halo breathe — opacity-only (D3) */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 14px 28px -13px color-mix(in srgb, var(--cta) 72%, transparent);
+  animation: cta-halo var(--ambient-cycle) ease-in-out infinite;
+}
+@keyframes cta-halo {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+.cta-card::after {
+  /* sheen sweep */
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 34%, rgba(255, 255, 255, 0.22) 48%, transparent 60%);
+  transform: translateX(-130%);
+  animation: cta-sheen var(--ambient-cycle) cubic-bezier(0.4, 0, 0.2, 1) 1.6s infinite;
+}
+@keyframes cta-sheen {
+  0% { transform: translateX(-130%) skewX(-18deg); }
+  42%, 100% { transform: translateX(130%) skewX(-18deg); }
+}
+.cta-card-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.cta-card-chevron {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+}
+.cta-card-chevron svg {
+  animation: chevron-nudge var(--ambient-cycle) ease-in-out infinite;
+}
+@keyframes chevron-nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(2px); }
+}
+.digital-menu .cta-card {
+  --cta: #d7c198;
+  color: #151513;
+  background:
+    radial-gradient(120% 60% at 50% -20%, rgba(255, 255, 255, 0.2), transparent 50%),
+    linear-gradient(135deg, color-mix(in srgb, var(--menu-gold) 88%, #fff), var(--menu-gold) 45%, color-mix(in srgb, var(--menu-gold) 70%, #151513));
+}
+
 /* WhatsApp pulse animation */
 @keyframes whatsapp-pulse {
   0% {
@@ -698,7 +785,10 @@
   .menu-whatsapp-button,
   .orb-chip[data-selected="true"]::before,
   .orb-float,
-  .orb-float::after {
+  .orb-float::after,
+  .cta-card::before,
+  .cta-card::after,
+  .cta-card-chevron svg {
     animation: none !important;
   }
   .shine-sweep::after {

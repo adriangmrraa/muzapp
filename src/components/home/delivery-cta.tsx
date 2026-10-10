@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
 import { fadeUp, staggerContainer } from "@/lib/animation-variants";
 import { buildWhatsAppURL } from "@/lib/whatsapp";
 import { useBusiness } from "@/lib/hooks/use-business";
@@ -98,17 +99,21 @@ export function DeliveryCTA() {
         {/* CTA buttons */}
         <motion.div
           variants={fadeUp}
-          className="flex flex-col sm:flex-row items-center gap-4"
+          className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-md"
         >
           {whatsappUrl && (
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-gold inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-widest"
+              className="cta-card w-full text-left"
             >
-              <WhatsAppIcon />
-              Pedir por WhatsApp
+              <span className="cta-card-icon"><WhatsAppIcon /></span>
+              <span className="flex-1">
+                <span className="block text-[17px] font-bold leading-tight">Pedir por WhatsApp</span>
+                <span className="block text-xs opacity-70">Respuesta inmediata</span>
+              </span>
+              <span className="cta-card-chevron"><ChevronRight size={20} aria-hidden="true" /></span>
             </a>
           )}
 

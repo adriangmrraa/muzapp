@@ -1631,3 +1631,65 @@ test("orb loops honor reduced motion in the global block", () => {
   assert.match(rm, /\.orb-chip\[data-selected="true"\]::before/);
   assert.match(rm, /\.orb-float/);
 });
+
+// ─── ui-redesign-r2 D: gradient CTA cards + gold quick-actions ───────────────
+
+test("cta-card carries the gold gradient anatomy with icon-tile and chevron", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const card = css.match(/\.cta-card\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(card, /linear-gradient\(135deg,\s*#D4A017 0%,\s*#F5A623 45%,\s*#E8712A 100%\)/);
+  assert.match(card, /inset 0 1px 0 rgba\(255,\s*255,\s*255,\s*0\.32\)/);
+  assert.match(card, /radial-gradient\(120% 60% at 50% -20%/);
+  assert.match(css, /\.cta-card::before/);
+  assert.match(css, /@keyframes cta-halo/);
+  assert.match(css, /\.cta-card::after/);
+  assert.match(css, /@keyframes cta-sheen/);
+  const icon = css.match(/\.cta-card-icon\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(icon, /border-radius:\s*16px/);
+  assert.match(icon, /rgba\(255,\s*255,\s*255,\s*0\.15\)/);
+  const chevron = css.match(/\.cta-card-chevron\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(chevron, /border-radius:\s*50%/);
+  assert.match(css, /@keyframes chevron-nudge/);
+});
+
+test("digital-menu cta-card recolors to the menu ramp without brand gold", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const variant = css.match(/\.digital-menu \.cta-card\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(variant, /--cta:\s*#d7c198/);
+  assert.match(variant, /var\(--menu-gold\)/);
+  assert.doesNotMatch(variant, /#D4A017/);
+});
+
+test("storefront CTA cards use the gradient anatomy (no emoji icon)", () => {
+  const home = readFileSync("src/app/(storefront)/page.tsx", "utf8");
+  assert.match(home, /className="cta-card/);
+  assert.match(home, /cta-card-icon/);
+  assert.match(home, /cta-card-chevron/);
+  assert.doesNotMatch(home, /📱|📲/);
+  const hamb = readFileSync("src/app/(storefront)/hamburguesas/page.tsx", "utf8");
+  assert.match(hamb, /className="cta-card/);
+  assert.doesNotMatch(hamb, /📱|📲/);
+  const pan = readFileSync("src/app/(storefront)/pan-mayorista/page.tsx", "utf8");
+  assert.match(pan, /variant="card"/);
+  const delivery = readFileSync("src/components/home/delivery-cta.tsx", "utf8");
+  assert.match(delivery, /className="cta-card/);
+});
+
+test("whatsapp CTA exposes a card variant preserving attribution", () => {
+  const cta = readFileSync("src/components/attribution/whatsapp-cta.tsx", "utf8");
+  assert.match(cta, /variant\??:\s*"pill" \| "card"/);
+  assert.match(cta, /cta-card-icon/);
+  assert.match(cta, /buildRefCode/);
+  assert.match(cta, /buildWhatsAppURL/);
+});
+
+test("dashboard quick-actions are single gold style with lucide icons", () => {
+  const actions = readFileSync("src/app/(admin)/admin/dashboard-actions.tsx", "utf8");
+  assert.match(actions, /GOLD_STYLE/);
+  assert.doesNotMatch(actions, /CARD_STYLES|red-500|amber-500|blue-500|emerald-500|purple-500/);
+  assert.match(actions, /ICON_MAP/);
+  assert.match(actions, /Target/);
+  assert.doesNotMatch(actions, /🎯/);
+  const page = readFileSync("src/app/(admin)/admin/page.tsx", "utf8");
+  assert.doesNotMatch(page, /icon:\s*"(🔴|🟠|💬|💵|📥)"/);
+});

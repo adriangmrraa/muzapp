@@ -157,6 +157,8 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
             campaignSlug={slug}
             message={campaign.whatsappMessage}
             label="Hablar con nosotros"
+            variant="card"
+            subtitle="Respuesta inmediata"
           />
         </motion.div>
       </section>

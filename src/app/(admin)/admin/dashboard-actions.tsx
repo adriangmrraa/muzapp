@@ -3,45 +3,36 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { CheckCircle, Clock, DollarSign, Inbox, MessageSquare, Target, Truck, UserPlus } from "lucide-react";
 import { fadeUpSmall, staggerContainer, cardEntrance } from "@/lib/animation-variants";
 import type { ActionCard } from "./page";
 import { updateOrderStatus } from "@/app/(admin)/admin/orders/actions";
 import { triggerAgentForConversation } from "./dashboard-actions-server";
 
-// ─── Color styles ─────────────────────────────────────────────────────────
+// ─── Single gold accent (D8: oro, no multi-hue) ────────────────────────────
 
-const CARD_STYLES: Record<string, { border: string; bg: string; btn: string; btnHover: string }> = {
-  red: {
-    border: "border-red-500/20",
-    bg: "bg-red-500/[0.03]",
-    btn: "bg-red-500/15 text-red-300 border border-red-500/20",
-    btnHover: "hover:bg-red-500/25",
-  },
-  amber: {
-    border: "border-amber-500/20",
-    bg: "bg-amber-500/[0.03]",
-    btn: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
-    btnHover: "hover:bg-amber-500/25",
-  },
-  blue: {
-    border: "border-blue-500/20",
-    bg: "bg-blue-500/[0.03]",
-    btn: "bg-blue-500/15 text-blue-300 border border-blue-500/20",
-    btnHover: "hover:bg-blue-500/25",
-  },
-  green: {
-    border: "border-emerald-500/20",
-    bg: "bg-emerald-500/[0.03]",
-    btn: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
-    btnHover: "hover:bg-emerald-500/25",
-  },
-  purple: {
-    border: "border-purple-500/20",
-    bg: "bg-purple-500/[0.03]",
-    btn: "bg-purple-500/15 text-purple-300 border border-purple-500/20",
-    btnHover: "hover:bg-purple-500/25",
-  },
+const GOLD_STYLE: { border: string; bg: string; btn: string; btnHover: string } = {
+  border: "border-primary/20",
+  bg: "bg-primary/[0.03]",
+  btn: "bg-primary/15 text-primary border border-primary/20",
+  btnHover: "hover:bg-primary/25",
 };
+
+// Emoji → lucide icon names (server passes a semantic key, not an emoji).
+const ICON_MAP: Record<string, typeof Truck> = {
+  truck: Truck,
+  check: CheckCircle,
+  clock: Clock,
+  message: MessageSquare,
+  dollar: DollarSign,
+  userplus: UserPlus,
+  inbox: Inbox,
+};
+
+function CardIcon({ name }: { name: string }) {
+  const Icon = ICON_MAP[name] ?? Inbox;
+  return <Icon size={16} aria-hidden="true" />;
+}
 
 // ─── Action Button ────────────────────────────────────────────────────────
 
@@ -81,7 +72,7 @@ function ActionCardComponent({
 }) {
   const [loadingItems, setLoadingItems] = useState<Record<string, Record<string, boolean>>>({});
 
-  const styles = CARD_STYLES[card.color] ?? CARD_STYLES.red;
+  const styles = GOLD_STYLE;
 
   async function handleAction(itemId: string | number, action: string, item: (typeof card.items)[0]) {
     const key = `${itemId}-${action}`;
@@ -139,7 +130,7 @@ function ActionCardComponent({
     >
       {/* Header */}
       <div className="px-4 py-3 border-b border-border">
-        <h3 className="text-sm font-semibold text-foreground/90">{card.icon} {card.title}</h3>
+        <h3 className="text-sm font-semibold text-foreground/90 flex items-center gap-2"><CardIcon name={card.icon} /> {card.title}</h3>
         <p className="text-[11px] text-foreground/30 mt-0.5">{card.items.length} pendiente{card.items.length !== 1 ? "s" : ""}</p>
       </div>
 
@@ -188,7 +179,7 @@ export function DashboardActions({ actionCards }: { actionCards: ActionCard[] })
     >
       {/* Section header */}
       <motion.div variants={fadeUpSmall}>
-        <h2 className="text-base font-semibold text-gold-gradient">🎯 Acciones del día</h2>
+        <h2 className="text-base font-semibold text-gold-gradient flex items-center gap-2"><Target size={16} aria-hidden="true" /> Acciones del día</h2>
         <p className="text-xs text-muted-foreground mt-0.5">
           Insights y acciones rápidas basadas en datos en vivo
         </p>

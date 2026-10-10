@@ -290,7 +290,7 @@ async function getActionCards() {
   if (readyOrders.length > 0) {
     cards.push({
       id: "ready",
-      icon: "🔴",
+      icon: "truck",
       title: "Listos para entregar",
       color: "red",
       items: readyOrders.map((o) => ({
@@ -309,7 +309,7 @@ async function getActionCards() {
   if (stuckPreparing.length > 0) {
     cards.push({
       id: "stuck",
-      icon: "🟠",
+      icon: "clock",
       title: "Preparando hace rato",
       color: "amber",
       items: stuckPreparing.map((o) => ({
@@ -336,7 +336,7 @@ async function getActionCards() {
   if (staleRows.length > 0) {
     cards.push({
       id: "stale-chats",
-      icon: "💬",
+      icon: "message",
       title: "Chats sin respuesta",
       color: "blue",
       items: staleRows.map((r) => ({
@@ -358,7 +358,7 @@ async function getActionCards() {
   if (unpaidOrders.length > 0) {
     cards.push({
       id: "unpaid",
-      icon: "💵",
+      icon: "dollar",
       title: "Pagos pendientes",
       color: "green",
       items: unpaidOrders.map((o) => ({
@@ -377,7 +377,7 @@ async function getActionCards() {
   if (freshLeads.length > 0) {
     cards.push({
       id: "fresh-leads",
-      icon: "📥",
+      icon: "userplus",
       title: "Leads nuevos",
       color: "purple",
       items: freshLeads.map((l) => ({

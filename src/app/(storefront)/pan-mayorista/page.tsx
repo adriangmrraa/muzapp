@@ -243,16 +243,12 @@ export default function PanMayoristaPage() {
       <section className="py-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
-            className="glass-card rounded-3xl p-10 flex flex-col items-center gap-5"
+            className="flex flex-col items-center gap-5"
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            whileHover={{
-              boxShadow: "0 0 40px rgba(212,160,23,0.15)",
-            }}
           >
-            <span className="text-4xl">🤝</span>
             <h2 className="text-2xl sm:text-3xl font-black font-heading text-gold-gradient">
               ¿Listo para trabajar juntos?
             </h2>
@@ -264,6 +260,8 @@ export default function PanMayoristaPage() {
               campaignSlug="mayorista"
               message="Hola! Me interesa información sobre pan mayorista"
               label="Escribinos por WhatsApp"
+              variant="card"
+              subtitle="Respondemos en el día"
             />
           </motion.div>
         </div>
