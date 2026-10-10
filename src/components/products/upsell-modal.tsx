@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls, type PanInfo } from "framer-motion";
 import { X, ShoppingCart, Sparkles } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const STORAGE_KEY = "muzapp-upsell-shown";
 
@@ -41,6 +42,13 @@ export function UpsellModal({ onNavigateToPapas }: UpsellModalProps) {
   const [show, setShow] = useState(false);
   const [suggestions, setSuggestions] = useState<ApiProduct[]>([]);
   const { addItem } = useCart();
+  // Bottom-anchored only under md — sheet affordance lives there too.
+  const isMobile = useMediaQuery("(max-width: 767px)");
+  const dragControls = useDragControls();
+
+  function handleDragEnd(_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
+    if (info.offset.y > 120 || info.velocity.y > 500) setShow(false);
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -97,8 +105,18 @@ export function UpsellModal({ onNavigateToPapas }: UpsellModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed z-50 inset-x-4 bottom-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] rounded-2xl border border-primary/20 bg-card p-5 shadow-2xl"
+            drag={isMobile ? "y" : false}
+            dragListener={false}
+            dragControls={dragControls}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.15 }}
+            onDragEnd={handleDragEnd}
+            className="fixed z-50 inset-x-4 bottom-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] rounded-2xl border border-primary/20 bg-card p-5 max-md:pt-1 pb-[max(20px,env(safe-area-inset-bottom))] shadow-2xl"
           >
+            {isMobile && (
+              <div className="sheet-handle" aria-hidden="true"
+                onPointerDown={(event) => dragControls.start(event)} />
+            )}
             {/* Close */}
             <button
               onClick={() => setShow(false)}

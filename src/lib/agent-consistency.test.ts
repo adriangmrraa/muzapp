@@ -1328,3 +1328,49 @@ test("cart total and order card render display numerals", () => {
   assert.match(view, /computeOrderTotal/);
   assert.match(view, /font-mono[^\n]*tabular-nums[^\n]*text-xl|text-xl[^\n]*font-mono[^\n]*tabular-nums/);
 });
+
+// ─── ui-redesign R3: bottom-sheet pattern + cart thumbnails ──────────────────
+
+test("catalog image resolver prefers DB url then id and name fallbacks", async () => {
+  const { getCatalogProductImage } = await import("./catalog-images");
+  assert.equal(
+    getCatalogProductImage({ id: 999, name: "Cosa", imageUrl: "https://cdn.example.com/x.jpg" }),
+    "https://cdn.example.com/x.jpg",
+  );
+  assert.equal(
+    getCatalogProductImage({ id: "genesis", name: "Cualquiera" }),
+    "/assets/images/products/hamburguesa-genesis.png",
+  );
+  assert.equal(
+    getCatalogProductImage({ id: 999, name: " Deli Deli " }),
+    "/assets/images/products/hamburguesa-deli-float.png",
+  );
+  assert.equal(getCatalogProductImage({ id: -1, name: "Inexistente XYZ" }), null);
+});
+
+test("mobile cart drawer becomes a draggable bottom sheet with thumbnails", () => {
+  const drawer = readFileSync("src/components/cart/cart-drawer.tsx", "utf8");
+  assert.match(drawer, /useMediaQuery/);
+  assert.match(drawer, /side=\{isMobile/);
+  assert.match(drawer, /CatalogImage/);
+  assert.match(drawer, /getCatalogProductImage/);
+  assert.doesNotMatch(drawer, /product\.emoji/);
+});
+
+test("sheet bottom path drags via controls with a 44px handle and safe-area pad", () => {
+  const sheet = readFileSync("src/components/ui/sheet.tsx", "utf8");
+  assert.match(sheet, /useDragControls/);
+  assert.match(sheet, /dragConstraints/);
+  assert.match(sheet, /sheet-handle/);
+  assert.match(sheet, /env\(safe-area-inset-bottom\)/);
+  assert.match(sheet, /onDragDismiss/);
+});
+
+test("catalog dialog and upsell modal adopt the sheet handle affordance", () => {
+  const dialog = readFileSync("src/components/storefront/catalog-dialog.tsx", "utf8");
+  assert.match(dialog, /sheet-handle/);
+  assert.match(dialog, /useDragControls|dragControls/);
+  const upsell = readFileSync("src/components/products/upsell-modal.tsx", "utf8");
+  assert.match(upsell, /sheet-handle/);
+  assert.match(upsell, /env\(safe-area-inset-bottom\)/);
+});

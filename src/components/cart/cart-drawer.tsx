@@ -2,6 +2,9 @@
 
 import { useCart } from "@/lib/cart/cart-context"
 import { CheckoutForm } from "./checkout-form"
+import { useMediaQuery } from "@/hooks/use-media-query"
+import { CatalogImage } from "@/components/products/catalog-image"
+import { getCatalogProductImage } from "@/lib/catalog-images"
 import {
   Sheet,
   SheetContent,
@@ -26,6 +29,8 @@ type CartDrawerProps = {
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, total, itemCount, updateQuantity, removeItem, clearCart } =
     useCart()
+  // Mobile renders the cart as a bottom sheet; desktop keeps the side drawer.
+  const isMobile = useMediaQuery("(max-width: 767px)")
   // Checkout only accepts catalog ids — drop stale entries persisted before
   // items were stored with real product ids.
   const checkoutable = items.filter((i) =>
@@ -34,7 +39,15 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const hasStale = checkoutable.length !== items.length
   return (
     <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="flex w-full flex-col overflow-y-auto p-5 sm:max-w-md">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        onDragDismiss={onClose}
+        className={
+          isMobile
+            ? "flex max-h-[85svh] w-full flex-col overflow-y-auto p-5 pt-0"
+            : "flex w-full flex-col overflow-y-auto p-5 sm:max-w-md"
+        }
+      >
         <SheetHeader className="flex-row items-center justify-between gap-0">
           <SheetTitle className="flex items-center gap-2 text-lg">
             <ShoppingCart className="size-5" />
@@ -62,7 +75,13 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                   key={item.product.id}
                   className="group flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
                 >
-                  <span className="text-2xl">{item.product.emoji}</span>
+                  <div className="relative h-12 w-14 shrink-0 overflow-hidden rounded-md">
+                    <CatalogImage
+                      src={getCatalogProductImage({ id: item.product.id, name: item.product.name })}
+                      alt={item.product.name}
+                      sizes="56px"
+                    />
+                  </div>
 
                   <div className="flex-1 min-w-0">
                     <p className="truncate text-sm font-medium">

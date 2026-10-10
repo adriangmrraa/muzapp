@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
+import { motion, useDragControls, type PanInfo } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -41,11 +42,38 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  onDragDismiss,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
+  /** Bottom sheets only: called when the drag gesture ends past the dismiss
+      thresholds (>120px offset or >500px/s flick). Wire to onClose. */
+  onDragDismiss?: () => void
 }) {
+  const dragControls = useDragControls()
+
+  function handleDragEnd(_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
+    if (info.offset.y > 120 || info.velocity.y > 500) onDragDismiss?.()
+  }
+
+  const closeButton = showCloseButton && (
+    <SheetPrimitive.Close
+      data-slot="sheet-close"
+      render={
+        <Button
+          variant="ghost"
+          className="absolute top-3 right-3"
+          size="icon-sm"
+        />
+      }
+    >
+      <XIcon
+      />
+      <span className="sr-only">Close</span>
+    </SheetPrimitive.Close>
+  )
+
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -53,27 +81,42 @@ function SheetContent({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-ending-style:translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-ending-style:translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
-          className
+          side === "bottom"
+            ? "fixed z-50 flex flex-col inset-x-0 bottom-0 h-auto bg-transparent text-sm text-popover-foreground transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-ending-style:translate-y-[2.5rem] data-starting-style:translate-y-[2.5rem]"
+            : cn(
+                "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-ending-style:translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-ending-style:translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
+                className
+              )
         )}
         {...props}
       >
-        {children}
-        {showCloseButton && (
-          <SheetPrimitive.Close
-            data-slot="sheet-close"
-            render={
-              <Button
-                variant="ghost"
-                className="absolute top-3 right-3"
-                size="icon-sm"
-              />
-            }
+        {side === "bottom" ? (
+          <motion.div
+            className={cn(
+              "relative flex flex-col gap-4 rounded-t-2xl border-t border-border bg-popover text-popover-foreground shadow-lg pb-[max(16px,env(safe-area-inset-bottom))]",
+              className
+            )}
+            drag="y"
+            dragListener={false}
+            dragControls={dragControls}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.15 }}
+            onDragEnd={handleDragEnd}
           >
-            <XIcon
+            {/* 44px grab zone; drag starts only from the handle so inner scroll works */}
+            <div
+              className="sheet-handle"
+              aria-hidden="true"
+              onPointerDown={(event) => dragControls.start(event)}
             />
-            <span className="sr-only">Close</span>
-          </SheetPrimitive.Close>
+            {children}
+            {closeButton}
+          </motion.div>
+        ) : (
+          <>
+            {children}
+            {closeButton}
+          </>
         )}
       </SheetPrimitive.Popup>
     </SheetPortal>
