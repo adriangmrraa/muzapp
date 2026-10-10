@@ -21,7 +21,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Trash2 } from "lucide-react";
 import { CreateOrderModal } from "@/components/orders/create-order-modal";
 import { deleteLead } from "@/app/(admin)/admin/clients/actions";
 
@@ -408,7 +408,7 @@ export default function LeadsTable({
                       onClick={() => setConfirmDelete(true)}
                       className="w-full rounded-lg bg-muted/20 text-red-400/60 px-4 py-2.5 text-xs font-medium hover:bg-red-500/10 hover:text-red-400 transition-colors border border-red-500/10"
                     >
-                      🗑️ Eliminar lead
+                      <Trash2 size={12} aria-hidden="true" className="inline mr-1.5 -mt-0.5" />Eliminar lead
                     </button>
                   )}
                 </div>

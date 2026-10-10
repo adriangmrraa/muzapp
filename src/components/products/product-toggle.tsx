@@ -21,19 +21,19 @@ export function ProductToggle({ value, onChange, showAll = false, options }: Pro
   ];
 
   return (
-    <div className="relative inline-flex rounded-full p-1 bg-black/50 border border-primary/30">
+    <div className="relative inline-flex rounded-full p-1 bg-muted/40 border border-border">
       {TABS.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
           className={`relative px-6 py-2.5 rounded-full text-sm font-semibold transition-colors duration-300 ${
-            value === tab.id ? "text-primary-foreground" : "text-foreground/60"
+            value === tab.id ? "text-foreground" : "text-foreground/60 hover:text-foreground/80"
           }`}
         >
           {value === tab.id && (
             <motion.div
               layoutId="toggle-pill"
-              className="absolute inset-0 rounded-full bg-gradient-to-br from-gold via-gold-bright to-gold-ember shadow-[0_4px_15px_rgba(212,160,23,0.4)]"
+              className="absolute inset-0 rounded-full border border-border bg-card"
               transition={{ type: "spring", stiffness: 500, damping: 35 }}
             />
           )}

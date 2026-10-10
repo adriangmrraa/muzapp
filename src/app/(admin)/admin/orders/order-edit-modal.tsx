@@ -161,7 +161,7 @@ export function OrderEditModal({ order, open, onClose }: OrderEditModalProps) {
                             <button onClick={() => updateQty(item.name, item.quantity + 1)} className="p-0.5 rounded hover:bg-muted text-muted-foreground"><Plus className="h-3 w-3" /></button>
                           </div>
                           <span className="text-xs text-muted-foreground w-16 text-right">${((Number(item.price) || 0) * item.quantity).toLocaleString("es-AR")}</span>
-                          <button onClick={() => setItems((prev) => prev.filter((i) => i.name !== item.name))} className="p-0.5 rounded hover:bg-red-500/20 text-foreground/40 hover:text-red-400">✕</button>
+                          <button onClick={() => setItems((prev) => prev.filter((i) => i.name !== item.name))} className="p-0.5 rounded hover:bg-red-500/20 text-foreground/40 hover:text-red-400" aria-label="Quitar item"><X className="h-3 w-3" aria-hidden="true" /></button>
                         </div>
                       ))}
                     </div>

@@ -10,6 +10,8 @@ import { OrderEditModal } from "./order-edit-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Bell, X, Trash2, Pencil, Sandwich, Wheat, Package, ClipboardList } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -53,10 +55,10 @@ function formatTime(d: Date): string {
   });
 }
 
-function orderTypeBadge(type: string | null): { label: string; cls: string } {
-  if (type === "hamburguesas") return { label: "🍔 Hamburguesas", cls: "bg-amber-500/10 text-amber-300 border border-amber-500/20" };
-  if (type === "pan_mayorista") return { label: "🍞 Pan Mayorista", cls: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" };
-  return { label: "📦 Gral", cls: "bg-muted/40 text-foreground/50 border border-border" };
+function orderTypeBadge(type: string | null): { label: string; cls: string; Icon: typeof Sandwich } {
+  if (type === "hamburguesas") return { label: "Hamburguesas", Icon: Sandwich, cls: "bg-amber-500/10 text-amber-300 border border-amber-500/20" };
+  if (type === "pan_mayorista") return { label: "Pan Mayorista", Icon: Wheat, cls: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" };
+  return { label: "Gral", Icon: Package, cls: "bg-muted/40 text-foreground/50 border border-border" };
 }
 
 // ─── Order Card ───────────────────────────────────────────────────────────────
@@ -109,7 +111,8 @@ function OrderCard({
       {/* Header: ID + Order Type */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-mono text-foreground/30">#{order.id}</span>
-        <span className={`text-[10px] px-2 py-0.5 rounded-full ${typeBadge.cls}`}>
+        <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${typeBadge.cls}`}>
+          <typeBadge.Icon size={10} aria-hidden="true" />
           {typeBadge.label}
         </span>
       </div>
@@ -219,8 +222,9 @@ function OrderCard({
               variant="ghost"
               className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-foreground/30 hover:text-gold-bright"
               title="Notificar al cliente"
+              aria-label="Notificar al cliente"
             >
-              🔔
+              <Bell size={14} aria-hidden="true" />
             </Button>
           )}
           {order.status === "pending" && (
@@ -231,8 +235,10 @@ function OrderCard({
               onClick={(e) => { e.stopPropagation(); handleCancel(); }}
               variant="ghost"
               className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-red-400/50 hover:text-red-400"
+              title="Cancelar pedido"
+              aria-label="Cancelar pedido"
             >
-              ✕
+              <X size={14} aria-hidden="true" />
             </Button>
           )}
           {/* Delete button - visible on delivered/cancelled or always with confirm */}
@@ -259,8 +265,10 @@ function OrderCard({
                 onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
                 variant="ghost"
                 className="h-8 sm:h-7 text-xs px-2 text-foreground/30"
+                title="Cancelar eliminación"
+                aria-label="Cancelar eliminación"
               >
-                ✕
+                <X size={13} aria-hidden="true" />
               </Button>
             </div>
           ) : (
@@ -271,8 +279,9 @@ function OrderCard({
               variant="ghost"
               className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-foreground/20 hover:text-red-400"
               title="Eliminar pedido"
+              aria-label="Eliminar pedido"
             >
-              🗑️
+              <Trash2 size={14} aria-hidden="true" />
             </Button>
           )}
           {/* Edit button */}
@@ -283,8 +292,9 @@ function OrderCard({
             variant="ghost"
             className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-foreground/20 hover:text-gold-bright"
             title="Editar pedido"
+            aria-label="Editar pedido"
           >
-            ✏️
+            <Pencil size={14} aria-hidden="true" />
           </Button>
         </div>
       </div>
@@ -299,7 +309,7 @@ function OrderCard({
 function EmptyState({ label }: { label: string }) {
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-20 text-foreground/20">
-      <span className="text-4xl mb-3 opacity-30">📋</span>
+      <ClipboardList size={36} strokeWidth={1.25} aria-hidden="true" className="mb-3 opacity-30" />
       <p className="text-sm">{label}</p>
     </div>
   );
@@ -373,54 +383,32 @@ export function OrdersView({
       className="flex flex-col gap-5"
     >
       {/* Status Filter Tabs */}
-      <motion.div variants={fadeUpSmall} className="flex flex-wrap gap-1.5">
-        {allStatuses.map((s) => {
-          const label = s === "" ? "Todos" : STATUSES[s]?.label ?? s;
-          const active = s === currentStatus;
-          const count = counts[s] ?? 0;
-
-          return (
-            <button
-              key={s || "all"}
-              type="button"
-              onClick={() => navigate({ status: s, type: currentType, search: currentSearch, page: "" })}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                active
-                  ? "bg-primary/15 text-gold-bright border border-primary/30"
-                  : "text-foreground/40 hover:text-foreground/70 border border-transparent"
-              }`}
-            >
-              {label}{" "}
-              <span className={active ? "text-primary/60" : "text-foreground/20"}>
-                ({count})
-              </span>
-            </button>
-          );
-        })}
+      <motion.div variants={fadeUpSmall}>
+        <SegmentedControl
+          id="orders-status"
+          className="flex-wrap"
+          value={currentStatus}
+          onChange={(s) => navigate({ status: s, type: currentType, search: currentSearch, page: "" })}
+          options={allStatuses.map((s) => ({
+            id: s,
+            label: s === "" ? "Todos" : STATUSES[s]?.label ?? s,
+            count: counts[s] ?? 0,
+          }))}
+        />
       </motion.div>
 
       {/* Type Filter + Search */}
       <motion.div variants={fadeUpSmall} className="flex flex-col sm:flex-row gap-3">
-        <div className="flex gap-1.5">
-          {["", "hamburguesas", "pan_mayorista"].map((t) => {
-            const label = t === "" ? "Todos" : t === "hamburguesas" ? "🍔 Hamburguesas" : "🍞 Pan Mayorista";
-            const active = t === currentType;
-            return (
-              <button
-                key={t || "all"}
-                type="button"
-                onClick={() => navigate({ status: currentStatus, type: t, search: currentSearch, page: "" })}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  active
-                    ? "bg-muted text-foreground"
-                    : "text-foreground/30 hover:text-foreground/60"
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          id="orders-type"
+          value={currentType}
+          onChange={(t) => navigate({ status: currentStatus, type: t, search: currentSearch, page: "" })}
+          options={[
+            { id: "", label: "Todos" },
+            { id: "hamburguesas", label: (<><Sandwich size={12} aria-hidden="true" />Hamburguesas</>) },
+            { id: "pan_mayorista", label: (<><Wheat size={12} aria-hidden="true" />Pan Mayorista</>) },
+          ]}
+        />
         <div className="flex gap-2 flex-1 sm:max-w-xs">
           <Input
             placeholder="Buscar por teléfono, nombre..."

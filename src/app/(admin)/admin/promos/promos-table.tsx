@@ -5,6 +5,7 @@ import { createPromo, updatePromo, deletePromo, type PromoRow } from "./actions"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // El import de useRouter debe estar en el scope correcto
@@ -186,8 +187,8 @@ export function PromosTable({ promos }: { promos: PromoRow[] }) {
                   <Button type="button" size="sm" onClick={() => handleDelete(p.id)} className="h-6 text-[10px] px-2 bg-red-500/20 text-red-400">
                     Confirmar
                   </Button>
-                  <Button type="button" size="sm" onClick={() => setDeleting(null)} variant="ghost" className="h-6 text-[10px] px-2 text-foreground/30">
-                    ✕
+                  <Button type="button" size="sm" onClick={() => setDeleting(null)} variant="ghost" className="h-6 text-[10px] px-2 text-foreground/30" aria-label="Cancelar eliminación">
+                    <X size={12} aria-hidden="true" />
                   </Button>
                 </div>
               )}

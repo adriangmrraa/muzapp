@@ -37,7 +37,7 @@ export function HeroSection() {
           stagger={0.14}
           className="text-5xl sm:text-6xl md:text-8xl font-black leading-none tracking-tight font-heading"
           wordStyle={{
-            background: "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",
+            background: "linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-bright) 50%, var(--color-gold-ember) 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",

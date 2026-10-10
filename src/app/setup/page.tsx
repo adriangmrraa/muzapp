@@ -20,10 +20,10 @@ export default async function SetupPage() {
     if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
     // Users table missing → migrations not run yet; show instructions state.
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "#0a0a0a" }}>
-        <p className="max-w-md text-center text-sm" style={{ color: "rgba(245,245,220,0.7)" }}>
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <p className="max-w-md text-center text-sm text-muted-foreground">
           La base de datos todavía no tiene las tablas. Corré{" "}
-          <code style={{ color: "#D4A017" }}>npm run db:migrate</code> y recargá
+          <code className="text-primary">npm run db:migrate</code> y recargá
           esta página.
         </p>
       </div>

@@ -9,7 +9,7 @@ import type { ClientSummary } from "./actions";
 import { updateClient } from "./actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Edit, X, Save } from "lucide-react";
+import { Edit, X, Save, User, Pencil, Sandwich, Wheat, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 function formatDate(d: Date | null): string {
@@ -47,10 +47,9 @@ function clientTypeBadge(type: string | null): { label: string; cls: string } | 
     : { label: "B2C", cls: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded-full" };
 }
 
-function orderTypeIcon(type: string | null): string {
-  if (type === "hamburguesas") return "🍔";
-  if (type === "pan_mayorista") return "🍞";
-  return "📦";
+function OrderTypeIcon({ type }: { type: string | null }) {
+  const Icon = type === "hamburguesas" ? Sandwich : type === "pan_mayorista" ? Wheat : Package;
+  return <Icon size={14} aria-hidden="true" />;
 }
 
 function formatClientDate(d: Date | string | null): string {
@@ -177,7 +176,7 @@ export function ClientsView({
                     <div className="text-foreground/30">Chats</div>
                   </div>
                   <div className="rounded-md bg-muted/40 p-2">
-                    <div className="font-medium text-foreground/70">{client.lastOrderType ? orderTypeIcon(client.lastOrderType) : "—"}</div>
+                    <div className="font-medium text-foreground/70">{client.lastOrderType ? <OrderTypeIcon type={client.lastOrderType} /> : "—"}</div>
                     <div className="text-foreground/30">Tipo</div>
                   </div>
                 </div>
@@ -198,9 +197,9 @@ export function ClientsView({
                   </span>
                   <div className="flex items-center gap-1">
                     <Link href={`/admin/clients/${encodeURIComponent(client.phone)}`}
-                      className="text-xs text-foreground/30 hover:text-primary transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5">👤</Link>
+                      className="text-xs text-foreground/30 hover:text-primary transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5" aria-label="Ver cliente"><User size={14} aria-hidden="true" /></Link>
                     <button onClick={(e) => { e.preventDefault(); setEditClient(client); setEditName(client.name || ""); setEditType(client.type || ""); setEditNotes(""); }}
-                      className="text-xs text-foreground/20 hover:text-gold-bright transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5" title="Editar cliente">✏️</button>
+                      className="text-xs text-foreground/20 hover:text-gold-bright transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5" title="Editar cliente" aria-label="Editar cliente"><Pencil size={13} aria-hidden="true" /></button>
                   </div>
                 </div>
               </motion.div>

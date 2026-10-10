@@ -1403,3 +1403,42 @@ test("editorial menu-shimmer is defined and covered by reduced-motion", () => {
   assert.match(css, /\.menu-shimmer\{/);
   assert.match(css, /prefers-reduced-motion:reduce\)\{[\s\S]*?menu-shimmer::after[\s\S]*?animation:none/);
 });
+
+// ─── ui-redesign R5: segmented pills, lucide icons, token hygiene ────────────
+
+test("segmented control exposes layoutId pill, muted track and card segment", () => {
+  const src = readFileSync("src/components/ui/segmented-control.tsx", "utf8");
+  assert.match(src, /layoutId/);
+  assert.match(src, /bg-muted\/40/);
+  assert.match(src, /bg-card/);
+  assert.match(src, /rounded-full/);
+});
+
+test("orders view adopts segmented pills and lucide action icons", () => {
+  const src = readFileSync("src/app/(admin)/admin/orders/orders-view.tsx", "utf8");
+  assert.match(src, /SegmentedControl/);
+  for (const icon of ["Bell", "Trash2", "Pencil", "Sandwich", "Wheat", "Package", "ClipboardList"]) {
+    assert.ok(src.includes(icon), `missing ${icon}`);
+  }
+  assert.doesNotMatch(src, /🔔|🗑|✏|✕|🍔|🍞|📦|📋/);
+  assert.match(src, /aria-label/);
+});
+
+test("product toggle active segment becomes a card pill", () => {
+  const src = readFileSync("src/components/products/product-toggle.tsx", "utf8");
+  assert.match(src, /bg-card/);
+  assert.doesNotMatch(src, /from-gold|to-gold-ember/);
+});
+
+test("setup error state and hero gradient use tokens not raw hexes", () => {
+  const setup = readFileSync("src/app/setup/page.tsx", "utf8");
+  assert.doesNotMatch(setup, /#0a0a0a|#D4A017|rgba\(245/);
+  const hero = readFileSync("src/components/hero/hero-section.tsx", "utf8");
+  assert.match(hero, /var\(--color-gold\)/);
+  assert.doesNotMatch(hero, /#D4A017|#F5A623|#E8712A/);
+});
+
+test("removed clients tab module is gone (gate: zero source references)", () => {
+  const removedPath = ["src", "components", "clients", ["client", "tabs"].join("-") + ".tsx"].join("/");
+  assert.throws(() => readFileSync(removedPath, "utf8"));
+});

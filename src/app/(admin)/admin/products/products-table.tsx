@@ -25,6 +25,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -349,7 +350,7 @@ function ProductCard({
           onClick={() => onEdit(product)}
           className="flex-1 h-8 sm:h-7 text-xs transition-colors hover:border-primary/40 hover:text-primary"
         >
-          ✏️ Editar
+          <Pencil size={13} aria-hidden="true" className="mr-1.5" />Editar
         </Button>
         <Button
           variant="destructive"
@@ -357,7 +358,7 @@ function ProductCard({
           onClick={() => onDelete(product)}
           className="flex-1 h-8 sm:h-7 text-xs transition-opacity hover:opacity-90"
         >
-          🗑️ Eliminar
+          <Trash2 size={13} aria-hidden="true" className="mr-1.5" />Eliminar
         </Button>
       </div>
     </motion.div>
