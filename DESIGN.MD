@@ -104,11 +104,33 @@ o 400-900):
 
 | Contexto | Regla |
 |---|---|
-| Stat cards admin | valor `text-4xl tabular-nums`; unidad en `text-sm` muted separada |
-| Total de OrderCard | `font-mono tabular-nums text-xl` (solo si `> 0`, calculado por `computeOrderTotal`) |
-| Total de cart drawer | `font-mono tabular-nums text-2xl` |
-| Precios `.digital-menu` | `.menu-item-action strong` `clamp(1.15rem,1.3rem)`; `.menu-detail-footer strong` `clamp(1.9rem,2.4rem)`; `.menu-cart-total strong` `clamp(1.9rem,2.3rem)` — todos `tabular-nums` |
+| Stat cards admin | valor `text-4xl font-black tabular-nums`; unidad en `text-sm` muted separada |
+| Total de OrderCard | `font-mono font-black tabular-nums text-xl` (solo si `> 0`, calculado por `computeOrderTotal`) |
+| Total de cart drawer | `font-mono font-black tabular-nums text-4xl` |
+| Precios `.digital-menu` | `.menu-item-action strong` `clamp(1.15rem,1.3rem)`; `.menu-detail-footer strong` `clamp(1.9rem,2.4rem)` `font-weight:900`; `.menu-cart-total strong` `clamp(1.9rem,2.3rem)` `font-weight:900`; `.menu-floating-cart strong` `font-weight:900` — todos `tabular-nums` |
 | `AnimatedStatCard` | `useCountUp` solo si el valor matchea `/^\d+[%+]?$/`; strings ("Pan","♥") se imprimen literales |
+
+### Mapa tipográfico final (ui-redesign R2)
+
+| Fuente | Ejes | Ámbito |
+|---|---|---|
+| Playfair Display | roman + **itálica** (400-900) | Display editorial/brand storefront, headings `.digital-menu`, acentos `em.font-heading` en admin |
+| Inter | **300-900** + normal + **itálica** | TODA la jerarquía `.digital-menu`: body light 300, fragmentos itálicos, numerales black |
+| Geist Mono | normal | Numerales admin/cart-drawer (`font-mono`) — boundary mono preservado |
+| Poppins | normal (300-900) | Body/UI de marketing y chrome — **nunca itálica** |
+
+Regla dura: `<em>`/itálica SOLO donde renderiza Playfair o Inter (`.font-heading`,
+`.digital-menu`, `em.font-heading`). Nunca en Poppins/Geist — Poppins no carga
+cara itálica y sintetizaría faux-italic. `layout.tsx` declara
+`style:["normal","italic"]` en Playfair e Inter; Inter suma `weight:300`.
+
+### Headings mixtos roman+itálica (R2)
+
+- `TextReveal` soporta `emLines?: number[]` — envuelve en `<em>` los word-spans
+  de esas líneas; el hero pasa el índice de la última línea (nombre dinámico).
+- `PromoMeta.em` define la keyword itálica por campaña en el h1 de promo.
+- `.marker-gold` (wash orgánico detrás de la keyword) se combina con `<em>` en
+  headings clave; variante `.digital-menu .marker-gold` recolorea a `--menu-gold`.
 
 ---
 
@@ -153,9 +175,18 @@ propio). NO es Tailwind — es el sistema de diseño de la carta pública:
   — safe-area respetado.
 - `catalog-dialog` full-viewport con `catalog-dialog-veil` blur + panel
   `max-height:calc(100svh - 3rem)`.
+- `.menu-category-nav` es ahora **pill flotante inset** (`top:.75rem`,
+  `margin-inline:max(.75rem,env(safe-area-inset-left))`, `border-radius:28px`,
+  blur 18px, sombra spec `0_20px_50px_-4px_rgba(0,0,0,.55)`). Indicador de
+  categoría activa = pill orb-finish (`inset:6px 4px`, `z-index:-1`,
+  `isolation:isolate` en el botón) en vez de underline 2px. `aria-pressed` +
+  `layoutId="category-indicator"` intactos.
+- `.menu-floating-cart` es pill `border-radius:28px` con sombra spec +
+  `:active{scale(.98)}`; badge de cantidad usa `.orb-chip`.
 - `checkout-form` grid 2col, inputs `min-height:46px`, botón WhatsApp 52px.
 - Touch targets ≥ 44px en controles del menú (`min-height:44px`).
-- Breakpoints del sistema: `1024px` y `760px` (media queries propias).
+- Breakpoints del sistema: `1024px` y `760px` (media queries propias, **no** el
+  default Tailwind 768/767 — drift intencional, ver brechas).
 
 ### Superficies y utilidades custom (`globals.css`)
 
@@ -178,6 +209,12 @@ propio). NO es Tailwind — es el sistema de diseño de la carta pública:
 | `.shine-sweep` | sweep de luz en hover |
 | `.marquee-track` | marquee infinito 30s, pausa en hover |
 | `.catalog-image` | frame editorial: fade+zoom on ready, shimmer loading |
+| `.marker-gold` | highlight orgánico detrás de keyword (`box-decoration-break:clone`); variante `.digital-menu` usa `--menu-gold` |
+| `.orb-finish` | acabado orb shape-agnostic: specular radial + grano feTurbulence + insets hi/lo; `--oc:#D4A017` (`.digital-menu`→`#d7c198`) |
+| `.orb-chip` | esfera oro saturada circular (badges cortos/numéricos); halo respira en opacity-only |
+| `.orb-float` | orbe flotante decorativo: levitate + piso + haz (opacity/transform only) |
+| `.cta-card` | card CTA gradiente oro `#D4A017→#F5A623→#E8712A` + anatomy `-icon`/`-chevron`; halo/sheen en opacity/transform only; variante `.digital-menu` rampa `--menu-*` |
+| `.btn-outline-gold` | pill hairline oro (contraparte outlined de `.btn-gold`) |
 
 ### Marketing storefront — dos sub-sistemas
 
@@ -324,6 +361,17 @@ uploads, webhooks…
 10. ~~Hexes en setup/hero~~ — **resuelto** (R5): estado de error de `/setup`
     usa `bg-background`/`text-muted-foreground`/`text-primary`; `wordStyle`
     del hero usa `var(--color-gold*)`.
+11. **Drift de breakpoints editorial** — **intencional**: `.digital-menu` usa
+    media queries propias `1024px`/`760px` (globals.css) que NO coinciden con
+    el default Tailwind `768px`/`767px`. Es bespoke y autoconsistente; no
+    unificar.
+12. **Emoji residuales decorativos** — fuera del alcance de R5/R2:
+    `upsell-modal.tsx` `CATEGORY_EMOJI` (`🍟`,`🥤`), `promo-page-client.tsx`
+    `trustItems` (`🏆`,`⚡`,`❤️`) y `pan-mayorista/page.tsx` `benefits`
+    (`🏆`,`📦`,`🚚`,`🤝`). No son iconos de acción de la lista del gate;
+    migrarlos es follow-up opcional. Los iconos de acción admin de
+    `dashboard-actions` SÍ se migraron a lucide (R2-D) — `🎯` → `Target`,
+    quick-actions a estilo oro único.
 
 ### Excepciones documentadas (color hardcodeado legítimo)
 
@@ -406,9 +454,10 @@ uploads, webhooks…
 
 ---
 
-**Última actualización:** `ui-redesign` apply completado (R1 foundations +
-cadencia ambiental → R2 display numerals → R3 bottom-sheet pattern →
-R4 skeletons/drift editorial → R5 segmented pills + iconos lucide + este sync),
-2026-10-10.
+**Última actualización:** `ui-redesign` ciclo 2 completado — R2-A foundations
+(itálicas reales, pills, marker, sheet elevation) → R2-B headings mixtos +
+numerales black → R2-C orbes glossy + pills flotantes → R2-D CTA cards
+gradiente + quick-actions oro → R2-E motion + paridad reduced-motion → R2-F
+este sync, 2026-10-10.
 **Próxima revisión:** tras merge de `ui-redesign` a `main` o próximo cambio
 de design tokens.
