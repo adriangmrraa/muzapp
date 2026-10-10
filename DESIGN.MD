@@ -1,9 +1,9 @@
 # DESIGN.MD — Muzapp (Mrs Muzzarella)
 
 > Design system oficial del proyecto. Refleja el estado REAL del código en `src/`
-> (snapshot de `main`, 2026-10-09). Generado con el mismo criterio que los
-> DESIGN.MD de dentalogic y demobondisok: cuando el código difiere de la
-> intención, este doc dice qué hace el código.
+> (snapshot de branch `ui-redesign` post-apply, 2026-10-10). Generado con el mismo
+> criterio que los DESIGN.MD de dentalogic y demobondisok: cuando el código
+> difiere de la intención, este doc dice qué hace el código.
 >
 > Reglas adicionales del repo: `AGENTS.md` (Next.js nuevo + inter-agent Engram),
 > `skills/` (skills de producto locales).
@@ -100,6 +100,16 @@ o 400-900):
 | Precios/números | `font-variant-numeric: tabular-nums` |
 | Metadata/caption | `.65–.78rem`, color `#aaa497`/`#c8b899` |
 
+### Escala de display numerals (ui-redesign R1–R2)
+
+| Contexto | Regla |
+|---|---|
+| Stat cards admin | valor `text-4xl tabular-nums`; unidad en `text-sm` muted separada |
+| Total de OrderCard | `font-mono tabular-nums text-xl` (solo si `> 0`, calculado por `computeOrderTotal`) |
+| Total de cart drawer | `font-mono tabular-nums text-2xl` |
+| Precios `.digital-menu` | `.menu-item-action strong` `clamp(1.15rem,1.3rem)`; `.menu-detail-footer strong` `clamp(1.9rem,2.4rem)`; `.menu-cart-total strong` `clamp(1.9rem,2.3rem)` — todos `tabular-nums` |
+| `AnimatedStatCard` | `useCountUp` solo si el valor matchea `/^\d+[%+]?$/`; strings ("Pan","♥") se imprimen literales |
+
 ---
 
 ## Layout
@@ -151,14 +161,18 @@ propio). NO es Tailwind — es el sistema de diseño de la carta pública:
 
 | Utility | Qué hace |
 |---|---|
-| `.glass-card` | `rgba(0,0,0,.5)` + `blur(12px)` + borde oro .3 |
-| `.glass-surface` | `rgba(0,0,0,.45)` + `blur(16px)` + borde oro .15 + shadow |
+| `.glass-card` | `rgba(0,0,0,.5)` + `blur(12px)` + borde oro .3 + inset highlight `0 1px 0 rgba(255,255,255,.06)` + sombra ambiente estática |
+| `.glass-surface` | `rgba(0,0,0,.45)` + `blur(16px)` + borde oro .15 + inset highlight + sombra ambiente estática |
 | `.text-gold-gradient` | gradiente oro→naranja clip-text (estático) |
 | `.text-gold-shimmer` | mismo gradiente animado 6s |
 | `.btn-gold` | gradiente oro, `border-radius:25px`, hover `scale(1.05) translateY(-2px)` + glow |
 | `.card-gold-glow` | hover: borde oro .5 + glow 30px + `translateY(-2px)` |
-| `.gold-shimmer` | skeleton dorado 1.5s |
-| `.whatsapp-pulse` | ping verde WhatsApp 2s (FAB) |
+| `.gold-shimmer` | skeleton dorado (`Skeleton variant="shimmer"`); cadencia `--ambient-cycle / 3` |
+| `.menu-shimmer` | skeleton editorial (sweep `#ffffff` sobre `#ffffff05`, keyframe `catalog-loading`); SOLO dentro de `.digital-menu` |
+| `.paint-veil` | overlay fijo de primer paint (`var(--veil-bg,--background)`), fade 700ms tras mount |
+| `.rise-in` | entrada por opacidad+y con stagger `--i × --stagger-step + --stagger-base` |
+| `.sheet-handle` | grab-zone 44px + pill `h-1 w-10` centrada; marca el patrón bottom-sheet |
+| `.whatsapp-pulse` | ping verde WhatsApp, cadencia `--ambient-cycle / 3` (FAB) |
 | `.border-animated` | hairline oro↔vino `#8B0000` rotando 4s |
 | `.orb-glow`/`.orb-1`/`.orb-2` | orbes de glow flotantes (ocultos <480px) |
 | `.shine-sweep` | sweep de luz en hover |
@@ -199,10 +213,19 @@ propio). NO es Tailwind — es el sistema de diseño de la carta pública:
 ## Motion
 
 - Transiciones UI ≤ 300ms; hovers con `cubic-bezier(0.4,0,0.2,1)`.
-- Entradas suaves: `fadeUp`/`staggerContainer` en nav y cards.
-- Ambiente: orbs 20-25s, marquee 30s, shimmer 1.5-6s, pulse 2s, border-rotate 4s.
-- **Reduced motion respetado**: bloque `prefers-reduced-motion` apaga marquee,
-  orbs, pulses, shimmer, shine-sweep (globals.css:391,450-463).
+- Entradas suaves: `fadeUp`/`staggerContainer` en nav y cards; `riseIn`,
+  `riseInSmall`, `popIn`, `staggerDense` en `animation-variants.ts` con paridad
+  reduced-motion (`expoOut`/`overshoot` como eases compartidos).
+- **Cadencia ambiental unificada**: `--ambient-cycle: 5.4s` en `:root`; todos los
+  loops derivan de ella — orb-1 `×4`, orb-2 `×5`, whatsapp-pulse/gold-shimmer/
+  catalog-loading `/3`, shimmer-text/border-rotate `×1`.
+- **CTAs materiales**: `.btn-gold`, `.menu-add-button`, `.menu-whatsapp-button`
+  tienen inset highlight + `:active { scale(.98) }`; la "respiración" es un
+  pseudo-elemento animando `opacity` (`gold-breathe`), nunca `box-shadow`
+  animada ni `transition: all`.
+- **Reduced motion respetado**: los bloques `prefers-reduced-motion` (admin +
+  editorial) cubren TODO keyframe nuevo (`gold-breathe`, `paint-veil`, `rise-in`,
+  `menu-shimmer`); drag-to-dismiss es manipulación directa y se mantiene.
 
 ## Accesibilidad
 
@@ -212,6 +235,42 @@ propio). NO es Tailwind — es el sistema de diseño de la carta pública:
 - Touch targets ≥ 44px en storefront.
 - Contraste: `#f5f5f5` sobre `#0a0a0a` ≈ 18:1; `#888888` muted ≈ 3.5:1 (solo
   secundario); `#aaa497`/`#c8b899` del sistema menú ≈ AA para captions.
+
+## Patrones de interacción (ui-redesign R3–R5)
+
+### Bottom-sheet pattern
+
+El patrón se implementa una vez en `src/components/ui/sheet.tsx` (`side="bottom"`)
+y se repite en los paneles móviles editoriales:
+
+- Base UI `Dialog` conserva semántica: focus trap, Escape, backdrop, restore
+  focus. El popup queda como shell transparente; el panel visual es un
+  `motion.div` interior con `bg-popover border-t rounded-t-2xl` y
+  `pb-[max(16px,env(safe-area-inset-bottom))]`.
+- Drag vertical SOLO desde `.sheet-handle` (`dragListener={false}` +
+  `dragControls` → el scroll interno nunca se bloquea).
+- `dragConstraints {top:0,bottom:0}` + `dragElastic {bottom:.15}`; dismiss si
+  offset `>120px` o velocity `>500px/s` → `onDragDismiss` (consumidor pasa su
+  `onClose`).
+- Consumidores: `CartDrawer` (`side={isMobile?"bottom":"right"}` vía
+  `useMediaQuery("(max-width:767px)")`), `CatalogDialog` y `UpsellModal`
+  (handle solo en mobile; desktop queda idéntico).
+
+### `SegmentedControl` (`src/components/ui/segmented-control.tsx`)
+
+- Track `rounded-full bg-muted/40` + `border`; segmento activo = pill `bg-card`
+  animada con `motion layoutId={segmented-${id}}` — el prop `id` namespacing el
+  layoutId (dos controles con el mismo id animarían el thumb entre instancias).
+- Options soportan `label: ReactNode` (icons lucide inline) y `count` numérico.
+- Consumidores: filtros de estado/tipo en `orders-view`; `product-toggle.tsx`
+  usa el mismo lenguaje (pill `bg-card`, sin gradiente oro activo).
+
+### Loading
+
+- Admin: `Skeleton variant="shimmer"` (`.gold-shimmer`, oro admin).
+- Editorial: `.menu-shimmer` (sweep neutro, reusa `catalog-loading`).
+- `animate-pulse` solo sobrevive como `variant="default"` del componente
+  `Skeleton` (sin usos actuales en `src/app`).
 
 ## Vistas (mapa real de rutas, `src/app`)
 
@@ -238,28 +297,55 @@ uploads, webhooks…
    en `layout.tsx`.
 3. **`.dark` duplica `:root`**: intencional (tema único dark forzado en
    `<html class="dark">`), documentado — no es bug, es decisión.
-4. **Dos oros** — **deliberado y ya acotado** (S3): `#D4A017`/`primary` en
-   marca+admin+chrome perimetral; `#d7c198`/`--menu-gold` SOLO dentro de
-   scopes `.digital-menu` (carta-digital, tragos-vip, detalles de producto).
-   Regla: no mezclar `primary`/`text-gold` dentro de `.digital-menu`.
+4. **Dos oros** — **deliberado y acotado** (S3 + ui-redesign R4): `#D4A017`/
+   `primary` en marca+admin+chrome perimetral; `#d7c198`/`--menu-*` SOLO dentro
+   de scopes `.digital-menu` — que ahora incluye `/carta-digital`, `/tragos-vip`
+   y los detalles `hamburguesas/[id]` + `pan-mayorista/[id]` (sus raíces montan
+   la clase `digital-menu` para que `--menu-*` resuelva). Regla: no mezclar
+   `primary`/`text-gold` dentro de `.digital-menu`.
 5. **Sin i18n**: UI en español hardcodeado (`lang="es"`), a diferencia de
    dentalogic. Strings de storefront son marketing — OK hardcode; admin sería
    candidato a i18n solo si se pide.
 6. **Mezcla de unidades**: el sistema editorial usa rem/px propios fuera del
    token radius — aceptable porque es bespoke, mantener consistencia dentro
    de `.digital-menu`.
+7. ~~Drift blanco/ámbar en storefront~~ — **resuelto** (R4): `bg-white/*`,
+   `border-white/*`, `text-amber-*` migrados a `var(--menu-*)`; loading paths
+   usan `.menu-shimmer`/`Skeleton variant="shimmer"`; `animate-pulse` en
+   `src/app` = 0.
+8. ~~Emoji como iconos de acción~~ — **resuelto en paths de orden/cliente**
+   (R5): `Bell`, `X`, `Trash2`, `Pencil`, `Sandwich`, `Wheat`, `Package`,
+   `ClipboardList` lucide con `aria-label` en orders/clients/products/promos/
+   leads. Residual decorativo fuera de alcance: emojis en `dashboard-actions`,
+   `admin/page.tsx` (acciones del día), `agent-config-form` — no son iconos de
+   acción de la lista del gate; migrarlos es follow-up opcional.
+9. ~~`client-tabs.tsx` muerto~~ — **resuelto** (R5): módulo eliminado junto a
+   todos sus subcomponentes sin consumidores.
+10. ~~Hexes en setup/hero~~ — **resuelto** (R5): estado de error de `/setup`
+    usa `bg-background`/`text-muted-foreground`/`text-primary`; `wordStyle`
+    del hero usa `var(--color-gold*)`.
 
 ### Excepciones documentadas (color hardcodeado legítimo)
 
 - `#25D366` (WhatsApp brand) en `whatsapp-fab` y `text-[#25D366]` de agente.
 - `#8B0000` vino solo en `.border-animated` (rotación oro↔vino).
 - `rgba(212,160,23,*)`/`#D4A017` inline donde una clase no aplica: gradientes
-  de framer (`whileHover` boxShadow/borderColor), `wordStyle` de `TextReveal`
-  (clip por palabra), orbes radiales, gradientes de sección anclados a
-  `var(--background)`, `bgColor` de navbar por scroll.
+  de framer (`whileHover` boxShadow/borderColor), orbes radiales, gradientes
+  de sección anclados a `var(--background)`, `bgColor` de navbar por scroll.
+  (`wordStyle` de `TextReveal` ya usa `var(--color-gold*)` — dejó de ser
+  excepción en R5.)
 - `bg-[#050505]` en footer — más oscuro que `--background`, sin token.
 - Colores semánticos de estado (emerald/red/purple/amber/blue) y de
   origen en charts (facebook/instagram/whatsapp/organic/direct).
+- `src/lib/whatsapp/tools/escalation-email.ts` — HTML email con estilos
+  inline: los clientes de correo no soportan CSS custom properties; los hexes
+  son deliberados.
+- `src/app/api/meta/callback/route.ts` — devuelve un HTML string mínimo
+  ("cerrar ventana") fuera del árbol React; inline styles deliberados.
+- `src/components/products/upsell-modal.tsx` — sin skeleton: las sugerencias
+  se cargan en background y el modal solo aparece cuando hay contenido
+  (`suggestions.length === 0 → null`); skeleton deliberadamente omitido para
+  no flashear un panel vacío.
 
 ---
 
@@ -320,8 +406,9 @@ uploads, webhooks…
 
 ---
 
-**Última actualización:** elevación UI aplicada en worktree `ui-elevation`
-(S1 chrome admin → S2a chat → S2b orders/clients → S2c resto admin →
-S3 storefront + este sync).
-**Próxima revisión:** tras merge de `ui-elevation` a `main` o próximo cambio
+**Última actualización:** `ui-redesign` apply completado (R1 foundations +
+cadencia ambiental → R2 display numerals → R3 bottom-sheet pattern →
+R4 skeletons/drift editorial → R5 segmented pills + iconos lucide + este sync),
+2026-10-10.
+**Próxima revisión:** tras merge de `ui-redesign` a `main` o próximo cambio
 de design tokens.
