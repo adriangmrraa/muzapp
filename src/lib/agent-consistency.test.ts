@@ -1374,3 +1374,32 @@ test("catalog dialog and upsell modal adopt the sheet handle affordance", () => 
   assert.match(upsell, /sheet-handle/);
   assert.match(upsell, /env\(safe-area-inset-bottom\)/);
 });
+
+// ─── ui-redesign R4: skeleton shimmer + editorial drift ──────────────────────
+
+test("skeleton exposes a shimmer variant and admin loading adopts it", () => {
+  const skeleton = readFileSync("src/components/ui/skeleton.tsx", "utf8");
+  assert.match(skeleton, /variant/);
+  assert.match(skeleton, /gold-shimmer/);
+  const loading = readFileSync("src/app/(admin)/admin/loading.tsx", "utf8");
+  assert.match(loading, /variant="shimmer"/);
+});
+
+test("storefront detail and tragos-vip pages drop animate-pulse and white/amber drift", () => {
+  for (const file of [
+    "src/app/(storefront)/tragos-vip/page.tsx",
+    "src/app/(storefront)/hamburguesas/[id]/page.tsx",
+    "src/app/(storefront)/pan-mayorista/[id]/page.tsx",
+  ]) {
+    const src = readFileSync(file, "utf8");
+    assert.doesNotMatch(src, /animate-pulse/, `${file} keeps animate-pulse`);
+    assert.doesNotMatch(src, /bg-white\/|border-white\/|text-amber-/, `${file} keeps white/amber drift`);
+    assert.match(src, /menu-shimmer/, `${file} missing editorial shimmer`);
+  }
+});
+
+test("editorial menu-shimmer is defined and covered by reduced-motion", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.match(css, /\.menu-shimmer\{/);
+  assert.match(css, /prefers-reduced-motion:reduce\)\{[\s\S]*?menu-shimmer::after[\s\S]*?animation:none/);
+});

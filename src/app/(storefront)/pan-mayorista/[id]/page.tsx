@@ -69,12 +69,12 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background p-4">
+      <div className="digital-menu p-4">
         <div className="max-w-4xl mx-auto">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-white/[0.04] rounded w-24" />
-            <div className="h-96 bg-white/[0.04] rounded-2xl" />
-            <div className="h-32 bg-white/[0.04] rounded-xl" />
+          <div className="space-y-4">
+            <div className="h-8 menu-shimmer rounded w-24" />
+            <div className="h-96 menu-shimmer rounded-2xl" />
+            <div className="h-32 menu-shimmer rounded-xl" />
           </div>
         </div>
       </div>
@@ -83,12 +83,12 @@ export default function ProductDetailPage() {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+      <div className="digital-menu p-4 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error ?? "Producto no encontrado"}</p>
           <button
             onClick={() => router.push("/pan-mayorista")}
-            className="text-amber-400 hover:underline text-sm"
+            className="text-[var(--menu-gold)] hover:underline text-sm"
           >
             Volver al catálogo
           </button>
@@ -98,7 +98,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#151513] px-5 sm:px-10 pt-28 pb-20">
+    <div className="digital-menu px-5 sm:px-10 pt-28">
       <ProductDetail product={product} onAddToCart={handleAddToCart} />
     </div>
   );

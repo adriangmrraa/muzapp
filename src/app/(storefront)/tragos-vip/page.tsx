@@ -24,14 +24,14 @@ export default function TragosVIPPage() {
     }).then(setProducts).catch(cause => { if (cause.name !== "AbortError") setError(true); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, []);
-  return <div className="min-h-screen bg-[#151513] text-[#f2eee5] px-5 sm:px-10 pt-32 pb-24">
-    <header className="max-w-6xl mx-auto border-b border-white/10 pb-14 sm:pb-20">
+  return <div className="digital-menu px-5 sm:px-10 pt-32">
+    <header className="max-w-6xl mx-auto border-b border-[var(--menu-border)] pb-14 sm:pb-20">
       <p className="menu-eyebrow">{business?.name || "La carta"} / La noche</p>
       <h1 className="text-5xl sm:text-8xl tracking-[-.06em] font-normal my-7" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}><EditorialHeading>La noche,</EditorialHeading><EditorialHeading><em className="text-[#d7c198]">a tu gusto.</em></EditorialHeading></h1>
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6"><p className="text-sm text-stone-400 max-w-sm leading-loose">Descubrí nuestra selección de tragos. Elegí tu favorito y sumalo al pedido.</p><Link href="/carta-digital" className="menu-text-link">Explorá la carta completa <ArrowUpRight size={18} /></Link></div>
     </header>
     <section className="max-w-6xl mx-auto pt-12" aria-label="Tragos V.I.P.">
-      {error ? <p role="alert" className="menu-empty">No pudimos cargar los tragos. <button onClick={() => window.location.reload()} className="menu-add-button">Reintentar</button></p> : loading ? <div className="grid sm:grid-cols-3 gap-8" role="status" aria-label="Cargando tragos">{[0,1,2].map(i => <div key={i} className="aspect-[3/4] bg-white/5 motion-safe:animate-pulse" />)}</div> : !products.length ? <p className="menu-empty">Pronto, nuevas opciones para tu noche.</p> : <motion.div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: reduced ? 0 : .07 } } }}>
+      {error ? <p role="alert" className="menu-empty">No pudimos cargar los tragos. <button onClick={() => window.location.reload()} className="menu-add-button">Reintentar</button></p> : loading ? <div className="grid sm:grid-cols-3 gap-8" role="status" aria-label="Cargando tragos">{[0,1,2].map(i => <div key={i} className="aspect-[3/4] menu-shimmer" />)}</div> : !products.length ? <p className="menu-empty">Pronto, nuevas opciones para tu noche.</p> : <motion.div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: reduced ? 0 : .07 } } }}>
         {products.map(product => {
           const price = Number(product.isPromo && product.promoPrice != null ? product.promoPrice : product.price);
           return <motion.article key={product.id} variants={reveal} className="public-product-card">
