@@ -30,7 +30,7 @@ function ImageMedia({ media }: { media: MediaAttachment }) {
         loading="lazy"
       />
       {media.caption && (
-        <p className="text-xs text-neutral-300 mt-1">{media.caption}</p>
+        <p className="text-xs text-muted-foreground mt-1">{media.caption}</p>
       )}
     </div>
   );
@@ -39,8 +39,8 @@ function ImageMedia({ media }: { media: MediaAttachment }) {
 function AudioMedia({ media }: { media: MediaAttachment }) {
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2.5">
-        <Mic className="h-4 w-4 text-[#D4A017] flex-shrink-0" />
+      <div className="flex items-center gap-2 bg-muted/40 rounded-lg px-3 py-2.5">
+        <Mic className="h-4 w-4 text-primary flex-shrink-0" />
         <div className="flex-1 min-w-0">
           {media.url ? (
             <audio
@@ -50,17 +50,17 @@ function AudioMedia({ media }: { media: MediaAttachment }) {
               preload="none"
             />
           ) : (
-            <span className="text-xs text-neutral-400">Archivo no disponible</span>
+            <span className="text-xs text-muted-foreground">Archivo no disponible</span>
           )}
         </div>
         {media.fileSize && (
-          <span className="text-[10px] text-neutral-500 flex-shrink-0">
+          <span className="text-[10px] text-muted-foreground flex-shrink-0">
             {formatFileSize(media.fileSize)}
           </span>
         )}
       </div>
       {media.transcription && (
-        <p className="text-xs text-neutral-400 italic px-1">
+        <p className="text-xs text-muted-foreground italic px-1">
           &ldquo;{media.transcription}&rdquo;
         </p>
       )}
@@ -80,11 +80,11 @@ function VideoMedia({ media }: { media: MediaAttachment }) {
         />
       ) : (
         <div className="aspect-video flex items-center justify-center">
-          <span className="text-xs text-neutral-400">Archivo no disponible</span>
+          <span className="text-xs text-muted-foreground">Archivo no disponible</span>
         </div>
       )}
       {media.caption && (
-        <p className="text-xs text-neutral-300 px-2 pb-2">{media.caption}</p>
+        <p className="text-xs text-muted-foreground px-2 pb-2">{media.caption}</p>
       )}
     </div>
   );
@@ -96,27 +96,27 @@ function DocumentMedia({ media }: { media: MediaAttachment }) {
       href={resolveUrl(media.url)}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-3 bg-white/5 rounded-lg px-3 py-2.5 border border-white/10 hover:border-[#D4A017]/30 transition-colors group"
+      className="flex items-center gap-3 bg-muted/40 rounded-lg px-3 py-2.5 border border-border hover:border-primary/30 transition-colors group"
     >
-      <FileText className="h-5 w-5 text-[#D4A017] flex-shrink-0" />
+      <FileText className="h-5 w-5 text-primary flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-neutral-200 truncate">
+        <p className="text-sm text-foreground truncate">
           {media.fileName || "Documento"}
         </p>
         <div className="flex items-center gap-2">
           {media.mimeType && (
-            <span className="text-[10px] text-neutral-500 uppercase">
+            <span className="text-[10px] text-muted-foreground uppercase">
               {media.mimeType.split("/").pop()}
             </span>
           )}
           {media.fileSize && (
-            <span className="text-[10px] text-neutral-500">
+            <span className="text-[10px] text-muted-foreground">
               {formatFileSize(media.fileSize)}
             </span>
           )}
         </div>
       </div>
-      <Download className="h-4 w-4 text-neutral-500 group-hover:text-[#D4A017] transition-colors flex-shrink-0" />
+      <Download className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
     </a>
   );
 }
@@ -133,9 +133,9 @@ export function MediaRenderer({ media }: MediaRendererProps) {
       return <DocumentMedia media={media} />;
     default:
       return (
-        <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-          <ImageIcon className="h-4 w-4 text-neutral-400" />
-          <span className="text-xs text-neutral-400">Archivo no soportado</span>
+        <div className="flex items-center gap-2 bg-muted/40 rounded-lg px-3 py-2">
+          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Archivo no soportado</span>
         </div>
       );
   }

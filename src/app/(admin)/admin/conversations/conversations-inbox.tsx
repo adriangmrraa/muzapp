@@ -68,24 +68,24 @@ function ConversationsInboxInner({ initialConversations, sellerPhones }: Props) 
 
   const contextPanel = selectedId ? (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 xl:hidden">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border xl:hidden">
         <button
           onClick={handleBackToChat}
-          className="p-1.5 -ml-1.5 rounded-lg hover:bg-white/5 text-neutral-400"
+          className="p-1.5 -ml-1.5 rounded-lg hover:bg-muted text-muted-foreground"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <span className="text-sm font-medium text-neutral-200">Perfil del Cliente</span>
+        <span className="text-sm font-medium text-foreground">Perfil del Cliente</span>
       </div>
       <CustomerContextPanel conversationId={selectedId} onNewOrder={handleNewOrder} />
     </div>
   ) : null;
 
   return (
-    <div className="flex flex-1 min-h-0 overflow-hidden bg-[#0f0f0f]">
+    <div className="flex flex-1 min-h-0 overflow-hidden bg-card">
       {/* Col 1: Listado de Chats */}
       <div
-        className={`flex-shrink-0 border-r border-white/5 overflow-hidden ${
+        className={`flex-shrink-0 border-r border-border overflow-hidden ${
           currentView === "list" ? "flex flex-col w-full md:w-80" : "hidden md:flex md:flex-col md:w-80"
         }`}
       >
@@ -104,7 +104,7 @@ function ConversationsInboxInner({ initialConversations, sellerPhones }: Props) 
         }`}
       >
         {!selectedId || !selectedConversation ? (
-          <div className="flex flex-1 items-center justify-center text-gray-500">
+          <div className="flex flex-1 items-center justify-center text-muted-foreground">
             <p>Seleccioná una conversación</p>
           </div>
         ) : (
@@ -122,7 +122,7 @@ function ConversationsInboxInner({ initialConversations, sellerPhones }: Props) 
 
       {/* Col 3: Contexto/Perfil del Cliente (desktop xl+) */}
       {selectedId && (
-        <div className="hidden xl:flex xl:w-[380px] flex-shrink-0 border-l border-white/5 h-full">
+        <div className="hidden xl:flex xl:w-[380px] flex-shrink-0 border-l border-border h-full">
           {contextPanel}
         </div>
       )}
@@ -130,7 +130,7 @@ function ConversationsInboxInner({ initialConversations, sellerPhones }: Props) 
       {/* Mobile: overlay fullscreen para contexto */}
       {selectedId && (
         <div
-          className={`absolute inset-0 z-40 bg-[#0f0f0f] xl:hidden ${
+          className={`absolute inset-0 z-40 bg-card xl:hidden ${
             currentView === "context" ? "flex flex-col" : "hidden"
           }`}
         >

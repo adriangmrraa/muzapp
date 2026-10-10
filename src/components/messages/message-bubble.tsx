@@ -19,10 +19,10 @@ function formatTime(dateStr: string): string {
 
 // user = left (incoming), assistant = right (bot response), human = right (operator)
 const roleStyles: Record<string, string> = {
-  user: "bg-white/5 border-white/10",
-  assistant: "bg-[rgba(212,160,23,0.1)] border-[rgba(212,160,23,0.2)] ml-auto",
+  user: "bg-muted/40 border-border",
+  assistant: "bg-primary/10 border-primary/20 ml-auto",
   human: "bg-blue-500/10 border-blue-500/20 ml-auto",
-  system: "bg-neutral-800/50 border-white/5 mx-auto text-center",
+  system: "bg-muted border-border mx-auto text-center",
 };
 
 const roleLabels: Record<string, string | null> = {
@@ -68,7 +68,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     >
       {/* Role label */}
       {label && (
-        <span className="block text-[10px] font-medium text-neutral-400 mb-1">
+        <span className="block text-[10px] font-medium text-muted-foreground mb-1">
           {label}
         </span>
       )}
@@ -84,12 +84,12 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
       {/* Text content (URLs are stripped — rendered as link previews below) */}
       {message.content && !isSystem && (
-        <p className="text-sm text-neutral-200 whitespace-pre-wrap break-words">
+        <p className="text-sm text-foreground whitespace-pre-wrap break-words">
           {hasLinks ? stripUrls(message.content) : message.content}
         </p>
       )}
       {isSystem && (
-        <p className="text-xs text-neutral-500 italic">{message.content}</p>
+        <p className="text-xs text-muted-foreground italic">{message.content}</p>
       )}
 
       {/* Link previews */}
@@ -103,7 +103,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
       {/* Timestamp */}
       <div className={cn("mt-1", isSystem ? "text-center" : message.role === "user" ? "text-left" : "text-right")}>
-        <span className="text-[10px] text-neutral-500">
+        <span className="text-[10px] text-muted-foreground">
           {formatTime(message.createdAt)}
         </span>
       </div>

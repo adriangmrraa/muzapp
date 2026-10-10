@@ -28,11 +28,11 @@ export function OrderHistory({ leadId, expanded }: OrderHistoryProps) {
   if (!expanded) return null;
 
   if (isLoading) {
-    return <p className="text-xs text-neutral-500 py-2">Cargando pedidos...</p>;
+    return <p className="text-xs text-muted-foreground py-2">Cargando pedidos...</p>;
   }
 
   if (!orders || orders.length === 0) {
-    return <p className="text-xs text-neutral-500 py-2">Sin pedidos</p>;
+    return <p className="text-xs text-muted-foreground py-2">Sin pedidos</p>;
   }
 
   return (
@@ -40,11 +40,11 @@ export function OrderHistory({ leadId, expanded }: OrderHistoryProps) {
       {orders.map((order) => (
         <div
           key={order.id}
-          className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2"
+          className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm text-neutral-200">#{order.id}</span>
-            <span className="text-[11px] text-neutral-500 capitalize">
+            <span className="text-sm text-foreground">#{order.id}</span>
+            <span className="text-[11px] text-muted-foreground capitalize">
               {order.orderType?.replace("_", " ") ?? "—"}
             </span>
           </div>

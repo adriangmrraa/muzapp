@@ -161,7 +161,7 @@ export default async function ConversationDetailPage({ params }: { params: Param
                     "max-w-[75%] rounded-2xl px-4 py-3 shadow-sm",
                     isUser
                       ? "bg-muted/80 text-foreground rounded-tl-sm border border-border/50"
-                      : "bg-[#D4A017]/10 text-foreground rounded-tr-sm border border-[#D4A017]/20"
+                      : "bg-primary/10 text-foreground rounded-tr-sm border border-primary/20"
                   )}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
@@ -191,20 +191,20 @@ export default async function ConversationDetailPage({ params }: { params: Param
         </h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="flex flex-col gap-0.5">
-            <span className="text-[11px] font-medium text-[#D4A017] uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-primary uppercase tracking-wider">
               Estado
             </span>
             <span className="text-sm text-foreground">{cfg.label}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="text-[11px] font-medium text-[#D4A017] uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-primary uppercase tracking-wider">
               Mensajes
             </span>
             <span className="text-sm text-foreground tabular-nums">{messages.length}</span>
           </div>
           {row.customerPhone && (
             <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] font-medium text-[#D4A017] uppercase tracking-wider">
+              <span className="text-[11px] font-medium text-primary uppercase tracking-wider">
                 Teléfono
               </span>
               <span className="text-sm text-foreground font-mono">{row.customerPhone}</span>

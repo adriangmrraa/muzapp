@@ -48,11 +48,11 @@ function formatDateSeparator(dateStr: string): string {
 function DateSeparator({ date }: { date: string }) {
   return (
     <div className="flex items-center gap-3 py-3">
-      <div className="flex-1 h-px bg-white/10" />
-      <span className="text-[11px] text-neutral-500 font-medium px-2">
+      <div className="flex-1 h-px bg-border" />
+      <span className="text-[11px] text-muted-foreground font-medium px-2">
         {formatDateSeparator(date)}
       </span>
-      <div className="flex-1 h-px bg-white/10" />
+      <div className="flex-1 h-px bg-border" />
     </div>
   );
 }
@@ -79,24 +79,24 @@ export function ChatPanel({
   }, [messages]);
 
   return (
-    <div className={cn("flex flex-col flex-1 min-h-0 bg-[#0a0a0a]", className)}>
+    <div className={cn("flex flex-col flex-1 min-h-0 bg-background", className)}>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-[rgba(0,0,0,0.6)] backdrop-blur-lg"
+        className="flex items-center gap-3 px-4 py-3 border-b border-border bg-black/60 backdrop-blur-lg"
       >
         {onBack && (
           <button
             onClick={onBack}
-            className="p-1.5 -ml-1 rounded-lg hover:bg-white/5 text-neutral-400 lg:hidden"
+            className="p-1.5 -ml-1 rounded-lg hover:bg-muted text-muted-foreground lg:hidden"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
 
         {/* Avatar */}
-        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#D4A017]/30 to-[#D4A017]/10 flex items-center justify-center text-sm font-semibold text-[#D4A017]">
+        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
           {initial}
         </div>
 
@@ -106,7 +106,7 @@ export function ChatPanel({
           className="flex-1 min-w-0 text-left"
         >
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-neutral-100 truncate">
+            <span className="text-sm font-medium text-foreground truncate">
               {displayName}
             </span>
             <ChannelBadge channel={conversation.channel} size="sm" />
@@ -119,7 +119,7 @@ export function ChatPanel({
               </span>
             )}
           </div>
-          <p className="text-[11px] text-neutral-500 truncate">
+          <p className="text-[11px] text-muted-foreground truncate">
             {conversation.customerPhone}
           </p>
         </button>
@@ -130,7 +130,7 @@ export function ChatPanel({
           {onShowContext && (
             <button
               onClick={onShowContext}
-              className="p-2 rounded-lg hover:bg-white/5 text-neutral-400 transition-colors xl:hidden"
+              className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors xl:hidden"
               title="Datos del cliente"
             >
               <UserRound className="h-4 w-4" />
@@ -142,17 +142,17 @@ export function ChatPanel({
               className={`p-2 rounded-lg transition-colors ${
                 humanOverrideActive
                   ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
-                  : "hover:bg-white/5 text-neutral-400"
+                  : "hover:bg-muted text-muted-foreground"
               }`}
               title={humanOverrideActive ? "Modo manual activo — desactivar" : "Tomar control manual"}
             >
               <UserCheck className="h-4 w-4" />
             </button>
           )}
-          <button className="p-2 rounded-lg hover:bg-white/5 text-neutral-400 transition-colors">
+          <button className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
             <Phone className="h-4 w-4" />
           </button>
-          <button className="p-2 rounded-lg hover:bg-white/5 text-neutral-400 transition-colors">
+          <button className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
             <MoreVertical className="h-4 w-4" />
           </button>
         </div>

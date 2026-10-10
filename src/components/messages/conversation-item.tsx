@@ -42,11 +42,11 @@ export function ConversationItem({ conversation, isActive, onClick, isSeller = f
       onClick={() => onClick(conversation.id)}
       className={cn(
         "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors",
-        isSeller ? "hover:bg-purple-950/20" : "hover:bg-[rgba(212,160,23,0.03)]",
+        isSeller ? "hover:bg-purple-950/20" : "hover:bg-primary/3",
         isActive
           ? isSeller
             ? "border-l-2 border-purple-500 bg-purple-950/10"
-            : "border-l-2 border-[#D4A017] bg-[rgba(212,160,23,0.05)]"
+            : "border-l-2 border-primary bg-primary/5"
           : "border-l-2 border-transparent"
       )}
       whileTap={{ scale: 0.98 }}
@@ -57,14 +57,14 @@ export function ConversationItem({ conversation, isActive, onClick, isSeller = f
           "h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold",
           isSeller
             ? "bg-gradient-to-br from-purple-500/30 to-purple-500/10 text-purple-400"
-            : "bg-gradient-to-br from-[#D4A017]/30 to-[#D4A017]/10 text-[#D4A017]"
+            : "bg-gradient-to-br from-primary/30 to-primary/10 text-primary"
         )}>
           {isSeller ? "🛒" : initial}
         </div>
         {/* Status dot */}
         {conversation.status === "active" && (
           <div className={cn(
-            "absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#0f0f0f]",
+            "absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card",
             isSeller ? "bg-purple-400" : "bg-emerald-400"
           )} />
         )}
@@ -76,19 +76,19 @@ export function ConversationItem({ conversation, isActive, onClick, isSeller = f
           <div className="flex items-center gap-1.5 min-w-0">
             <span className={cn(
               "text-sm font-medium truncate",
-              isSeller ? "text-purple-200" : "text-neutral-100"
+              isSeller ? "text-purple-200" : "text-foreground"
             )}>
               {isSeller ? `🛒 ${displayName}` : displayName}
             </span>
             <ChannelBadge channel={conversation.channel} size="sm" />
           </div>
-          <span className="text-[10px] text-neutral-500 flex-shrink-0">
+          <span className="text-[10px] text-muted-foreground flex-shrink-0">
             {formatRelativeTime(conversation.lastMessageAt)}
           </span>
         </div>
         <p className={cn(
           "text-xs truncate mt-0.5",
-          isSeller ? "text-purple-300/60" : "text-neutral-400"
+          isSeller ? "text-purple-300/60" : "text-muted-foreground"
         )}>
           {isSeller ? "🧑‍💼 Vendedor — gestionando pedidos" : truncate(conversation.lastMessagePreview, 60)}
         </p>

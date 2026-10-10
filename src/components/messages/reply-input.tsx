@@ -58,13 +58,13 @@ export function ReplyInput({
   const canSend = value.trim().length > 0 && !disabled && !isSending;
 
   return (
-    <div className="px-4 py-3 border-t border-white/5 bg-[rgba(0,0,0,0.4)] backdrop-blur-lg">
+    <div className="px-4 py-3 border-t border-border bg-black/40 backdrop-blur-lg">
       {/* Channel indicator */}
       {isSending && (
         <motion.p
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className="text-[11px] text-neutral-500 mb-2"
+          className="text-[11px] text-muted-foreground mb-2"
         >
           Enviando por {channelLabels[channel]}...
         </motion.p>
@@ -74,7 +74,7 @@ export function ReplyInput({
         {/* Attach button (disabled) */}
         <button
           disabled
-          className="flex-shrink-0 p-2 rounded-lg text-neutral-600 cursor-not-allowed"
+          className="flex-shrink-0 p-2 rounded-lg text-foreground/40 cursor-not-allowed"
           title="Adjuntos no disponible"
         >
           <Paperclip className="h-5 w-5" />
@@ -90,9 +90,9 @@ export function ReplyInput({
           disabled={disabled}
           rows={1}
           className={cn(
-            "flex-1 resize-none rounded-xl px-4 py-2.5 text-sm text-neutral-200",
-            "bg-white/5 border border-white/10 placeholder:text-neutral-500",
-            "focus:outline-none focus:border-[#D4A017]/40 transition-colors",
+            "flex-1 resize-none rounded-xl px-4 py-2.5 text-sm text-foreground",
+            "bg-muted/40 border border-border placeholder:text-muted-foreground",
+            "focus:outline-none focus:border-primary/40 transition-colors",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             "max-h-[120px]"
           )}
@@ -105,8 +105,8 @@ export function ReplyInput({
           className={cn(
             "flex-shrink-0 p-2.5 rounded-xl transition-colors",
             canSend
-              ? "bg-[#D4A017] text-black hover:bg-[#F5A623]"
-              : "bg-white/5 text-neutral-600 cursor-not-allowed"
+              ? "bg-primary text-primary-foreground hover:bg-gold-bright"
+              : "bg-muted/40 text-foreground/40 cursor-not-allowed"
           )}
           whileTap={canSend ? { scale: 0.92 } : undefined}
         >

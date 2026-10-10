@@ -54,22 +54,22 @@ function AudioList({ audios }: { audios: MediaAttachment[] }) {
       {audios.map((audio, i) => (
         <div
           key={i}
-          className="flex items-center gap-3 bg-white/5 rounded-lg px-3 py-2.5 border border-white/10"
+          className="flex items-center gap-3 bg-muted/40 rounded-lg px-3 py-2.5 border border-border"
         >
-          <Mic className="h-4 w-4 text-[#D4A017] flex-shrink-0" />
+          <Mic className="h-4 w-4 text-primary flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-neutral-200 truncate">
+            <p className="text-sm text-foreground truncate">
               {audio.fileName || `Audio ${i + 1}`}
             </p>
             {audio.fileSize && (
-              <p className="text-[10px] text-neutral-500">{formatFileSize(audio.fileSize)}</p>
+              <p className="text-[10px] text-muted-foreground">{formatFileSize(audio.fileSize)}</p>
             )}
           </div>
           <a
             href={resolveUrl(audio.url)}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1.5 rounded-md hover:bg-white/10 text-neutral-400 hover:text-[#D4A017] transition-colors"
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
           >
             <Download className="h-3.5 w-3.5" />
           </a>
@@ -88,27 +88,27 @@ function DocumentList({ docs }: { docs: MediaAttachment[] }) {
           href={resolveUrl(doc.url)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 bg-white/5 rounded-lg px-3 py-2.5 border border-white/10 hover:border-[#D4A017]/30 transition-colors group"
+          className="flex items-center gap-3 bg-muted/40 rounded-lg px-3 py-2.5 border border-border hover:border-primary/30 transition-colors group"
         >
-          <FileText className="h-5 w-5 text-[#D4A017] flex-shrink-0" />
+          <FileText className="h-5 w-5 text-primary flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-neutral-200 truncate">
+            <p className="text-sm text-foreground truncate">
               {doc.fileName || "Documento"}
             </p>
             <div className="flex items-center gap-2">
               {doc.mimeType && (
-                <span className="text-[10px] text-neutral-500 uppercase">
+                <span className="text-[10px] text-muted-foreground uppercase">
                   {doc.mimeType.split("/").pop()}
                 </span>
               )}
               {doc.fileSize && (
-                <span className="text-[10px] text-neutral-500">
+                <span className="text-[10px] text-muted-foreground">
                   {formatFileSize(doc.fileSize)}
                 </span>
               )}
             </div>
           </div>
-          <Download className="h-4 w-4 text-neutral-500 group-hover:text-[#D4A017] transition-colors flex-shrink-0" />
+          <Download className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
         </a>
       ))}
     </div>
@@ -118,7 +118,7 @@ function DocumentList({ docs }: { docs: MediaAttachment[] }) {
 export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
   if (!attachments || attachments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-neutral-500">
+      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
         <ImageOff className="h-8 w-8 mb-2 opacity-50" />
         <p className="text-sm">Sin archivos adjuntos</p>
       </div>
@@ -133,7 +133,7 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
     <div className="space-y-4">
       {images.length > 0 && (
         <section>
-          <h4 className="text-xs font-medium text-neutral-400 mb-2 uppercase tracking-wider">
+          <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
             Imágenes ({images.length})
           </h4>
           <ImageGrid images={images} />
@@ -142,7 +142,7 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
 
       {audios.length > 0 && (
         <section>
-          <h4 className="text-xs font-medium text-neutral-400 mb-2 uppercase tracking-wider">
+          <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
             Audio ({audios.length})
           </h4>
           <AudioList audios={audios} />
@@ -151,7 +151,7 @@ export function AttachmentGallery({ attachments }: AttachmentGalleryProps) {
 
       {documents.length > 0 && (
         <section>
-          <h4 className="text-xs font-medium text-neutral-400 mb-2 uppercase tracking-wider">
+          <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
             Documentos ({documents.length})
           </h4>
           <DocumentList docs={documents} />

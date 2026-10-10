@@ -36,10 +36,10 @@ export function LinkPreview({ url }: LinkPreviewProps) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-1.5 flex border border-white/10 rounded-lg overflow-hidden hover:bg-white/[0.02] transition-colors group"
+      className="mt-1.5 flex border border-border rounded-lg overflow-hidden hover:bg-muted/40 transition-colors group"
     >
       {data.image && (
-        <div className="w-20 h-20 flex-shrink-0 bg-white/5">
+        <div className="w-20 h-20 flex-shrink-0 bg-muted/40">
           <img
             src={data.image}
             alt=""
@@ -49,15 +49,15 @@ export function LinkPreview({ url }: LinkPreviewProps) {
         </div>
       )}
       <div className="flex-1 min-w-0 p-2.5">
-        <p className="text-xs font-medium text-neutral-200 line-clamp-1 leading-snug">
+        <p className="text-xs font-medium text-foreground line-clamp-1 leading-snug">
           {data.title}
         </p>
         {data.description && (
-          <p className="text-[10px] text-neutral-500 line-clamp-2 mt-0.5 leading-relaxed">
+          <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
             {data.description}
           </p>
         )}
-        <p className="flex items-center gap-1 text-[10px] text-neutral-600 mt-1">
+        <p className="flex items-center gap-1 text-[10px] text-foreground/40 mt-1">
           <ExternalLink className="h-3 w-3" />
           {data.siteName || new URL(url).hostname}
         </p>

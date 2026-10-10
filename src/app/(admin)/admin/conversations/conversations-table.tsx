@@ -157,7 +157,7 @@ export default function ConversationsTable({
                 return (
                   <TableRow
                     key={conv.id}
-                    className="cursor-pointer hover:bg-white/[0.02] transition-colors"
+                    className="cursor-pointer hover:bg-muted/40 transition-colors"
                     onClick={() => handleRowClick(conv.id)}
                   >
                     <TableCell className="font-medium text-foreground">

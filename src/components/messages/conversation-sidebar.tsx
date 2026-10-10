@@ -59,29 +59,29 @@ export function ConversationSidebar({
     <div
       className={cn(
         "flex flex-col h-full",
-        "bg-[#0f0f0f] border-r border-[rgba(212,160,23,0.1)]",
+        "bg-card border-r border-border",
         className
       )}
     >
       {/* Header */}
-      <div className="p-4 space-y-3 border-b border-white/5">
-        <h2 className="text-lg font-semibold text-neutral-100">Mensajes</h2>
+      <div className="p-4 space-y-3 border-b border-border">
+        <h2 className="text-lg font-semibold text-foreground">Mensajes</h2>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar conversación..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:border-[#D4A017]/40 transition-colors"
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 transition-colors"
           />
         </div>
 
         {/* Filter pills */}
         <div className="flex items-center gap-1 flex-wrap">
-          <Filter className="h-3.5 w-3.5 text-neutral-500 mr-1" />
+          <Filter className="h-3.5 w-3.5 text-muted-foreground mr-1" />
           {filters.map((f) => (
             <button
               key={f.value}
@@ -89,8 +89,8 @@ export function ConversationSidebar({
               className={cn(
                 "px-2.5 py-1 rounded-md text-xs font-medium transition-colors",
                 filter === f.value
-                  ? "bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30"
-                  : "text-neutral-400 hover:text-neutral-200 hover:bg-white/5"
+                  ? "bg-primary/20 text-primary border border-primary/30"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >
               {f.label}
@@ -123,7 +123,7 @@ export function ConversationSidebar({
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center text-sm text-neutral-500 py-8"
+              className="text-center text-sm text-muted-foreground py-8"
             >
               No se encontraron conversaciones
             </motion.p>
@@ -132,8 +132,8 @@ export function ConversationSidebar({
       </div>
 
       {/* Footer count */}
-      <div className="px-4 py-2 border-t border-white/5">
-        <p className="text-[11px] text-neutral-500">
+      <div className="px-4 py-2 border-t border-border">
+        <p className="text-[11px] text-muted-foreground">
           {filtered.length} conversación{filtered.length !== 1 ? "es" : ""}
         </p>
       </div>
