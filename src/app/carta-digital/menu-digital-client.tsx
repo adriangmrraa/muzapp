@@ -97,6 +97,7 @@ export function MenuDigitalClient({ products, promos }: { products: Product[]; p
   const hero = products.find(p => p.category === "hamburguesa" && getCatalogProductImage(p)) ?? products.find(p => getCatalogProductImage(p));
 
   return <LayoutGroup id="digital-menu"><div className="digital-menu">
+    <div className="paint-veil" aria-hidden="true" />
     <header className="digital-menu-header">
       <Link href="/" className="menu-back-link" aria-label="Volver al sitio principal"><ArrowLeft size={18} /><span>Inicio</span></Link>
       <Link href="/" className="menu-brand">{brandName}<small>{brandTagline}</small></Link>

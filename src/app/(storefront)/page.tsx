@@ -37,6 +37,7 @@ export default function HomePage() {
     : MARQUEE_ITEMS;
   return (
     <>
+      <div className="paint-veil" aria-hidden="true" />
       <HeroSection />
 
       <Marquee items={marqueeItems} />

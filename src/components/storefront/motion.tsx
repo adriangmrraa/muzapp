@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { reducedMotionVariant } from "@/lib/animation-variants";
 import { type ReactNode } from "react";
 
 export const editorialEase = [0.22, 1, 0.36, 1] as const;
@@ -12,7 +13,11 @@ export function useEditorialMotion() {
     hidden: { opacity: 0, y: reduced ? 0 : 22 },
     visible: { opacity: 1, y: 0, transition: { duration: reduced ? 0 : 0.65, ease: editorialEase } },
   };
-  return { reduced, reveal };
+  /** Reduced-motion parity for every variant in lib/animation-variants —
+      wrap before passing to `variants={...}` (riseIn, popIn, etc.). */
+  const variant = (original: Variants): Variants =>
+    reduced ? reducedMotionVariant(original) : original;
+  return { reduced, reveal, variant };
 }
 
 export function EditorialHeading({ children, className = "" }: { children: ReactNode; className?: string }) {

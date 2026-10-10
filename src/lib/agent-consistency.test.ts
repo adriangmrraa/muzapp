@@ -1192,3 +1192,91 @@ test("W4 human-override check fails closed on DB errors", () => {
   assert.match(fn, /humanOverrideUntil/);
   assert.match(fn, /return false/);
 });
+
+// ─── ui-redesign R1: ambient cadence, surfaces, CTAs, entrance motion ────────
+
+function reducedMotionCss(css: string): string {
+  const blocks: string[] = [];
+  let index = css.indexOf("prefers-reduced-motion");
+  while (index !== -1) {
+    blocks.push(css.slice(index, index + 1400));
+    index = css.indexOf("prefers-reduced-motion", index + 1);
+  }
+  return blocks.join("\n");
+}
+
+test("entrance variants extend the library with shared eases and reduced-motion parity", async () => {
+  const variants = await import("./animation-variants");
+  assert.deepEqual([...variants.expoOut], [0.16, 1, 0.3, 1]);
+  assert.deepEqual([...variants.overshoot], [0.2, 1.2, 0.34, 1]);
+  for (const variant of [variants.riseIn, variants.riseInSmall, variants.popIn]) {
+    const reduced = variants.reducedMotionVariant(variant);
+    assert.equal((reduced.hidden as { opacity: number }).opacity, 0);
+    assert.equal((reduced.visible as { opacity: number }).opacity, 1);
+  }
+  const dense = (variants.staggerDense.visible as {
+    transition?: { staggerChildren?: number; delayChildren?: number };
+  }).transition;
+  assert.equal(dense?.staggerChildren, 0.035);
+  assert.equal(dense?.delayChildren, 0.18);
+});
+
+test("ambient cadence token governs every storefront loop", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.match(css, /--ambient-cycle:\s*5\.4s/);
+  assert.match(css, /orbFloat\s+calc\(var\(--ambient-cycle\)\s*\*\s*4\)/);
+  assert.match(css, /orbFloat2\s+calc\(var\(--ambient-cycle\)\s*\*\s*5\)/);
+  const pulseRules = css.match(/\.whatsapp-pulse\s*\{[^}]*\}/g) ?? [];
+  assert.equal(pulseRules.length, 1, "whatsapp-pulse rule must be defined once");
+  assert.match(pulseRules[0] ?? "", /calc\(var\(--ambient-cycle\)\s*\/\s*3\)/);
+  assert.match(css, /gold-shimmer\s+calc\(var\(--ambient-cycle\)\s*\/\s*3\)/);
+  assert.match(css, /catalog-loading\s+calc\(var\(--ambient-cycle\)\s*\/\s*3\)/);
+  assert.match(css, /shimmer-text\s+var\(--ambient-cycle\)/);
+  assert.match(css, /borderRotate\s+var\(--ambient-cycle\)/);
+});
+
+test("dimensional surfaces and material CTAs stay transform/opacity-budgeted", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const inset = /inset 0 1px 0 rgba\(255,\s*255,\s*255/;
+  for (const selector of ["glass-card", "glass-surface", "card-gold-glow"]) {
+    const rule = css.match(new RegExp(`\\.${selector}\\s*\\{[^}]*\\}`))?.[0] ?? "";
+    assert.match(rule, inset, `.${selector} missing inset highlight`);
+    assert.match(rule, /0 24px 48px -28px rgba\(0,\s*0,\s*0,\s*0?\.6\)/, `.${selector} missing ambient stack`);
+  }
+  const btnGold = css.match(/\.btn-gold\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.doesNotMatch(btnGold, /transition:\s*all/);
+  assert.match(css, /\.btn-gold:active\s*\{[^}]*scale\(0?\.98\)/);
+  assert.match(css, /@keyframes gold-breathe/);
+  assert.match(css, /\.menu-add-button:active\s*\{[^}]*scale\(0?\.98\)/);
+  assert.match(css, /\.menu-whatsapp-button:active\s*\{[^}]*scale\(0?\.98\)/);
+});
+
+test("editorial display numerals reach clamp scale with tabular-nums", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.match(css, /\.menu-item-action strong\{[^}]*clamp\(1\.15rem/);
+  assert.match(css, /\.menu-detail-footer strong\{[^}]*clamp\(1\.9rem[^}]*tabular-nums/);
+  assert.match(css, /\.menu-cart-total strong\{[^}]*clamp\(1\.9rem/);
+});
+
+test("every new keyframe is covered by the reduced-motion blocks", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const blocks = reducedMotionCss(css);
+  assert.match(css, /@keyframes paint-veil/);
+  assert.match(css, /@keyframes rise-in/);
+  assert.match(css, /@keyframes gold-breathe/);
+  assert.match(css, /\.sheet-handle\s*\{/);
+  for (const cls of [".paint-veil", ".rise-in", ".btn-gold::after", ".menu-whatsapp-button"]) {
+    assert.ok(blocks.includes(cls), `missing ${cls} in prefers-reduced-motion`);
+  }
+});
+
+test("first-paint veil mounts on storefront and digital menu", () => {
+  assert.match(readFileSync("src/app/(storefront)/page.tsx", "utf8"), /paint-veil/);
+  assert.match(readFileSync("src/app/carta-digital/menu-digital-client.tsx", "utf8"), /paint-veil/);
+});
+
+test("useMediaQuery hook resolves matchMedia with an SSR-safe default", () => {
+  const hook = readFileSync("src/hooks/use-media-query.ts", "utf8");
+  assert.match(hook, /useSyncExternalStore/);
+  assert.match(hook, /matchMedia/);
+});
