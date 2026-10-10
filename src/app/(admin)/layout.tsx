@@ -16,9 +16,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div
-      className="flex h-screen overflow-hidden bg-[#0a0a0a]"
-    >
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar desktop */}
       <AdminSidebar />
 

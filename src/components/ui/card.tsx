@@ -10,7 +10,7 @@ function Card({
 }: React.ComponentProps<"div"> & { size?: "default" | "sm"; variant?: "default" | "glass" }) {
   const variants = {
     default: "bg-card text-card-foreground ring-1 ring-foreground/10",
-    glass: "glass-surface hover:border-amber-400/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300",
+    glass: "glass-surface hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300",
   }
   return (
     <div

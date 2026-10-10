@@ -35,11 +35,7 @@ export default function AdminTopbar({ user }: TopbarProps) {
 
   return (
     <motion.header
-      className="flex h-14 shrink-0 items-center px-4 gap-3"
-      style={{
-        backgroundColor: "#0a0a0a",
-        borderBottom: "1px solid rgba(212,160,23,0.2)",
-      }}
+      className="flex h-14 shrink-0 items-center gap-3 border-b border-sidebar-border bg-sidebar px-4"
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
@@ -66,11 +62,7 @@ export default function AdminTopbar({ user }: TopbarProps) {
         </motion.div>
         <SheetContent
           side="left"
-          className="w-64 p-0"
-          style={{
-            backgroundColor: "#0a0a0a",
-            borderRight: "1px solid rgba(212,160,23,0.2)",
-          }}
+          className="w-64 border-r border-sidebar-border bg-sidebar p-0"
         >
           <AdminSidebarContent />
         </SheetContent>
@@ -86,10 +78,10 @@ export default function AdminTopbar({ user }: TopbarProps) {
           initial="hidden"
           animate="visible"
         >
-          <span className="text-sm font-medium leading-none" style={{ color: "rgba(255,255,255,0.9)" }}>
+          <span className="text-sm font-medium leading-none text-foreground/90">
             {displayName}
           </span>
-          <span className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+          <span className="text-xs mt-0.5 text-muted-foreground">
             Administrador
           </span>
         </motion.div>
@@ -99,13 +91,7 @@ export default function AdminTopbar({ user }: TopbarProps) {
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
           <Avatar>
-            <AvatarFallback
-              style={{
-                background: "linear-gradient(135deg, rgba(212,160,23,0.25), rgba(245,166,35,0.15))",
-                color: "#F5A623",
-                fontWeight: 700,
-              }}
-            >
+            <AvatarFallback className="bg-gradient-to-br from-primary/25 to-gold-bright/15 font-bold text-gold-bright">
               {initials}
             </AvatarFallback>
           </Avatar>

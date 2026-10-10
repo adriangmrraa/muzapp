@@ -13,6 +13,8 @@
   --color-gold: #D4A017;
   --color-gold-light: #E8B84B;
   --color-gold-dark: #B8860B;
+  --color-gold-bright: #F5A623;
+  --color-gold-ember: #E8712A;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -194,6 +196,30 @@
   border-color: rgba(212, 160, 23, 0.5);
   box-shadow: 0 0 30px rgba(212, 160, 23, 0.15), 0 8px 32px rgba(0, 0, 0, 0.35);
   transform: translateY(-2px);
+}
+
+/* Gold ambient glow (replaces inline glows in auth shells) */
+.gold-glow {
+  box-shadow: 0 0 60px rgba(212, 160, 23, 0.35);
+}
+
+/* Soft radial gold orb used behind auth cards */
+.gold-orb {
+  background: radial-gradient(
+    circle,
+    rgba(212, 160, 23, 0.18) 0%,
+    rgba(232, 113, 42, 0.08) 40%,
+    transparent 70%
+  );
+}
+
+/* Admin content surface: subtle gold radial over the app background */
+.admin-content {
+  background: radial-gradient(
+    ellipse at 60% 0%,
+    rgba(212, 160, 23, 0.04) 0%,
+    var(--background) 60%
+  );
 }
 
 /* Subtle gold shimmer animation for loading states */

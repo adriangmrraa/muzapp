@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, Playfair_Display, Inter } from "next/font/google";
+import { Poppins, Playfair_Display, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { MetaPixelProvider } from "@/components/meta/meta-pixel-provider";
 import { getBusinessInfo } from "@/lib/business";
@@ -23,6 +23,11 @@ const inter = Inter({
   display: "swap",
 });
 
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
 export async function generateMetadata(): Promise<Metadata> {
   const biz = await getBusinessInfo();
   return {
@@ -44,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${poppins.variable} ${playfair.variable} ${inter.variable} h-full antialiased dark`}
+      className={`${poppins.variable} ${playfair.variable} ${inter.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden">
         <MetaPixelProvider />

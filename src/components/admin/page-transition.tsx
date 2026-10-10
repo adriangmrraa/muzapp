@@ -11,7 +11,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
 
   if (isFullBleed) {
     return (
-      <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0a]">
+      <div className="flex-1 flex flex-col overflow-hidden bg-background">
         {children}
       </div>
     );
@@ -20,11 +20,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        className="flex-1 overflow-y-auto"
-        style={{
-          background:
-            "radial-gradient(ellipse at 60% 0%, rgba(212,160,23,0.04) 0%, #0a0a0a 60%)",
-        }}
+        className="admin-content flex-1 overflow-y-auto"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}

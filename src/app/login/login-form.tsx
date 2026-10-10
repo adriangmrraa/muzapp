@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { signIn } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signInAction } from "./actions";
@@ -12,8 +12,8 @@ import { staggerContainer, fadeUpSmall } from "@/lib/animation-variants";
 
 const initialState = { error: "" };
 
-const GOLD_FOCUS_SHADOW =
-  "0 0 0 2px rgba(212,160,23,0.25), 0 0 12px rgba(212,160,23,0.12)";
+const FOCUS_INPUT_CLASSES =
+  "border-primary/15 transition-[border-color,box-shadow] duration-200 focus:border-primary/60 focus:shadow-[0_0_0_2px,0_0_12px] focus:shadow-primary/25";
 
 interface FocusableInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -22,23 +22,8 @@ interface FocusableInputProps
 }
 
 function FocusableInput({ id, name, ...props }: FocusableInputProps) {
-  const [focused, setFocused] = useState(false);
-
   return (
-    <Input
-      id={id}
-      name={name}
-      {...props}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      style={{
-        transition: "box-shadow 0.2s ease, border-color 0.2s ease",
-        boxShadow: focused ? GOLD_FOCUS_SHADOW : undefined,
-        borderColor: focused
-          ? "rgba(212,160,23,0.6)"
-          : "rgba(212,160,23,0.15)",
-      }}
-    />
+    <Input id={id} name={name} className={FOCUS_INPUT_CLASSES} {...props} />
   );
 }
 
@@ -56,7 +41,7 @@ export default function LoginForm() {
     >
       {/* Email field */}
       <motion.div className="flex flex-col gap-1.5" variants={fadeUpSmall}>
-        <Label htmlFor="email" style={{ color: "rgba(245,245,220,0.7)" }}>
+        <Label htmlFor="email" className="text-foreground/70">
           Email
         </Label>
         <FocusableInput
@@ -71,7 +56,7 @@ export default function LoginForm() {
 
       {/* Password field */}
       <motion.div className="flex flex-col gap-1.5" variants={fadeUpSmall}>
-        <Label htmlFor="password" style={{ color: "rgba(245,245,220,0.7)" }}>
+        <Label htmlFor="password" className="text-foreground/70">
           Contraseña
         </Label>
         <FocusableInput
@@ -93,12 +78,7 @@ export default function LoginForm() {
             initial="hidden"
             animate="visible"
             exit={{ opacity: 0, y: -6, transition: { duration: 0.2 } }}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
-            style={{
-              background: "rgba(139,0,0,0.15)",
-              border: "1px solid rgba(139,0,0,0.4)",
-              color: "#ff6b6b",
-            }}
+            className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/15 px-3 py-2 text-sm text-destructive"
           >
             <AlertCircleIcon className="size-4 shrink-0" />
             <span>{state.error}</span>
@@ -137,26 +117,11 @@ export default function LoginForm() {
 
       {/* Separator */}
       <div className="relative my-4 flex items-center gap-3">
-        <div
-          className="h-px flex-1"
-          style={{
-            background:
-              "linear-gradient(to right, transparent, rgba(212,160,23,0.3), transparent)",
-          }}
-        />
-        <span
-          className="text-xs font-medium uppercase tracking-widest"
-          style={{ color: "rgba(212,160,23,0.6)" }}
-        >
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <span className="text-xs font-medium uppercase tracking-widest text-primary/60">
           o continuá con
         </span>
-        <div
-          className="h-px flex-1"
-          style={{
-            background:
-              "linear-gradient(to right, transparent, rgba(212,160,23,0.3), transparent)",
-          }}
-        />
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
       </div>
 
       {/* Facebook login */}
@@ -169,14 +134,7 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={() => signIn("facebook", { callbackUrl: "/admin" })}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl font-bold uppercase tracking-widest text-sm text-white"
-            style={{ backgroundColor: "#1877F2" }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "#166fe5")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#1877F2")
-            }
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1877F2] font-bold uppercase tracking-widest text-sm text-white hover:bg-[#166fe5]"
           >
             <LogInIcon className="size-4" />
             Continuar con Facebook
