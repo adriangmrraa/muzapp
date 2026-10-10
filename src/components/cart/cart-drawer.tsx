@@ -124,7 +124,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                 </div>
                 <div className="flex justify-between text-base font-semibold">
                   <span>Total</span>
-                  <span>${total.toLocaleString("es-AR")}</span>
+                  <span className="text-2xl font-mono tabular-nums">${total.toLocaleString("es-AR")}</span>
                 </div>
               </div>
 

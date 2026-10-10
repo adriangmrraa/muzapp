@@ -78,7 +78,7 @@ function StatsCard({ card, index }: { card: DashboardCard; index: number }) {
           </motion.div>
         ) : (
           <motion.div
-            className="text-3xl font-bold text-gold-gradient"
+            className="text-4xl font-bold tabular-nums text-gold-gradient"
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.45, ease: "easeOut" }}

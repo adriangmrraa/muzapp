@@ -47,6 +47,32 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+/**
+ * Total de un pedido para display: Σ(precio||unitPrice)×cantidad + envío.
+ * Los items del admin guardan `price` y/o `unitPrice`; cantidad faltante
+ * cuenta como 1 (mismo default que el render "1x"). Devuelve 0 cuando no hay
+ * nada cobrado — el caller decide no renderizar el total en ese caso.
+ */
+export function computeOrderTotal(
+  items: Array<{
+    name?: string;
+    productName?: string;
+    quantity?: number | null;
+    price?: number | string | null;
+    unitPrice?: number | string | null;
+  }> | null | undefined,
+  deliveryFee?: number | string | null,
+): number {
+  const lines = Array.isArray(items) ? items : [];
+  const subtotal = lines.reduce((sum, item) => {
+    const unit = Number(item?.price) || Number(item?.unitPrice) || 0;
+    const qty = Number(item?.quantity ?? 1);
+    return sum + (unit > 0 && qty > 0 ? unit * qty : 0);
+  }, 0);
+  const fee = Number(deliveryFee) || 0;
+  return subtotal + (fee > 0 ? fee : 0);
+}
+
 export function parseTags(notes: string | null): string[] {
   if (!notes) return [];
   try {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { fadeUpSmall, staggerContainer } from "@/lib/animation-variants";
 import { updateOrderStatus, notifyCustomer, deleteOrder, updateOrder, markPaidAndDelivered, type OrderRow } from "./actions";
+import { computeOrderTotal } from "@/lib/client-utils";
 import { OrderEditModal } from "./order-edit-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,8 +77,9 @@ function OrderCard({
   const [editOpen, setEditOpen] = useState(false);
   const statusCfg = STATUSES[order.status] ?? STATUSES.pending;
   const typeBadge = orderTypeBadge(order.orderType);
-  const items: Array<{ name?: string; quantity?: number; productName?: string }> =
+  const items: Array<{ name?: string; quantity?: number; productName?: string; price?: number; unitPrice?: number }> =
     Array.isArray(order.items) ? order.items : [];
+  const total = computeOrderTotal(items, order.deliveryFee);
 
   const handleNext = useCallback(async () => {
     const next = NEXT_STATUS[order.status];
@@ -132,6 +134,16 @@ function OrderCard({
           ))
         )}
       </div>
+
+      {/* Hero total — only when something is priced (spec: render iff > 0) */}
+      {total > 0 && (
+        <div className="flex items-baseline justify-between gap-2 border-t border-border pt-2">
+          <span className="text-[10px] uppercase tracking-wider text-foreground/30">Total</span>
+          <span className="font-mono tabular-nums text-xl text-foreground/90">
+            ${total.toLocaleString("es-AR")}
+          </span>
+        </div>
+      )}
 
       {/* Notes */}
       {order.notes && (

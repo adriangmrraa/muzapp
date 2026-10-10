@@ -10,13 +10,18 @@ interface AnimatedStatCardProps {
   label: string;
 }
 
+// Count-up only when the whole value is digits plus at most one unit suffix —
+// "Pan", "♥" or "$1.234" render verbatim instead of a broken 0→N tween.
+const NUMERIC_PATTERN = /^\d+[%+]?$/;
+
 export function AnimatedStatCard({ value, label }: AnimatedStatCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
   const prefersReduced = useReducedMotion();
-  const numericValue = parseInt(value);
-  const isNumeric = !isNaN(numericValue);
-  const count = useCountUp({ end: isNumeric ? numericValue : 0, enabled: inView });
+  const isNumeric = NUMERIC_PATTERN.test(value);
+  const numericValue = isNumeric ? parseInt(value, 10) : 0;
+  const unit = isNumeric ? value.replace(/^\d+/, "") : "";
+  const count = useCountUp({ end: numericValue, enabled: inView });
 
   return (
     <motion.div
@@ -26,10 +31,11 @@ export function AnimatedStatCard({ value, label }: AnimatedStatCardProps) {
       transition={prefersReduced ? { duration: 0.01 } : { duration: 0.5, ease: "easeOut" }}
       className="flex flex-col items-center justify-center gap-2 p-6 rounded-2xl text-center bg-primary/[0.07] border border-primary/20"
     >
-      <span className="text-3xl font-black text-gold-gradient">
+      <span className="text-4xl font-black tabular-nums text-gold-gradient">
         {isNumeric ? count : value}
-        {isNumeric && value.includes("+") ? "+" : ""}
-        {isNumeric && value.includes("%") ? "%" : ""}
+        {unit ? (
+          <span className="text-sm font-medium text-foreground/50">{unit}</span>
+        ) : null}
       </span>
       <span className="text-xs text-foreground/50 font-medium">
         {label}

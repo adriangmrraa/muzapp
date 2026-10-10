@@ -40,7 +40,8 @@ export function SummaryCards({ data }: SummaryCardsProps) {
     },
     {
       title: "Tasa de Conversión",
-      value: `${data.conversionRate.toFixed(1)}%`,
+      value: data.conversionRate.toFixed(1),
+      unit: "%",
       description: "Leads convertidos",
       icon: PercentIcon,
       small: false,
@@ -76,13 +77,16 @@ export function SummaryCards({ data }: SummaryCardsProps) {
                 className={
                   card.small
                     ? "text-lg font-bold text-foreground truncate"
-                    : "text-3xl font-bold text-gold-gradient"
+                    : "text-4xl font-bold tabular-nums text-gold-gradient"
                 }
                 initial={{ scale: 0.85, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.45, ease: "easeOut", delay: 0.2 }}
               >
                 {card.value}
+                {"unit" in card && card.unit ? (
+                  <span className="ml-0.5 text-sm font-medium text-muted-foreground">{card.unit}</span>
+                ) : null}
               </motion.p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {card.description}

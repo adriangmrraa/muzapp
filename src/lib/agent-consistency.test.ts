@@ -1280,3 +1280,51 @@ test("useMediaQuery hook resolves matchMedia with an SSR-safe default", () => {
   assert.match(hook, /useSyncExternalStore/);
   assert.match(hook, /matchMedia/);
 });
+
+// ─── ui-redesign R2: display numerals + computed order total ─────────────────
+
+test("order hero total sums priced items plus delivery fee", async () => {
+  const { computeOrderTotal } = await import("./client-utils");
+  assert.equal(
+    computeOrderTotal([{ name: "Muzza", quantity: 2, price: 5000 }], "1500"),
+    11500,
+  );
+  assert.equal(
+    computeOrderTotal([{ name: "Pan", quantity: 3, unitPrice: 800 }], null),
+    2400,
+  );
+  // Falsy price falls back to unitPrice; missing quantity counts as one unit.
+  assert.equal(
+    computeOrderTotal(
+      [
+        { name: "A", price: 0, unitPrice: 700, quantity: 2 },
+        { name: "B", price: 1000 },
+      ],
+      undefined,
+    ),
+    2400,
+  );
+  // No priced items and no fee means the card must not render a total at all.
+  assert.equal(computeOrderTotal([{ name: "Sin precio", quantity: 1 }], "0"), 0);
+  assert.equal(computeOrderTotal(null, null), 0);
+});
+
+test("admin display stats exceed text-3xl and keep tabular-nums", () => {
+  for (const file of [
+    "src/app/(admin)/admin/dashboard-client.tsx",
+    "src/components/analytics/summary-cards.tsx",
+    "src/components/ui/animated-stat-card.tsx",
+  ]) {
+    const src = readFileSync(file, "utf8");
+    assert.match(src, /text-4xl[^\n]*tabular-nums/, `${file} stat value`);
+    assert.doesNotMatch(src, /text-3xl/, `${file} must not keep text-3xl stat values`);
+  }
+});
+
+test("cart total and order card render display numerals", () => {
+  const drawer = readFileSync("src/components/cart/cart-drawer.tsx", "utf8");
+  assert.match(drawer, /text-2xl[^\n]*font-mono[^\n]*tabular-nums/);
+  const view = readFileSync("src/app/(admin)/admin/orders/orders-view.tsx", "utf8");
+  assert.match(view, /computeOrderTotal/);
+  assert.match(view, /font-mono[^\n]*tabular-nums[^\n]*text-xl|text-xl[^\n]*font-mono[^\n]*tabular-nums/);
+});
