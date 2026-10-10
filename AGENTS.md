@@ -23,3 +23,9 @@ Cuando hay múltiples agentes trabajando en paralelo en este proyecto:
 
 Cargá la skill `clear-chat` desde `skills/clear-chat/SKILL.md` cuando el usuario pida vaciar su chat de WhatsApp. Trigger: "vacia mi chat", "clear my chat", "empty my chat", "borra mis mensajes", "limpia mi chat".
 <!-- END:skill-clear-chat -->
+
+<!-- BEGIN:design-md -->
+# DESIGN.MD — fuente de verdad del design system
+
+Antes de tocar cualquier UI leé `DESIGN.MD` en la raíz del repo: tokens, sub-sistemas visuales (admin dark-chrome + storefront editorial), utilidades gold/glass, brechas conocidas, do's/don'ts. Los agentes que editen vistas DEBEN respetarlo.
+<!-- END:design-md -->
