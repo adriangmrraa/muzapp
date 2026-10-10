@@ -33,18 +33,13 @@ const trustItems = [
 
 export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] relative flex flex-col">
+    <div className="min-h-screen bg-background relative flex flex-col">
       {/* Hero */}
       <PageHero backgroundImage="/assets/images/background/1.png">
         {/* Badge */}
         <motion.span
           variants={heroChild}
-          className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full"
-          style={{
-            background: "rgba(212,160,23,0.12)",
-            border: "1px solid rgba(212,160,23,0.35)",
-            color: "#D4A017",
-          }}
+          className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full bg-primary/[0.12] border border-primary/35 text-primary"
         >
           {meta.badge}
         </motion.span>
@@ -55,12 +50,7 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
           whileHover={{ scale: 1.08, rotate: 3 }}
           animate={{ y: [0, -8, 0] }}
           transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-          className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl cursor-default"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(212,160,23,0.2) 0%, rgba(232,113,42,0.12) 100%)",
-            border: "1px solid rgba(212,160,23,0.3)",
-          }}
+          className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl cursor-default bg-gradient-to-br from-primary/20 to-gold-ember/[0.12] border border-primary/30"
         >
           {meta.emoji}
         </motion.div>
@@ -68,15 +58,7 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
         {/* Headline */}
         <motion.h1
           variants={heroChild}
-          className="text-4xl sm:text-6xl font-black leading-tight"
-          style={{
-            fontFamily: "var(--font-playfair), serif",
-            background:
-              "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
+          className="text-4xl sm:text-6xl font-black leading-tight font-heading text-gold-gradient"
         >
           {meta.headline}
         </motion.h1>
@@ -84,7 +66,7 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
         {/* Sub */}
         <motion.p
           variants={heroChild}
-          className="text-lg text-white/65 max-w-xl leading-relaxed"
+          className="text-lg text-foreground/65 max-w-xl leading-relaxed"
         >
           {meta.sub}
         </motion.p>
@@ -99,7 +81,7 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
             message={campaign.whatsappMessage}
             label="Aprovechá la promo"
           />
-          <p className="text-white/35 text-xs">
+          <p className="text-foreground/35 text-xs">
             Respuesta inmediata por WhatsApp
           </p>
         </motion.div>
@@ -109,17 +91,11 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
       <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <motion.div
-            className="rounded-2xl p-8"
+            className="glass-card rounded-2xl p-8"
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            style={{
-              background: "rgba(0,0,0,0.45)",
-              border: "1px solid rgba(212,160,23,0.2)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-            }}
           >
             <motion.div
               className="grid grid-cols-1 sm:grid-cols-3 gap-4"
@@ -139,7 +115,7 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
                   className="flex flex-col items-center gap-2 text-center py-2 rounded-xl cursor-default"
                 >
                   <span className="text-2xl">{item.icon}</span>
-                  <span className="text-sm font-semibold text-white/70">
+                  <span className="text-sm font-semibold text-foreground/70">
                     {item.label}
                   </span>
                 </motion.div>
@@ -161,16 +137,10 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
           viewport={{ once: true }}
           className="flex flex-col items-center gap-4"
         >
-          <p
-            className="text-sm font-semibold uppercase tracking-[0.2em]"
-            style={{ color: "#D4A017" }}
-          >
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
             ¿Tenés preguntas?
           </p>
-          <h2
-            className="text-xl sm:text-2xl font-black text-white"
-            style={{ fontFamily: "var(--font-playfair), serif" }}
-          >
+          <h2 className="text-xl sm:text-2xl font-black text-foreground font-heading">
             Escribinos directamente
           </h2>
           <WhatsAppCTA

@@ -16,12 +16,8 @@ export function ScrollProgress() {
 
   return (
     <motion.div
-      className="fixed top-0 left-0 right-0 z-[60] h-[3px] origin-left pointer-events-none"
-      style={{
-        scaleX,
-        background: "linear-gradient(90deg, #D4A017, #F5A623, #E8712A)",
-        boxShadow: "0 0 12px rgba(212,160,23,0.45)",
-      }}
+      className="fixed top-0 left-0 right-0 z-[60] h-[3px] origin-left pointer-events-none bg-gradient-to-r from-gold via-gold-bright to-gold-ember shadow-[0_0_12px_rgba(212,160,23,0.45)]"
+      style={{ scaleX }}
       aria-hidden="true"
     />
   );

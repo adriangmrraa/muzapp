@@ -97,24 +97,24 @@ export function UpsellModal({ onNavigateToPapas }: UpsellModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed z-50 inset-x-4 bottom-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] rounded-2xl border border-[#D4A017]/20 bg-[#0f0f0f] p-5 shadow-2xl"
+            className="fixed z-50 inset-x-4 bottom-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] rounded-2xl border border-primary/20 bg-card p-5 shadow-2xl"
           >
             {/* Close */}
             <button
               onClick={() => setShow(false)}
-              className="absolute top-3 right-3 p-1 rounded-lg hover:bg-white/5 text-neutral-500 hover:text-neutral-300 transition-colors"
+              className="absolute top-3 right-3 p-1 rounded-lg hover:bg-muted/40 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
 
             {/* Header */}
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-4 w-4 text-[#D4A017]" />
-              <p className="text-sm font-medium text-neutral-200">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">
                 ¿Te falta el combo perfecto?
               </p>
             </div>
-            <p className="text-xs text-neutral-500 mb-5">
+            <p className="text-xs text-muted-foreground mb-5">
               Añade el toque final a tu pedido
             </p>
 
@@ -124,14 +124,14 @@ export function UpsellModal({ onNavigateToPapas }: UpsellModalProps) {
                 <button
                   key={product.id}
                   onClick={() => handleAdd(product)}
-                  className="flex-1 flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:border-[#D4A017]/40 hover:bg-white/[0.06] transition-all group"
+                  className="flex-1 flex flex-col items-center gap-2 rounded-xl border border-border bg-muted/40 p-4 hover:border-primary/40 hover:bg-muted/60 transition-all group"
                 >
                   <span className="text-3xl">{CATEGORY_EMOJI[product.category] ?? "⭐"}</span>
-                  <span className="text-xs font-medium text-neutral-200">{product.name}</span>
-                  <span className="text-xs text-[#D4A017] font-semibold">
+                  <span className="text-xs font-medium text-foreground">{product.name}</span>
+                  <span className="text-xs text-primary font-semibold">
                     ${effectivePrice(product).toLocaleString("es-AR")}
                   </span>
-                  <span className="flex items-center gap-1 text-[10px] text-[#D4A017]/70 group-hover:text-[#D4A017] transition-colors">
+                  <span className="flex items-center gap-1 text-[10px] text-primary/70 group-hover:text-primary transition-colors">
                     <ShoppingCart className="h-3 w-3" />
                     Añadir
                   </span>
@@ -142,7 +142,7 @@ export function UpsellModal({ onNavigateToPapas }: UpsellModalProps) {
             {/* Skip */}
             <button
               onClick={() => setShow(false)}
-              className="w-full mt-4 text-[11px] text-neutral-600 hover:text-neutral-400 transition-colors"
+              className="w-full mt-4 text-[11px] text-muted-foreground/70 hover:text-muted-foreground transition-colors"
             >
               No, gracias
             </button>

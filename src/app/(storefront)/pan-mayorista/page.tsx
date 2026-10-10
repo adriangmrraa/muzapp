@@ -88,25 +88,19 @@ export default function PanMayoristaPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] relative">
+    <div className="min-h-screen bg-background relative">
       {/* Hero */}
       <PageHero backgroundImage="/assets/images/pan-muzzarella.jpeg">
         <motion.span
           variants={heroChild}
-          className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full"
-          style={{
-            background: "rgba(212,160,23,0.1)",
-            border: "1px solid rgba(212,160,23,0.3)",
-            color: "#D4A017",
-          }}
+          className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary"
         >
           Servicio Mayorista
         </motion.span>
 
         <motion.h1
           variants={heroChild}
-          className="text-gold-shimmer text-4xl sm:text-6xl font-black leading-tight"
-          style={{ fontFamily: "var(--font-playfair), serif" }}
+          className="text-gold-shimmer text-4xl sm:text-6xl font-black leading-tight font-heading"
         >
           Pan Artesanal
           <br />
@@ -115,7 +109,7 @@ export default function PanMayoristaPage() {
 
         <motion.p
           variants={heroChild}
-          className="text-lg text-white/65 max-w-2xl leading-relaxed"
+          className="text-lg text-foreground/65 max-w-2xl leading-relaxed"
         >
           Proveemos pan artesanal de calidad premium para restaurantes,
           hamburgueserías y cocinas profesionales. Sin conservantes, con
@@ -140,7 +134,7 @@ export default function PanMayoristaPage() {
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.h2
-            className="text-center text-2xl sm:text-3xl font-black text-white mb-10"
+            className="text-center text-2xl sm:text-3xl font-black text-foreground mb-10"
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
@@ -164,27 +158,13 @@ export default function PanMayoristaPage() {
                   scale: 1.03,
                   boxShadow: "0 0 24px rgba(212,160,23,0.2)",
                 }}
-                className="shine-sweep flex flex-col gap-3 p-6 rounded-2xl transition-colors duration-300 cursor-default"
-                style={{
-                  background: "rgba(0,0,0,0.5)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                  border: "1px solid rgba(212,160,23,0.3)",
-                }}
+                className="glass-card shine-sweep flex flex-col gap-3 p-6 rounded-2xl transition-colors duration-300 cursor-default"
               >
                 <span className="text-3xl">{benefit.icon}</span>
-                <h3
-                  className="font-bold text-base"
-                  style={{
-                    background: "linear-gradient(135deg, #D4A017, #F5A623)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
+                <h3 className="font-bold text-base text-gold-gradient">
                   {benefit.title}
                 </h3>
-                <p className="text-sm text-white/60 leading-relaxed">
+                <p className="text-sm text-foreground/60 leading-relaxed">
                   {benefit.description}
                 </p>
               </motion.div>
@@ -206,10 +186,10 @@ export default function PanMayoristaPage() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground mb-2">
               Nuestras Variedades
             </h2>
-            <p className="text-white/50 text-sm">
+            <p className="text-foreground/50 text-sm">
               Todos los precios son por bulto cerrado. Consultá disponibilidad y
               pedido mínimo.
             </p>
@@ -228,7 +208,7 @@ export default function PanMayoristaPage() {
               <motion.div
                 key={bread.id}
                 variants={cardEntrance}
-                className="public-product-card shine-sweep"
+                className="bg-card border border-border rounded-xl overflow-hidden flex flex-col shine-sweep"
               >
                 {/* Real bread image */}
                 <div className="relative w-full aspect-[4/3] overflow-hidden">
@@ -236,18 +216,10 @@ export default function PanMayoristaPage() {
                 </div>
 
                 <div className="flex flex-col gap-2 p-5">
-                  <h3
-                    className="font-bold text-base"
-                    style={{
-                      background: "linear-gradient(135deg, #D4A017, #F5A623)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
+                  <h3 className="font-bold text-base text-gold-gradient">
                     {bread.name}
                   </h3>
-                  <p className="text-xs text-white/55 leading-relaxed">
+                  <p className="text-xs text-foreground/55 leading-relaxed">
                     {bread.description}
                   </p>
                   <WhatsAppCTA
@@ -271,7 +243,7 @@ export default function PanMayoristaPage() {
       <section className="py-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
-            className="rounded-3xl p-10 flex flex-col items-center gap-5"
+            className="glass-card rounded-3xl p-10 flex flex-col items-center gap-5"
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
@@ -279,28 +251,12 @@ export default function PanMayoristaPage() {
             whileHover={{
               boxShadow: "0 0 40px rgba(212,160,23,0.15)",
             }}
-            style={{
-              background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(212,160,23,0.3)",
-            }}
           >
             <span className="text-4xl">🤝</span>
-            <h2
-              className="text-2xl sm:text-3xl font-black"
-              style={{
-                fontFamily: "var(--font-playfair), serif",
-                background:
-                  "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-gold-gradient">
               ¿Listo para trabajar juntos?
             </h2>
-            <p className="text-white/60 leading-relaxed max-w-lg">
+            <p className="text-foreground/60 leading-relaxed max-w-lg">
               Escribinos por WhatsApp y te respondemos en el día. Armamos una
               propuesta adaptada a tu volumen y necesidades.
             </p>

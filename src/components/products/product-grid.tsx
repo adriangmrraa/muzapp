@@ -63,7 +63,7 @@ export function ProductGrid({ products }: ProductGridProps) {
       ))}
     {normalized.length === 0 && (
       <div className="col-span-full text-center py-16">
-        <p className="text-white/40 text-lg">No hay productos disponibles</p>
+        <p className="text-foreground/40 text-lg">No hay productos disponibles</p>
       </div>
     )}
     </motion.div>

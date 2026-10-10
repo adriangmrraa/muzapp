@@ -52,7 +52,7 @@ export function ClientGallery() {
     : blurIn;
 
   return (
-    <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
+    <section className="py-20 sm:py-24 px-4 bg-background relative">
       <div className="max-w-7xl mx-auto">
         {/* Heading */}
         <motion.div
@@ -64,20 +64,13 @@ export function ClientGallery() {
         >
           <motion.h2
             variants={headingVariants}
-            className="text-4xl sm:text-5xl font-black leading-tight mb-4"
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
+            className="text-4xl sm:text-5xl font-black leading-tight mb-4 font-heading text-gold-gradient"
           >
             Nuestros Clientes Disfrutan
           </motion.h2>
           <motion.p
             variants={headingVariants}
-            className="text-white/60 text-lg font-light"
+            className="text-foreground/60 text-lg font-light"
           >
             Lo que dicen en Instagram
           </motion.p>
@@ -95,10 +88,7 @@ export function ClientGallery() {
             <motion.div
               key={photo.src}
               variants={itemVariants}
-              className="relative aspect-square md:aspect-[3/4] rounded-2xl overflow-hidden group"
-              style={{
-                border: "1px solid rgba(212,160,23,0.2)",
-              }}
+              className="relative aspect-square md:aspect-[3/4] rounded-2xl overflow-hidden group border border-primary/20"
               whileHover={
                 prefersReduced
                   ? {}
@@ -123,7 +113,7 @@ export function ClientGallery() {
 
               {/* Instagram tag */}
               {instagram ? (
-                <span className="absolute bottom-3 left-3 text-xs text-white/70 font-medium select-none">
+                <span className="absolute bottom-3 left-3 text-xs text-foreground/70 font-medium select-none">
                   @{instagram.replace(/^@/, "")}
                 </span>
               ) : null}

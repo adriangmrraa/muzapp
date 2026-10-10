@@ -6,7 +6,7 @@ const tagVariants = cva(
   {
     variants: {
       color: {
-        default: "bg-neutral-500/20 text-neutral-300",
+        default: "bg-muted text-muted-foreground",
         purple: "bg-purple-500/20 text-purple-400",
         blue: "bg-blue-500/20 text-blue-400",
         amber: "bg-amber-500/20 text-amber-400",

@@ -71,9 +71,8 @@ Oro extendido: `--color-gold #D4A017` / `gold-light #E8B84B` /
 ### Reglas de tokens
 
 - Bordes NUNCA `border-border` genérico de otro color: la firma es el hairline
-  dorado (`border` ya es dorado). En sidebar/topbar hoy se usa inline style
-  `rgba(212,160,23,0.2)`/`0.15` — mismo valor, preferir `border-border` o
-  `border-sidebar-border`.
+  dorado (`border` ya es dorado). Sidebar/topbar/navbar usan `border-border` /
+  `border-sidebar-border` directamente.
 - Tints de oro: `bg-primary/10`, `border-primary/30`, etc.
 
 ---
@@ -88,7 +87,7 @@ o 400-900):
 | `--font-poppins` → `--font-sans` | Poppins | Body/UI global (`html { font-sans }`) |
 | `--font-playfair` → `--font-heading` | Playfair Display | Display editorial, h1/h2, brand |
 | `--font-inter` | Inter | Sistema `.digital-menu` (carta pública) |
-| `--font-geist-mono` → `--font-mono` | **declarada, NO cargada** | gap: nadie la provee |
+| `--font-geist-mono` → `--font-mono` | Geist Mono | Cargada en `layout.tsx`; mono/UI técnico |
 
 ### Escala en uso real
 
@@ -116,12 +115,13 @@ o 400-900):
 └──────────────────────────────────────────────┘
 ```
 
-- Root: `flex h-screen overflow-hidden bg-[#0a0a0a]` — **scroll isolation**
+- Root: `flex h-screen overflow-hidden bg-background` — **scroll isolation**
   (misma regla que clinicforge/dentalogic: nada fuga del viewport).
-- Sidebar `w-64`, `hidden md:flex`, border-right oro `0.2`; brand = wordmark
-  `text-gold-gradient` (`background-clip:text` inline, `sidebar.tsx:26-33`);
-  nav animado con `staggerContainer`/`fadeUpSmall` (framer-motion).
-- Topbar `h-14 shrink-0`, fondo `#0a0a0a` + hairline; sheet mobile con
+- Sidebar `w-64`, `hidden md:flex`, `border-sidebar-border`; brand = wordmark
+  `text-gold-gradient`; nav animado con `staggerContainer`/`fadeUpSmall`
+  (framer-motion). Contenido extraído a `sidebar-content.tsx` —
+  `AdminSidebarContent` se reusa en sidebar y sheet mobile.
+- Topbar `h-14 shrink-0`, `bg-background` + hairline; sheet mobile con
   `AdminSidebarContent`.
 - `PageTransition` envuelve cada página admin.
 - Toasts: `<Toaster richColors position="top-right" />` en el layout admin.
@@ -164,6 +164,20 @@ propio). NO es Tailwind — es el sistema de diseño de la carta pública:
 | `.shine-sweep` | sweep de luz en hover |
 | `.marquee-track` | marquee infinito 30s, pausa en hover |
 | `.catalog-image` | frame editorial: fade+zoom on ready, shimmer loading |
+
+### Marketing storefront — dos sub-sistemas
+
+- **Páginas marketing** (`/`, `/hamburguesas`, `/pan-mayorista`, `/promo/*`):
+  sistema de MARCA = tokens oro admin (`bg-background`, `bg-card`,
+  `border-border`, `text-primary`, `text-foreground`, `glass-card`,
+  `text-gold-gradient`, `font-heading`). Product cards usan
+  `bg-card` + `border` + `border-border` (antes `.public-product-card`).
+- **Páginas editoriales** (`/carta-digital`, `/tragos-vip`, `hamburguesas/[id]`,
+  `pan-mayorista/[id]`): sistema `.digital-menu`/`--menu-*` con oro crema
+  `#d7c198`. `.public-product-card` sobrevive SOLO en tragos-vip.
+- **Chrome perimetral** (navbar, footer, CartDrawer): oro de marca `#D4A017`
+  vía tokens — el oro crema editorial NO se usa en chrome.
+- Límite verificado: cero `text-gold`/`#D4A017`/`primary` en scopes editoriales.
 
 ### Home/storefront components clave
 
@@ -216,22 +230,36 @@ uploads, webhooks…
 
 ## Brechas conocidas
 
-1. **Hexes hardcodeados en chrome admin**: `(admin)/layout.tsx` usa
-   `bg-[#0a0a0a]`; `sidebar.tsx`/`topbar.tsx` usan inline styles con hex y
-   gradiente en vez de tokens (`bg-sidebar`, `border-sidebar-border`,
-   `text-gold-gradient`). Funciona, pero rompe la regla "tokens primero".
-2. **`--font-geist-mono` colgante**: declarada en `@theme` pero ningún
-   `next/font` la carga.
+1. ~~Hexes hardcodeados en chrome admin~~ — **resuelto** (ui-elevation S1):
+   `(admin)/layout.tsx` usa `bg-background`; sidebar/topbar usan
+   `bg-sidebar`/`border-sidebar-border`/`text-gold-gradient`; nav/links de
+   marketing usan tokens.
+2. ~~`--font-geist-mono` colgante~~ — **resuelto** (S1): `Geist_Mono` cargada
+   en `layout.tsx`.
 3. **`.dark` duplica `:root`**: intencional (tema único dark forzado en
    `<html class="dark">`), documentado — no es bug, es decisión.
-4. **Dos oros**: `#D4A017` (marca/admin) vs `#d7c198` (menú editorial crema).
-   Es deliberado por sub-sistema, pero confunde: documentar al tocar.
+4. **Dos oros** — **deliberado y ya acotado** (S3): `#D4A017`/`primary` en
+   marca+admin+chrome perimetral; `#d7c198`/`--menu-gold` SOLO dentro de
+   scopes `.digital-menu` (carta-digital, tragos-vip, detalles de producto).
+   Regla: no mezclar `primary`/`text-gold` dentro de `.digital-menu`.
 5. **Sin i18n**: UI en español hardcodeado (`lang="es"`), a diferencia de
    dentalogic. Strings de storefront son marketing — OK hardcode; admin sería
    candidato a i18n solo si se pide.
 6. **Mezcla de unidades**: el sistema editorial usa rem/px propios fuera del
    token radius — aceptable porque es bespoke, mantener consistencia dentro
    de `.digital-menu`.
+
+### Excepciones documentadas (color hardcodeado legítimo)
+
+- `#25D366` (WhatsApp brand) en `whatsapp-fab` y `text-[#25D366]` de agente.
+- `#8B0000` vino solo en `.border-animated` (rotación oro↔vino).
+- `rgba(212,160,23,*)`/`#D4A017` inline donde una clase no aplica: gradientes
+  de framer (`whileHover` boxShadow/borderColor), `wordStyle` de `TextReveal`
+  (clip por palabra), orbes radiales, gradientes de sección anclados a
+  `var(--background)`, `bgColor` de navbar por scroll.
+- `bg-[#050505]` en footer — más oscuro que `--background`, sin token.
+- Colores semánticos de estado (emerald/red/purple/amber/blue) y de
+  origen en charts (facebook/instagram/whatsapp/organic/direct).
 
 ---
 
@@ -265,8 +293,9 @@ uploads, webhooks…
 
 ## Verificación de coherencia
 
-1. `grep -rn "bg-\[#" src/app src/components` — hexes arbitrarios (hoy:
-   `#0a0a0a` en admin layout) candidatos a `bg-background`/`bg-sidebar`.
+1. `grep -rn "bg-\[#" src/app src/components` — hexes arbitrarios candidatos
+   a `bg-background`/`bg-card` (hoy: solo `#050505` footer + `#151513`
+   editorial, documentados).
 2. `grep -rn "next/font" src/app/layout.tsx` — deben existir poppins,
    playfair, inter (y geist-mono si se usa `--font-mono`).
 3. `grep -rn "font-playfair\|Playfair" src` — headings editoriales.
@@ -291,5 +320,8 @@ uploads, webhooks…
 
 ---
 
-**Última actualización:** 2026-10-09 (generado desde el estado real de `main`)
-**Próxima revisión:** tras la elevación de vistas delegada en worktree.
+**Última actualización:** elevación UI aplicada en worktree `ui-elevation`
+(S1 chrome admin → S2a chat → S2b orders/clients → S2c resto admin →
+S3 storefront + este sync).
+**Próxima revisión:** tras merge de `ui-elevation` a `main` o próximo cambio
+de design tokens.

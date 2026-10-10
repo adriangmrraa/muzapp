@@ -25,12 +25,7 @@ export function HeroSection() {
       >
         <motion.span
           variants={heroChild}
-          className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full"
-          style={{
-            background: "rgba(212,160,23,0.1)",
-            border: "1px solid rgba(212,160,23,0.3)",
-            color: "#D4A017",
-          }}
+          className="inline-block text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary"
         >
           Hamburguesas Artesanales Premium
         </motion.span>
@@ -40,8 +35,7 @@ export function HeroSection() {
           text={heroText}
           delay={0.35}
           stagger={0.14}
-          className="text-5xl sm:text-6xl md:text-8xl font-black leading-none tracking-tight"
-          style={{ fontFamily: "var(--font-playfair), serif" }}
+          className="text-5xl sm:text-6xl md:text-8xl font-black leading-none tracking-tight font-heading"
           wordStyle={{
             background: "linear-gradient(135deg, #D4A017 0%, #F5A623 50%, #E8712A 100%)",
             WebkitBackgroundClip: "text",
@@ -52,7 +46,7 @@ export function HeroSection() {
 
         <motion.p
           variants={heroChild}
-          className="text-lg sm:text-xl text-white/70 max-w-xl leading-relaxed font-light"
+          className="text-lg sm:text-xl text-foreground/70 max-w-xl leading-relaxed font-light"
         >
           Sabores únicos, ingredientes de primera. Cada mordida es una experiencia que no vas a olvidar.
         </motion.p>
@@ -69,12 +63,7 @@ export function HeroSection() {
           <Magnetic>
             <Link
               href="/pan-mayorista"
-              className="shine-sweep inline-flex items-center justify-center px-8 py-4 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105"
-              style={{
-                background: "rgba(212,160,23,0.1)",
-                border: "1px solid rgba(212,160,23,0.4)",
-                color: "#D4A017",
-              }}
+              className="shine-sweep inline-flex items-center justify-center px-8 py-4 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105 bg-primary/10 border border-primary/40 text-primary"
             >
               Pan Mayorista
             </Link>
@@ -85,14 +74,11 @@ export function HeroSection() {
           variants={heroChild}
           className="mt-12 flex flex-col items-center gap-2 opacity-40"
         >
-          <span className="text-xs tracking-widest uppercase text-white/60">
+          <span className="text-xs tracking-widest uppercase text-foreground/60">
             Scroll
           </span>
           <motion.div
-            className="w-px h-8 rounded-full"
-            style={{
-              background: "linear-gradient(to bottom, rgba(212,160,23,0.6), transparent)",
-            }}
+            className="w-px h-8 rounded-full bg-gradient-to-b from-primary/60 to-transparent"
             animate={prefersReduced ? {} : { opacity: [0.3, 1, 0.3] }}
             transition={prefersReduced ? {} : { duration: 2, repeat: Infinity, ease: "easeInOut" }}
           />

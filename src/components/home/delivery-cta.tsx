@@ -5,13 +5,6 @@ import { fadeUp, staggerContainer } from "@/lib/animation-variants";
 import { buildWhatsAppURL } from "@/lib/whatsapp";
 import { useBusiness } from "@/lib/hooks/use-business";
 
-const GOLD_GRADIENT = {
-  background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  backgroundClip: "text",
-} as const;
-
 function PhoneIcon() {
   return (
     <svg
@@ -57,7 +50,7 @@ export function DeliveryCTA() {
     <section
       className="w-full py-20 sm:py-24 px-4 relative"
       style={{
-        background: "linear-gradient(180deg, #0a0a0a 0%, rgba(212,160,23,0.05) 50%, #0a0a0a 100%)",
+        background: "linear-gradient(180deg, var(--background) 0%, rgba(212,160,23,0.05) 50%, var(--background) 100%)",
       }}
     >
       <motion.div
@@ -70,20 +63,13 @@ export function DeliveryCTA() {
         {/* Decorative top line */}
         <motion.div
           variants={fadeUp}
-          className="w-24 h-px mx-auto"
-          style={{
-            background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-          }}
+          className="w-24 h-px mx-auto bg-gradient-to-br from-gold via-gold-bright to-gold-ember"
         />
 
         {/* Heading */}
         <motion.h2
           variants={fadeUp}
-          className="text-4xl sm:text-5xl font-black leading-tight"
-          style={{
-            fontFamily: "var(--font-playfair), serif",
-            ...GOLD_GRADIENT,
-          }}
+          className="text-4xl sm:text-5xl font-black leading-tight font-heading text-gold-gradient"
         >
           Delivery a Domicilio
         </motion.h2>
@@ -92,8 +78,7 @@ export function DeliveryCTA() {
         {business?.tagline && (
           <motion.p
             variants={fadeUp}
-            className="text-lg"
-            style={{ color: "rgba(255,255,255,0.6)" }}
+            className="text-lg text-foreground/60"
           >
             {business.tagline}
           </motion.p>
@@ -103,8 +88,7 @@ export function DeliveryCTA() {
         {business?.phoneDisplay && (
           <motion.div
             variants={fadeUp}
-            className="flex items-center gap-3"
-            style={{ color: "rgba(255,255,255,0.9)" }}
+            className="flex items-center gap-3 text-foreground/90"
           >
             <PhoneIcon />
             <span className="text-2xl font-bold tracking-wide">{business.phoneDisplay}</span>
@@ -133,12 +117,7 @@ export function DeliveryCTA() {
               href={`https://instagram.com/${instagram}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-8 py-4 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105"
-              style={{
-                background: "rgba(212,160,23,0.08)",
-                border: "1px solid rgba(212,160,23,0.3)",
-                color: "#D4A017",
-              }}
+              className="inline-flex items-center justify-center px-8 py-4 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105 bg-primary/[0.08] border border-primary/30 text-primary"
             >
               @{instagram}
             </a>
@@ -148,8 +127,7 @@ export function DeliveryCTA() {
         {/* Hours */}
         <motion.p
           variants={fadeUp}
-          className="text-sm"
-          style={{ color: "rgba(255,255,255,0.4)" }}
+          className="text-sm text-foreground/40"
         >
           Lunes a Sábado · 10:00 a 22:00
         </motion.p>

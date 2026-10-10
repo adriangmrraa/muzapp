@@ -69,7 +69,7 @@ export function FeaturedProductsSection() {
   const filteredProducts = burgers.filter((p) => p.line === activeLinea);
 
   return (
-    <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
+    <section className="py-20 sm:py-24 px-4 bg-background relative">
       <div className="max-w-7xl mx-auto">
         <motion.div
           className="flex flex-col items-center text-center gap-4 mb-12"
@@ -78,25 +78,13 @@ export function FeaturedProductsSection() {
           whileInView="visible"
           viewport={{ once: true }}
         >
-          <span
-            className="text-xs font-semibold uppercase tracking-[0.3em]"
-            style={{ color: "#D4A017" }}
-          >
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
             Productos Destacados
           </span>
-          <h2
-            className="text-3xl sm:text-4xl font-black leading-tight"
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
+          <h2 className="text-3xl sm:text-4xl font-black leading-tight font-heading text-gold-gradient">
             Nuestras Favoritas
           </h2>
-          <p className="text-white/60 max-w-lg leading-relaxed">
+          <p className="text-foreground/60 max-w-lg leading-relaxed">
             Las hamburguesas que el ama de casa (nuestra mejor jueza) recomienda.
           </p>
           <div className="mt-2">

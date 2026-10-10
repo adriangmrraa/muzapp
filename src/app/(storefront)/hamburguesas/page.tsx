@@ -83,21 +83,19 @@ export default function HamburguesasPage() {
         >
           <motion.span
             variants={heroChild}
-            className="text-xs font-semibold uppercase tracking-[0.3em]"
-            style={{ color: "#D4A017" }}
+            className="text-xs font-semibold uppercase tracking-[0.3em] text-primary"
           >
             El Menú
           </motion.span>
           <motion.h1
             variants={heroChild}
-            className="text-gold-shimmer text-4xl sm:text-5xl font-black"
-            style={{ fontFamily: "var(--font-playfair), serif" }}
+            className="text-gold-shimmer text-4xl sm:text-5xl font-black font-heading"
           >
             Nuestras Hamburguesas
           </motion.h1>
           <motion.p
             variants={heroChild}
-            className="text-white/60 max-w-lg leading-relaxed"
+            className="text-foreground/60 max-w-lg leading-relaxed"
           >
             Cada una tiene su propia historia. Elegí tu línea y descubrí la que te va a conquistar.
           </motion.p>
@@ -108,7 +106,7 @@ export default function HamburguesasPage() {
         </motion.div>
       </PageHero>
 
-      <div className="bg-[#0a0a0a] relative pb-20 px-4">
+      <div className="bg-background relative pb-20 px-4">
         <div className="max-w-7xl mx-auto pt-16">
           {/* Search */}
           <motion.div
@@ -118,12 +116,12 @@ export default function HamburguesasPage() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 pointer-events-none" />
             <Input
               placeholder="Buscá tu hamburguesa..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-11 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-[#D4A017]/50 focus-visible:border-[#D4A017]/50"
+              className="pl-10 h-11 rounded-xl bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-ring/50 focus-visible:border-primary/50"
             />
           </motion.div>
 
@@ -136,32 +134,24 @@ export default function HamburguesasPage() {
       <ParallaxDivider image="/assets/images/background/3.png" height="35vh" />
 
       {/* Digital Menu CTA */}
-      <section className="py-12 px-4 bg-[#0a0a0a]">
+      <section className="py-12 px-4 bg-background">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
-            className="rounded-2xl p-8"
+            className="rounded-2xl p-8 bg-gradient-to-br from-primary/[0.08] to-primary/[0.02] border border-primary/15"
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            style={{
-              background: "linear-gradient(135deg, rgba(212,160,23,0.08), rgba(212,160,23,0.02))",
-              border: "1px solid rgba(212,160,23,0.15)",
-            }}
           >
             <span className="text-3xl block mb-3">📱</span>
-            <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "var(--font-playfair), serif" }}>
+            <h2 className="text-xl font-bold text-foreground mb-2 font-heading">
               Pedí directo desde la Carta Digital
             </h2>
-            <p className="text-sm text-white/50 mb-5">
+            <p className="text-sm text-foreground/50 mb-5">
               Deslizá productos, armá tu pedido y enviá por WhatsApp al toque
             </p>
             <a href="/carta-digital"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105"
-              style={{
-                background: "linear-gradient(135deg, #D4A017, #F5A623)",
-                color: "#000",
-              }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 bg-gradient-to-br from-gold to-gold-bright text-primary-foreground"
             >
               📲 Abrir Carta Digital
             </a>
@@ -169,7 +159,7 @@ export default function HamburguesasPage() {
         </div>
       </section>
 
-      <div className="bg-[#0a0a0a] py-16 px-4">
+      <div className="bg-background py-16 px-4">
         <motion.div
           className="max-w-7xl mx-auto flex flex-col items-center gap-4 text-center"
           variants={fadeUp}
@@ -177,7 +167,7 @@ export default function HamburguesasPage() {
           whileInView="visible"
           viewport={{ once: true }}
         >
-          <p className="text-white/60 text-sm">
+          <p className="text-foreground/60 text-sm">
             ¿Ya elegiste? Hacé tu pedido directo por WhatsApp
           </p>
           <WhatsAppCTA

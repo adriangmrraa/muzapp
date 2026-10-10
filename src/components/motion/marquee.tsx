@@ -18,7 +18,7 @@ export function Marquee({
           <span className="px-6 text-sm sm:text-base font-semibold uppercase tracking-[0.25em] whitespace-nowrap">
             {item}
           </span>
-          <span aria-hidden="true" style={{ color: "#D4A017" }}>
+          <span aria-hidden="true" className="text-primary">
             {separator}
           </span>
         </span>
@@ -28,10 +28,8 @@ export function Marquee({
 
   return (
     <div
-      className={`relative w-full overflow-hidden py-5 select-none ${className}`}
+      className={`relative w-full overflow-hidden py-5 select-none border-y border-primary/15 ${className}`}
       style={{
-        borderTop: "1px solid rgba(212,160,23,0.15)",
-        borderBottom: "1px solid rgba(212,160,23,0.15)",
         maskImage:
           "linear-gradient(90deg, transparent, black 8%, black 92%, transparent)",
         WebkitMaskImage:
@@ -40,7 +38,7 @@ export function Marquee({
       aria-hidden="true"
     >
       <div
-        className="marquee-track text-white/55"
+        className="marquee-track text-foreground/55"
         style={{ animationDuration: `${speedSeconds}s` }}
       >
         {row}

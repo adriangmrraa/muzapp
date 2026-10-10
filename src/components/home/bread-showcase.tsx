@@ -29,7 +29,7 @@ export function BreadShowcase() {
     : clipReveal;
 
   return (
-    <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative">
+    <section className="py-20 sm:py-24 px-4 bg-background relative">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
         {/* LEFT — Text */}
         <motion.div
@@ -42,12 +42,7 @@ export function BreadShowcase() {
           {/* Tag */}
           <motion.span
             variants={itemVariants}
-            className="self-start text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full"
-            style={{
-              border: "1px solid rgba(212,160,23,0.4)",
-              color: "#D4A017",
-              background: "rgba(212,160,23,0.06)",
-            }}
+            className="self-start text-xs font-semibold uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-primary/40 text-primary bg-primary/[0.06]"
           >
             Pan Artesanal
           </motion.span>
@@ -55,20 +50,13 @@ export function BreadShowcase() {
           {/* Heading */}
           <motion.h2
             variants={itemVariants}
-            className="text-4xl sm:text-5xl font-black leading-tight"
-            style={{
-              fontFamily: "var(--font-playfair), serif",
-              background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
+            className="text-4xl sm:text-5xl font-black leading-tight font-heading text-gold-gradient"
           >
             Pan al Por Mayor
           </motion.h2>
 
           {/* Description */}
-          <motion.p variants={itemVariants} className="text-white/65 leading-relaxed">
+          <motion.p variants={itemVariants} className="text-foreground/65 leading-relaxed">
             Proveemos pan artesanal a restaurantes, rotiserías y negocios gastronómicos que no se conforman con lo mediocre. Elaboración propia, ingredientes frescos, entrega directa.
           </motion.p>
 
@@ -78,12 +66,9 @@ export function BreadShowcase() {
               <motion.li
                 key={feature}
                 variants={itemVariants}
-                className="flex items-center gap-3 text-white/80"
+                className="flex items-center gap-3 text-foreground/80"
               >
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ background: "#D4A017" }}
-                />
+                <span className="w-2 h-2 rounded-full shrink-0 bg-primary" />
                 {feature}
               </motion.li>
             ))}
@@ -111,10 +96,7 @@ export function BreadShowcase() {
           {/* Main image */}
           <motion.div
             variants={imageVariants}
-            className="col-span-2 relative aspect-[4/3] md:absolute md:inset-x-0 md:top-0 md:max-h-[340px] rounded-2xl overflow-hidden"
-            style={{
-              border: "1px solid rgba(212,160,23,0.3)",
-            }}
+            className="col-span-2 relative aspect-[4/3] md:absolute md:inset-x-0 md:top-0 md:max-h-[340px] rounded-2xl overflow-hidden border border-primary/30"
             whileHover={
               prefersReduced
                 ? {}
@@ -137,9 +119,8 @@ export function BreadShowcase() {
           {/* Smaller image */}
           <motion.div
             variants={imageVariants}
-            className="relative aspect-square md:absolute md:bottom-0 md:right-0 md:w-48 rounded-2xl overflow-hidden"
+            className="relative aspect-square md:absolute md:bottom-0 md:right-0 md:w-48 rounded-2xl overflow-hidden border border-primary/40"
             style={{
-              border: "1px solid rgba(212,160,23,0.4)",
               zIndex: 10,
             }}
             whileHover={
@@ -164,9 +145,8 @@ export function BreadShowcase() {
           {/* Small accent image */}
           <motion.div
             variants={imageVariants}
-            className="relative aspect-[3/2] md:absolute md:bottom-8 md:left-0 md:w-36 rounded-2xl overflow-hidden"
+            className="relative aspect-[3/2] md:absolute md:bottom-8 md:left-0 md:w-36 rounded-2xl overflow-hidden border border-primary/35"
             style={{
-              border: "1px solid rgba(212,160,23,0.35)",
               zIndex: 10,
             }}
             whileHover={

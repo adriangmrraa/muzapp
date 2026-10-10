@@ -54,7 +54,7 @@ export function Navbar() {
 
   return (
     <><motion.header
-      className="fixed top-0 left-0 right-0 z-50"
+      className="fixed top-0 left-0 right-0 z-50 border-b border-border"
       initial={false}
       animate={prefersReduced ? {} : { y: hidden ? "-100%" : "0%" }}
       transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
@@ -62,7 +62,6 @@ export function Navbar() {
         background: bgColor,
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.1)",
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,15 +74,7 @@ export function Navbar() {
               height={36}
               className="object-contain"
             />
-            <span
-              className="text-xl font-black tracking-tight hidden sm:inline"
-              style={{
-                background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
+            <span className="text-xl font-black tracking-tight hidden sm:inline text-gold-gradient">
               {brandName}
             </span>
           </Link>
@@ -93,11 +84,11 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-200"
-                style={{
-                  color: pathname === link.href ? "#f8d582" : "rgba(255,255,255,0.7)",
-                  background: pathname === link.href ? "rgba(212,160,23,0.12)" : "transparent",
-                }}
+                className={`relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-200 ${
+                  pathname === link.href
+                    ? "text-gold-light bg-primary/[0.12]"
+                    : "text-foreground/70"
+                }`}
               >
                 {link.label}
               </Link>
@@ -106,12 +97,12 @@ export function Navbar() {
 
           <div className="flex items-center gap-3">
             {/* Cart button */}
-            <Link href="/carta-digital" className="hidden lg:inline-flex rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-[#151006] transition-transform hover:scale-[1.03]" style={{ background: "#D4A017" }}>
+            <Link href="/carta-digital" className="hidden lg:inline-flex rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wider bg-primary text-primary-foreground transition-transform hover:scale-[1.03]">
               Pedir ahora
             </Link>
             <button
               onClick={() => setCartOpen(true)}
-              className="relative p-2 text-white/80 hover:text-amber-400 transition-colors bg-transparent border-none cursor-pointer"
+              className="relative p-2 text-foreground/80 hover:text-primary transition-colors bg-transparent border-none cursor-pointer"
               aria-label="Abrir carrito"
             >
               <ShoppingBag className="h-5 w-5" />
@@ -123,8 +114,7 @@ export function Navbar() {
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
                     transition={{ type: "spring", stiffness: 500, damping: 20 }}
-                    className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold rounded-full"
-                    style={{ background: "#D4A017", color: "#0a0a0a" }}
+                    className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold rounded-full bg-primary text-primary-foreground"
                   >
                     {itemCount > 9 ? "9+" : itemCount}
                   </motion.span>
@@ -136,7 +126,7 @@ export function Navbar() {
           <div className="md:hidden">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger
-                className="p-2 text-white/80 hover:text-amber-400 transition-colors bg-transparent border-none cursor-pointer"
+                className="p-2 text-foreground/80 hover:text-primary transition-colors bg-transparent border-none cursor-pointer"
                 aria-label="Abrir menú"
               >
                 {open ? (
@@ -149,20 +139,12 @@ export function Navbar() {
                   </svg>
                 )}
               </SheetTrigger>
-              <SheetContent side="right" className="w-72 border-l"
-                style={{ background: "#0a0a0a", borderColor: "rgba(212,160,23,0.3)" }}
+              <SheetContent side="right" className="w-72 border-l bg-background border-primary/30"
               >
                 <div className="pt-8 flex flex-col gap-6">
                   <div className="flex items-center gap-3">
                     <Image src="/assets/images/logo.png" alt={brandName || "Logo"} width={28} height={28} className="object-contain" />
-                    <span className="text-lg font-black"
-                      style={{
-                        background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
+                    <span className="text-lg font-black text-gold-gradient">
                       {brandName}
                     </span>
                   </div>
@@ -172,11 +154,11 @@ export function Navbar() {
                         key={link.href}
                         href={link.href}
                         onClick={() => setOpen(false)}
-                        className="rounded-lg px-3 py-2 text-base font-semibold transition-colors"
-                        style={{
-                          color: pathname === link.href ? "#f8d582" : "rgba(255,255,255,0.78)",
-                          background: pathname === link.href ? "rgba(212,160,23,0.12)" : "transparent",
-                        }}
+                        className={`rounded-lg px-3 py-2 text-base font-semibold transition-colors ${
+                          pathname === link.href
+                            ? "text-gold-light bg-primary/[0.12]"
+                            : "text-foreground/80"
+                        }`}
                       >
                         {link.label}
                       </Link>

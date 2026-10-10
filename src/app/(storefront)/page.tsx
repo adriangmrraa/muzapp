@@ -45,7 +45,7 @@ export default function HomePage() {
 
       <ParallaxDivider image="/assets/images/background/2.png" />
 
-      <section className="py-20 sm:py-24 px-4 bg-[#0a0a0a] relative overflow-hidden">
+      <section className="py-20 sm:py-24 px-4 bg-background relative overflow-hidden">
         <div className="orb-glow orb-1" style={{ width: "450px", height: "450px", background: "radial-gradient(circle, rgba(212,160,23,0.08), transparent 70%)", top: "-10%", right: "-5%" }} />
         <div className="orb-glow orb-2" style={{ width: "350px", height: "350px", background: "radial-gradient(circle, rgba(232,113,42,0.06), transparent 70%)", bottom: "-15%", left: "-5%" }} />
         <div className="max-w-5xl mx-auto relative z-10">
@@ -58,33 +58,20 @@ export default function HomePage() {
                 whileInView="visible"
                 viewport={{ once: true }}
               >
-                <span
-                  className="text-xs font-semibold uppercase tracking-[0.3em]"
-                  style={{ color: "#D4A017" }}
-                >
+                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
                   Sobre Nosotros
                 </span>
-                <h2
-                  className="text-3xl sm:text-4xl font-black text-white leading-tight"
-                  style={{ fontFamily: "var(--font-playfair), serif" }}
-                >
+                <h2 className="text-3xl sm:text-4xl font-black text-foreground leading-tight font-heading">
                   Más que una{" "}
-                  <span
-                    style={{
-                      background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
+                  <span className="text-gold-gradient">
                     hamburguesa
                   </span>
                 </h2>
-                <p className="text-white/65 leading-relaxed">
+                <p className="text-foreground/65 leading-relaxed">
                   {business?.description ||
                     `En ${business?.name ?? "nuestra cocina"} creemos que cada ingrediente importa. Trabajamos con productores locales, elaboramos nuestro propio pan y preparamos cada hamburguesa al momento. Sin compromiso. Sin atajos.`}
                 </p>
-                <p className="text-white/65 leading-relaxed">
+                <p className="text-foreground/65 leading-relaxed">
                   También proveemos pan artesanal a restaurantes y cocinas que, como nosotros, no se conforman con lo mediocre.
                 </p>
                 <div className="flex gap-4 mt-2">
@@ -96,12 +83,7 @@ export default function HomePage() {
                   </Link>
                   <Link
                     href="/pan-mayorista"
-                    className="shine-sweep inline-flex items-center justify-center px-6 py-3 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105"
-                    style={{
-                      background: "rgba(212,160,23,0.08)",
-                      border: "1px solid rgba(212,160,23,0.3)",
-                      color: "#D4A017",
-                    }}
+                    className="shine-sweep inline-flex items-center justify-center px-6 py-3 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105 bg-primary/[0.08] border border-primary/30 text-primary"
                   >
                     Pan Mayorista
                   </Link>
@@ -120,11 +102,11 @@ export default function HomePage() {
 
       <ParallaxDivider image="/assets/images/background/3.png" height="45vh" overlay={0.6}>
         <p
-          className="text-xl sm:text-2xl font-black text-white text-center max-w-xl mx-auto px-6 leading-snug"
-          style={{ fontFamily: "var(--font-playfair), serif", textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}
+          className="text-xl sm:text-2xl font-black text-foreground text-center max-w-xl mx-auto px-6 leading-snug font-heading"
+          style={{ textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}
         >
-          "Cada mordida cuenta una historia.{" "}
-          <span style={{ color: "#D4A017" }}>La nuestra empieza con ingredientes reales."</span>
+          &quot;Cada mordida cuenta una historia.{" "}
+          <span className="text-primary">La nuestra empieza con ingredientes reales.&quot;</span>
         </p>
       </ParallaxDivider>
 
@@ -133,43 +115,26 @@ export default function HomePage() {
       <EmpanadasShowcase />
 
       {/* Digital Menu CTA */}
-      <section className="py-16 px-4 bg-[#0a0a0a] relative overflow-hidden">
+      <section className="py-16 px-4 bg-background relative overflow-hidden">
         <div className="orb-glow orb-1" style={{ width: "400px", height: "400px", background: "radial-gradient(circle, rgba(212,160,23,0.07), transparent 70%)", top: "-20%", left: "10%" }} />
         <div className="max-w-3xl mx-auto text-center relative z-10">
           <motion.div
-            className="rounded-3xl p-10 flex flex-col items-center gap-4"
+            className="glass-card rounded-3xl p-10 flex flex-col items-center gap-4"
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             whileHover={{ boxShadow: "0 0 40px rgba(212,160,23,0.12)" }}
-            style={{
-              background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(212,160,23,0.25)",
-            }}
           >
             <span className="text-5xl">📱</span>
-            <h2 className="text-2xl sm:text-3xl font-black"
-              style={{
-                fontFamily: "var(--font-playfair), serif",
-                background: "linear-gradient(135deg, #D4A017, #F5A623, #E8712A)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}>
+            <h2 className="text-2xl sm:text-3xl font-black font-heading text-gold-gradient">
               Carta Digital
             </h2>
-            <p className="text-white/60 max-w-md leading-relaxed">
+            <p className="text-foreground/60 max-w-md leading-relaxed">
               Deslizá todos nuestros productos, armá tu pedido y enviá directo por WhatsApp. Rápido y sin vueltas.
             </p>
             <a href="/carta-digital"
-              className="shine-sweep inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105"
-              style={{
-                background: "linear-gradient(135deg, #D4A017, #F5A623)",
-                color: "#000",
-              }}>
+              className="shine-sweep inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 bg-gradient-to-br from-gold to-gold-bright text-primary-foreground">
               📲 Abrir Carta Digital
             </a>
           </motion.div>
