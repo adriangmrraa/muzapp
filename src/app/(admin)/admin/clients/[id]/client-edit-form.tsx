@@ -64,13 +64,13 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
     setSaving(false);
   };
 
-  const fieldClass = "w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40";
+  const fieldClass = "w-full mt-1 px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40";
 
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 px-3 py-2 text-xs font-medium text-neutral-300 transition-colors"
+        className="flex items-center gap-1.5 rounded-lg bg-muted/40 hover:bg-muted border border-border px-3 py-2 text-xs font-medium text-foreground/80 transition-colors"
       >
         <Edit className="h-3 w-3" />
         Editar
@@ -79,11 +79,11 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !saving && setOpen(false)} />
-          <div className="relative z-10 w-full max-w-lg mx-4 bg-[#0f0f0f] border border-white/10 rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
+          <div className="relative z-10 w-full max-w-lg mx-4 bg-card border border-border rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-              <span className="text-sm font-semibold text-neutral-200">Editar Cliente</span>
-              <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-white/5 text-neutral-500">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <span className="text-sm font-semibold text-foreground">Editar Cliente</span>
+              <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-muted text-muted-foreground">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -92,28 +92,28 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Nombre</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Nombre</label>
                   <input value={name} onChange={(e) => setName(e.target.value)} className={fieldClass} />
                 </div>
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Teléfono</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Teléfono</label>
                   <input value={phone} disabled className={fieldClass + " opacity-50 cursor-not-allowed"} />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] text-neutral-500 uppercase font-semibold">Email</label>
+                <label className="text-[10px] text-muted-foreground uppercase font-semibold">Email</label>
                 <input value={email} onChange={(e) => setEmail(e.target.value)} className={fieldClass} />
               </div>
 
               <div>
-                <label className="text-[10px] text-neutral-500 uppercase font-semibold">Dirección</label>
+                <label className="text-[10px] text-muted-foreground uppercase font-semibold">Dirección</label>
                 <input value={address} onChange={(e) => setAddress(e.target.value)} className={fieldClass} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Tipo</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Tipo</label>
                   <select value={type} onChange={(e) => setType(e.target.value)} className={fieldClass}>
                     <option value="">—</option>
                     <option value="b2c">B2C (Consumidor)</option>
@@ -121,24 +121,24 @@ export function ClientEditForm({ lead }: { lead: LeadData | null }) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Tags</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Tags</label>
                   <input value={tagsStr} onChange={(e) => setTagsStr(e.target.value)} placeholder="ej: frecuente, delivery" className={fieldClass} />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] text-neutral-500 uppercase font-semibold">Notas</label>
+                <label className="text-[10px] text-muted-foreground uppercase font-semibold">Notas</label>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={fieldClass + " resize-none"} />
               </div>
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-3 border-t border-white/5 flex justify-end gap-2">
-              <button onClick={() => setOpen(false)} disabled={saving} className="px-4 py-2 rounded-lg text-xs text-neutral-400 hover:bg-white/5 transition-colors">
+            <div className="px-5 py-3 border-t border-border flex justify-end gap-2">
+              <button onClick={() => setOpen(false)} disabled={saving} className="px-4 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted transition-colors">
                 Cancelar
               </button>
               <button onClick={handleSave} disabled={saving}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-xs font-semibold bg-[#D4A017] text-black hover:bg-[#F5A623] transition-colors disabled:opacity-40">
+                className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-gold-bright transition-colors disabled:opacity-40">
                 <Save className="h-3 w-3" />
                 {saving ? "Guardando..." : "Guardar cambios"}
               </button>

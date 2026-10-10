@@ -199,15 +199,15 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="fixed z-50 inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[640px] md:max-h-[90vh] bg-[#0f0f0f] border border-white/10 rounded-2xl flex flex-col shadow-2xl"
+            className="fixed z-50 inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[640px] md:max-h-[90vh] bg-card border border-border rounded-2xl flex flex-col shadow-2xl"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4 text-[#D4A017]" />
-                <span className="text-sm font-semibold text-neutral-200">Nuevo Pedido</span>
+                <ShoppingBag className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">Nuevo Pedido</span>
               </div>
-              <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/5 text-neutral-500">
+              <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted text-muted-foreground">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -220,43 +220,43 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
               <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
                 {/* Buscador de Clientes / Leads */}
                 <div ref={searchRef} className="relative">
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Cliente / Lead</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Cliente / Lead</label>
                   <div className="relative mt-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                     <input
                       value={searchTerm}
                       onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true); }}
                       onFocus={() => setShowDropdown(true)}
                       placeholder="Buscá por nombre o teléfono..."
-                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40"
+                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40"
                     />
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-600" />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-foreground/40" />
                   </div>
 
                   {showDropdown && (
-                    <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-[#1a1a1a] shadow-xl">
+                    <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-border bg-popover shadow-xl">
                       {filteredLeads.length === 0 ? (
-                        <p className="px-3 py-3 text-xs text-neutral-500">Sin resultados</p>
+                        <p className="px-3 py-3 text-xs text-muted-foreground">Sin resultados</p>
                       ) : (
                         filteredLeads.map((lead) => (
                           <button
                             key={lead.phone}
                             onClick={() => selectClient(lead)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-white/5 transition-colors ${
-                              customerPhone === lead.phone ? "bg-[#D4A017]/10" : ""
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted transition-colors ${
+                              customerPhone === lead.phone ? "bg-primary/10" : ""
                             }`}
                           >
                             <div className="flex-1 min-w-0">
-                              <span className="text-xs font-medium text-neutral-200 truncate block">
+                              <span className="text-xs font-medium text-foreground truncate block">
                                 {lead.name}
                                 {lead.hasOrders && <span className="ml-1.5 text-[10px] text-emerald-400">🟢 cliente</span>}
                               </span>
-                              <span className="text-[10px] text-neutral-500 font-mono">{lead.phone}</span>
+                              <span className="text-[10px] text-muted-foreground font-mono">{lead.phone}</span>
                             </div>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                               lead.status === "new" ? "bg-blue-500/10 text-blue-300" :
                               lead.status === "contacted" ? "bg-amber-500/10 text-amber-300" :
-                              lead.status === "converted" ? "bg-green-500/10 text-green-300" : "bg-white/10 text-neutral-400"
+                              lead.status === "converted" ? "bg-green-500/10 text-green-300" : "bg-muted text-muted-foreground"
                             }`}>
                               {lead.status}
                             </span>
@@ -270,31 +270,31 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
                 {/* Cliente seleccionado */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] text-neutral-500 uppercase font-semibold">Nombre</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold">Nombre</label>
                     <input value={customerName} onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40" />
+                      className="w-full mt-1 px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40" />
                   </div>
                   <div>
-                    <label className="text-[10px] text-neutral-500 uppercase font-semibold">Teléfono</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold">Teléfono</label>
                     <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40" />
+                      className="w-full mt-1 px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40" />
                   </div>
                 </div>
 
                 {/* Tabs: Hamburguesas | Pan Mayorista | Promos */}
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Productos / Promos</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Productos / Promos</label>
                   <div className="flex gap-2 mt-1">
                     <button onClick={() => { setSelectedTab("hamburguesas"); setOrderType("hamburguesas"); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTab === "hamburguesas" ? "bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30" : "bg-white/5 text-neutral-400 border border-white/10"}`}>
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTab === "hamburguesas" ? "bg-primary/20 text-primary border border-primary/30" : "bg-muted/40 text-muted-foreground border border-border"}`}>
                       🍔 Hamburguesas
                     </button>
                     <button onClick={() => { setSelectedTab("pan_mayorista"); setOrderType("pan_mayorista"); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTab === "pan_mayorista" ? "bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30" : "bg-white/5 text-neutral-400 border border-white/10"}`}>
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTab === "pan_mayorista" ? "bg-primary/20 text-primary border border-primary/30" : "bg-muted/40 text-muted-foreground border border-border"}`}>
                       🍞 Pan Mayorista
                     </button>
                     <button onClick={() => setSelectedTab("promos")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTab === "promos" ? "bg-[#D4A017]/20 text-[#D4A017] border border-[#D4A017]/30" : "bg-white/5 text-neutral-400 border border-white/10"}`}>
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTab === "promos" ? "bg-primary/20 text-primary border border-primary/30" : "bg-muted/40 text-muted-foreground border border-border"}`}>
                       🔥 Promos
                     </button>
                   </div>
@@ -305,25 +305,25 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
                   {selectedTab === "promos" ? (
                     <div className="flex flex-col gap-2 mt-1 max-h-48 overflow-y-auto">
                       {promos.length === 0 ? (
-                        <p className="text-xs text-neutral-600 italic mt-1">No hay promos activas</p>
+                        <p className="text-xs text-foreground/40 italic mt-1">No hay promos activas</p>
                       ) : (
                         promos.map((promo) => (
                           <button
                             key={promo.id}
                             onClick={() => addItem(promo.name, promo.customPrice)}
-                            className="flex items-start gap-3 w-full rounded-lg bg-white/[0.03] hover:bg-[#D4A017]/5 border border-white/10 hover:border-[#D4A017]/30 px-3 py-2.5 text-left transition-colors"
+                            className="flex items-start gap-3 w-full rounded-lg bg-muted/40 hover:bg-primary/5 border border-border hover:border-primary/30 px-3 py-2.5 text-left transition-colors"
                           >
                             {promo.imageUrl && (
                               <img src={promo.imageUrl} alt={promo.name}
                                 className="w-12 h-12 rounded-lg object-cover shrink-0" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <span className="text-xs font-medium text-neutral-200 block">{promo.name}</span>
+                              <span className="text-xs font-medium text-foreground block">{promo.name}</span>
                               {promo.description && (
-                                <span className="text-[10px] text-neutral-500 block mt-0.5 line-clamp-2">{promo.description}</span>
+                                <span className="text-[10px] text-muted-foreground block mt-0.5 line-clamp-2">{promo.description}</span>
                               )}
                             </div>
-                            <span className="text-xs font-semibold text-[#D4A017] shrink-0">
+                            <span className="text-xs font-semibold text-primary shrink-0">
                               ${Number(promo.customPrice || 0).toLocaleString("es-AR")}
                             </span>
                           </button>
@@ -336,7 +336,7 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
                         .filter(p => selectedTab === "pan_mayorista" ? p.category === "pan_mayorista" : p.category !== "pan_mayorista")
                         .map((p) => (
                         <button key={p.id} onClick={() => addItem(p.name, p.price)}
-                          className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[11px] text-neutral-300 hover:border-[#D4A017]/30 hover:bg-[#D4A017]/5 transition-colors">
+                          className="px-2.5 py-1.5 rounded-lg bg-muted/40 border border-border text-[11px] text-foreground/80 hover:border-primary/30 hover:bg-primary/5 transition-colors">
                           {p.name}
                         </button>
                       ))}
@@ -346,56 +346,56 @@ export function CreateOrderModal({ open, onClose, clientName, clientPhone }: Cre
 
                 {/* Items */}
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Items ({items.length})</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Items ({items.length})</label>
                   {items.length === 0 ? (
-                    <p className="text-xs text-neutral-600 mt-2 italic">Seleccioná productos arriba</p>
+                    <p className="text-xs text-foreground/40 mt-2 italic">Seleccioná productos arriba</p>
                   ) : (
                     <div className="space-y-1.5 mt-1">
                       {items.map((item) => (
-                        <div key={item.name} className="flex items-center gap-2 bg-white/[0.03] rounded-lg px-3 py-2">
-                          <span className="flex-1 text-xs text-neutral-200 truncate">{item.name}</span>
+                        <div key={item.name} className="flex items-center gap-2 bg-muted/40 rounded-lg px-3 py-2">
+                          <span className="flex-1 text-xs text-foreground truncate">{item.name}</span>
                           <div className="flex items-center gap-1.5">
-                            <button onClick={() => updateQty(item.name, item.quantity - 1)} className="p-0.5 rounded hover:bg-white/10 text-neutral-500"><Minus className="h-3 w-3" /></button>
-                            <span className="text-xs text-neutral-200 w-5 text-center">{item.quantity}</span>
-                            <button onClick={() => updateQty(item.name, item.quantity + 1)} className="p-0.5 rounded hover:bg-white/10 text-neutral-500"><Plus className="h-3 w-3" /></button>
+                            <button onClick={() => updateQty(item.name, item.quantity - 1)} className="p-0.5 rounded hover:bg-muted text-muted-foreground"><Minus className="h-3 w-3" /></button>
+                            <span className="text-xs text-foreground w-5 text-center">{item.quantity}</span>
+                            <button onClick={() => updateQty(item.name, item.quantity + 1)} className="p-0.5 rounded hover:bg-muted text-muted-foreground"><Plus className="h-3 w-3" /></button>
                           </div>
-                          <span className="text-xs text-neutral-400 w-16 text-right">${(item.quantity * item.unitPrice).toLocaleString("es-AR")}</span>
-                          <button onClick={() => removeItem(item.name)} className="p-0.5 rounded hover:bg-red-500/20 text-neutral-600 hover:text-red-400"><Trash2 className="h-3 w-3" /></button>
+                          <span className="text-xs text-muted-foreground w-16 text-right">${(item.quantity * item.unitPrice).toLocaleString("es-AR")}</span>
+                          <button onClick={() => removeItem(item.name)} className="p-0.5 rounded hover:bg-red-500/20 text-foreground/40 hover:text-red-400"><Trash2 className="h-3 w-3" /></button>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between py-2 border-t border-white/5">
-                  <span className="text-xs text-neutral-500">Total</span>
-                  <span className="text-sm font-bold text-[#D4A017]">${total.toLocaleString("es-AR")}</span>
+                <div className="flex items-center justify-between py-2 border-t border-border">
+                  <span className="text-xs text-muted-foreground">Total</span>
+                  <span className="text-sm font-bold text-primary">${total.toLocaleString("es-AR")}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] text-neutral-500 uppercase font-semibold">Dirección</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold">Dirección</label>
                     <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Opcional"
-                      className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40" />
+                      className="w-full mt-1 px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40" />
                   </div>
                   <div>
-                    <label className="text-[10px] text-neutral-500 uppercase font-semibold">Costo delivery</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold">Costo delivery</label>
                     <input type="number" min="0" value={deliveryFee || ""} onChange={(e) => setDeliveryFee(Number(e.target.value) || 0)} placeholder="0 = sin delivery"
-                      className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40" />
+                      className="w-full mt-1 px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Notas</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Notas</label>
                   <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional"
-                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40" />
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40" />
                 </div>
               </div>
             )}
 
-            <div className="px-5 py-3 border-t border-white/5 flex justify-end gap-2">
-              <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs text-neutral-400 hover:bg-white/5 transition-colors">Cancelar</button>
+            <div className="px-5 py-3 border-t border-border flex justify-end gap-2">
+              <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted transition-colors">Cancelar</button>
               <button onClick={handleSave} disabled={saving || !customerName || items.length === 0}
-                className="px-5 py-2 rounded-lg text-xs font-semibold bg-[#D4A017] text-black hover:bg-[#F5A623] transition-colors disabled:opacity-40">
+                className="px-5 py-2 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-gold-bright transition-colors disabled:opacity-40">
                 {saving ? "Creando..." : "Crear Pedido"}
               </button>
             </div>

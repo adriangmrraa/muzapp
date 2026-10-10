@@ -67,7 +67,7 @@ export default async function ClientDetailPage({ params }: Props) {
   return (
     <div className="flex flex-col gap-5 p-4 md:p-6 max-w-4xl">
       {/* ── Back ──────────────────────────────────────────────────────── */}
-      <Link href="/admin/clients" className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 transition-colors w-fit">
+      <Link href="/admin/clients" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit">
         <ArrowLeft className="h-3.5 w-3.5" />
         Volver a clientes
       </Link>
@@ -75,17 +75,17 @@ export default async function ClientDetailPage({ params }: Props) {
       {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-neutral-100">{name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gold-gradient">{name}</h1>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs text-neutral-500 font-mono">{phone}</span>
+            <span className="text-xs text-muted-foreground font-mono">{phone}</span>
             {statusCfg && <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <ClientEditForm lead={lead} />
           <div className="text-right">
-            <p className="text-[10px] text-neutral-500 uppercase tracking-wider">Total gastado</p>
-            <p className="text-2xl font-bold text-amber-400">${stats.totalSpent.toLocaleString("es-AR")}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total gastado</p>
+            <p className="text-2xl font-bold text-gold-bright">${stats.totalSpent.toLocaleString("es-AR")}</p>
           </div>
         </div>
       </div>
@@ -98,9 +98,9 @@ export default async function ClientDetailPage({ params }: Props) {
           { label: "Este mes", value: stats.ordersThisMonth },
           { label: "Último pedido", value: stats.lastOrderAt ? new Date(stats.lastOrderAt).toLocaleDateString("es-AR") : "—" },
         ].map((s) => (
-          <div key={s.label} className="rounded-lg border border-white/[0.06] bg-[#0a0a0a] px-4 py-3 text-center">
-            <p className="text-lg font-semibold text-neutral-100">{s.value}</p>
-            <p className="text-[10px] text-neutral-500 mt-0.5">{s.label}</p>
+          <div key={s.label} className="rounded-lg border border-border bg-card px-4 py-3 text-center">
+            <p className="text-lg font-semibold text-foreground">{s.value}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
@@ -115,12 +115,12 @@ export default async function ClientDetailPage({ params }: Props) {
           </Link>
         )}
         {lead?.conversationId && (
-          <Link href={`/admin/conversations`} className="flex items-center gap-1.5 rounded-lg bg-white/[0.04] border border-white/10 px-3.5 py-2 text-xs font-medium text-neutral-300 hover:bg-white/[0.07] transition-colors">
+          <Link href={`/admin/conversations`} className="flex items-center gap-1.5 rounded-lg bg-muted/40 border border-border px-3.5 py-2 text-xs font-medium text-foreground/80 hover:bg-muted transition-colors">
             <MessageSquare className="h-3.5 w-3.5" />
             Ir al chat
           </Link>
         )}
-        <Link href={`/admin/orders?search=${encodeURIComponent(phone)}`} className="flex items-center gap-1.5 rounded-lg bg-white/[0.04] border border-white/10 px-3.5 py-2 text-xs font-medium text-neutral-300 hover:bg-white/[0.07] transition-colors">
+        <Link href={`/admin/orders?search=${encodeURIComponent(phone)}`} className="flex items-center gap-1.5 rounded-lg bg-muted/40 border border-border px-3.5 py-2 text-xs font-medium text-foreground/80 hover:bg-muted transition-colors">
           <ShoppingBag className="h-3.5 w-3.5" />
           Ver pedidos
         </Link>
@@ -132,24 +132,24 @@ export default async function ClientDetailPage({ params }: Props) {
         {/* ── LEFT COL ──────────────────────────────────────────────────── */}
 
         {/* Address card */}
-        <div className="rounded-xl border border-white/[0.06] p-4 space-y-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+        <div className="rounded-xl border border-border p-4 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             <MapPin className="h-3.5 w-3.5" />
             Dirección guardada
           </div>
           {lead?.address ? (
-            <div className="flex items-center gap-2.5 rounded-lg bg-white/[0.03] border border-white/5 px-3.5 py-3">
-              <MapPin className="h-4 w-4 text-amber-400 flex-shrink-0" />
-              <p className="text-sm text-neutral-200">{lead.address}</p>
+            <div className="flex items-center gap-2.5 rounded-lg bg-muted/40 border border-border px-3.5 py-3">
+              <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+              <p className="text-sm text-foreground">{lead.address}</p>
             </div>
           ) : (
-            <p className="text-xs text-neutral-500 italic">Sin dirección registrada. El cliente no ha compartido ubicación aún.</p>
+            <p className="text-xs text-muted-foreground italic">Sin dirección registrada. El cliente no ha compartido ubicación aún.</p>
           )}
         </div>
 
         {/* Contact / Detalles */}
-        <div className="rounded-xl border border-white/[0.06] p-4 space-y-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+        <div className="rounded-xl border border-border p-4 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             <Phone className="h-3.5 w-3.5" />
             Contacto
           </div>
@@ -163,7 +163,7 @@ export default async function ClientDetailPage({ params }: Props) {
           {Array.isArray(lead?.tags) && lead.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
               {lead.tags.map((tag: string) => (
-                <span key={tag} className="inline-flex items-center rounded-full bg-neutral-500/20 text-neutral-300 px-2 py-0.5 text-[10px] font-medium">
+                <span key={tag} className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[10px] font-medium">
                   <Tag className="h-2.5 w-2.5 mr-1" />
                   {tag}
                 </span>
@@ -176,16 +176,16 @@ export default async function ClientDetailPage({ params }: Props) {
 
         {/* Productos favoritos / repetidos */}
         {repeatProducts.length > 0 && (
-          <div className="rounded-xl border border-white/[0.06] p-4 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-              <Star className="h-3.5 w-3.5 text-amber-400" />
+          <div className="rounded-xl border border-border p-4 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <Star className="h-3.5 w-3.5 text-primary" />
               Siempre pide
             </div>
             <div className="space-y-1.5">
               {repeatProducts.map((p) => (
-                <div key={p.name} className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2">
-                  <span className="text-sm text-neutral-200">{p.name}</span>
-                  <span className="text-[10px] text-neutral-500 bg-white/[0.05] rounded-full px-2 py-0.5">
+                <div key={p.name} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+                  <span className="text-sm text-foreground">{p.name}</span>
+                  <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">
                     {p.count}x
                   </span>
                 </div>
@@ -196,8 +196,8 @@ export default async function ClientDetailPage({ params }: Props) {
 
         {/* Attribution (UTM) */}
         {lead?.utmCampaign && (
-          <div className="rounded-xl border border-white/[0.06] p-4 space-y-2">
-            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Atribución</p>
+          <div className="rounded-xl border border-border p-4 space-y-2">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Atribución</p>
             <InfoRow label="Campaña" value={lead.utmCampaign} />
             <InfoRow label="Source" value={lead.utmSource ? `${lead.utmSource}${lead.utmMedium ? ` / ${lead.utmMedium}` : ""}` : null} />
           </div>
@@ -206,26 +206,26 @@ export default async function ClientDetailPage({ params }: Props) {
       </div>
 
       {/* ── Orders Section ─────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-white/[0.06] p-4 space-y-3">
-        <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+      <div className="rounded-xl border border-border p-4 space-y-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           <ShoppingBag className="h-3.5 w-3.5" />
           Historial de pedidos ({clientOrders.length})
         </div>
 
         {clientOrders.length === 0 ? (
-          <p className="text-xs text-neutral-500 italic py-4 text-center">Sin historial de pedidos (contacto sin compras)</p>
+          <p className="text-xs text-muted-foreground italic py-4 text-center">Sin historial de pedidos (contacto sin compras)</p>
         ) : (
           <div className="space-y-1.5">
             {clientOrders.slice(0, 15).map((order) => {
               const items = order.items as { name?: string; quantity?: number }[] | null;
               const itemSummary = items?.slice(0, 2).map((i) => `${i.quantity ?? 1}x ${i.name ?? ""}`).join(", ") || "";
               return (
-                <div key={order.id} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.015] px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors">
+                <div key={order.id} className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3.5 py-2.5 hover:bg-muted/40 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-xs font-medium text-neutral-400">#{order.id}</span>
+                    <span className="text-xs font-medium text-muted-foreground">#{order.id}</span>
                     <div className="min-w-0">
-                      <p className="text-xs text-neutral-200 truncate max-w-[200px]">{itemSummary || (order.orderType?.replace("_", " ") ?? "Pedido")}</p>
-                      <p className="text-[10px] text-neutral-500">{new Date(order.createdAt).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</p>
+                      <p className="text-xs text-foreground truncate max-w-[200px]">{itemSummary || (order.orderType?.replace("_", " ") ?? "Pedido")}</p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(order.createdAt).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</p>
                     </div>
                   </div>
                   <Badge variant={
@@ -250,8 +250,8 @@ function InfoRow({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
     <div className="flex items-center justify-between py-0.5">
-      <span className="text-[11px] text-neutral-500">{label}</span>
-      <span className="text-xs text-neutral-300 truncate max-w-[200px] text-right">{value}</span>
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <span className="text-xs text-foreground/80 truncate max-w-[200px] text-right">{value}</span>
     </div>
   );
 }

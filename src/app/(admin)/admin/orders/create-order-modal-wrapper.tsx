@@ -9,7 +9,7 @@ export function CreateOrderModalWrapper() {
   return (
     <>
       <button onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#D4A017] text-black text-xs font-semibold hover:bg-[#F5A623] transition-colors">
+        className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-gold-bright transition-colors">
         <Plus className="h-3.5 w-3.5" />
         Nuevo Pedido
       </button>

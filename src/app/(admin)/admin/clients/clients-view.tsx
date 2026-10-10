@@ -110,30 +110,30 @@ export function ClientsView({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && navigate({ search, page: "" })}
-          className="h-8 text-xs bg-white/[0.03] border-white/[0.08]"
+          className="h-8 text-xs bg-muted/40 border-border"
         />
         <Button
           type="button"
           size="sm"
           onClick={() => navigate({ search, page: "" })}
-          className="h-8 text-xs bg-white/[0.06] hover:bg-white/[0.1] text-white/60"
+          className="h-8 text-xs bg-muted/60 hover:bg-muted text-foreground/60"
         >
           Buscar
         </Button>
       </motion.div>
 
       {/* Stats */}
-      <motion.div variants={fadeUpSmall} className="text-xs text-white/20">
+      <motion.div variants={fadeUpSmall} className="text-xs text-foreground/20">
         {total > 0 ? `${total} clientes` : "..."}
         {totalPages > 1 && total > 0 && (
-          <span className="text-white/10"> · Pág. {currentPage}/{totalPages}</span>
+          <span className="text-foreground/10"> · Pág. {currentPage}/{totalPages}</span>
         )}
       </motion.div>
 
       {/* Client Cards */}
       <motion.div variants={fadeUpSmall} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {localClients.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center py-20 text-white/20">
+          <div className="col-span-full flex flex-col items-center justify-center py-20 text-foreground/20">
             <span className="text-4xl mb-3 opacity-30">👥</span>
             <p className="text-sm">
               {currentSearch
@@ -148,12 +148,12 @@ export function ClientsView({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: (i % 10) * 0.03 }}
-                className="rounded-xl border border-white/[0.06] p-4 flex flex-col gap-3 bg-[#0a0a0a] hover:border-white/25 hover:bg-white/[0.02] transition-all duration-200 cursor-pointer"
+                className="rounded-xl border border-border p-4 flex flex-col gap-3 bg-card hover:border-primary/30 hover:bg-muted/20 transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="text-sm font-medium text-white/90 truncate">{client.name || "Sin nombre"}</span>
-                    <span className="text-xs text-white/40 font-mono">{client.phone}</span>
+                    <span className="text-sm font-medium text-foreground/90 truncate">{client.name || "Sin nombre"}</span>
+                    <span className="text-xs text-foreground/40 font-mono">{client.phone}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     {clientTypeBadge(client.type) && (
@@ -168,17 +168,17 @@ export function ClientsView({
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
-                  <div className="rounded-md bg-white/[0.03] p-2">
-                    <div className="font-medium text-white/70">{client.totalOrders}</div>
-                    <div className="text-white/30">Pedidos</div>
+                  <div className="rounded-md bg-muted/40 p-2">
+                    <div className="font-medium text-foreground/70">{client.totalOrders}</div>
+                    <div className="text-foreground/30">Pedidos</div>
                   </div>
-                  <div className="rounded-md bg-white/[0.03] p-2">
-                    <div className="font-medium text-white/70">{client.totalConversations}</div>
-                    <div className="text-white/30">Chats</div>
+                  <div className="rounded-md bg-muted/40 p-2">
+                    <div className="font-medium text-foreground/70">{client.totalConversations}</div>
+                    <div className="text-foreground/30">Chats</div>
                   </div>
-                  <div className="rounded-md bg-white/[0.03] p-2">
-                    <div className="font-medium text-white/70">{client.lastOrderType ? orderTypeIcon(client.lastOrderType) : "—"}</div>
-                    <div className="text-white/30">Tipo</div>
+                  <div className="rounded-md bg-muted/40 p-2">
+                    <div className="font-medium text-foreground/70">{client.lastOrderType ? orderTypeIcon(client.lastOrderType) : "—"}</div>
+                    <div className="text-foreground/30">Tipo</div>
                   </div>
                 </div>
 
@@ -193,14 +193,14 @@ export function ClientsView({
                 )}
 
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-[10px] text-white/20">
+                  <span className="text-[10px] text-foreground/20">
                     {client.lastOrderDate ? `Últ. pedido: ${formatClientDate(client.lastOrderDate)}` : "Sin pedidos"}
                   </span>
                   <div className="flex items-center gap-1">
                     <Link href={`/admin/clients/${encodeURIComponent(client.phone)}`}
-                      className="text-xs text-white/30 hover:text-[#D4A017] transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5">👤</Link>
+                      className="text-xs text-foreground/30 hover:text-primary transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5">👤</Link>
                     <button onClick={(e) => { e.preventDefault(); setEditClient(client); setEditName(client.name || ""); setEditType(client.type || ""); setEditNotes(""); }}
-                      className="text-xs text-white/20 hover:text-amber-400 transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5" title="Editar cliente">✏️</button>
+                      className="text-xs text-foreground/20 hover:text-gold-bright transition-colors px-2.5 py-1.5 sm:px-1.5 sm:py-0.5" title="Editar cliente">✏️</button>
                   </div>
                 </div>
               </motion.div>
@@ -215,7 +215,7 @@ export function ClientsView({
           <button
             onClick={() => navigate({ search: currentSearch, page: String(currentPage - 1) })}
             disabled={currentPage <= 1}
-            className="px-3 py-1.5 rounded-lg text-xs bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08] disabled:opacity-20 disabled:pointer-events-none transition-all"
+            className="px-3 py-1.5 rounded-lg text-xs bg-muted/40 border border-border text-foreground/50 hover:text-foreground/80 hover:bg-muted disabled:opacity-20 disabled:pointer-events-none transition-all"
           >
             ← Anterior
           </button>
@@ -239,8 +239,8 @@ export function ClientsView({
                 onClick={() => navigate({ search: currentSearch, page: String(page) })}
                 className={`w-8 h-8 rounded-lg text-xs font-medium transition-all ${
                   isCurrent
-                    ? "bg-[#D4A017] text-black"
-                    : "bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08]"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/40 border border-border text-foreground/50 hover:text-foreground/80 hover:bg-muted"
                 }`}
               >
                 {page}
@@ -251,7 +251,7 @@ export function ClientsView({
           <button
             onClick={() => navigate({ search: currentSearch, page: String(currentPage + 1) })}
             disabled={currentPage >= totalPages}
-            className="px-3 py-1.5 rounded-lg text-xs bg-white/[0.04] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.08] disabled:opacity-20 disabled:pointer-events-none transition-all"
+            className="px-3 py-1.5 rounded-lg text-xs bg-muted/40 border border-border text-foreground/50 hover:text-foreground/80 hover:bg-muted disabled:opacity-20 disabled:pointer-events-none transition-all"
           >
             Siguiente →
           </button>
@@ -262,29 +262,29 @@ export function ClientsView({
       {editClient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditClient(null)} />
-          <div className="relative z-10 w-full max-w-md mx-4 bg-[#0f0f0f] border border-white/10 rounded-2xl shadow-2xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-              <span className="text-sm font-semibold text-neutral-200">Editar {editClient.name || "cliente"}</span>
-              <button onClick={() => setEditClient(null)} className="p-1 rounded-lg hover:bg-white/5 text-neutral-500">
+          <div className="relative z-10 w-full max-w-md mx-4 bg-card border border-border rounded-2xl shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <span className="text-sm font-semibold text-foreground">Editar {editClient.name || "cliente"}</span>
+              <button onClick={() => setEditClient(null)} className="p-1 rounded-lg hover:bg-muted text-muted-foreground">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="px-5 py-4 space-y-4">
               <div>
-                <label className="text-[10px] text-neutral-500 uppercase font-semibold">Nombre</label>
+                <label className="text-[10px] text-muted-foreground uppercase font-semibold">Nombre</label>
                 <input value={editName} onChange={(e) => setEditName(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40" />
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Teléfono</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Teléfono</label>
                   <input value={editClient.phone} disabled
-                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5 text-sm text-neutral-500 cursor-not-allowed" />
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-muted/20 border border-border text-sm text-muted-foreground cursor-not-allowed" />
                 </div>
                 <div>
-                  <label className="text-[10px] text-neutral-500 uppercase font-semibold">Tipo</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-semibold">Tipo</label>
                   <select value={editType} onChange={(e) => setEditType(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40">
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40">
                     <option value="">—</option>
                     <option value="b2c">B2C (Consumidor)</option>
                     <option value="b2b">B2B (Mayorista)</option>
@@ -292,13 +292,13 @@ export function ClientsView({
                 </div>
               </div>
               <div>
-                <label className="text-[10px] text-neutral-500 uppercase font-semibold">Notas</label>
+                <label className="text-[10px] text-muted-foreground uppercase font-semibold">Notas</label>
                 <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} placeholder="Notas internas..."
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-neutral-200 focus:outline-none focus:border-[#D4A017]/40 resize-none" />
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-muted/40 border border-border text-sm text-foreground focus:outline-none focus:border-primary/40 resize-none" />
               </div>
             </div>
-                <div className="px-5 py-3 border-t border-white/5 flex justify-end gap-2">
-                <button onClick={() => setEditClient(null)} className="px-5 py-2.5 sm:px-4 sm:py-2 rounded-lg text-xs text-neutral-400 hover:bg-white/5">
+                <div className="px-5 py-3 border-t border-border flex justify-end gap-2">
+                <button onClick={() => setEditClient(null)} className="px-5 py-2.5 sm:px-4 sm:py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted">
                   Cancelar
                 </button>
                 <button onClick={async () => {
@@ -324,7 +324,7 @@ export function ClientsView({
                 } catch (e) { console.error(e); }
                 setSavingEdit(false);
               }} disabled={savingEdit}
-                className="flex items-center gap-1.5 px-6 py-2.5 sm:px-5 sm:py-2 rounded-lg text-xs font-semibold bg-[#D4A017] text-black hover:bg-[#F5A623] disabled:opacity-40">
+                className="flex items-center gap-1.5 px-6 py-2.5 sm:px-5 sm:py-2 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-gold-bright disabled:opacity-40">
                 <Save className="h-3 w-3" />
                 {savingEdit ? "Guardando..." : "Guardar"}
               </button>

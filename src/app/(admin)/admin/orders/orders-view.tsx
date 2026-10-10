@@ -22,7 +22,7 @@ const STATUSES: Record<string, StatusConfig> = {
   pending: { label: "Pendiente", color: "text-amber-400 border-amber-500/30", dot: "bg-amber-400" },
   preparing: { label: "Preparando", color: "text-blue-400 border-blue-500/30", dot: "bg-blue-400" },
   ready: { label: "Listo", color: "text-green-400 border-green-500/30", dot: "bg-green-400" },
-  delivered: { label: "Entregado", color: "text-white/40 border-white/[0.08]", dot: "bg-white/20" },
+  delivered: { label: "Entregado", color: "text-foreground/40 border-border", dot: "bg-foreground/20" },
   cancelled: { label: "Cancelado", color: "text-red-400/60 border-red-500/20", dot: "bg-red-400/50" },
 };
 
@@ -55,7 +55,7 @@ function formatTime(d: Date): string {
 function orderTypeBadge(type: string | null): { label: string; cls: string } {
   if (type === "hamburguesas") return { label: "🍔 Hamburguesas", cls: "bg-amber-500/10 text-amber-300 border border-amber-500/20" };
   if (type === "pan_mayorista") return { label: "🍞 Pan Mayorista", cls: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20" };
-  return { label: "📦 Gral", cls: "bg-white/[0.04] text-white/50 border border-white/[0.08]" };
+  return { label: "📦 Gral", cls: "bg-muted/40 text-foreground/50 border border-border" };
 }
 
 // ─── Order Card ───────────────────────────────────────────────────────────────
@@ -100,12 +100,13 @@ function OrderCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={() => setEditOpen(true)}
-      className="rounded-xl border p-4 flex flex-col gap-3 bg-[#0a0a0a] transition-all duration-200 hover:border-white/20 cursor-pointer"
-      style={{ borderColor: order.status === "pending" ? "rgba(212,160,23,0.3)" : "rgba(255,255,255,0.06)" }}
+      className={`rounded-xl border p-4 flex flex-col gap-3 bg-card transition-all duration-200 hover:border-primary/40 cursor-pointer ${
+        order.status === "pending" ? "border-primary/30" : "border-border"
+      }`}
     >
       {/* Header: ID + Order Type */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-mono text-white/30">#{order.id}</span>
+        <span className="text-xs font-mono text-foreground/30">#{order.id}</span>
         <span className={`text-[10px] px-2 py-0.5 rounded-full ${typeBadge.cls}`}>
           {typeBadge.label}
         </span>
@@ -113,16 +114,16 @@ function OrderCard({
 
       {/* Customer */}
       <div className="flex flex-col gap-0.5">
-        <span className="text-sm font-medium text-white/90">
+        <span className="text-sm font-medium text-foreground/90">
           {order.customerName || "Sin nombre"}
         </span>
-        <span className="text-xs text-white/40">{order.phoneNumber}</span>
+        <span className="text-xs text-foreground/40">{order.phoneNumber}</span>
       </div>
 
       {/* Items */}
-      <div className="text-xs text-white/60 leading-relaxed">
+      <div className="text-xs text-foreground/60 leading-relaxed">
         {items.length === 0 ? (
-          <span className="italic text-white/30">Sin items</span>
+          <span className="italic text-foreground/30">Sin items</span>
         ) : (
           items.map((item, i) => (
             <span key={i} className="block">
@@ -134,7 +135,7 @@ function OrderCard({
 
       {/* Notes */}
       {order.notes && (
-        <div className="text-[11px] text-white/40 italic border-t border-white/[0.04] pt-2">
+        <div className="text-[11px] text-foreground/40 italic border-t border-border pt-2">
           {order.notes}
         </div>
       )}
@@ -157,7 +158,7 @@ function OrderCard({
           <span className={`text-[11px] font-medium ${statusCfg.color}`}>
             {statusCfg.label}
           </span>
-          <span className="text-[10px] text-white/20">
+          <span className="text-[10px] text-foreground/20">
             {formatTime(order.createdAt)}
           </span>
         </div>
@@ -169,7 +170,7 @@ function OrderCard({
               size="sm"
               disabled={changing}
               onClick={(e) => { e.stopPropagation(); handleNext(); }}
-              className="h-8 sm:h-7 text-xs px-2.5 sm:px-3 bg-white/[0.06] hover:bg-white/[0.1] text-white/70"
+              className="h-8 sm:h-7 text-xs px-2.5 sm:px-3 bg-muted/60 hover:bg-muted text-foreground/70"
             >
               → {STATUSES[NEXT_STATUS[order.status]]?.label}
             </Button>
@@ -204,7 +205,7 @@ function OrderCard({
                 setNotifying(false);
               }}
               variant="ghost"
-              className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-white/30 hover:text-amber-400"
+              className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-foreground/30 hover:text-gold-bright"
               title="Notificar al cliente"
             >
               🔔
@@ -245,7 +246,7 @@ function OrderCard({
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
                 variant="ghost"
-                className="h-8 sm:h-7 text-xs px-2 text-white/30"
+                className="h-8 sm:h-7 text-xs px-2 text-foreground/30"
               >
                 ✕
               </Button>
@@ -256,7 +257,7 @@ function OrderCard({
               size="sm"
               onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
               variant="ghost"
-              className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-white/20 hover:text-red-400"
+              className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-foreground/20 hover:text-red-400"
               title="Eliminar pedido"
             >
               🗑️
@@ -268,7 +269,7 @@ function OrderCard({
             size="sm"
             onClick={(e) => { e.stopPropagation(); setEditOpen(true); }}
             variant="ghost"
-            className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-white/20 hover:text-amber-400"
+            className="h-8 sm:h-7 w-8 sm:w-7 text-xs flex items-center justify-center text-foreground/20 hover:text-gold-bright"
             title="Editar pedido"
           >
             ✏️
@@ -285,7 +286,7 @@ function OrderCard({
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="col-span-full flex flex-col items-center justify-center py-20 text-white/20">
+    <div className="col-span-full flex flex-col items-center justify-center py-20 text-foreground/20">
       <span className="text-4xl mb-3 opacity-30">📋</span>
       <p className="text-sm">{label}</p>
     </div>
@@ -373,12 +374,12 @@ export function OrdersView({
               onClick={() => navigate({ status: s, type: currentType, search: currentSearch, page: "" })}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                 active
-                  ? "bg-[#D4A017]/15 text-[#F5A623] border border-[#D4A017]/30"
-                  : "text-white/40 hover:text-white/70 border border-transparent"
+                  ? "bg-primary/15 text-gold-bright border border-primary/30"
+                  : "text-foreground/40 hover:text-foreground/70 border border-transparent"
               }`}
             >
               {label}{" "}
-              <span className={active ? "text-[#D4A017]/60" : "text-white/20"}>
+              <span className={active ? "text-primary/60" : "text-foreground/20"}>
                 ({count})
               </span>
             </button>
@@ -399,8 +400,8 @@ export function OrdersView({
                 onClick={() => navigate({ status: currentStatus, type: t, search: currentSearch, page: "" })}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   active
-                    ? "bg-white/[0.08] text-white"
-                    : "text-white/30 hover:text-white/60"
+                    ? "bg-muted text-foreground"
+                    : "text-foreground/30 hover:text-foreground/60"
                 }`}
               >
                 {label}
@@ -414,13 +415,13 @@ export function OrdersView({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="h-8 text-xs bg-white/[0.03] border-white/[0.08]"
+            className="h-8 text-xs bg-muted/40 border-border"
           />
           <Button
             type="button"
             size="sm"
             onClick={handleSearch}
-            className="h-8 text-xs bg-white/[0.06] hover:bg-white/[0.1] text-white/60"
+            className="h-8 text-xs bg-muted/60 hover:bg-muted text-foreground/60"
           >
             Buscar
           </Button>
@@ -428,7 +429,7 @@ export function OrdersView({
       </motion.div>
 
       {/* Stats Bar */}
-      <motion.div variants={fadeUpSmall} className="flex gap-4 text-xs text-white/20">
+      <motion.div variants={fadeUpSmall} className="flex gap-4 text-xs text-foreground/20">
         <span>Total: {counts.total ?? 0}</span>
         <span>Pendientes: {counts.pending ?? 0}</span>
         <span>Preparando: {counts.preparing ?? 0}</span>
@@ -476,11 +477,11 @@ export function OrdersView({
               })
             }
             variant="outline"
-            className="h-8 text-xs border-white/[0.08]"
+            className="h-8 text-xs border-border"
           >
             ← Anterior
           </Button>
-          <span className="text-xs text-white/30">
+          <span className="text-xs text-foreground/30">
             {currentPage} / {totalPages}
           </span>
           <Button
@@ -496,7 +497,7 @@ export function OrdersView({
               })
             }
             variant="outline"
-            className="h-8 text-xs border-white/[0.08]"
+            className="h-8 text-xs border-border"
           >
             Siguiente →
           </Button>
