@@ -71,7 +71,7 @@ export function DeliveryCTA() {
           variants={fadeUp}
           className="text-4xl sm:text-5xl font-black leading-tight font-heading text-gold-gradient"
         >
-          Delivery a Domicilio
+          Delivery a <em>Domicilio</em>
         </motion.h2>
 
         {/* Subtitle */}

@@ -14,6 +14,8 @@ interface TextRevealProps {
   stagger?: number;
   once?: boolean;
   mode?: "animate" | "whileInView";
+  /** Line indexes whose words render inside <em> (real italic face). */
+  emLines?: number[];
 }
 
 export function TextReveal({
@@ -26,6 +28,7 @@ export function TextReveal({
   stagger = 0.09,
   once = true,
   mode = "animate",
+  emLines,
 }: TextRevealProps) {
   const prefersReduced = useReducedMotion();
 
@@ -52,12 +55,8 @@ export function TextReveal({
 
   const content: ReactNode = lines.map((line, li) => (
     <span key={li} className="block">
-      {line.split(" ").map((w, wi) => (
-        <span
-          key={wi}
-          className="inline-block overflow-hidden align-bottom"
-          style={{ paddingBottom: "0.12em", marginBottom: "-0.12em" }}
-        >
+      {line.split(" ").map((w, wi) => {
+        const wordSpan = (
           <motion.span
             variants={word}
             className="inline-block will-change-transform"
@@ -66,8 +65,17 @@ export function TextReveal({
             {w}
             {wi < line.split(" ").length - 1 ? "\u00A0" : ""}
           </motion.span>
-        </span>
-      ))}
+        );
+        return (
+          <span
+            key={wi}
+            className="inline-block overflow-hidden align-bottom"
+            style={{ paddingBottom: "0.12em", marginBottom: "-0.12em" }}
+          >
+            {emLines?.includes(li) ? <em>{wordSpan}</em> : wordSpan}
+          </span>
+        );
+      })}
     </span>
   ));
 

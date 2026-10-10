@@ -78,7 +78,7 @@ function StatsCard({ card, index }: { card: DashboardCard; index: number }) {
           </motion.div>
         ) : (
           <motion.div
-            className="text-4xl font-bold tabular-nums text-gold-gradient"
+            className="text-4xl font-black tabular-nums text-gold-gradient"
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
@@ -231,7 +231,7 @@ export function DashboardClient({ cards, activity, recentOrders, actionCards }: 
           Dashboard
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Resumen general del negocio
+          Resumen general del <em className="font-heading">negocio</em>
         </p>
       </motion.div>
 

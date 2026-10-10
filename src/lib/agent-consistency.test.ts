@@ -1323,7 +1323,7 @@ test("admin display stats exceed text-3xl and keep tabular-nums", () => {
 
 test("cart total and order card render display numerals", () => {
   const drawer = readFileSync("src/components/cart/cart-drawer.tsx", "utf8");
-  assert.match(drawer, /text-2xl[^\n]*font-mono[^\n]*tabular-nums/);
+  assert.match(drawer, /text-4xl[^\n]*font-black[^\n]*font-mono[^\n]*tabular-nums/);
   const view = readFileSync("src/app/(admin)/admin/orders/orders-view.tsx", "utf8");
   assert.match(view, /computeOrderTotal/);
   assert.match(view, /font-mono[^\n]*tabular-nums[^\n]*text-xl|text-xl[^\n]*font-mono[^\n]*tabular-nums/);
@@ -1507,4 +1507,71 @@ test("sheet bottom panel and editorial dialogs carry the spec elevation", () => 
   const upsell = readFileSync("src/components/products/upsell-modal.tsx", "utf8");
   assert.match(upsell, /shadow-\[0_20px_50px_-4px_rgba\(0,0,0,\.7\)\]/);
   assert.match(upsell, /rounded-3xl/);
+});
+
+// ─── ui-redesign-r2 B: mixed roman+italic headings + black numerals ──────────
+
+test("hero reveal supports emLines and the hero italicizes its last line", () => {
+  const reveal = readFileSync("src/components/motion/text-reveal.tsx", "utf8");
+  assert.match(reveal, /emLines\??:\s*number\[\]/);
+  assert.match(reveal, /<em[>\s]/);
+  const hero = readFileSync("src/components/hero/hero-section.tsx", "utf8");
+  assert.match(hero, /emLines=\{/);
+});
+
+test("storefront display headings mix roman with real italic keywords", () => {
+  const home = readFileSync("src/app/(storefront)/page.tsx", "utf8");
+  assert.match(home, /<em className="marker-gold">hamburguesa<\/em>/);
+  assert.match(home, /<em>nuestra<\/em>/);
+  assert.match(home, /<em>Digital<\/em>/);
+  const delivery = readFileSync("src/components/home/delivery-cta.tsx", "utf8");
+  assert.match(delivery, /<em>Domicilio<\/em>/);
+  const hamburguesas = readFileSync("src/app/(storefront)/hamburguesas/page.tsx", "utf8");
+  assert.match(hamburguesas, /<em className="marker-gold">Hamburguesas<\/em>/);
+  const pan = readFileSync("src/app/(storefront)/pan-mayorista/page.tsx", "utf8");
+  assert.match(pan, /<em>Negocio<\/em>/);
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.match(css, /\.digital-menu-hero h1 em\{/);
+});
+
+test("promo h1 renders a per-campaign italic keyword via PromoMeta.em", () => {
+  const client = readFileSync("src/app/(storefront)/promo/[slug]/promo-page-client.tsx", "utf8");
+  assert.match(client, /em\??:\s*string/);
+  assert.match(client, /<em>/);
+  const page = readFileSync("src/app/(storefront)/promo/[slug]/page.tsx", "utf8");
+  assert.match(page, /em:\s*"/);
+});
+
+test("admin dashboard subtitle takes a Playfair italic accent", () => {
+  const dash = readFileSync("src/app/(admin)/admin/dashboard-client.tsx", "utf8");
+  assert.match(dash, /<em className="font-heading">/);
+});
+
+test("display numerals hit font-black across admin stats and totals", () => {
+  const dash = readFileSync("src/app/(admin)/admin/dashboard-client.tsx", "utf8");
+  assert.match(dash, /text-4xl font-black tabular-nums/);
+  const summary = readFileSync("src/components/analytics/summary-cards.tsx", "utf8");
+  assert.match(summary, /text-4xl font-black tabular-nums/);
+  const orders = readFileSync("src/app/(admin)/admin/orders/orders-view.tsx", "utf8");
+  assert.match(orders, /font-black/);
+  const drawer = readFileSync("src/components/cart/cart-drawer.tsx", "utf8");
+  assert.match(drawer, /text-4xl[^\n]*font-black[^\n]*font-mono[^\n]*tabular-nums/);
+});
+
+test("editorial menu numerals go black and body copy goes light", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  for (const sel of [
+    ".menu-detail-footer strong",
+    ".menu-cart-total strong",
+    ".menu-floating-cart strong",
+  ]) {
+    const block = css.match(new RegExp(sel.replace(/\./g, "\\.") + "\\{[^}]*\\}"))?.[0] ?? "";
+    assert.match(block, /font-weight:\s*900/, `${sel} must render black numerals`);
+  }
+  const desc = css.match(/\.menu-hero-description\{[^}]*\}/)?.[0] ?? "";
+  assert.match(desc, /font-weight:\s*300/);
+  const detailP = css.match(/\.menu-detail-content>p:not\(\.menu-eyebrow\)\{[^}]*\}/)?.[0] ?? "";
+  assert.match(detailP, /font-weight:\s*300/);
+  const confirm = css.match(/\.checkout-confirmation p\{[^}]*\}/)?.[0] ?? "";
+  assert.match(confirm, /font-weight:\s*300/);
 });

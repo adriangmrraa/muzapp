@@ -77,7 +77,7 @@ export function SummaryCards({ data }: SummaryCardsProps) {
                 className={
                   card.small
                     ? "text-lg font-bold text-foreground truncate"
-                    : "text-4xl font-bold tabular-nums text-gold-gradient"
+                    : "text-4xl font-black tabular-nums text-gold-gradient"
                 }
                 initial={{ scale: 0.85, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}

@@ -91,7 +91,7 @@ export default function HamburguesasPage() {
             variants={heroChild}
             className="text-gold-shimmer text-4xl sm:text-5xl font-black font-heading"
           >
-            Nuestras Hamburguesas
+            Nuestras <em className="marker-gold">Hamburguesas</em>
           </motion.h1>
           <motion.p
             variants={heroChild}

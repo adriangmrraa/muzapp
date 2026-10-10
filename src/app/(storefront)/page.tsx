@@ -64,9 +64,7 @@ export default function HomePage() {
                 </span>
                 <h2 className="text-3xl sm:text-4xl font-black text-foreground leading-tight font-heading">
                   Más que una{" "}
-                  <span className="text-gold-gradient">
-                    hamburguesa
-                  </span>
+                  <em className="marker-gold">hamburguesa</em>
                 </h2>
                 <p className="text-foreground/65 leading-relaxed">
                   {business?.description ||
@@ -107,7 +105,7 @@ export default function HomePage() {
           style={{ textShadow: "0 2px 12px rgba(0,0,0,0.7)" }}
         >
           &quot;Cada mordida cuenta una historia.{" "}
-          <span className="text-primary">La nuestra empieza con ingredientes reales.&quot;</span>
+          <span className="text-primary">La <em>nuestra</em> empieza con ingredientes reales.&quot;</span>
         </p>
       </ParallaxDivider>
 
@@ -129,7 +127,7 @@ export default function HomePage() {
           >
             <span className="text-5xl">📱</span>
             <h2 className="text-2xl sm:text-3xl font-black font-heading text-gold-gradient">
-              Carta Digital
+              Carta <em>Digital</em>
             </h2>
             <p className="text-foreground/60 max-w-md leading-relaxed">
               Deslizá todos nuestros productos, armá tu pedido y enviá directo por WhatsApp. Rápido y sin vueltas.

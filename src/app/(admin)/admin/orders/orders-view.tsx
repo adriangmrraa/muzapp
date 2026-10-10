@@ -142,7 +142,7 @@ function OrderCard({
       {total > 0 && (
         <div className="flex items-baseline justify-between gap-2 border-t border-border pt-2">
           <span className="text-[10px] uppercase tracking-wider text-foreground/30">Total</span>
-          <span className="font-mono tabular-nums text-xl text-foreground/90">
+          <span className="font-mono font-black tabular-nums text-xl text-foreground/90">
             ${total.toLocaleString("es-AR")}
           </span>
         </div>

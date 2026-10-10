@@ -13,31 +13,35 @@ export async function generateStaticParams() {
 // Campaign-specific visual config
 const CAMPAIGN_META: Record<
   string,
-  { headline: string; sub: string; emoji: string; badge: string }
+  { headline: string; sub: string; emoji: string; badge: string; em?: string }
 > = {
   hamburguesas: {
     headline: "Las Hamburguesas que te vuelan la cabeza",
     sub: "Elaboradas a mano con ingredientes frescos. Sin apuro, con amor y mucho fuego.",
     emoji: "🍔",
     badge: "Menú Especial",
+    em: "Hamburguesas",
   },
   mayorista: {
     headline: "Pan Artesanal para tu Negocio",
     sub: "Fermentación lenta, sin conservantes. El pan que tus clientes van a notar.",
     emoji: "🍞",
     badge: "Distribución Mayorista",
+    em: "Negocio",
   },
   "promo-muzza": {
     headline: "La Promo de Muzza que no podés perder",
     sub: "Mozzarella derretida, masa artesanal, ingredientes de primera. Por tiempo limitado.",
     emoji: "🧀",
     badge: "Promo Exclusiva",
+    em: "perder",
   },
   "2x1-empanadas": {
     headline: "2x1 en Empanadas — Solo por Hoy",
     sub: "Las empanadas más buscadas del barrio. Aprovechá la promo antes que se acaben.",
     emoji: "🥟",
     badge: "Oferta Limitada",
+    em: "Empanadas",
   },
 };
 

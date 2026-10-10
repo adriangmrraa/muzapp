@@ -104,7 +104,7 @@ export default function PanMayoristaPage() {
         >
           Pan Artesanal
           <br />
-          para tu Negocio
+          para tu <em>Negocio</em>
         </motion.h1>
 
         <motion.p

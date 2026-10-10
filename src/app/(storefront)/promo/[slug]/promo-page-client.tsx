@@ -17,6 +17,8 @@ interface PromoMeta {
   sub: string;
   emoji: string;
   badge: string;
+  /** Keyword inside `headline` rendered in real italic (<em>). */
+  em?: string;
 }
 
 interface PromoPageClientProps {
@@ -60,7 +62,15 @@ export function PromoPageClient({ slug, campaign, meta }: PromoPageClientProps) 
           variants={heroChild}
           className="text-4xl sm:text-6xl font-black leading-tight font-heading text-gold-gradient"
         >
-          {meta.headline}
+          {meta.em && meta.headline.includes(meta.em) ? (
+            <>
+              {meta.headline.slice(0, meta.headline.indexOf(meta.em))}
+              <em>{meta.em}</em>
+              {meta.headline.slice(meta.headline.indexOf(meta.em) + meta.em.length)}
+            </>
+          ) : (
+            meta.headline
+          )}
         </motion.h1>
 
         {/* Sub */}

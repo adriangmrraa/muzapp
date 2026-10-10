@@ -36,6 +36,7 @@ export function HeroSection() {
           delay={0.35}
           stagger={0.14}
           className="text-5xl sm:text-6xl md:text-8xl font-black leading-none tracking-tight font-heading"
+          emLines={[heroText.split("\n").length - 1]}
           wordStyle={{
             background: "linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-bright) 50%, var(--color-gold-ember) 100%)",
             WebkitBackgroundClip: "text",
