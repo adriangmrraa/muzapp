@@ -33,7 +33,7 @@ export function ProductToggle({ value, onChange, showAll = false, options }: Pro
           {value === tab.id && (
             <motion.div
               layoutId="toggle-pill"
-              className="absolute inset-0 rounded-full border border-border bg-card"
+              className="absolute inset-0 rounded-full border border-border orb-finish"
               transition={{ type: "spring", stiffness: 500, damping: 35 }}
             />
           )}

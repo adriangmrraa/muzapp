@@ -1424,9 +1424,9 @@ test("orders view adopts segmented pills and lucide action icons", () => {
   assert.match(src, /aria-label/);
 });
 
-test("product toggle active segment becomes a card pill", () => {
+test("product toggle active segment becomes an orb-finish pill", () => {
   const src = readFileSync("src/components/products/product-toggle.tsx", "utf8");
-  assert.match(src, /bg-card/);
+  assert.match(src, /orb-finish/);
   assert.doesNotMatch(src, /from-gold|to-gold-ember/);
 });
 
@@ -1574,4 +1574,60 @@ test("editorial menu numerals go black and body copy goes light", () => {
   assert.match(detailP, /font-weight:\s*300/);
   const confirm = css.match(/\.checkout-confirmation p\{[^}]*\}/)?.[0] ?? "";
   assert.match(confirm, /font-weight:\s*300/);
+});
+
+// ─── ui-redesign-r2 C: glossy orbs + floating pill nav ────────────────────────
+
+test("orb primitives carry the specular+grain+halo recipe with gold accent", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const orbChip = css.match(/\.orb-chip\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(orbChip, /radial-gradient\(56% 44% at 32% 22%/);
+  assert.match(orbChip, /linear-gradient\(135deg/);
+  assert.match(orbChip, /feTurbulence/);
+  assert.match(orbChip, /inset 0 2px 4px/);
+  assert.match(orbChip, /inset 0 -9px 16px/);
+  assert.match(css, /\.orb-chip\[data-selected="true"\]::before/);
+  assert.match(css, /@keyframes chip-halo/);
+  assert.match(css, /--oc:\s*#D4A017/);
+  assert.match(css, /\.digital-menu \.orb-chip\s*\{\s*--oc:\s*#d7c198/);
+});
+
+test("orb-finish is shape-agnostic and recolors inside .digital-menu", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const finish = css.match(/\.orb-finish\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(finish, /radial-gradient\(56% 44% at 32% 20%/);
+  assert.match(finish, /feTurbulence/);
+  assert.match(css, /\.digital-menu \.orb-finish\s*\{\s*--oc:\s*#d7c198/);
+});
+
+test("category nav is a floating inset pill and cart badge is an orb chip", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const nav = css.match(/\.menu-category-nav\{[^}]*\}/)?.[0] ?? "";
+  assert.match(nav, /border-radius:\s*28px/);
+  assert.match(nav, /margin-inline:max\(\.75rem,env\(safe-area-inset-left\)\)/);
+  assert.match(nav, /0 20px 50px -4px rgba\(0,\s*0,\s*0,\s*\.55\)/);
+  const cart = css.match(/\.menu-floating-cart\{[^}]*\}/)?.[0] ?? "";
+  assert.match(cart, /border-radius:\s*28px/);
+  assert.match(cart, /0 20px 50px -4px rgba\(0,\s*0,\s*0,\s*\.55\)/);
+  const client = readFileSync("src/app/carta-digital/menu-digital-client.tsx", "utf8");
+  assert.match(client, /className="orb-chip"/);
+  assert.match(client, /aria-pressed=/);
+});
+
+test("category indicator is an orb-finish pill behind the active label", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const indicator = css.match(/\.menu-category-indicator\{[^}]*\}/)?.[0] ?? "";
+  assert.match(indicator, /border-radius:\s*9999px/);
+  assert.match(indicator, /color-mix\(in srgb,\s*var\(--menu-gold\)/);
+  assert.match(indicator, /inset:\s*6px 4px/);
+  assert.match(indicator, /z-index:\s*-1/);
+  const navBtn = css.match(/\.menu-category-nav button\{[^}]*\}/)?.[0] ?? "";
+  assert.match(navBtn, /isolation:\s*isolate/);
+});
+
+test("orb loops honor reduced motion in the global block", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const rm = css.match(/@media \(prefers-reduced-motion: reduce\) \{[^@]*?\}/)?.[0] ?? "";
+  assert.match(rm, /\.orb-chip\[data-selected="true"\]::before/);
+  assert.match(rm, /\.orb-float/);
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { ArrowLeft, ArrowUpRight, Minus, Plus, Search, ShoppingBag } from "lucide-react";
 import { CatalogImage } from "@/components/products/catalog-image";
@@ -101,7 +101,7 @@ export function MenuDigitalClient({ products, promos }: { products: Product[]; p
     <header className="digital-menu-header">
       <Link href="/" className="menu-back-link" aria-label="Volver al sitio principal"><ArrowLeft size={18} /><span>Inicio</span></Link>
       <Link href="/" className="menu-brand">{brandName}<small>{brandTagline}</small></Link>
-      <button type="button" className="menu-cart-icon" onClick={() => setCartOpen(true)} aria-label={`Ver pedido, ${count} productos`}><ShoppingBag size={20} />{count > 0 && <b>{count}</b>}</button>
+      <button type="button" className="menu-cart-icon" onClick={() => setCartOpen(true)} aria-label={`Ver pedido, ${count} productos`}><ShoppingBag size={20} />{count > 0 && <b className="orb-chip">{count}</b>}</button>
     </header>
     <main>
       <section className={`digital-menu-hero ${hero ? "has-photo" : ""}`}>
@@ -115,7 +115,7 @@ export function MenuDigitalClient({ products, promos }: { products: Product[]; p
           <figcaption><span>De nuestra cocina</span><strong>{hero.name}</strong></figcaption>
         </motion.figure>}
       </section>
-      <nav className="menu-category-nav" aria-label="Categorías de la carta" id="carta"><div>{categories.map(category => <button type="button" key={category.key} aria-pressed={activeCategory === category.key && !query} onClick={(event) => { setActiveCategory(category.key); setQuery(""); event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest", behavior: reduced ? "instant" : "smooth" }); }}>
+      <nav className="menu-category-nav" aria-label="Categorías de la carta" id="carta"><div>{categories.map((category, i) => <button type="button" key={category.key} style={{ "--i": i } as CSSProperties} aria-pressed={activeCategory === category.key && !query} onClick={(event) => { setActiveCategory(category.key); setQuery(""); event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest", behavior: reduced ? "instant" : "smooth" }); }}>
         {category.label}{activeCategory === category.key && !query && <motion.span className="menu-category-indicator" layoutId="category-indicator" transition={reduced ? { duration: 0 } : editorialSpring} />}
       </button>)}</div></nav>
       <section className="menu-content">
