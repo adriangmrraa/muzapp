@@ -84,7 +84,7 @@ export default function HomePage() {
                   </Link>
                   <Link
                     href="/pan-mayorista"
-                    className="shine-sweep inline-flex items-center justify-center px-6 py-3 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105 bg-primary/[0.08] border border-primary/30 text-primary"
+                    className="btn-outline-gold shine-sweep px-6 py-3 text-sm uppercase tracking-widest"
                   >
                     Pan Mayorista
                   </Link>

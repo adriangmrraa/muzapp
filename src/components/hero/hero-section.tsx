@@ -63,7 +63,7 @@ export function HeroSection() {
           <Magnetic>
             <Link
               href="/pan-mayorista"
-              className="shine-sweep inline-flex items-center justify-center px-8 py-4 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105 bg-primary/10 border border-primary/40 text-primary"
+              className="btn-outline-gold shine-sweep px-8 py-4 text-sm uppercase tracking-widest"
             >
               Pan Mayorista
             </Link>

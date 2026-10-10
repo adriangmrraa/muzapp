@@ -93,7 +93,7 @@ function SheetContent({
         {side === "bottom" ? (
           <motion.div
             className={cn(
-              "relative flex flex-col gap-4 rounded-t-2xl border-t border-border bg-popover text-popover-foreground shadow-lg pb-[max(16px,env(safe-area-inset-bottom))]",
+              "relative flex flex-col gap-4 rounded-t-[28px] border-t border-border bg-popover text-popover-foreground shadow-[0_20px_50px_-4px_rgba(0,0,0,.7)] pb-[max(16px,env(safe-area-inset-bottom))]",
               className
             )}
             drag="y"

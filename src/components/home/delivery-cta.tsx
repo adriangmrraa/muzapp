@@ -117,7 +117,7 @@ export function DeliveryCTA() {
               href={`https://instagram.com/${instagram}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-8 py-4 text-sm font-semibold uppercase tracking-widest rounded-full transition-all duration-300 hover:scale-105 bg-primary/[0.08] border border-primary/30 text-primary"
+              className="btn-outline-gold px-8 py-4 text-sm uppercase tracking-widest"
             >
               @{instagram}
             </a>

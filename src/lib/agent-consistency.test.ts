@@ -1442,3 +1442,69 @@ test("removed clients tab module is gone (gate: zero source references)", () => 
   const removedPath = ["src", "components", "clients", ["client", "tabs"].join("-") + ".tsx"].join("/");
   assert.throws(() => readFileSync(removedPath, "utf8"));
 });
+
+// ─── ui-redesign-r2 A: real italics, pill buttons, marker, sheet elevation ───
+
+test("font loader requests real italic faces and Inter light weight", () => {
+  const layout = readFileSync("src/app/layout.tsx", "utf8");
+  const styleAxes = layout.match(/style:\s*\["normal",\s*"italic"\]/g) ?? [];
+  assert.equal(styleAxes.length, 2, "Playfair and Inter must both load normal+italic");
+  const playfairBlock = layout.match(/Playfair_Display\(\{[\s\S]*?\}\)/)?.[0] ?? "";
+  assert.match(playfairBlock, /style:\s*\["normal",\s*"italic"\]/);
+  const interBlock = layout.match(/Inter\(\{[\s\S]*?\}\)/)?.[0] ?? "";
+  assert.match(interBlock, /style:\s*\["normal",\s*"italic"\]/);
+  assert.match(interBlock, /"300"/, "Inter must include the light 300 face");
+});
+
+test("pill button standard unifies gold CTAs and editorial menu controls", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const btnGold = css.match(/\.btn-gold\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(btnGold, /border-radius:\s*9999px/, ".btn-gold must be a true pill");
+  assert.doesNotMatch(btnGold, /border-radius:\s*25px/);
+  const outline = css.match(/\.btn-outline-gold\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(outline, /border-radius:\s*9999px/);
+  assert.match(outline, /border:\s*1px solid rgba\(212,\s*160,\s*23,\s*0?\.4\)/);
+  assert.match(css, /\.btn-outline-gold:active\s*\{[^}]*scale\(0?\.98\)/);
+  const menuButtons = css.match(/\.menu-add-button,\.menu-quantity\{[^}]*\}/)?.[0] ?? "";
+  assert.match(menuButtons, /border-radius:\s*9999px/);
+  assert.doesNotMatch(menuButtons, /border-radius:\s*4px/);
+  const whatsapp = css.match(/\.menu-whatsapp-button\{[^}]*\}/)?.[0] ?? "";
+  assert.match(whatsapp, /border-radius:\s*9999px/);
+  assert.doesNotMatch(whatsapp, /border-radius:\s*4px/);
+});
+
+test("ad-hoc outline CTAs migrate to the shared btn-outline-gold utility", () => {
+  const hero = readFileSync("src/components/hero/hero-section.tsx", "utf8");
+  assert.match(hero, /btn-outline-gold/);
+  assert.doesNotMatch(hero, /bg-primary\/10 border border-primary\/40/);
+  const home = readFileSync("src/app/(storefront)/page.tsx", "utf8");
+  assert.match(home, /btn-outline-gold/);
+  const cta = readFileSync("src/components/home/delivery-cta.tsx", "utf8");
+  assert.match(cta, /btn-outline-gold/);
+  assert.doesNotMatch(cta, /bg-primary\/\[0\.08\] border border-primary\/30/);
+});
+
+test("marker-gold paints a wrap-safe highlight and recolors inside digital-menu", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const marker = css.match(/\.marker-gold\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(marker, /box-decoration-break:\s*clone/);
+  assert.match(marker, /background-size:\s*100% 62%/);
+  assert.match(marker, /background-image:\s*linear-gradient/);
+  const menuMarker = css.match(/\.digital-menu \.marker-gold\s*\{[^}]*\}/)?.[0] ?? "";
+  assert.match(menuMarker, /--menu-gold/);
+  assert.doesNotMatch(menuMarker, /#D4A017/);
+});
+
+test("sheet bottom panel and editorial dialogs carry the spec elevation", () => {
+  const sheet = readFileSync("src/components/ui/sheet.tsx", "utf8");
+  assert.match(sheet, /rounded-t-\[28px\]/);
+  assert.match(sheet, /shadow-\[0_20px_50px_-4px_rgba\(0,0,0,\.7\)\]/);
+  assert.doesNotMatch(sheet, /rounded-t-2xl/, "bottom panel must not keep rounded-t-2xl");
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const panel = css.match(/\.catalog-dialog-panel\{[^}]*\}/)?.[0] ?? "";
+  assert.match(panel, /0 20px 50px -4px rgba\(0,\s*0,\s*0,\s*\.7\)/);
+  assert.match(panel, /env\(safe-area-inset-bottom\)/);
+  const upsell = readFileSync("src/components/products/upsell-modal.tsx", "utf8");
+  assert.match(upsell, /shadow-\[0_20px_50px_-4px_rgba\(0,0,0,\.7\)\]/);
+  assert.match(upsell, /rounded-3xl/);
+});

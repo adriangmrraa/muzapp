@@ -160,7 +160,7 @@
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, #D4A017, #F5A623, #E8712A);
-  border-radius: 25px;
+  border-radius: 9999px;
   color: #0a0a0a;
   font-weight: 700;
   transition: transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
@@ -191,6 +191,50 @@
 @keyframes gold-breathe {
   0%, 100% { opacity: 0; }
   50% { opacity: 0.55; }
+}
+
+/* Hairline gold pill — the outlined counterpart of .btn-gold */
+.btn-outline-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(212, 160, 23, 0.4);
+  background: rgba(212, 160, 23, 0.08);
+  color: var(--primary);
+  font-weight: 600;
+  transition: transform 0.2s ease, background 0.3s ease, border-color 0.3s ease;
+}
+.btn-outline-gold:hover {
+  background: rgba(212, 160, 23, 0.15);
+  border-color: rgba(212, 160, 23, 0.55);
+}
+.btn-outline-gold:active {
+  transform: scale(0.98);
+}
+
+/* Editorial marker highlight — wash behind keywords, wrap-safe via clone */
+.marker-gold {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding-inline: 0.08em;
+  margin-inline: -0.08em;
+  border-radius: 0.18em 0.5em 0.22em 0.45em;
+  background-image: linear-gradient(
+    100deg,
+    color-mix(in srgb, #D4A017 72%, transparent),
+    color-mix(in srgb, #D4A017 45%, transparent)
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 62%;
+  background-position: 0 78%;
+}
+.digital-menu .marker-gold {
+  background-image: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--menu-gold) 70%, transparent),
+    color-mix(in srgb, var(--menu-gold) 42%, transparent)
+  );
 }
 
 /* WhatsApp pulse animation */
@@ -391,7 +435,7 @@
 .menu-item-body .menu-includes{font-size:.67rem;color:#c8b899;margin:0}
 .menu-item-action{display:flex;align-items:center;justify-content:space-between;gap:1rem;border-top:1px solid #ffffff16;margin-top:auto;padding-top:1rem}
 .menu-item-action strong{font-size:clamp(1.15rem,1.05rem + .5vw,1.3rem);font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
-.menu-add-button,.menu-quantity{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #ffffff28;border-radius:4px;color:#e3d2af;font-size:.72rem;gap:.45rem;white-space:nowrap}
+.menu-add-button,.menu-quantity{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #ffffff28;border-radius:9999px;color:#e3d2af;font-size:.72rem;gap:.45rem;white-space:nowrap}
 .menu-add-button{padding:0 .9rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.18);transition:background .2s,color .2s,transform .15s}
 .menu-add-button:hover{background:#d7c198;color:#151513}
 .menu-add-button:active{transform:scale(.98)}
@@ -412,7 +456,7 @@
 .catalog-dialog[open]{display:flex;align-items:center;justify-content:center}
 .catalog-dialog::backdrop{background:transparent}
 .catalog-dialog-veil{position:fixed;inset:0;background:#090908ba;backdrop-filter:blur(8px)}
-.catalog-dialog-panel{position:relative;z-index:1;width:min(100%,34rem);max-height:calc(100svh - 3rem);overflow:auto;background:#1c1c19;border:1px solid #ffffff20;border-radius:8px;box-shadow:0 30px 100px #0007;scrollbar-width:thin}
+.catalog-dialog-panel{position:relative;z-index:1;width:min(100%,34rem);max-height:calc(100svh - 3rem);overflow:auto;background:#1c1c19;border:1px solid #ffffff20;border-radius:8px;box-shadow:0 20px 50px -4px rgba(0,0,0,.7);padding-bottom:max(.75rem,env(safe-area-inset-bottom));scrollbar-width:thin}
 .catalog-dialog-wide{width:min(100%,64rem)}
 .catalog-close{position:absolute;z-index:3;top:1rem;right:1rem;width:44px;height:44px;display:grid;place-items:center;color:#f2eee5;background:#171714d9;border:1px solid #ffffff25;border-radius:50%}
 .menu-detail-layout{display:grid;grid-template-columns:1fr 1fr;min-height:28rem}
@@ -441,7 +485,7 @@
 .checkout-fields{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
 .checkout-fields label{font-size:.7rem;color:#bab2a2;display:flex;flex-direction:column;gap:.5rem}
 .checkout-fields input{min-width:0;width:100%;min-height:46px;border:1px solid #ffffff25;border-radius:4px;background:#ffffff04;padding:.75rem;font-size:.8rem;color:#f2eee5}
-.menu-whatsapp-button{margin-top:1rem;width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;gap:.7rem;border-radius:4px;border:0;background:#ded0b3;color:#201d17;font-size:.82rem;font-weight:600;padding:.8rem;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.35);transition:transform .15s ease,background .2s ease}
+.menu-whatsapp-button{margin-top:1rem;width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;gap:.7rem;border-radius:9999px;border:0;background:#ded0b3;color:#201d17;font-size:.82rem;font-weight:600;padding:.8rem;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.35);transition:transform .15s ease,background .2s ease}
 .menu-whatsapp-button:hover{background:#eee2ca}
 .menu-whatsapp-button:active{transform:scale(.98)}
 .menu-cart-note{font-size:.65rem;line-height:1.7;color:#aaa497;margin:.75rem 0 0}
@@ -456,7 +500,7 @@
 .public-detail-photo{position:relative;aspect-ratio:1;overflow:hidden;background:#211f1b;border-radius:4px}
 .public-detail h1{font-family:var(--font-playfair),Georgia,serif;font-size:clamp(2.7rem,5vw,4.6rem);font-weight:400;letter-spacing:-.055em;line-height:1.07;color:#eee8dc;margin:1rem 0 1.5rem}
 @media(max-width:1024px){.digital-menu-header{padding-inline:2rem}.digital-menu-hero{gap:2.5rem;padding:4rem 2rem}.menu-content{padding-inline:2rem}.menu-category-nav>div{padding-inline:2rem;gap:1.8rem}.menu-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.menu-editorial-footer{margin-inline:2rem}.menu-detail-content{padding-inline:1.75rem}}
-@media(max-width:760px){.digital-menu-header{height:5rem;padding-inline:1.25rem}.menu-back-link span{display:none}.menu-brand{font-size:1.17rem}.digital-menu-hero,.digital-menu-hero.has-photo{grid-template-columns:1fr;padding:3rem 1.25rem;gap:2rem}.digital-menu-hero h1{font-size:clamp(3.7rem,13vw,6rem);margin:1.2rem 0}.menu-hero-photo{aspect-ratio:1.55;border-bottom-right-radius:48px}.menu-hero-photo figcaption{bottom:1.25rem;left:1.25rem}.menu-hero-description{max-width:26rem}.menu-text-link{margin-top:1rem}.menu-category-nav>div{padding-inline:1.25rem;gap:1.6rem}.menu-category-nav button{min-height:3.8rem;font-size:.72rem}.menu-content{padding:2.5rem 1.25rem}.menu-section-heading{align-items:start;flex-direction:column;gap:1rem}.menu-search{width:100%}.menu-grid{grid-template-columns:1fr;gap:1.8rem}.menu-item-card{display:grid;grid-template-columns:36% minmax(0,1fr);gap:1.1rem;border-bottom:1px solid #ffffff16;padding-bottom:1.8rem}.menu-item-preview{aspect-ratio:1/1.2;align-self:start}.menu-item-body{padding:0;gap:.65rem}.menu-item-body h3{font-size:1.2rem}.menu-item-body p{font-size:.7rem;line-height:1.6}.menu-item-action{flex-wrap:wrap;gap:.5rem;border:0;padding-top:.3rem}.menu-add-button{padding:0 .75rem}.menu-item-action strong{font-size:1.1rem}.menu-results{margin-bottom:1.5rem}.menu-preview-arrow{display:none}.menu-editorial-footer{margin:1rem 1.25rem 0;padding:2rem 0;align-items:start;flex-direction:column;gap:.8rem}.catalog-dialog{padding:.75rem;align-items:end!important}.catalog-dialog-panel{max-height:calc(100svh - 1.5rem);border-radius:10px}.menu-detail-layout{grid-template-columns:1fr;min-height:auto}.menu-detail-photo{min-height:0;height:35svh}.menu-detail-content{padding:1.75rem 1.4rem}.menu-detail-content h2{font-size:2.2rem}.menu-detail-footer{margin-top:1.5rem}.menu-cart-content{padding:2rem 1.2rem 1.5rem}.menu-cart-thumb{width:42px;height:50px}.menu-cart-line{gap:.65rem}.menu-cart-line .menu-quantity button{width:32px}.menu-cart-line .menu-quantity span{width:21px}.public-detail{grid-template-columns:1fr;gap:2rem}.checkout-fields{grid-template-columns:1fr}.menu-floating-cart{padding:1rem 1.2rem}}
+@media(max-width:760px){.digital-menu-header{height:5rem;padding-inline:1.25rem}.menu-back-link span{display:none}.menu-brand{font-size:1.17rem}.digital-menu-hero,.digital-menu-hero.has-photo{grid-template-columns:1fr;padding:3rem 1.25rem;gap:2rem}.digital-menu-hero h1{font-size:clamp(3.7rem,13vw,6rem);margin:1.2rem 0}.menu-hero-photo{aspect-ratio:1.55;border-bottom-right-radius:48px}.menu-hero-photo figcaption{bottom:1.25rem;left:1.25rem}.menu-hero-description{max-width:26rem}.menu-text-link{margin-top:1rem}.menu-category-nav>div{padding-inline:1.25rem;gap:1.6rem}.menu-category-nav button{min-height:3.8rem;font-size:.72rem}.menu-content{padding:2.5rem 1.25rem}.menu-section-heading{align-items:start;flex-direction:column;gap:1rem}.menu-search{width:100%}.menu-grid{grid-template-columns:1fr;gap:1.8rem}.menu-item-card{display:grid;grid-template-columns:36% minmax(0,1fr);gap:1.1rem;border-bottom:1px solid #ffffff16;padding-bottom:1.8rem}.menu-item-preview{aspect-ratio:1/1.2;align-self:start}.menu-item-body{padding:0;gap:.65rem}.menu-item-body h3{font-size:1.2rem}.menu-item-body p{font-size:.7rem;line-height:1.6}.menu-item-action{flex-wrap:wrap;gap:.5rem;border:0;padding-top:.3rem}.menu-add-button{padding:0 .75rem}.menu-item-action strong{font-size:1.1rem}.menu-results{margin-bottom:1.5rem}.menu-preview-arrow{display:none}.menu-editorial-footer{margin:1rem 1.25rem 0;padding:2rem 0;align-items:start;flex-direction:column;gap:.8rem}.catalog-dialog{padding:.75rem;align-items:end!important}.catalog-dialog-panel{max-height:calc(100svh - 1.5rem);border-radius:28px 28px 0 0}.menu-detail-layout{grid-template-columns:1fr;min-height:auto}.menu-detail-photo{min-height:0;height:35svh}.menu-detail-content{padding:1.75rem 1.4rem}.menu-detail-content h2{font-size:2.2rem}.menu-detail-footer{margin-top:1.5rem}.menu-cart-content{padding:2rem 1.2rem 1.5rem}.menu-cart-thumb{width:42px;height:50px}.menu-cart-line{gap:.65rem}.menu-cart-line .menu-quantity button{width:32px}.menu-cart-line .menu-quantity span{width:21px}.public-detail{grid-template-columns:1fr;gap:2rem}.checkout-fields{grid-template-columns:1fr}.menu-floating-cart{padding:1rem 1.2rem}}
 @media(prefers-reduced-motion:reduce){.catalog-image img,.menu-preview-arrow,.menu-add-button,.menu-whatsapp-button{transition:none;transform:none!important}.catalog-image[data-state="loading"]::after,.menu-shimmer::after,.paint-veil,.rise-in{animation:none}.digital-menu *{scroll-behavior:auto!important}}
 /* ─── Marquee (infinite scrolling strip) ─── */
 @keyframes marquee {

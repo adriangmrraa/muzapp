@@ -111,7 +111,7 @@ export function UpsellModal({ onNavigateToPapas }: UpsellModalProps) {
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.15 }}
             onDragEnd={handleDragEnd}
-            className="fixed z-50 inset-x-4 bottom-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] rounded-2xl border border-primary/20 bg-card p-5 max-md:pt-1 pb-[max(20px,env(safe-area-inset-bottom))] shadow-2xl"
+            className="fixed z-50 inset-x-4 bottom-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[420px] rounded-3xl border border-primary/20 bg-card p-5 max-md:pt-1 pb-[max(20px,env(safe-area-inset-bottom))] shadow-[0_20px_50px_-4px_rgba(0,0,0,.7)]"
           >
             {isMobile && (
               <div className="sheet-handle" aria-hidden="true"
